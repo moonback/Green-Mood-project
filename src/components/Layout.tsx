@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import AgeGate from "./AgeGate";
 import CartSidebar from "./CartSidebar";
+import BudTender from "./BudTender";
 import { useCartStore } from "../store/cartStore";
 import { useAuthStore } from "../store/authStore";
 import { useSettingsStore } from "../store/settingsStore";
@@ -59,6 +60,9 @@ export default function Layout() {
 
       {/* Cart Sidebar */}
       <CartSidebar />
+
+      {/* BudTender IA Widget */}
+      <BudTender />
 
       {/* Promotional Banner */}
       <AnimatePresence>
