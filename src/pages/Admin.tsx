@@ -41,11 +41,12 @@ import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminReviewsTab from '../components/admin/AdminReviewsTab';
 import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
+import AdminRecommendationsTab from '../components/admin/AdminRecommendationsTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -195,6 +196,7 @@ export default function Admin() {
       case 'reviews': break; // handled by AdminReviewsTab
       case 'analytics': break; // handled by AdminAnalyticsTab
       case 'promo_codes': break; // handled by AdminPromoCodesTab
+      case 'recommendations': break; // handled by AdminRecommendationsTab
     }
     setIsLoading(false);
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -910,6 +912,7 @@ export default function Admin() {
                   { key: 'stock' as Tab, label: 'Stock', icon: BarChart3 },
                   { key: 'subscriptions' as Tab, label: 'Abonnements', icon: RefreshCw },
                   { key: 'promo_codes' as Tab, label: 'Codes Promo', icon: Tag },
+                  { key: 'recommendations' as Tab, label: 'Cross-Selling', icon: Star },
                 ],
               },
               {
@@ -2083,6 +2086,11 @@ export default function Admin() {
                 {/* ── Promo Codes tab ── */}
                 {tab === 'promo_codes' && !isLoading && (
                   <AdminPromoCodesTab />
+                )}
+
+                {/* ── Recommendations tab ── */}
+                {tab === 'recommendations' && !isLoading && (
+                  <AdminRecommendationsTab />
                 )}
               </>
             )}

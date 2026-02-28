@@ -23,6 +23,7 @@ import StockBadge from '../components/StockBadge';
 import QuantitySelector from '../components/QuantitySelector';
 import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
+import RelatedProducts from '../components/RelatedProducts';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -663,6 +664,9 @@ export default function ProductDetail() {
             </div>
           )}
         </div>
+
+        {/* ── Related Products ── */}
+        <RelatedProducts productId={product.id} categoryId={product.category_id} />
       </div>
     </>
   );

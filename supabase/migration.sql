@@ -589,3 +589,96 @@ BEGIN
     END IF;
   END IF;
 END $$;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Cross-Selling — Produits Complémentaires
+-- ═══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS product_recommendations (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id       uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  recommended_id   uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  sort_order       int NOT NULL DEFAULT 0,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (product_id, recommended_id),
+  CHECK (product_id <> recommended_id)
+);
+
+ALTER TABLE product_recommendations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "recommendations_public_read" ON product_recommendations;
+CREATE POLICY "recommendations_public_read" ON product_recommendations FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "recommendations_admin_all" ON product_recommendations;
+CREATE POLICY "recommendations_admin_all" ON product_recommendations FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- Fonction : recommandations explicites + fallback même catégorie
+CREATE OR REPLACE FUNCTION public.get_product_recommendations(p_product_id uuid, p_limit int DEFAULT 4)
+RETURNS SETOF products AS $$
+DECLARE
+  cat_id uuid;
+BEGIN
+  SELECT category_id INTO cat_id FROM products WHERE id = p_product_id;
+
+  RETURN QUERY
+    SELECT DISTINCT p.*
+      FROM (
+        SELECT p.*, 0 AS priority, r.sort_order AS srt
+          FROM product_recommendations r
+          JOIN products p ON p.id = r.recommended_id
+         WHERE r.product_id = p_product_id
+           AND p.is_active = true AND p.is_available = true
+        UNION ALL
+        SELECT p.*, 1 AS priority, (random() * 100)::int AS srt
+          FROM products p
+         WHERE p.category_id = cat_id
+           AND p.id <> p_product_id
+           AND p.is_active = true AND p.is_available = true
+           AND NOT EXISTS (
+             SELECT 1 FROM product_recommendations
+              WHERE product_id = p_product_id AND recommended_id = p.id
+           )
+      ) p
+     ORDER BY priority, srt
+     LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Seed recommandations croisées
+DO $$
+DECLARE
+  oil10   uuid; oil20 uuid; inf_det uuid; inf_dig uuid;
+  amnesia uuid; gelato uuid; afghan  uuid;
+BEGIN
+  SELECT id INTO oil10   FROM products WHERE slug = 'huile-10-full-spectrum' LIMIT 1;
+  SELECT id INTO oil20   FROM products WHERE slug = 'huile-20-sommeil'       LIMIT 1;
+  SELECT id INTO inf_det FROM products WHERE slug = 'infusion-detente'       LIMIT 1;
+  SELECT id INTO inf_dig FROM products WHERE slug = 'infusion-digestion'     LIMIT 1;
+  SELECT id INTO amnesia FROM products WHERE slug = 'amnesia-haze'           LIMIT 1;
+  SELECT id INTO gelato  FROM products WHERE slug = 'gelato'                 LIMIT 1;
+  SELECT id INTO afghan  FROM products WHERE slug = 'afghan'                 LIMIT 1;
+
+  IF oil10 IS NOT NULL AND inf_det IS NOT NULL THEN
+    INSERT INTO product_recommendations (product_id, recommended_id, sort_order)
+    VALUES (oil10, inf_det, 0) ON CONFLICT DO NOTHING;
+  END IF;
+  IF oil10 IS NOT NULL AND inf_dig IS NOT NULL THEN
+    INSERT INTO product_recommendations (product_id, recommended_id, sort_order)
+    VALUES (oil10, inf_dig, 1) ON CONFLICT DO NOTHING;
+  END IF;
+  IF oil20 IS NOT NULL AND inf_det IS NOT NULL THEN
+    INSERT INTO product_recommendations (product_id, recommended_id, sort_order)
+    VALUES (oil20, inf_det, 0) ON CONFLICT DO NOTHING;
+  END IF;
+  IF amnesia IS NOT NULL AND gelato IS NOT NULL THEN
+    INSERT INTO product_recommendations (product_id, recommended_id, sort_order)
+    VALUES (amnesia, gelato, 0) ON CONFLICT DO NOTHING;
+  END IF;
+  IF amnesia IS NOT NULL AND afghan IS NOT NULL THEN
+    INSERT INTO product_recommendations (product_id, recommended_id, sort_order)
+    VALUES (amnesia, afghan, 1) ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
