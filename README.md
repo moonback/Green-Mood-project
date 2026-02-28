@@ -1,28 +1,129 @@
-# 🌿 Green Mood CBD Shop - Site Vitrine & E-commerce
+# 🌿 Green Mood CBD Shop — Site Vitrine & E-commerce
+
+> Application web e-commerce premium pour une boutique CBD physique, avec système Click & Collect, livraison, fidélité, codes promo, bundles et cross-selling.
+
+---
 
 ## 📖 Présentation du Projet
-**Green Mood CBD Shop** est une application web moderne (Single Page Application) conçue pour une boutique physique de CBD. La plateforme vise à présenter l'univers premium de la marque, à rassurer les clients sur la qualité et la légalité des produits, et à générer des ventes en ligne (Click & Collect / Livraison) ainsi que du trafic en boutique (Web-to-Store).
+
+**Green Mood CBD Shop** est une Single Page Application (SPA) conçue pour une boutique physique de CBD. La plateforme vise à présenter l'univers premium de la marque, rassurer les clients sur la qualité et la légalité des produits, et générer des ventes en ligne (**Click & Collect / Livraison**) ainsi que du trafic en boutique.
+
+---
 
 ## 🛠️ Stack Technique
-- **Cœur Frontend** : React 19, Vite 6, TypeScript
-- **Styling** : Tailwind CSS v4, Framer Motion (pour les animations), Lucide React (pour les icônes)
-- **Gestion d'État** : Zustand (Authentification, Panier, Paramètres)
-- **Routage** : React Router v7
-- **Base de données & Backend (BaaS)** : Supabase (PostgreSQL, Authentification, Row Level Security)
-- **Autres utilitaires** : express, better-sqlite3
 
-## ✨ Fonctionnalités Principales (MVP)
-- **Vitrine Premium** : Page d'accueil responsive et animée mettant en valeur la marque.
-- **Catalogue de Produits** : Produits CBD dynamiques récupérés depuis la base de données (Fleurs, Résines, Huiles).
-- **Panier & Commande** : Panier interactif avec mises à jour en temps réel et traitement des commandes.
-- **Comptes Utilisateurs** : Authentification, gestion de profil et suivi des commandes.
-- **Tableau de Bord Administrateur** : Panneau sécurisé pour gérer le stock, mettre à jour les paramètres (horaires, frais) et suivre les commandes.
-- **Paramètres Dynamiques** : Informations de la boutique (téléphone, adresse, bannière) synchronisées dynamiquement de manière globale.
+| Catégorie | Technologies |
+|---|---|
+| **Frontend** | React 19, Vite 6, TypeScript |
+| **Styling** | Tailwind CSS v4, Framer Motion, Lucide React |
+| **État global** | Zustand (auth, panier, paramètres) |
+| **Routage** | React Router v7 |
+| **Backend / BaaS** | Supabase (PostgreSQL, Auth, RLS, Storage) |
+| **Paiement** | Viva Wallet (placeholder — mode simulation) |
+
+---
+
+## ✨ Fonctionnalités
+
+### 🛍️ Boutique & Catalogue
+- **Vitrine premium** : page d'accueil animée avec splash screen vidéo + logo
+- **Catalogue dynamique** : fleurs, résines, huiles — chargés depuis Supabase
+- **Fiche produit** : galerie, specs (CBD %, THC, poids), badges, avis clients vérifiés
+- **Recherche & filtres** par catégorie
+
+### 🛒 Panier & Commande
+- **Sidebar panier** interactive (glassmorphism, animations Framer Motion)
+- Toggle **Click & Collect / Livraison** avec pill glissante animée
+- **Jauge livraison offerte** (`FreeShippingGauge`) avec barre de progression
+- **Checkout complet** : adresses multiples, résumé commande, simulation paiement
+
+### 🎟️ Codes Promo
+- Saisie de code promo dans le checkout avec validation Supabase en temps réel
+- Types : **pourcentage** (%) ou **montant fixe** (€)
+- Vérifications : expiration, nombre max d'utilisations, commande minimum
+- Compteur `uses_count` incrémenté automatiquement à la validation
+
+### 💖 Fidélité & Rétention
+- **Points de fidélité** : 1 point par euro dépensé, convertibles en réduction (100 pts = 5 €)
+- Historique des transactions (`loyalty_transactions`) : gains, utilisations
+- Affichage du solde sur la page compte et dans le checkout
+- **Abonnements produits** (huiles) : fréquence hebdo / bimensuelle / mensuelle
+
+### 📦 Packs & Bundles
+- Produits de type **Bundle** (`is_bundle`) composés de plusieurs articles
+- Stock synchronisé automatiquement via trigger PostgreSQL (`sync_bundle_stock`)
+- Affichage **prix barré + économie réalisée** en violet sur les cartes et fiches
+- Section "Contenu du Pack" sur la fiche produit avec liens vers chaque composant
+
+### 🔄 Cross-Selling
+- Section **"Vous aimerez aussi"** en bas de chaque fiche produit
+- Recommandations **explicites** configurables par l'admin (table `product_recommendations`)
+- **Fallback automatique** : même catégorie si pas de recommandation configurée
+- Skeleton animé pendant le chargement + quick-add panier sur chaque carte
+
+### 👤 Comptes Utilisateurs
+- Inscription / connexion / déconnexion (Supabase Auth)
+- Page compte premium avec avatar initiales, badge vérifié, stats de fidélité
+- Gestion des adresses de livraison
+- Historique des commandes + suivi statut
+- Gestion des abonnements
+
+### ⭐ Avis Clients
+- Système **reviews** liés à un achat vérifié
+- Notation par étoiles (1–5), commentaire, badge "Achat vérifié"
+- Validation manuelle par l'admin avant publication
+
+---
+
+## 🔧 Panneau d'Administration
+
+Accessible sur `/admin` (compte `is_admin = true` requis).
+
+| Onglet | Description |
+|---|---|
+| **Dashboard** | CA total, commandes du jour, alertes stock bas |
+| **Produits** | CRUD complet avec upload image Supabase Storage |
+| **Catégories** | Gestion des catégories avec ordre d'affichage |
+| **Commandes** | Mise à jour des statuts (pending → livré) |
+| **Stock** | Ajustements manuels + historique mouvements |
+| **Clients** | Liste des profils, passage en admin |
+| **Codes Promo** | Création, édition, toggle actif/inactif, suivi utilisations |
+| **Cross-Selling** | Configuration des recommandations produits par produit |
+| **Abonnements** | Suivi des abonnements actifs |
+| **Avis** | Modération des avis clients |
+| **Analytique** | Tableaux de bord, graphiques |
+| **Paramètres** | Horaires, adresse, frais de port, bannière, réseaux sociaux |
+
+---
+
+## 🗄️ Schéma Base de Données
+
+```
+categories         → produits classés par type
+products           → catalogue avec is_bundle, original_value
+bundle_items       → articles composant un pack
+product_recommendations → cross-selling explicite
+orders             → commandes avec promo_code, promo_discount
+order_items        → lignes de commande
+addresses          → adresses de livraison par utilisateur
+profiles           → profils utilisateurs + loyalty_points
+loyalty_transactions → historique points de fidélité
+promo_codes        → codes promo avec règles et compteurs
+subscriptions      → abonnements produits récurrents
+reviews            → avis clients vérifiés
+stock_movements    → historique mouvements de stock
+store_settings     → paramètres dynamiques de la boutique
+```
+
+---
 
 ## 📋 Prérequis
-- **Node.js** : v18+ (v22+ recommandé)
-- **npm**, **yarn**, ou **pnpm**
-- Un projet **Supabase** configuré (pour la BDD distante et l'Authentification)
+
+- **Node.js** v18+ (v22+ recommandé)
+- **npm**, **yarn** ou **pnpm**
+- Un projet **Supabase** configuré
+
+---
 
 ## 🚀 Installation & Configuration
 
@@ -37,58 +138,87 @@
    npm install
    ```
 
-3. **Configuration de l'environnement :**
-   Dupliquez le fichier `.env.example` et renommez-le en `.env` :
+3. **Variables d'environnement :**
    ```bash
    cp .env.example .env
    ```
-   Remplissez vos identifiants Supabase et les autres variables d'API dans le fichier `.env`.
+   Renseigner dans `.env` :
+   ```env
+   VITE_SUPABASE_URL=url_de_votre_projet_supabase
+   VITE_SUPABASE_ANON_KEY=clé_anon_de_votre_projet_supabase
+   ```
 
 4. **Initialisation de la base de données :**
-   Exécutez le script `supabase/migration.sql` fourni dans l'éditeur SQL de votre projet Supabase pour créer les tables, les politiques RLS et les données de test (seed).
+   Exécutez `supabase/migration.sql` en intégralité dans l'éditeur SQL de votre projet Supabase.  
+   Ce script crée les tables, les politiques RLS, les triggers, fonctions PostgreSQL et les données de démonstration.
 
-## 💻 Comment lancer le projet
+---
 
-**Mode Développement :**
+## 💻 Lancer le projet
+
+**Développement :**
 ```bash
 npm run dev
+# → http://localhost:3000
 ```
-Accédez à l'application sur `http://localhost:3000`.
 
-**Build pour la Production :**
+**Production :**
 ```bash
 npm run build
 npm run preview
 ```
-Les fichiers optimisés seront générés dans le dossier `dist/`.
+
+---
 
 ## 📁 Structure du Projet
-```text
-/
-├── public/               # Ressources statiques publiques (images, icônes)
-├── src/
-│   ├── components/       # Composants UI réutilisables (Layout, Cart, Modals)
-│   ├── lib/              # Types, initialisation du client Supabase, utilitaires
-│   ├── pages/            # Composants de vues (Home, Shop, Admin, Cart, etc.)
-│   ├── store/            # État global Zustand (cart, auth, settings)
-│   ├── App.tsx           # Définition globale du routage
-│   ├── main.tsx          # Point d'entrée de l'application React
-│   └── index.css         # Styles globaux & point d'entrée Tailwind
-├── supabase/             # Migrations de base de données et contexte Supabase
-├── vite.config.ts        # Configuration du bundler Vite
-└── package.json          # Dépendances & scripts npm
+
 ```
+/
+├── public/                    # Ressources statiques (splash.mp4, logo.jpeg…)
+├── src/
+│   ├── components/
+│   │   ├── admin/             # Onglets admin (Promo, Cross-selling, Reviews…)
+│   │   ├── CartSidebar.tsx    # Sidebar panier glassmorphism
+│   │   ├── FreeShippingGauge.tsx  # Jauge livraison offerte
+│   │   ├── PromoCodeInput.tsx # Saisie code promo
+│   │   ├── RelatedProducts.tsx # Cross-selling fiche produit
+│   │   └── …                 # Layout, SEO, StockBadge, StarRating…
+│   ├── lib/
+│   │   ├── supabase.ts        # Client Supabase
+│   │   └── types.ts           # Interfaces TypeScript (Product, BundleItem…)
+│   ├── pages/
+│   │   ├── Admin.tsx          # Panneau admin complet (12 onglets)
+│   │   ├── Checkout.tsx       # Tunnel de commande avec promos & fidélité
+│   │   ├── ProductDetail.tsx  # Fiche produit + avis + bundle + cross-selling
+│   │   └── …                 # Home, Catalogue, Cart, Account, Orders…
+│   ├── store/
+│   │   ├── authStore.ts       # Authentification & profil
+│   │   ├── cartStore.ts       # Panier, livraison, totaux
+│   │   └── settingsStore.ts   # Paramètres boutique dynamiques
+│   ├── App.tsx                # Routage global
+│   └── index.css              # Design system (tokens, animations, glows)
+├── supabase/
+│   └── migration.sql          # Schéma complet + données de démonstration
+└── package.json
+```
+
+---
 
 ## 🔐 Variables d'Environnement
-Exemple de fichier `.env` :
-```env
-VITE_SUPABASE_URL=url_de_votre_projet_supabase
-VITE_SUPABASE_ANON_KEY=clé_anon_de_votre_projet_supabase
-# Autres clés potentielles (API Gemini, portefeuille Viva, etc.)
-```
 
-## 🤝 Bonnes pratiques pour contribuer
-Les contributions sont les bienvenues ! Veuillez lire [CONTRIBUTING.md](./CONTRIBUTING.md) pour les détails sur les normes de code, les conventions de nommage des branches et le processus de Pull Request. Référez-vous également à `.cursorrules` pour le contexte de développement assisté par IA.
+| Variable | Description |
+|---|---|
+| `VITE_SUPABASE_URL` | URL de votre projet Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Clé anonyme Supabase |
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](./CONTRIBUTING.md) et `.cursorrules` pour les conventions de code et le workflow de PR.
+
+---
 
 ## 📄 Licence
-Ce projet est sous licence MIT - voir le fichier LICENSE pour plus de détails.
+
+Ce projet est sous licence **MIT** — voir le fichier `LICENSE` pour plus de détails.

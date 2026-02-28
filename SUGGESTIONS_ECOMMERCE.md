@@ -3,17 +3,6 @@
 Suite à l'analyse de l'architecture actuelle (React, Supabase, Tailwind) et du schéma de base de données (utilisateurs, produits, commandes), voici des propositions stratégiques et techniques pour transformer ce MVP en une machine de conversion et de fidélisation haut de gamme.
 
 ---
-
-## 💶 1. Acquisition & Augmentation du Panier Moyen (Conversion)
-
-Actuellement, l'application dispose d'un catalogue standard et d'un panier simple. L'objectif est de pousser l'utilisateur à dépenser plus de manière organique et naturelle.
-
-- **Cross-Selling Dynamique (Produits Complémentaires)**
-  - *Idée* : Sur la page `ProductDetail.tsx`, ou lors de l'ajout au panier, proposer des produits liés. Par exemple, si le client achète une "Fleur", lui suggérer "Avez-vous pensé aux feuilles à rouler ou à un grinder ?" ou "Découvrez notre infusion douce pour accompagner votre soirée".
-  - *Tech* : Ajouter une table de relation `product_recommendations (product_id, recommended_id)` ou baser la recommandation sur la même catégorie.
-
-
-
 ## 💖 2. Fidélisation & Rétention
 
 La table `profiles` contient déjà un champ `loyalty_points`. Il faut maintenant le mettre en valeur.
