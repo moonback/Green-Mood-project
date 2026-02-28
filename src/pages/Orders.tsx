@@ -65,7 +65,7 @@ export default function Orders() {
             <p className="text-zinc-400 mb-4">Aucune commande pour l'instant.</p>
             <Link
               to="/catalogue"
-              className="text-green-neon hover:underline text-sm"
+              className="text-green-primary hover:underline text-sm"
             >
               Découvrir le catalogue →
             </Link>
@@ -92,9 +92,9 @@ export default function Orders() {
                     <div className="flex items-center gap-4 text-left">
                       <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
                         {order.delivery_type === 'click_collect' ? (
-                          <Package className="w-5 h-5 text-green-neon" />
+                          <Package className="w-5 h-5 text-green-primary" />
                         ) : (
-                          <Truck className="w-5 h-5 text-green-neon" />
+                          <Truck className="w-5 h-5 text-green-primary" />
                         )}
                       </div>
                       <div>

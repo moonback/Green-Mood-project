@@ -80,7 +80,7 @@ export default function Cart() {
                     <div>
                       <Link
                         to={`/catalogue/${product.slug}`}
-                        className="font-semibold text-white hover:text-green-neon transition-colors"
+                        className="font-semibold text-white hover:text-green-primary transition-colors"
                       >
                         {product.name}
                       </Link>

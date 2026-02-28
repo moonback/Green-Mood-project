@@ -25,7 +25,7 @@ export default function Quality() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
         >
-          Qualité & <span className="text-green-neon">Légalité</span>
+          Qualité & <span className="text-green-primary">Légalité</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -51,7 +51,7 @@ export default function Quality() {
             >
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center">
-                  <ShieldCheck className="h-6 w-6 text-green-neon" />
+                  <ShieldCheck className="h-6 w-6 text-green-primary" />
                 </div>
                 <h2 className="text-3xl font-serif font-bold text-white">
                   Conformité Légale
@@ -66,20 +66,20 @@ export default function Quality() {
                 </p>
                 <ul className="space-y-4 mt-6">
                   <li className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-green-neon shrink-0 mt-0.5" />
+                    <CheckCircle className="h-6 w-6 text-green-primary shrink-0 mt-0.5" />
                     <span className="text-zinc-300">
                       Taux de THC inférieur à 0.3% garanti.
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-green-neon shrink-0 mt-0.5" />
+                    <CheckCircle className="h-6 w-6 text-green-primary shrink-0 mt-0.5" />
                     <span className="text-zinc-300">
                       Produits issus de variétés de chanvre autorisées par
                       l'Union Européenne.
                     </span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <CheckCircle className="h-6 w-6 text-green-neon shrink-0 mt-0.5" />
+                    <CheckCircle className="h-6 w-6 text-green-primary shrink-0 mt-0.5" />
                     <span className="text-zinc-300">
                       Aucun effet psychotrope ni risque de dépendance.
                     </span>
@@ -97,7 +97,7 @@ export default function Quality() {
             >
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center">
-                  <Search className="h-6 w-6 text-green-neon" />
+                  <Search className="h-6 w-6 text-green-primary" />
                 </div>
                 <h2 className="text-3xl font-serif font-bold text-white">
                   Traçabilité & Analyses
@@ -113,7 +113,7 @@ export default function Quality() {
 
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5 mt-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <FileText className="h-5 w-5 text-green-neon" />
+                    <FileText className="h-5 w-5 text-green-primary" />
                     <h3 className="text-xl font-bold text-white m-0">
                       Analyses Laboratoire
                     </h3>

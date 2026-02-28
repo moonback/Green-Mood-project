@@ -175,7 +175,7 @@ export default function Login() {
 
             <p className="text-center text-zinc-500 text-sm mt-6">
               En créant un compte, vous acceptez nos{' '}
-              <Link to="/mentions-legales" className="text-green-neon hover:underline">
+              <Link to="/mentions-legales" className="text-green-primary hover:underline">
                 conditions générales
               </Link>
               . Vous devez avoir 18 ans ou plus.

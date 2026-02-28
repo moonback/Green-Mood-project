@@ -39,7 +39,7 @@ export default function Contact() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
         >
-          Nous <span className="text-green-neon">Contacter</span>
+          Nous <span className="text-green-primary">Contacter</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -70,10 +70,10 @@ export default function Contact() {
                 <div className="space-y-6">
                   <div className="flex items-start gap-4 group cursor-default">
                     <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <MapPin className="h-6 w-6 text-green-neon" />
+                      <MapPin className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Adresse</h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Adresse</h3>
                       <p className="text-zinc-400">
                         {settings.store_address.split(',')[0]}
                         <br />
@@ -84,30 +84,30 @@ export default function Contact() {
 
                   <div className="flex items-start gap-4 group cursor-default">
                     <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <Phone className="h-6 w-6 text-green-neon" />
+                      <Phone className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Téléphone</h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Téléphone</h3>
                       <p className="text-zinc-400">{settings.store_phone}</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4 group cursor-default">
                     <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <MessageCircle className="h-6 w-6 text-green-neon" />
+                      <MessageCircle className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">WhatsApp</h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">WhatsApp</h3>
                       <p className="text-zinc-400">06 12 34 56 78</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4 group cursor-default">
                     <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <Mail className="h-6 w-6 text-green-neon" />
+                      <Mail className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Email</h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Email</h3>
                       <p className="text-zinc-400">contact@greenMood-cbd.fr</p>
                     </div>
                   </div>

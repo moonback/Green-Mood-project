@@ -86,6 +86,9 @@ export default function Checkout() {
 
     try {
       // 1. Create order in Supabase
+      const pointsRedeemed = usePoints && profile
+        ? Math.floor(profile.loyalty_points / 100) * 100
+        : 0;
       const pointsEarned = Math.floor(tot);
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -97,6 +100,7 @@ export default function Checkout() {
           delivery_fee: fee,
           total: tot,
           loyalty_points_earned: pointsEarned,
+          loyalty_points_redeemed: pointsRedeemed,
           payment_status: 'pending',
           status: 'pending',
         })
@@ -150,14 +154,38 @@ export default function Checkout() {
         });
       }
 
-      // 5. Add loyalty points
+      // 5. Update loyalty points
+      const newBalance = Math.max(0, (profile?.loyalty_points ?? 0) - pointsRedeemed + pointsEarned);
+      await supabase
+        .from('profiles')
+        .update({ loyalty_points: newBalance })
+        .eq('id', user.id);
+
+      // Log earned points transaction
       if (pointsEarned > 0) {
-        await supabase
-          .from('profiles')
-          .update({ loyalty_points: (profile?.loyalty_points ?? 0) + pointsEarned - (usePoints ? profile?.loyalty_points ?? 0 : 0) })
-          .eq('id', user.id);
-        fetchProfile(user.id);
+        await supabase.from('loyalty_transactions').insert({
+          user_id: user.id,
+          order_id: order.id,
+          type: 'earned',
+          points: pointsEarned,
+          balance_after: newBalance,
+          note: `Commande #${order.id.slice(0, 8).toUpperCase()}`,
+        });
       }
+
+      // Log redeemed points transaction
+      if (pointsRedeemed > 0) {
+        await supabase.from('loyalty_transactions').insert({
+          user_id: user.id,
+          order_id: order.id,
+          type: 'redeemed',
+          points: pointsRedeemed,
+          balance_after: newBalance,
+          note: `Utilisation de ${pointsRedeemed} pts (−${pointsValue.toFixed(2)} €)`,
+        });
+      }
+
+      fetchProfile(user.id);
 
       // 6. Clear cart and redirect
       clearCart();
@@ -195,7 +223,7 @@ export default function Checkout() {
                     : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
-                  <Package className="w-5 h-5 text-green-neon" />
+                  <Package className="w-5 h-5 text-green-primary" />
                   <div className="text-left">
                     <p className="font-medium text-sm">Click & Collect</p>
                     <p className="text-xs text-zinc-500">En boutique — Gratuit</p>
@@ -208,7 +236,7 @@ export default function Checkout() {
                     : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
-                  <Truck className="w-5 h-5 text-green-neon" />
+                  <Truck className="w-5 h-5 text-green-primary" />
                   <div className="text-left">
                     <p className="font-medium text-sm">Livraison</p>
                     <p className="text-xs text-zinc-500">À domicile</p>
@@ -217,7 +245,7 @@ export default function Checkout() {
               </div>
               {deliveryType === 'click_collect' && (
                 <div className="mt-4 p-4 bg-zinc-800 rounded-xl text-sm text-zinc-400">
-                  <div className="flex items-center gap-2 text-green-neon font-medium mb-1">
+                  <div className="flex items-center gap-2 text-green-primary font-medium mb-1">
                     <MapPin className="w-4 h-4" />
                     Adresse de retrait
                   </div>
@@ -296,7 +324,7 @@ export default function Checkout() {
                 ) : (
                   <button
                     onClick={() => setShowAddressForm(true)}
-                    className="flex items-center gap-2 text-green-neon hover:text-green-400 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 text-green-primary hover:text-green-400 text-sm font-medium transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Ajouter une adresse
@@ -320,7 +348,7 @@ export default function Checkout() {
                     <Coins className="w-4 h-4 text-yellow-400" />
                     <span className="text-sm">
                       Utiliser mes {profile.loyalty_points} points
-                      <span className="text-green-neon font-semibold ml-1">
+                      <span className="text-green-primary font-semibold ml-1">
                         (−{pointsValue.toFixed(2)} €)
                       </span>
                     </span>

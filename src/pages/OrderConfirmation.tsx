@@ -34,7 +34,7 @@ export default function OrderConfirmation() {
           transition={{ type: 'spring', damping: 15 }}
           className="w-24 h-24 bg-green-primary/20 rounded-full flex items-center justify-center mx-auto mb-6"
         >
-          <CheckCircle className="w-12 h-12 text-green-neon" />
+          <CheckCircle className="w-12 h-12 text-green-primary" />
         </motion.div>
 
         <motion.h1
@@ -64,7 +64,7 @@ export default function OrderConfirmation() {
           >
             <div className="flex justify-between items-center">
               <span className="text-zinc-400 text-sm">N° de commande</span>
-              <span className="font-mono text-sm text-green-neon">
+              <span className="font-mono text-sm text-green-primary">
                 #{order.id.slice(0, 8).toUpperCase()}
               </span>
             </div>
@@ -79,12 +79,12 @@ export default function OrderConfirmation() {
               <span className="flex items-center gap-1.5 text-sm">
                 {order.delivery_type === 'click_collect' ? (
                   <>
-                    <Package className="w-4 h-4 text-green-neon" />
+                    <Package className="w-4 h-4 text-green-primary" />
                     Click & Collect
                   </>
                 ) : (
                   <>
-                    <Truck className="w-4 h-4 text-green-neon" />
+                    <Truck className="w-4 h-4 text-green-primary" />
                     Livraison
                   </>
                 )}
@@ -104,7 +104,7 @@ export default function OrderConfirmation() {
             {order.delivery_type === 'click_collect' && (
               <div className="bg-zinc-800 rounded-xl p-4 text-sm text-zinc-400">
                 <div className="flex items-center gap-2 text-white font-medium mb-1">
-                  <Clock className="w-4 h-4 text-green-neon" />
+                  <Clock className="w-4 h-4 text-green-primary" />
                   Retrait en boutique
                 </div>
                 123 Rue de la Nature, 75000 Paris
