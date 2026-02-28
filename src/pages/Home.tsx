@@ -139,7 +139,7 @@ export default function Home() {
               className="relative aspect-[4/5] rounded-2xl overflow-hidden"
             >
               <img
-                src="/images/presentation-cbd.png"
+                src="/images/presentation-cbd2.png"
                 alt="Produits CBD"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
