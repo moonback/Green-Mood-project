@@ -26,7 +26,7 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <>
-        <SEO title="Mon Panier — Green Moon CBD" description="Votre panier d'achats Green Moon CBD." />
+        <SEO title="Mon Panier — Green Mood CBD" description="Votre panier d'achats Green Mood CBD." />
         <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4">
           <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center">
             <ShoppingCart className="w-10 h-10 text-zinc-600" />
@@ -48,7 +48,7 @@ export default function Cart() {
 
   return (
     <>
-      <SEO title="Mon Panier — Green Moon CBD" description="Récapitulatif de votre panier d'achats." />
+      <SEO title="Mon Panier — Green Mood CBD" description="Récapitulatif de votre panier d'achats." />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center gap-3 mb-8">

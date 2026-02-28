@@ -56,7 +56,7 @@ export default function Login() {
   return (
     <>
       <SEO
-        title={mode === 'login' ? 'Connexion — Green Moon CBD' : 'Créer un compte — Green Moon CBD'}
+        title={mode === 'login' ? 'Connexion — Green Mood CBD' : 'Créer un compte — Green Mood CBD'}
         description="Connectez-vous ou créez un compte pour accéder à votre historique de commandes et programme de fidélité."
       />
 
@@ -69,8 +69,8 @@ export default function Login() {
           {/* Logo */}
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-3">
-              <img src="/logo.jpeg" alt="Green Moon Logo" className="w-12 h-12 object-contain rounded-full" />
-              <span className="font-serif text-2xl text-white">Green Moon</span>
+              <img src="/logo.jpeg" alt="Green Mood Logo" className="w-12 h-12 object-contain rounded-full" />
+              <span className="font-serif text-2xl text-white">Green Mood</span>
             </Link>
           </div>
 
@@ -82,8 +82,8 @@ export default function Login() {
                   key={m}
                   onClick={() => { setMode(m); setError(''); setSuccess(''); }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
-                      ? 'bg-green-primary text-white'
-                      : 'text-zinc-400 hover:text-white'
+                    ? 'bg-green-primary text-white'
+                    : 'text-zinc-400 hover:text-white'
                     }`}
                 >
                   {m === 'login' ? 'Connexion' : 'Inscription'}

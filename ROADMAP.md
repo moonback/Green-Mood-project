@@ -1,6 +1,6 @@
-# 🗺️ Roadmap - Green Moon CBD Shop
+# 🗺️ Roadmap - Green Mood CBD Shop
 
-Ce document présente la feuille de route du projet **Green Moon CBD Shop**. Il décrit les fonctionnalités déjà implémentées, celles en cours de développement et les évolutions futures pour améliorer l'expérience utilisateur et le référencement du site.
+Ce document présente la feuille de route du projet **Green Mood CBD Shop**. Il décrit les fonctionnalités déjà implémentées, celles en cours de développement et les évolutions futures pour améliorer l'expérience utilisateur et le référencement du site.
 
 ---
 
@@ -36,7 +36,7 @@ Cette phase concerne la personnalisation du site avec les vraies données de la 
   - Définition de balises `<title>` et `<meta description>` uniques et optimisées pour chaque page.
   - Implémentation du GEO (Generative Engine Optimization) via l'ajout de données structurées JSON-LD (LocalBusiness, Store, Product, FAQPage) pour optimiser la compréhension par les IA (Google SGE, ChatGPT, etc.).
 - [ ] **Google Business Profile** : S'assurer que la fiche Google My Business est créée, validée et liée au site web.
-- [ ] **Favicon** : Créer et ajouter un favicon (logo Green Moon) dans le dossier `public/`.
+- [ ] **Favicon** : Créer et ajouter un favicon (logo Green Mood) dans le dossier `public/`.
 
 ---
 

@@ -13,7 +13,7 @@ export default function Contact() {
       "@type": "LocalBusiness",
       "name": settings.store_name,
       "telephone": settings.store_phone,
-      "email": "contact@greenmoon-cbd.fr",
+      "email": "contact@greenMood-cbd.fr",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": settings.store_address.split(',')[0],
@@ -27,9 +27,9 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
       <SEO
-        title="Contactez notre CBD Shop à Paris - Green Moon Shop"
-        description="Une question ? Besoin d'un conseil ? Contactez Green Moon CBD Shop ou venez nous rendre visite dans notre boutique à Paris. Horaires et accès."
-        keywords="contact CBD Paris, horaires Green Moon, adresse CBD Paris, téléphone CBD shop"
+        title="Contactez notre CBD Shop à Paris - Green Mood Shop"
+        description="Une question ? Besoin d'un conseil ? Contactez Green Mood CBD Shop ou venez nous rendre visite dans notre boutique à Paris. Horaires et accès."
+        keywords="contact CBD Paris, horaires Green Mood, adresse CBD Paris, téléphone CBD shop"
         schema={contactSchema}
       />
       {/* Header */}
@@ -108,7 +108,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Email</h3>
-                      <p className="text-zinc-400">contact@greenmoon-cbd.fr</p>
+                      <p className="text-zinc-400">contact@greenMood-cbd.fr</p>
                     </div>
                   </div>
                 </div>

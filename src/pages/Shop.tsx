@@ -7,17 +7,17 @@ export default function Shop() {
   const shopSchema = {
     "@context": "https://schema.org",
     "@type": "Store",
-    "name": "La Boutique Green Moon",
+    "name": "La Boutique Green Mood",
     "description": "Un espace pensé pour la détente, la découverte et le conseil personnalisé autour du CBD.",
     "image": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2070&auto=format&fit=crop"
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
-      <SEO 
-        title="Notre Boutique CBD à Paris - Green Moon Shop"
-        description="Plongez dans l'univers Green Moon. Découvrez notre histoire, nos valeurs de transparence et d'exigence, et venez nous rencontrer dans notre boutique à Paris."
-        keywords="boutique CBD Paris, magasin CBD, histoire Green Moon, valeurs CBD, achat CBD en boutique"
+      <SEO
+        title="Notre Boutique CBD à Paris - Green Mood Shop"
+        description="Plongez dans l'univers Green Mood. Découvrez notre histoire, nos valeurs de transparence et d'exigence, et venez nous rencontrer dans notre boutique à Paris."
+        keywords="boutique CBD Paris, magasin CBD, histoire Green Mood, valeurs CBD, achat CBD en boutique"
         schema={shopSchema}
       />
       {/* Hero Section */}
@@ -38,7 +38,7 @@ export default function Shop() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
           >
-            La Boutique <span className="text-green-primary">Green Moon</span>
+            La Boutique <span className="text-green-primary">Green Mood</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -68,7 +68,7 @@ export default function Shop() {
                 </h2>
                 <p className="text-zinc-400 leading-relaxed">
                   Née de la passion pour les bienfaits naturels du chanvre,
-                  Green Moon a ouvert ses portes avec une mission simple :
+                  Green Mood a ouvert ses portes avec une mission simple :
                   démocratiser l'accès à un CBD de haute qualité, dans un cadre
                   rassurant et professionnel.
                 </p>

@@ -44,7 +44,7 @@ export default function Catalog() {
   return (
     <>
       <SEO
-        title="Catalogue en ligne — Green Moon CBD"
+        title="Catalogue en ligne — Green Mood CBD"
         description="Commandez nos fleurs CBD, résines, huiles et infusions en ligne. Click & Collect ou livraison à domicile."
         keywords="acheter CBD en ligne, fleurs CBD, huile CBD, résine CBD, livraison CBD France"
       />
@@ -100,11 +100,10 @@ export default function Catalog() {
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-              !selectedCategory
+            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${!selectedCategory
                 ? 'bg-green-primary border-green-primary text-white'
                 : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
-            }`}
+              }`}
           >
             Tous les produits
           </button>
@@ -112,11 +111,10 @@ export default function Catalog() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                selectedCategory === cat.id
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${selectedCategory === cat.id
                   ? 'bg-green-primary border-green-primary text-white'
                   : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
-              }`}
+                }`}
             >
               {cat.name}
             </button>

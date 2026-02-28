@@ -1,6 +1,6 @@
-# 🌿 Green Moon CBD Shop - Site Vitrine
+# 🌿 Green Mood CBD Shop - Site Vitrine
 
-Bienvenue sur le dépôt du site vitrine officiel de **Green Moon CBD Shop**. Ce projet est une application web moderne (Single Page Application) conçue pour présenter la boutique physique, ses valeurs, ses produits et rassurer la clientèle sur la légalité et la qualité des produits proposés.
+Bienvenue sur le dépôt du site vitrine officiel de **Green Mood CBD Shop**. Ce projet est une application web moderne (Single Page Application) conçue pour présenter la boutique physique, ses valeurs, ses produits et rassurer la clientèle sur la légalité et la qualité des produits proposés.
 
 ## 🎯 Objectifs du projet
 
@@ -74,4 +74,4 @@ Avant la mise en ligne définitive, voici les éléments à mettre à jour dans 
 
 ---
 
-_Développé avec soin pour Green Moon CBD Shop._
+_Développé avec soin pour Green Mood CBD Shop._

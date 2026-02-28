@@ -61,8 +61,8 @@ export default function ProductDetail() {
   return (
     <>
       <SEO
-        title={`${product.name} — Green Moon CBD`}
-        description={product.description ?? `Achetez ${product.name} en ligne sur Green Moon CBD. Click & Collect ou livraison.`}
+        title={`${product.name} — Green Mood CBD`}
+        description={product.description ?? `Achetez ${product.name} en ligne sur Green Mood CBD. Click & Collect ou livraison.`}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

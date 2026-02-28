@@ -30,7 +30,7 @@ export default function Account() {
 
   return (
     <>
-      <SEO title="Mon Compte — Green Moon CBD" description="Gérez votre compte Green Moon CBD." />
+      <SEO title="Mon Compte — Green Mood CBD" description="Gérez votre compte Green Mood CBD." />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

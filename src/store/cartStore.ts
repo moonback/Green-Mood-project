@@ -87,7 +87,7 @@ export const useCartStore = create<CartStore>()(
       total: () => get().subtotal() + get().deliveryFee(),
     }),
     {
-      name: 'greenmoon-cart',
+      name: 'greenMood-cart',
       partialize: (state) => ({ items: state.items, deliveryType: state.deliveryType }),
     }
   )

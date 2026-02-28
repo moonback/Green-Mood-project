@@ -25,7 +25,7 @@ export default function OrderConfirmation() {
 
   return (
     <>
-      <SEO title="Commande confirmée — Green Moon CBD" description="Votre commande a été confirmée." />
+      <SEO title="Commande confirmée — Green Mood CBD" description="Votre commande a été confirmée." />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
         <motion.div

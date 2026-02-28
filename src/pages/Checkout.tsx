@@ -176,7 +176,7 @@ export default function Checkout() {
 
   return (
     <>
-      <SEO title="Commander — Green Moon CBD" description="Finalisez votre commande Green Moon CBD." />
+      <SEO title="Commander — Green Mood CBD" description="Finalisez votre commande Green Mood CBD." />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h1 className="font-serif text-3xl font-bold mb-8">Finaliser la commande</h1>
@@ -191,8 +191,8 @@ export default function Checkout() {
                 <button
                   onClick={() => setDeliveryType('click_collect')}
                   className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'click_collect'
-                      ? 'bg-green-primary/10 border-green-primary'
-                      : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                    ? 'bg-green-primary/10 border-green-primary'
+                    : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
                   <Package className="w-5 h-5 text-green-primary" />
@@ -204,8 +204,8 @@ export default function Checkout() {
                 <button
                   onClick={() => setDeliveryType('delivery')}
                   className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'delivery'
-                      ? 'bg-green-primary/10 border-green-primary'
-                      : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                    ? 'bg-green-primary/10 border-green-primary'
+                    : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
                   <Truck className="w-5 h-5 text-green-primary" />
@@ -238,8 +238,8 @@ export default function Checkout() {
                       key={addr.id}
                       onClick={() => setSelectedAddress(addr.id)}
                       className={`w-full text-left p-4 rounded-xl border transition-all ${selectedAddress === addr.id
-                          ? 'bg-green-primary/10 border-green-primary'
-                          : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                        ? 'bg-green-primary/10 border-green-primary'
+                        : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                         }`}
                     >
                       <p className="font-medium text-sm">{addr.label}</p>

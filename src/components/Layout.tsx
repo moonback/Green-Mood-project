@@ -89,11 +89,11 @@ export default function Layout() {
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <img src="/logo.jpeg" alt="Green Moon Logo" className="h-12 w-12 object-contain rounded-full border border-green-primary/30 group-hover:border-green-neon transition-colors" />
+              <img src="/logo.jpeg" alt="Green Mood Logo" className="h-12 w-12 object-contain rounded-full border border-green-primary/30 group-hover:border-green-neon transition-colors" />
               <span className="font-serif text-2xl font-bold tracking-tight">
                 Green{" "}
                 <span className="text-green-primary group-hover:text-green-neon transition-colors">
-                  Moon
+                  Mood
                 </span>
               </span>
             </Link>
@@ -105,9 +105,9 @@ export default function Layout() {
                   key={link.path}
                   to={link.path}
                   className={`text-sm font-medium transition-colors hover:text-green-primary ${location.pathname === link.path ||
-                      (link.path !== "/" && location.pathname.startsWith(link.path))
-                      ? "text-green-primary"
-                      : "text-zinc-300"
+                    (link.path !== "/" && location.pathname.startsWith(link.path))
+                    ? "text-green-primary"
+                    : "text-zinc-300"
                     }`}
                 >
                   {link.name}
@@ -220,8 +220,8 @@ export default function Layout() {
                     key={link.path}
                     to={link.path}
                     className={`text-lg font-medium transition-colors ${location.pathname === link.path
-                        ? "text-green-primary"
-                        : "text-zinc-300"
+                      ? "text-green-primary"
+                      : "text-zinc-300"
                       }`}
                   >
                     {link.name}
@@ -269,8 +269,8 @@ export default function Layout() {
             {/* Brand */}
             <div className="space-y-4">
               <Link to="/" className="flex items-center gap-3">
-                <img src="/logo.jpeg" alt="Green Moon Logo" className="h-10 w-10 object-contain rounded-full" />
-                <span className="font-serif text-xl font-bold">Green Moon</span>
+                <img src="/logo.jpeg" alt="Green Mood Logo" className="h-10 w-10 object-contain rounded-full" />
+                <span className="font-serif text-xl font-bold">Green Mood</span>
               </Link>
               <p className="text-zinc-400 text-sm leading-relaxed">
                 Votre CBD Shop premium. Produits naturels, traçabilité garantie
@@ -340,7 +340,7 @@ export default function Layout() {
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
             <p>
-              &copy; {new Date().getFullYear()} Green Moon CBD Shop. Tous droits réservés.
+              &copy; {new Date().getFullYear()} Green Mood CBD Shop. Tous droits réservés.
             </p>
             <div className="flex gap-4">
               <Link to="/mentions-legales" className="hover:text-white transition-colors">

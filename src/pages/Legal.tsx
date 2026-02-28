@@ -4,10 +4,10 @@ import SEO from "../components/SEO";
 export default function Legal() {
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
-      <SEO 
-        title="Mentions Légales - Green Moon CBD Shop"
-        description="Consultez les mentions légales, conditions générales d'utilisation et avertissements légaux de Green Moon CBD Shop."
-        keywords="mentions légales CBD, CGU Green Moon"
+      <SEO
+        title="Mentions Légales - Green Mood CBD Shop"
+        description="Consultez les mentions légales, conditions générales d'utilisation et avertissements légaux de Green Mood CBD Shop."
+        keywords="mentions légales CBD, CGU Green Mood"
       />
       {/* Header */}
       <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
@@ -34,8 +34,8 @@ export default function Legal() {
                 1. Éditeur du site
               </h2>
               <p className="text-zinc-400 leading-relaxed">
-                Le site Green Moon CBD Shop est édité par :<br />
-                <strong>Raison sociale :</strong> Green Moon SAS
+                Le site Green Mood CBD Shop est édité par :<br />
+                <strong>Raison sociale :</strong> Green Mood SAS
                 <br />
                 <strong>Siège social :</strong> 123 Rue de la Nature, 75000
                 Paris
@@ -45,7 +45,7 @@ export default function Legal() {
                 <strong>Directeur de la publication :</strong> [Nom du
                 Directeur]
                 <br />
-                <strong>Contact :</strong> contact@greenmoon-cbd.fr
+                <strong>Contact :</strong> contact@greenMood-cbd.fr
               </p>
             </div>
 
@@ -93,11 +93,11 @@ export default function Legal() {
               </h2>
               <p className="text-zinc-400 leading-relaxed">
                 L'ensemble du contenu de ce site (textes, images, logos, etc.)
-                est la propriété exclusive de Green Moon SAS, sauf mention
+                est la propriété exclusive de Green Mood SAS, sauf mention
                 contraire. Toute reproduction, distribution, modification,
                 adaptation, retransmission ou publication de ces différents
                 éléments est strictement interdite sans l'accord exprès par
-                écrit de Green Moon SAS.
+                écrit de Green Mood SAS.
               </p>
             </div>
 

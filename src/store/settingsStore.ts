@@ -17,14 +17,14 @@ export interface StoreSettings {
 export const DEFAULT_SETTINGS: StoreSettings = {
     delivery_fee: 5.90,
     delivery_free_threshold: 50.00,
-    store_name: 'Green Moon CBD',
+    store_name: 'Green Mood CBD',
     store_address: '123 Rue de la Nature, 75000 Paris',
     store_phone: '01 23 45 67 89',
     store_hours: 'Lun–Sam 10h00–19h30',
-    banner_text: '🌿 Offre de bienvenue : -10% avec le code GREENMOON !',
+    banner_text: '🌿 Offre de bienvenue : -10% avec le code GREENMood !',
     banner_enabled: true,
-    social_instagram: 'https://instagram.com/greenmoon_cbd',
-    social_facebook: 'https://facebook.com/greenmoon_cbd',
+    social_instagram: 'https://instagram.com/greenMood_cbd',
+    social_facebook: 'https://facebook.com/greenMood_cbd',
 };
 
 interface SettingsStore {

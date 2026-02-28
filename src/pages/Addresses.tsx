@@ -60,7 +60,7 @@ export default function Addresses() {
 
   return (
     <>
-      <SEO title="Mes Adresses — Green Moon CBD" description="Gérez vos adresses de livraison." />
+      <SEO title="Mes Adresses — Green Mood CBD" description="Gérez vos adresses de livraison." />
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-8">
@@ -152,9 +152,8 @@ export default function Addresses() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className={`bg-zinc-900 rounded-2xl p-5 border transition-colors ${
-                  addr.is_default ? 'border-green-primary/50' : 'border-zinc-800'
-                }`}
+                className={`bg-zinc-900 rounded-2xl p-5 border transition-colors ${addr.is_default ? 'border-green-primary/50' : 'border-zinc-800'
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">

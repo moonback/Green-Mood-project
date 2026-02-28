@@ -38,7 +38,7 @@ export default function Orders() {
 
   return (
     <>
-      <SEO title="Mes Commandes — Green Moon CBD" description="Historique de vos commandes." />
+      <SEO title="Mes Commandes — Green Mood CBD" description="Historique de vos commandes." />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center gap-3 mb-8">

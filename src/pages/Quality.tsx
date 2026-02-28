@@ -6,14 +6,14 @@ export default function Quality() {
   const qualitySchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "Qualité et Légalité du CBD - Green Moon Shop",
+    "name": "Qualité et Légalité du CBD - Green Mood Shop",
     "description": "Tous nos produits respectent la législation française avec un taux de THC inférieur à 0.3%. Analyses laboratoires disponibles en boutique."
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
-      <SEO 
-        title="Qualité, Légalité et Analyses CBD - Green Moon Shop"
+      <SEO
+        title="Qualité, Légalité et Analyses CBD - Green Mood Shop"
         description="Votre sécurité est notre priorité. Nos produits CBD respectent la législation française (THC < 0.3%). Traçabilité et analyses laboratoires garanties."
         keywords="légalité CBD, CBD légal France, analyses CBD, qualité CBD, THC inférieur 0.3, traçabilité CBD"
         schema={qualitySchema}
@@ -60,7 +60,7 @@ export default function Quality() {
 
               <div className="prose prose-invert prose-zinc max-w-none">
                 <p className="text-lg text-zinc-400 leading-relaxed">
-                  Tous les produits proposés par Green Moon CBD Shop respectent
+                  Tous les produits proposés par Green Mood CBD Shop respectent
                   scrupuleusement la législation française et européenne en
                   vigueur.
                 </p>

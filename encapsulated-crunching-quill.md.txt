@@ -1,4 +1,4 @@
-# Plan : Implémentation e-commerce complet — Green Moon CBD
+# Plan : Implémentation e-commerce complet — Green Mood CBD
 
 ## Contexte
 La boutique passe d'un site vitrine statique à une plateforme e-commerce complète avec catalogue dynamique (Supabase), panier, paiement Viva Wallet, comptes utilisateurs, et gestion des stocks. L'utilisateur a déjà un projet Supabase actif, pas encore de compte Viva Wallet (placeholders), et souhaite un admin panel intégré — tout en une fois.

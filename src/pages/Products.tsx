@@ -82,8 +82,8 @@ export default function Products() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
-      <SEO 
-        title="Fleurs, Résines et Huiles CBD Premium - Green Moon Shop"
+      <SEO
+        title="Fleurs, Résines et Huiles CBD Premium - Green Mood Shop"
         description="Découvrez notre sélection rigoureuse de produits CBD : fleurs cultivées avec soin, résines puissantes et huiles pressées à froid. Disponibles en boutique."
         keywords="produits CBD, fleurs CBD, résine CBD, huile CBD, infusion CBD, achat CBD, qualité premium"
         schema={productsSchema}

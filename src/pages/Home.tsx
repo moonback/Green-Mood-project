@@ -8,10 +8,10 @@ export default function Home() {
   const homeSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Green Moon CBD Shop",
+    "name": "Green Mood CBD Shop",
     "image": "https://images.unsplash.com/photo-1603908064973-206e23114d59?q=80&w=2070&auto=format&fit=crop",
-    "@id": "https://greenmoon-cbd.fr",
-    "url": "https://greenmoon-cbd.fr",
+    "@id": "https://greenMood-cbd.fr",
+    "url": "https://greenMood-cbd.fr",
     "telephone": "0123456789",
     "address": {
       "@type": "PostalAddress",
@@ -43,9 +43,9 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <SEO
-        title="Acheter CBD à Paris - Green Moon Shop | Fleurs, Résines, Huiles"
-        description="Découvrez Green Moon, votre CBD Shop premium à Paris. Fleurs, résines et huiles 100% légales. Qualité supérieure, traçabilité et conseils d'experts."
-        keywords="CBD Paris, acheter CBD, boutique CBD, fleurs CBD, résine CBD, huile CBD, CBD légal, Green Moon"
+        title="Acheter CBD à Paris - Green Mood Shop | Fleurs, Résines, Huiles"
+        description="Découvrez Green Mood, votre CBD Shop premium à Paris. Fleurs, résines et huiles 100% légales. Qualité supérieure, traçabilité et conseils d'experts."
+        keywords="CBD Paris, acheter CBD, boutique CBD, fleurs CBD, résine CBD, huile CBD, CBD légal, Green Mood"
         schema={homeSchema}
       />
       {/* Hero Section */}
@@ -55,7 +55,7 @@ export default function Home() {
         <div className="absolute inset-0 z-0">
           <img
             src="/images/hero-bg.png"
-            alt="Intérieur de la boutique Green Moon"
+            alt="Intérieur de la boutique Green Mood"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
@@ -109,10 +109,10 @@ export default function Home() {
               className="space-y-6"
             >
               <h2 className="text-3xl md:text-4xl font-serif font-bold text-white">
-                Bienvenue chez Green Moon
+                Bienvenue chez Green Mood
               </h2>
               <p className="text-lg text-zinc-400 leading-relaxed">
-                Plus qu'une simple boutique, Green Moon est un espace dédié à
+                Plus qu'une simple boutique, Green Mood est un espace dédié à
                 votre bien-être. Nous sélectionnons minutieusement chaque
                 produit pour vous garantir une expérience authentique, sûre et
                 de la plus haute qualité.
