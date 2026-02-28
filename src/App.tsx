@@ -20,13 +20,16 @@ import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
 import Admin from "./pages/Admin";
 import { useAuthStore } from "./store/authStore";
+import { useSettingsStore } from "./store/settingsStore";
 
 export default function App() {
-  const initialize = useAuthStore((s) => s.initialize);
+  const initializeAuth = useAuthStore((s) => s.initialize);
+  const fetchSettings = useSettingsStore((s) => s.fetchSettings);
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    initializeAuth();
+    fetchSettings();
+  }, [initializeAuth, fetchSettings]);
 
   return (
     <BrowserRouter>

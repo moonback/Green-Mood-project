@@ -19,6 +19,7 @@ import AgeGate from "./AgeGate";
 import CartSidebar from "./CartSidebar";
 import { useCartStore } from "../store/cartStore";
 import { useAuthStore } from "../store/authStore";
+import { useSettingsStore } from "../store/settingsStore";
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function Layout() {
   const itemCount = useCartStore((s) => s.itemCount());
   const openSidebar = useCartStore((s) => s.openSidebar);
   const { user, profile, signOut } = useAuthStore();
+  const { settings } = useSettingsStore();
 
   // Close menus on route change and scroll to top
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function Layout() {
 
       {/* Promotional Banner */}
       <AnimatePresence>
-        {isBannerVisible && (
+        {isBannerVisible && settings.banner_enabled && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -64,8 +66,7 @@ export default function Layout() {
             className="bg-green-primary text-white relative flex items-center justify-center overflow-hidden"
           >
             <div className="px-4 py-2.5 text-sm font-medium text-center w-full max-w-7xl mx-auto pr-10">
-              🌿 Offre de bienvenue : -10% sur votre première visite en boutique avec le code{" "}
-              <span className="font-bold">GREENMOON</span> !
+              {settings.banner_text}
             </div>
             <button
               onClick={() => setIsBannerVisible(false)}
@@ -99,12 +100,11 @@ export default function Layout() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-green-primary ${
-                    location.pathname === link.path ||
-                    (link.path !== "/" && location.pathname.startsWith(link.path))
+                  className={`text-sm font-medium transition-colors hover:text-green-primary ${location.pathname === link.path ||
+                      (link.path !== "/" && location.pathname.startsWith(link.path))
                       ? "text-green-primary"
                       : "text-zinc-300"
-                  }`}
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -215,11 +215,10 @@ export default function Layout() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`text-lg font-medium transition-colors ${
-                      location.pathname === link.path
+                    className={`text-lg font-medium transition-colors ${location.pathname === link.path
                         ? "text-green-primary"
                         : "text-zinc-300"
-                    }`}
+                      }`}
                   >
                     {link.name}
                   </Link>
@@ -274,10 +273,10 @@ export default function Layout() {
                 et conseils d'experts pour votre bien-être.
               </p>
               <div className="flex gap-4 pt-2">
-                <a href="#" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
                   <Instagram className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
                   <Facebook className="h-5 w-5" />
                 </a>
               </div>
@@ -307,14 +306,14 @@ export default function Layout() {
                 <li className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-green-primary shrink-0" />
                   <span>
-                    123 Rue de la Nature
+                    {settings.store_address.split(',')[0]}
                     <br />
-                    75000 Paris
+                    {settings.store_address.split(',').slice(1).join(',').trim()}
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-green-primary shrink-0" />
-                  <span>01 23 45 67 89</span>
+                  <span>{settings.store_phone}</span>
                 </li>
               </ul>
             </div>
@@ -325,7 +324,7 @@ export default function Layout() {
               <ul className="space-y-2 text-sm text-zinc-400">
                 <li className="flex justify-between">
                   <span>Lundi - Samedi</span>
-                  <span>10h00 - 19h30</span>
+                  <span>{settings.store_hours.split(' ').slice(1).join(' ')}</span>
                 </li>
                 <li className="flex justify-between">
                   <span>Dimanche</span>

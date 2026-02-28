@@ -29,9 +29,11 @@ import {
   Store,
   Eye,
   TrendingUp,
+  Instagram,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
+import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -59,6 +61,8 @@ interface StoreSettings {
   store_hours: string;
   banner_text: string;
   banner_enabled: boolean;
+  social_instagram: string;
+  social_facebook: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -72,6 +76,8 @@ const DEFAULT_SETTINGS: StoreSettings = {
   store_hours: 'Lun–Sam 10h00–19h30',
   banner_text: '🌿 Offre de bienvenue : -10% avec le code GREENMOON !',
   banner_enabled: true,
+  social_instagram: 'https://instagram.com/greenmoon_cbd',
+  social_facebook: 'https://facebook.com/greenmoon_cbd',
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -118,7 +124,12 @@ export default function Admin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [customers, setCustomers] = useState<Profile[]>([]);
-  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+  const { settings, fetchSettings: refreshGlobalSettings } = useSettingsStore();
+  const [localSettings, setLocalSettings] = useState<StoreSettings>(settings);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
 
   // ── UI ──
   const [isLoading, setIsLoading] = useState(true);
@@ -255,14 +266,7 @@ export default function Admin() {
   };
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('store_settings').select('*');
-    if (data && data.length > 0) {
-      const obj = data.reduce((acc: Record<string, unknown>, row: { key: string; value: unknown }) => {
-        acc[row.key] = row.value;
-        return acc;
-      }, {});
-      setSettings({ ...DEFAULT_SETTINGS, ...obj } as StoreSettings);
-    }
+    await refreshGlobalSettings();
   };
 
   // ─── Product CRUD ─────────────────────────────────────────────────────────
@@ -398,7 +402,7 @@ export default function Admin() {
     setIsSaving(true);
     setSaveSuccess(false);
     try {
-      const payload = Object.entries(settings).map(([key, value]) => ({
+      const payload = Object.entries(localSettings).map(([key, value]) => ({
         key,
         value,
         updated_at: new Date().toISOString(),
@@ -408,6 +412,7 @@ export default function Admin() {
 
       if (error) throw error;
 
+      await refreshGlobalSettings();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -1635,7 +1640,7 @@ export default function Admin() {
 
             {/* ══════════════════════════════════ SETTINGS ═══════════════════ */}
             {tab === 'settings' && (
-              <div className="max-w-2xl space-y-6">
+              <div className="max-w-2xl space-y-6 pb-20">
                 {/* Delivery */}
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
@@ -1649,9 +1654,9 @@ export default function Admin() {
                         type="number"
                         step="0.01"
                         min="0"
-                        value={settings.delivery_fee}
+                        value={localSettings.delivery_fee}
                         onChange={(e) =>
-                          setSettings({ ...settings, delivery_fee: parseFloat(e.target.value) || 0 })
+                          setLocalSettings({ ...localSettings, delivery_fee: parseFloat(e.target.value) || 0 })
                         }
                         className={INPUT}
                       />
@@ -1662,10 +1667,10 @@ export default function Admin() {
                         type="number"
                         step="1"
                         min="0"
-                        value={settings.delivery_free_threshold}
+                        value={localSettings.delivery_free_threshold}
                         onChange={(e) =>
-                          setSettings({
-                            ...settings,
+                          setLocalSettings({
+                            ...localSettings,
                             delivery_free_threshold: parseInt(e.target.value) || 0,
                           })
                         }
@@ -1674,7 +1679,7 @@ export default function Admin() {
                     </div>
                   </div>
                   <p className="text-xs text-zinc-500">
-                    Livraison offerte automatiquement dès {settings.delivery_free_threshold} € de commande.
+                    Livraison offerte automatiquement dès {localSettings.delivery_free_threshold} € de commande.
                   </p>
                 </div>
 
@@ -1687,16 +1692,16 @@ export default function Admin() {
                   <div>
                     <label className={LABEL}>Nom de la boutique</label>
                     <input
-                      value={settings.store_name}
-                      onChange={(e) => setSettings({ ...settings, store_name: e.target.value })}
+                      value={localSettings.store_name}
+                      onChange={(e) => setLocalSettings({ ...localSettings, store_name: e.target.value })}
                       className={INPUT}
                     />
                   </div>
                   <div>
                     <label className={LABEL}>Adresse</label>
                     <input
-                      value={settings.store_address}
-                      onChange={(e) => setSettings({ ...settings, store_address: e.target.value })}
+                      value={localSettings.store_address}
+                      onChange={(e) => setLocalSettings({ ...localSettings, store_address: e.target.value })}
                       className={INPUT}
                     />
                   </div>
@@ -1704,18 +1709,48 @@ export default function Admin() {
                     <div>
                       <label className={LABEL}>Téléphone</label>
                       <input
-                        value={settings.store_phone}
-                        onChange={(e) => setSettings({ ...settings, store_phone: e.target.value })}
+                        value={localSettings.store_phone}
+                        onChange={(e) => setLocalSettings({ ...localSettings, store_phone: e.target.value })}
                         className={INPUT}
                       />
                     </div>
                     <div>
                       <label className={LABEL}>Horaires</label>
                       <input
-                        value={settings.store_hours}
-                        onChange={(e) => setSettings({ ...settings, store_hours: e.target.value })}
+                        value={localSettings.store_hours}
+                        onChange={(e) => setLocalSettings({ ...localSettings, store_hours: e.target.value })}
                         className={INPUT}
                         placeholder="Lun–Sam 10h00–19h30"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Networks */}
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Instagram className="w-5 h-5 text-green-primary" />
+                    <h2 className="font-serif font-semibold text-lg">Réseaux Sociaux</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={LABEL}>Instagram (URL)</label>
+                      <input
+                        type="url"
+                        value={localSettings.social_instagram}
+                        onChange={(e) => setLocalSettings({ ...localSettings, social_instagram: e.target.value })}
+                        className={INPUT}
+                        placeholder="https://instagram.com/…"
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL}>Facebook (URL)</label>
+                      <input
+                        type="url"
+                        value={localSettings.social_facebook}
+                        onChange={(e) => setLocalSettings({ ...localSettings, social_facebook: e.target.value })}
+                        className={INPUT}
+                        placeholder="https://facebook.com/…"
                       />
                     </div>
                   </div>
@@ -1731,8 +1766,8 @@ export default function Admin() {
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={settings.banner_enabled}
-                        onChange={(e) => setSettings({ ...settings, banner_enabled: e.target.checked })}
+                        checked={localSettings.banner_enabled}
+                        onChange={(e) => setLocalSettings({ ...localSettings, banner_enabled: e.target.checked })}
                         className="w-4 h-4 accent-green-600"
                       />
                       <span className="text-sm text-zinc-300">Activée</span>
@@ -1741,15 +1776,15 @@ export default function Admin() {
                   <div>
                     <label className={LABEL}>Texte de la bannière</label>
                     <input
-                      value={settings.banner_text}
-                      onChange={(e) => setSettings({ ...settings, banner_text: e.target.value })}
+                      value={localSettings.banner_text}
+                      onChange={(e) => setLocalSettings({ ...localSettings, banner_text: e.target.value })}
                       className={INPUT}
                       placeholder="🌿 Offre de bienvenue…"
                     />
                   </div>
-                  {settings.banner_enabled && (
+                  {localSettings.banner_enabled && (
                     <div className="bg-green-primary text-white px-4 py-3 rounded-xl text-sm text-center">
-                      Aperçu : {settings.banner_text || '…'}
+                      Aperçu : {localSettings.banner_text || '…'}
                     </div>
                   )}
                 </div>

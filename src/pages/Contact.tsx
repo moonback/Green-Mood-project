@@ -1,21 +1,24 @@
 import { motion } from "motion/react";
 import { MapPin, Phone, Clock, Mail, MessageCircle } from "lucide-react";
+import { useSettingsStore } from "../store/settingsStore";
 import SEO from "../components/SEO";
 
 export default function Contact() {
+  const { settings } = useSettingsStore();
+
   const contactSchema = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
     "mainEntity": {
       "@type": "LocalBusiness",
-      "name": "Green Moon CBD Shop",
-      "telephone": "0123456789",
+      "name": settings.store_name,
+      "telephone": settings.store_phone,
       "email": "contact@greenmoon-cbd.fr",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "123 Rue de la Nature",
-        "addressLocality": "Paris",
-        "postalCode": "75000",
+        "streetAddress": settings.store_address.split(',')[0],
+        "addressLocality": settings.store_address.split(',')[1]?.trim() ?? "Paris",
+        "postalCode": settings.store_address.match(/\d{5}/)?.[0] ?? "75000",
         "addressCountry": "FR"
       }
     }
@@ -23,7 +26,7 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
-      <SEO 
+      <SEO
         title="Contactez notre CBD Shop à Paris - Green Moon Shop"
         description="Une question ? Besoin d'un conseil ? Contactez Green Moon CBD Shop ou venez nous rendre visite dans notre boutique à Paris. Horaires et accès."
         keywords="contact CBD Paris, horaires Green Moon, adresse CBD Paris, téléphone CBD shop"
@@ -72,9 +75,9 @@ export default function Contact() {
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Adresse</h3>
                       <p className="text-zinc-400">
-                        123 Rue de la Nature
+                        {settings.store_address.split(',')[0]}
                         <br />
-                        75000 Paris
+                        {settings.store_address.split(',').slice(1).join(',').trim()}
                       </p>
                     </div>
                   </div>
@@ -85,7 +88,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Téléphone</h3>
-                      <p className="text-zinc-400">01 23 45 67 89</p>
+                      <p className="text-zinc-400">{settings.store_phone}</p>
                     </div>
                   </div>
 
@@ -119,7 +122,7 @@ export default function Contact() {
                   <ul className="space-y-4">
                     <li className="flex justify-between items-center text-zinc-300">
                       <span className="font-medium">Lundi - Samedi</span>
-                      <span>10h00 - 19h30</span>
+                      <span>{settings.store_hours.split(' ').slice(1).join(' ')}</span>
                     </li>
                     <li className="flex justify-between items-center text-zinc-500">
                       <span className="font-medium">Dimanche</span>
