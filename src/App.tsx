@@ -20,6 +20,7 @@ import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
 import Admin from "./pages/Admin";
 import { useAuthStore } from "./store/authStore";
+import SplashScreen from "./components/SplashScreen";
 
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -30,6 +31,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <SplashScreen />
       <Routes>
         <Route path="/" element={<Layout />}>
           {/* Pages publiques */}

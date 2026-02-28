@@ -56,8 +56,8 @@ Ces fonctionnalités viendront enrichir l'expérience utilisateur une fois le si
 
 Si la boutique décide de vendre ses produits en ligne (Click & Collect ou Livraison).
 
-- [ ] **Catalogue dynamique** : Remplacer les listes statiques par une base de données de produits (ex: Supabase, Firebase ou un CMS headless comme Strapi/Sanity).
-- [ ] **Panier d'achat (Cart)** : Permettre l'ajout de produits au panier avec gestion des quantités.
-- [ ] **Paiement en ligne** : Intégration d'une solution de paiement compatible avec le CBD (attention, Stripe et PayPal ont des politiques strictes sur le CBD, il faudra utiliser des passerelles spécialisées comme Viva Wallet ou un processeur haut risque).
-- [ ] **Comptes utilisateurs** : Historique des commandes, adresses de livraison, programme de fidélité.
-- [ ] **Gestion des stocks** : Synchronisation des stocks entre la boutique physique et le site web.
+- [x] **Catalogue dynamique** : Remplacer les listes statiques par une base de données de produits (ex: Supabase, Firebase ou un CMS headless comme Strapi/Sanity).
+- [x] **Panier d'achat (Cart)** : Permettre l'ajout de produits au panier avec gestion des quantités.
+- [x] **Paiement en ligne** : Intégration d'une solution de paiement compatible avec le CBD (attention, Stripe et PayPal ont des politiques strictes sur le CBD, il faudra utiliser des passerelles spécialisées comme Viva Wallet ou un processeur haut risque).
+- [x] **Comptes utilisateurs** : Historique des commandes, adresses de livraison, programme de fidélité.
+- [x] **Gestion des stocks** : Synchronisation des stocks entre la boutique physique et le site web.
