@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Package, Truck, MapPin, Plus, CreditCard, Coins } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { Package, Truck, MapPin, Plus, CreditCard, Coins, ArrowLeft, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Address } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -213,239 +213,313 @@ export default function Checkout() {
   }
 
   return (
-    <>
-      <SEO title="Commander — Green Mood CBD" description="Finalisez votre commande Green Mood CBD." />
+    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+      <SEO title="Finalisation — L'Excellence Green Mood" description="Finalisez votre commande Green Mood CBD." />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="font-serif text-3xl font-bold mb-8">Finaliser la commande</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: options */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Delivery type */}
-            <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-              <h2 className="font-serif font-semibold text-lg mb-4">Mode de réception</h2>
-              <div className="grid grid-cols-2 gap-3">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div className="space-y-4">
+            <Link to="/panier" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
+              <ArrowLeft className="w-4 h-4" />
+              Retour au Panier
+            </Link>
+            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none">
+              FINALISATION <br /><span className="text-green-neon italic">MASTR.</span>
+            </h1>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+          {/* Main Form Area */}
+          <div className="lg:col-span-8 space-y-8">
+
+            {/* Delivery Methods Panel */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 space-y-8">
+              <h2 className="text-xl font-serif font-black flex items-center gap-4">
+                <span className="w-8 h-8 rounded-full bg-green-neon text-black text-xs flex items-center justify-center font-bold">01</span>
+                MODE DE RÉCEPTION
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   onClick={() => setDeliveryType('click_collect')}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'click_collect'
-                    ? 'bg-green-neon/10 border-green-primary'
-                    : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                  className={`relative flex flex-col gap-4 p-8 rounded-[2rem] border transition-all text-left overflow-hidden group ${deliveryType === 'click_collect'
+                    ? 'bg-green-neon text-black border-transparent shadow-[0_0_40px_rgba(0,255,163,0.1)]'
+                    : 'bg-white/5 border-white/5 text-zinc-400 hover:border-white/20'
                     }`}
                 >
-                  <Package className="w-5 h-5 text-green-neon" />
-                  <div className="text-left">
-                    <p className="font-medium text-sm">Click & Collect</p>
-                    <p className="text-xs text-zinc-500">En boutique — Gratuit</p>
+                  <Package className={`w-8 h-8 ${deliveryType === 'click_collect' ? 'text-black' : 'text-green-neon'}`} />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest">Click & Collect</p>
+                    <p className={`text-[10px] mt-1 opacity-60 font-medium`}>Retrait immédiat en boutique — Gratuit</p>
                   </div>
+                  {deliveryType === 'click_collect' && <CheckCircle2 className="absolute top-6 right-6 w-5 h-5 text-black" />}
                 </button>
+
                 <button
                   onClick={() => setDeliveryType('delivery')}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'delivery'
-                    ? 'bg-green-neon/10 border-green-primary'
-                    : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                  className={`relative flex flex-col gap-4 p-8 rounded-[2rem] border transition-all text-left overflow-hidden group ${deliveryType === 'delivery'
+                    ? 'bg-white text-black border-transparent'
+                    : 'bg-white/5 border-white/5 text-zinc-400 hover:border-white/20'
                     }`}
                 >
-                  <Truck className="w-5 h-5 text-green-neon" />
-                  <div className="text-left">
-                    <p className="font-medium text-sm">Livraison</p>
-                    <p className="text-xs text-zinc-500">À domicile</p>
+                  <Truck className={`w-8 h-8 ${deliveryType === 'delivery' ? 'text-black' : 'text-green-neon'}`} />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-widest">Livraison Standard</p>
+                    <p className={`text-[10px] mt-1 opacity-60 font-medium`}>Expédition prioritaire à domicile</p>
                   </div>
+                  {deliveryType === 'delivery' && <CheckCircle2 className="absolute top-6 right-6 w-5 h-5 text-black" />}
                 </button>
               </div>
-              {deliveryType === 'click_collect' && (
-                <div className="mt-4 p-4 bg-zinc-800 rounded-xl text-sm text-zinc-400">
-                  <div className="flex items-center gap-2 text-green-neon font-medium mb-1">
-                    <MapPin className="w-4 h-4" />
-                    Adresse de retrait
-                  </div>
-                  {settings.store_address}
-                  <br />
-                  {settings.store_hours} | Tel : {settings.store_phone}
-                </div>
-              )}
+
+              <AnimatePresence>
+                {deliveryType === 'click_collect' && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-8 bg-zinc-900/50 rounded-3xl border border-white/5 space-y-4">
+                      <div className="flex items-center gap-3 text-green-neon font-black text-[10px] uppercase tracking-widest">
+                        <MapPin className="w-4 h-4" />
+                        Points de Retrait Expert
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-white font-bold leading-tight">{settings.store_address}</p>
+                        <p className="text-xs text-zinc-500 font-mono uppercase tracking-widest">
+                          {settings.store_hours} | TEL: {settings.store_phone}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Address (delivery only) */}
+            {/* Address Selection (Delivery only) */}
             {deliveryType === 'delivery' && (
-              <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-                <h2 className="font-serif font-semibold text-lg mb-4">Adresse de livraison</h2>
-                <div className="space-y-2 mb-4">
+              <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 space-y-8">
+                <h2 className="text-xl font-serif font-black flex items-center gap-4">
+                  <span className="w-8 h-12 rounded-full bg-green-neon text-black text-xs flex items-center justify-center font-bold">02</span>
+                  DESTINATION DE LIVAISON
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {addresses.map((addr) => (
                     <button
                       key={addr.id}
                       onClick={() => setSelectedAddress(addr.id)}
-                      className={`w-full text-left p-4 rounded-xl border transition-all ${selectedAddress === addr.id
-                        ? 'bg-green-neon/10 border-green-primary'
-                        : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
+                      className={`relative p-6 rounded-[2rem] border transition-all text-left group ${selectedAddress === addr.id
+                        ? 'bg-zinc-900 border-green-neon/50 shadow-[0_0_20px_rgba(0,255,163,0.05)]'
+                        : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
                         }`}
                     >
-                      <p className="font-medium text-sm">{addr.label}</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">
-                        {addr.street}, {addr.postal_code} {addr.city}
-                      </p>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${selectedAddress === addr.id ? 'bg-green-neon text-black' : 'bg-white/5 text-zinc-500'}`}>
+                          <MapPin className="w-4 h-4" />
+                        </div>
+                        <h4 className={`text-xs font-black uppercase tracking-widest ${selectedAddress === addr.id ? 'text-white' : 'text-zinc-500'}`}>{addr.label}</h4>
+                      </div>
+                      <p className="text-sm font-medium text-white leading-relaxed">{addr.street}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-500 mt-1">{addr.postal_code} {addr.city}</p>
+                      {selectedAddress === addr.id && <CheckCircle2 className="absolute top-6 right-6 w-4 h-4 text-green-neon" />}
                     </button>
                   ))}
-                </div>
 
-                {showAddressForm ? (
-                  <div className="space-y-3 bg-zinc-800 rounded-xl p-4">
-                    <input
-                      placeholder="Libellé (ex: Domicile)"
-                      value={newAddress.label}
-                      onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
-                      className="w-full bg-zinc-700 border border-zinc-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                    />
-                    <input
-                      placeholder="Adresse"
-                      value={newAddress.street}
-                      onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
-                      className="w-full bg-zinc-700 border border-zinc-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        placeholder="Code postal"
-                        value={newAddress.postal_code}
-                        onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })}
-                        className="bg-zinc-700 border border-zinc-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                      />
-                      <input
-                        placeholder="Ville"
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        className="bg-zinc-700 border border-zinc-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveAddress}
-                        className="flex-1 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-                      >
-                        Enregistrer
-                      </button>
-                      <button
-                        onClick={() => setShowAddressForm(false)}
-                        className="px-4 text-zinc-400 hover:text-white text-sm transition-colors"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                ) : (
                   <button
                     onClick={() => setShowAddressForm(true)}
-                    className="flex items-center gap-2 text-green-neon hover:text-green-400 text-sm font-medium transition-colors"
+                    className="flex flex-col items-center justify-center gap-3 p-8 rounded-[2rem] border-2 border-dashed border-white/5 hover:border-green-neon/30 hover:bg-green-neon/5 transition-all text-zinc-500 hover:text-green-neon group"
                   >
-                    <Plus className="w-4 h-4" />
-                    Ajouter une adresse
+                    <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Nouvele Adresse</span>
                   </button>
-                )}
+                </div>
+
+                <AnimatePresence>
+                  {showAddressForm && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-zinc-900/80 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-8 space-y-6"
+                    >
+                      <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Ajout Coordonnées</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                          placeholder="Libellé (ex: Domicile)"
+                          value={newAddress.label}
+                          onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
+                          className="bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-green-neon transition-all"
+                        />
+                        <input
+                          placeholder="Adresse complète"
+                          value={newAddress.street}
+                          onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
+                          className="bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-green-neon transition-all"
+                        />
+                        <input
+                          placeholder="Code postal"
+                          value={newAddress.postal_code}
+                          onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })}
+                          className="bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-green-neon transition-all"
+                        />
+                        <input
+                          placeholder="Ville"
+                          value={newAddress.city}
+                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                          className="bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-green-neon transition-all"
+                        />
+                      </div>
+                      <div className="flex gap-4 pt-2">
+                        <button
+                          onClick={handleSaveAddress}
+                          className="flex-1 bg-white text-black font-black uppercase tracking-widest py-4 rounded-xl hover:bg-green-neon transition-all text-sm"
+                        >
+                          Enregistrer
+                        </button>
+                        <button
+                          onClick={() => setShowAddressForm(false)}
+                          className="px-8 text-zinc-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
-            {/* Promo code */}
-            <PromoCodeInput
-              subtotal={sub}
-              onApply={setAppliedPromo}
-              applied={appliedPromo}
-            />
+            {/* Promo & Loyalty */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 space-y-6">
+                <h2 className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500 mb-6 flex items-center gap-3">
+                  <Sparkles className="w-4 h-4 text-green-neon" />
+                  CODE PRIVILÈGE
+                </h2>
+                <PromoCodeInput
+                  subtotal={sub}
+                  onApply={setAppliedPromo}
+                  applied={appliedPromo}
+                />
+              </div>
 
-            {/* Loyalty points */}
-            {profile && profile.loyalty_points >= 100 && (
-              <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-                <h2 className="font-serif font-semibold text-lg mb-4">Programme de fidélité</h2>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={usePoints}
-                    onChange={(e) => setUsePoints(e.target.checked)}
-                    className="w-5 h-5 rounded accent-green-600"
-                  />
-                  <div className="flex items-center gap-2">
+              {profile && profile.loyalty_points >= 100 && (
+                <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 space-y-6 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 blur-[50px] -z-10 group-hover:bg-yellow-400/10 transition-all duration-1000" />
+                  <h2 className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500 mb-6 flex items-center gap-3">
                     <Coins className="w-4 h-4 text-yellow-400" />
-                    <span className="text-sm">
-                      Utiliser mes {profile.loyalty_points} points
-                      <span className="text-green-neon font-semibold ml-1">
-                        (−{pointsValue.toFixed(2)} €)
+                    FIDÉLITÉ MASTER
+                  </h2>
+                  <label className="flex items-center gap-4 cursor-pointer p-6 bg-yellow-400/5 rounded-[2rem] border border-yellow-400/10 hover:bg-yellow-400/10 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={usePoints}
+                      onChange={(e) => setUsePoints(e.target.checked)}
+                      className="w-6 h-6 rounded-lg accent-yellow-400 bg-zinc-900 border-white/10"
+                    />
+                    <div className="space-y-1">
+                      <span className="text-xs font-black uppercase tracking-widest text-white block">
+                        Utiliser {profile.loyalty_points} Points
                       </span>
-                    </span>
-                  </div>
-                </label>
-              </div>
-            )}
+                      <span className="text-[10px] text-yellow-400 font-mono tracking-widest">
+                        VALEUR: −{pointsValue.toFixed(2)}€
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right: summary */}
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-              <h2 className="font-serif font-semibold mb-4">Récapitulatif</h2>
-              <div className="space-y-2 mb-4">
-                {items.map(({ product, quantity }) => (
-                  <div key={product.id} className="flex justify-between text-sm">
-                    <span className="text-zinc-400 line-clamp-1 flex-1 mr-2">
-                      {product.name} ×{quantity}
-                    </span>
-                    <span className="text-white font-medium flex-shrink-0">
-                      {(product.price * quantity).toFixed(2)} €
-                    </span>
-                  </div>
-                ))}
+          {/* Right Summary Panel */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 space-y-10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-green-neon/5 blur-[60px] -z-10" />
+
+              <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.25em] text-zinc-500">RESUMÉ SÉLECTION</h3>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+                  {items.map(({ product, quantity }) => (
+                    <div key={product.id} className="flex justify-between items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-black uppercase tracking-widest text-white truncate">{product.name}</p>
+                        <p className="text-[10px] font-mono text-zinc-500">PIÈCES: {quantity}</p>
+                      </div>
+                      <span className="text-sm font-serif font-black flex-shrink-0">
+                        {(product.price * quantity).toFixed(2)}€
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="border-t border-zinc-700 pt-3 space-y-1.5 text-sm">
-                <div className="flex justify-between text-zinc-400">
+
+              <div className="space-y-4 pt-8 border-t border-white/5 font-medium">
+                <div className="flex justify-between text-zinc-400 text-xs uppercase tracking-widest">
                   <span>Sous-total</span>
                   <span>{sub.toFixed(2)} €</span>
                 </div>
-                <div className="flex justify-between text-zinc-400">
-                  <span>Livraison</span>
-                  <span>{fee === 0 ? 'Gratuit' : `${fee.toFixed(2)} €`}</span>
+                <div className="flex justify-between text-zinc-400 text-xs uppercase tracking-widest">
+                  <span>Expédition</span>
+                  <span className="text-green-neon">{fee === 0 ? 'Gratuit' : `${fee.toFixed(2)} €`}</span>
                 </div>
                 {pointsValue > 0 && (
-                  <div className="flex justify-between text-green-400">
-                    <span>Réduction fidélité</span>
+                  <div className="flex justify-between text-yellow-500 text-xs uppercase tracking-widest">
+                    <span>Fidélité</span>
                     <span>−{pointsValue.toFixed(2)} €</span>
                   </div>
                 )}
                 {promoDiscount > 0 && (
-                  <div className="flex justify-between text-green-400">
-                    <span className="flex items-center gap-1">
-                      Code <span className="font-mono font-bold">{appliedPromo?.code}</span>
-                    </span>
+                  <div className="flex justify-between text-green-neon text-xs uppercase tracking-widest">
+                    <span>Code {appliedPromo?.code}</span>
                     <span>−{promoDiscount.toFixed(2)} €</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-base pt-1 border-t border-zinc-700">
-                  <span>Total</span>
-                  <span>{tot.toFixed(2)} €</span>
+                <div className="flex justify-between items-end pt-6 border-t border-white/10">
+                  <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">TOTAL MASTER</span>
+                  <span className="text-4xl font-serif font-black text-white">
+                    {tot.toFixed(2)}<span className="text-green-neon text-lg ml-1">€</span>
+                  </span>
+                </div>
+              </div>
+
+              {error && (
+                <div className="bg-red-900/10 border border-red-500/20 rounded-2xl p-4 text-red-500 text-[10px] font-black uppercase tracking-widest text-center">
+                  Error: {error}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <button
+                  onClick={handleOrder}
+                  disabled={isSubmitting}
+                  className="w-full relative group bg-white text-black font-black uppercase tracking-widest py-6 rounded-2xl hover:bg-green-neon transition-all flex items-center justify-center gap-3 overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-green-neon scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                  <span className="relative z-10 flex items-center gap-3">
+                    <CreditCard className="w-5 h-5" />
+                    {isSubmitting ? 'TRAITEMENT EN COURS…' : `REGLER ${tot.toFixed(2)} €`}
+                  </span>
+                </button>
+
+                <div className="flex items-center justify-center gap-3 py-2 opacity-30">
+                  <ShieldCheck className="w-4 h-4 text-green-neon" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Paiement Securisé</span>
                 </div>
               </div>
             </div>
 
-            {error && (
-              <div className="bg-red-900/30 border border-red-700 rounded-xl px-4 py-3 text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              onClick={handleOrder}
-              disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 bg-green-neon hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl transition-colors"
-            >
-              <CreditCard className="w-5 h-5" />
-              {isSubmitting ? 'Traitement…' : `Payer ${tot.toFixed(2)} €`}
-            </button>
-
-            <p className="text-xs text-zinc-600 text-center">
-              Paiement sécurisé. En mode démo, la commande est validée sans paiement réel.
-            </p>
-
-            <p className="text-xs text-zinc-600 text-center leading-relaxed">
-              {profile ? `Vous gagnerez ${Math.floor(tot)} points de fidélité.` : ''}
+            <p className="text-[10px] text-zinc-600 text-center leading-relaxed font-mono uppercase px-6">
+              {profile ? `CRÉDIT FIDÉLITÉ À VENIR: +${Math.floor(tot)} POINTS` : ''}
+              <br />
+              <span className="opacity-50">Validation immédiate en mode démonstration.</span>
             </p>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

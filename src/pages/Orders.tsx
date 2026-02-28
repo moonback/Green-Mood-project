@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Package, Truck, Clock, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Package, Truck, Clock, ChevronDown, ChevronUp, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
 import SEO from '../components/SEO';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'En attente', color: 'text-yellow-400 bg-yellow-900/30 border-yellow-800' },
-  paid: { label: 'Payé', color: 'text-blue-400 bg-blue-900/30 border-blue-800' },
-  processing: { label: 'En préparation', color: 'text-purple-400 bg-purple-900/30 border-purple-800' },
-  ready: { label: 'Prêt à retirer', color: 'text-green-400 bg-green-900/30 border-green-800' },
-  shipped: { label: 'En livraison', color: 'text-blue-400 bg-blue-900/30 border-blue-800' },
-  delivered: { label: 'Livré', color: 'text-green-400 bg-green-900/30 border-green-800' },
-  cancelled: { label: 'Annulé', color: 'text-red-400 bg-red-900/30 border-red-800' },
+  pending: { label: 'EN ATTENTE', color: 'text-yellow-400 bg-yellow-400/5 border-yellow-400/20' },
+  paid: { label: 'CONFIRMÉ', color: 'text-blue-400 bg-blue-400/5 border-blue-400/20' },
+  processing: { label: 'EN PRÉPARATION', color: 'text-purple-400 bg-purple-400/5 border-purple-400/20' },
+  ready: { label: 'PRÊT AU RETRAIT', color: 'text-green-neon bg-green-neon/5 border-green-neon/20' },
+  shipped: { label: 'EN TRANSIT', color: 'text-blue-400 bg-blue-400/5 border-blue-400/20' },
+  delivered: { label: 'LIVRÉ', color: 'text-green-neon bg-green-neon/5 border-green-neon/20' },
+  cancelled: { label: 'ANNULÉ', color: 'text-red-400 bg-red-400/5 border-red-400/20' },
 };
 
 export default function Orders() {
@@ -37,41 +37,54 @@ export default function Orders() {
   }, [user]);
 
   return (
-    <>
-      <SEO title="Mes Commandes — Green Mood CBD" description="Historique de vos commandes." />
+    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+      <SEO title="Mes Commandes — L'Excellence Green Mood" description="Historique de vos commandes." />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center gap-3 mb-8">
-          <Link to="/compte" className="text-zinc-500 hover:text-white transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="font-serif text-3xl font-bold">Mes commandes</h1>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div className="space-y-4">
+            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
+              <ArrowLeft className="w-4 h-4" />
+              Retour au Hub
+            </Link>
+            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none">
+              HISTORIQUE <br /><span className="text-green-neon italic">SÉLECT.</span>
+            </h1>
+          </div>
+          <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
+            ARCHIVES PERSONNELLES — {orders.length} ITEMS
+          </p>
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 animate-pulse">
-                <div className="h-4 bg-zinc-800 rounded w-1/3 mb-3" />
-                <div className="h-3 bg-zinc-800 rounded w-1/2" />
-              </div>
+              <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 animate-pulse h-32" />
             ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-4">
-              <Package className="w-8 h-8 text-zinc-600" />
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 bg-white/[0.01] border border-dashed border-white/5 rounded-[3rem]">
+            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-green-neon/5 rounded-full blur-xl" />
+              <ShoppingBag className="w-10 h-10 text-zinc-700" />
             </div>
-            <p className="text-zinc-400 mb-4">Aucune commande pour l'instant.</p>
+            <div className="space-y-3">
+              <p className="font-serif text-2xl font-black text-white">Aucune archive disponible</p>
+              <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
+                Votre historique commencera dès votre première commande d'exception.
+              </p>
+            </div>
             <Link
               to="/catalogue"
-              className="text-green-neon hover:underline text-sm"
+              className="bg-white text-black font-black uppercase tracking-widest px-10 py-5 rounded-2xl hover:bg-green-neon transition-all"
             >
-              Découvrir le catalogue →
+              Découvrir le Catalogue
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {orders.map((order, i) => {
               const status = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending;
               const isExpanded = expanded === order.id;
@@ -80,83 +93,111 @@ export default function Orders() {
               return (
                 <motion.div
                   key={order.id}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+                  transition={{ delay: i * 0.1 }}
+                  className={`group bg-white/[0.02] backdrop-blur-3xl border rounded-[2.5rem] overflow-hidden transition-all duration-500 ${isExpanded ? 'border-white/10 bg-white/[0.04]' : 'border-white/5 hover:border-white/20'}`}
                 >
                   <button
                     onClick={() => setExpanded(isExpanded ? null : order.id)}
-                    className="w-full flex items-center justify-between p-5 hover:bg-zinc-800/50 transition-colors"
+                    className="w-full flex flex-col md:flex-row md:items-center justify-between p-8 md:p-10 text-left gap-6"
                   >
-                    <div className="flex items-center gap-4 text-left">
-                      <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
+                    <div className="flex items-center gap-6 flex-1">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${isExpanded ? 'bg-green-neon text-black' : 'bg-white/5 text-zinc-500'}`}>
                         {order.delivery_type === 'click_collect' ? (
-                          <Package className="w-5 h-5 text-green-neon" />
+                          <Package className="w-6 h-6" />
                         ) : (
-                          <Truck className="w-5 h-5 text-green-neon" />
+                          <Truck className="w-6 h-6" />
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium text-white">
-                          Commande #{order.id.slice(0, 8).toUpperCase()}
+                      <div className="space-y-1">
+                        <p className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-500">
+                          SÉLECTION REFERENCE
                         </p>
-                        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                        <h3 className="text-xl font-serif font-black text-white uppercase tracking-tight">
+                          #{order.id.slice(0, 8)}
+                        </h3>
+                        <p className="text-[10px] text-zinc-600 font-mono flex items-center gap-2">
                           <Clock className="w-3 h-3" />
-                          {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                          EXPÉDIÉE LE {new Date(order.created_at).toLocaleDateString('fr-FR', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
-                          })}
+                          }).toUpperCase()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full border ${status.color}`}>
-                        {status.label}
-                      </span>
-                      <span className="font-bold text-white">{order.total.toFixed(2)} €</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-zinc-500" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-zinc-500" />
-                      )}
+
+                    <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
+                      <div className="space-y-2 text-right">
+                        <span className={`inline-block text-[9px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full border transition-all ${status.color}`}>
+                          {status.label}
+                        </span>
+                        <p className="text-2xl font-serif font-black text-white">
+                          {order.total.toFixed(2)}<span className="text-green-neon text-sm ml-1 font-sans">€</span>
+                        </p>
+                      </div>
+                      <div className={`w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all ${isExpanded ? 'rotate-180 bg-white/10' : ''}`}>
+                        <ChevronDown className="w-5 h-5 text-zinc-500" />
+                      </div>
                     </div>
                   </button>
 
-                  {isExpanded && items && (
-                    <div className="border-t border-zinc-800 p-5 space-y-2">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                          <span className="text-zinc-400">
-                            {item.product_name} ×{item.quantity}
-                          </span>
-                          <span className="text-white">{item.total_price.toFixed(2)} €</span>
+                  <AnimatePresence>
+                    {isExpanded && items && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t border-white/5 bg-white/[0.01]"
+                      >
+                        <div className="p-10 space-y-8">
+                          <div className="space-y-4">
+                            <p className="text-[10px] font-mono tracking-[0.4em] text-zinc-600 uppercase">DÉTAILS DE LA PIÈCE</p>
+                            <div className="space-y-3">
+                              {items.map((item) => (
+                                <div key={item.id} className="flex justify-between items-center group/item">
+                                  <span className="text-sm font-medium text-white/70 group-hover/item:text-white transition-colors">
+                                    {item.product_name} <span className="text-[10px] font-mono text-zinc-600 ml-2">×{item.quantity}</span>
+                                  </span>
+                                  <span className="text-sm font-serif font-black text-white">{item.total_price.toFixed(2)} €</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="pt-6 border-t border-white/5 space-y-3">
+                            <div className="flex justify-between text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+                              <span>FRAIS D'EXPÉDITION</span>
+                              <span>{order.delivery_fee === 0 ? 'OFFERT' : `${order.delivery_fee.toFixed(2)} €`}</span>
+                            </div>
+                            <div className="flex justify-between items-end pt-2">
+                              <span className="text-xs font-black uppercase tracking-[0.3em] text-green-neon">TOTAL PIÈCE</span>
+                              <span className="text-3xl font-serif font-black text-white">{order.total.toFixed(2)} €</span>
+                            </div>
+                          </div>
+
+                          {order.delivery_type === 'click_collect' && (
+                            <div className="bg-zinc-900/50 rounded-[2rem] p-6 border border-white/5 flex items-center gap-6">
+                              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                                <Package className="w-5 h-5 text-green-neon" />
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">LIEU DE RETRAIT</p>
+                                <p className="text-sm text-white/80 leading-relaxed italic font-serif">Retrait expert disponible en boutique Green Mood.</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
-                      <div className="border-t border-zinc-700 pt-2 text-sm">
-                        <div className="flex justify-between text-zinc-500">
-                          <span>Livraison</span>
-                          <span>{order.delivery_fee === 0 ? 'Gratuit' : `${order.delivery_fee.toFixed(2)} €`}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-white mt-1">
-                          <span>Total</span>
-                          <span>{order.total.toFixed(2)} €</span>
-                        </div>
-                      </div>
-                      {order.delivery_type === 'click_collect' && (
-                        <div className="text-xs text-zinc-500 bg-zinc-800 rounded-xl p-3 mt-2">
-                          Retrait en boutique — 123 Rue de la Nature, 75000 Paris
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               );
             })}
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -11,6 +11,9 @@ import {
   Star,
   Shield,
   Sparkles,
+  ArrowRight,
+  CreditCard,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -18,6 +21,7 @@ import SEO from '../components/SEO';
 
 export default function Account() {
   const { profile, user, signOut } = useAuthStore();
+  const { settings } = useSettingsStore();
 
   const initials = profile?.full_name
     ? profile.full_name
@@ -28,208 +32,187 @@ export default function Account() {
       .toUpperCase()
     : '?';
 
-  const settings = useSettingsStore((s) => s.settings);
-
-  const tiles = [
+  const services = [
     {
       icon: Package,
-      label: 'Mes commandes',
-      description: 'Suivre et consulter vos commandes',
+      label: 'Historique des Commandes',
+      description: 'SUIVRE VOS EXQUISES SÉLECTIONS',
       to: '/compte/commandes',
-      accent: 'from-blue-500/10 to-blue-600/5',
-      iconColor: 'text-blue-400',
-      iconBg: 'bg-blue-500/10 group-hover:bg-blue-500/20',
-      borderHover: 'hover:border-blue-500/40',
+      accent: 'from-zinc-500/5 to-zinc-500/2',
     },
     {
       icon: MapPin,
-      label: 'Mes adresses',
-      description: 'Gérer vos adresses de livraison',
+      label: 'Carnet d\'Adresses',
+      description: 'GÉRER VOS LIEUX DE DESTINATION',
       to: '/compte/adresses',
-      accent: 'from-purple-500/10 to-purple-600/5',
-      iconColor: 'text-purple-400',
-      iconBg: 'bg-purple-500/10 group-hover:bg-purple-500/20',
-      borderHover: 'hover:border-purple-500/40',
+      accent: 'from-zinc-500/5 to-zinc-500/2',
     },
     {
       icon: Coins,
-      label: 'Points fidélité',
-      description: `${profile?.loyalty_points ?? 0} points disponibles`,
+      label: 'Programme Privilège',
+      description: `${profile?.loyalty_points ?? 0} POINTS D'EXCELLENCE`,
       to: '/compte/fidelite',
-      accent: 'from-yellow-500/10 to-yellow-600/5',
-      iconColor: 'text-yellow-400',
-      iconBg: 'bg-yellow-500/10 group-hover:bg-yellow-500/20',
-      borderHover: 'hover:border-yellow-500/40',
+      accent: 'from-yellow-500/5 to-yellow-500/2',
     },
     {
       icon: RefreshCw,
-      label: 'Abonnements',
-      description: 'Livraisons automatiques récurrentes',
+      label: 'Abonnements Maîtrisés',
+      description: 'LIVRAISONS RÉCURRENTES AUTOMATISÉES',
       to: '/compte/abonnements',
-      accent: 'from-green-500/10 to-green-600/5',
-      iconColor: 'text-green-neon',
-      iconBg: 'bg-green-neon/10 group-hover:bg-green-neon/20',
-      borderHover: 'hover:border-green-neon/40',
+      accent: 'from-green-neon/5 to-green-neon/2',
       enabled: settings.subscriptions_enabled,
     },
     {
       icon: Star,
-      label: 'Mes avis',
-      description: 'Rédiger et consulter vos avis',
+      label: 'Mes Impressions',
+      description: 'PARTAGER VOTRE EXPÉRIENCE SENSORIELLE',
       to: '/compte/avis',
-      accent: 'from-orange-500/10 to-orange-600/5',
-      iconColor: 'text-orange-400',
-      iconBg: 'bg-orange-500/10 group-hover:bg-orange-500/20',
-      borderHover: 'hover:border-orange-500/40',
+      accent: 'from-zinc-500/5 to-zinc-500/2',
     },
+    {
+      icon: Settings,
+      label: 'Paramètres Profil',
+      description: 'VOS INFORMATIONS PERSONNELLES',
+      to: '/compte/profil',
+      accent: 'from-zinc-500/5 to-zinc-500/2',
+    }
   ].filter(t => t.enabled !== false);
 
   return (
-    <>
-      <SEO title="Mon Compte — Green Mood CBD" description="Gérez votre compte Green Mood CBD." />
+    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+      <SEO title="Mon Espace — L'Excellence Green Mood" description="Votre espace personnel Green Mood." />
 
-      <div className="min-h-screen bg-zinc-950">
-        {/* Hero Header */}
-        <div className="relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-green-neon/5 blur-3xl" />
-            <div className="absolute -top-16 right-0 w-64 h-64 rounded-full bg-green-neon/3 blur-2xl" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Hero Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-20 relative">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-green-neon/5 blur-[100px] -z-10" />
+
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+              <Sparkles className="w-3 h-3 text-green-neon" />
+              Espace Membre Privilégié
+            </div>
+            <h1 className="text-6xl md:text-8xl font-serif font-black tracking-tighter leading-none uppercase">
+              Mon <br /><span className="text-green-neon italic">Espace.</span>
+            </h1>
           </div>
 
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+          <div className="md:text-right space-y-2">
+            <p className="text-xs font-mono uppercase tracking-[0.4em] text-zinc-600">CLIENT RÉFÉRENCE</p>
+            <p className="text-xl font-serif font-medium tracking-wide italic text-white/80">{user?.email}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+          {/* Left: Profile Overview Card */}
+          <div className="lg:col-span-4 space-y-8">
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-10 space-y-12 relative overflow-hidden"
             >
-              {/* Profile card */}
-              <div className="relative rounded-3xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm overflow-hidden p-8">
-                {/* Card background gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-green-neon/5 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-neon/5 blur-[60px] -z-10" />
 
-                <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                  {/* Avatar */}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-neon/30 to-green-neon/10 border border-green-neon/30 flex items-center justify-center shadow-lg glow-box-green-sm">
-                      <span className="text-2xl font-bold text-green-neon font-sans tracking-wider">
-                        {initials}
-                      </span>
-                    </div>
-                    {/* Online dot */}
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-neon border-2 border-zinc-900 shadow-sm" />
+              {/* Avatar & Verification */}
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-green-neon/20 blur-2xl group-hover:bg-green-neon/40 transition-all duration-1000 -z-10" />
+                  <div className="w-32 h-32 rounded-[2.5rem] bg-zinc-900 border-2 border-green-neon/30 flex items-center justify-center group-hover:border-green-neon transition-all duration-500 overflow-hidden">
+                    <span className="text-4xl font-serif font-black text-green-neon tracking-widest">{initials}</span>
                   </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <h1 className="text-2xl font-bold text-white truncate">
-                        {profile?.full_name ?? 'Mon compte'}
-                      </h1>
-                      {profile && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-neon/10 border border-green-neon/30 text-green-neon text-xs font-medium flex-shrink-0">
-                          <Shield className="w-3 h-3" />
-                          Vérifié
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-zinc-400 text-sm truncate">{user?.email}</p>
+                  <div className="absolute -bottom-2 -right-2 bg-green-neon text-black p-2 rounded-2xl shadow-xl">
+                    <Shield className="w-5 h-5" />
                   </div>
-
-                  {/* Points badge */}
-                  {profile && profile.loyalty_points > 0 && (
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex-shrink-0 flex flex-col items-center gap-0.5 bg-gradient-to-b from-yellow-900/40 to-yellow-900/20 border border-yellow-700/50 px-4 py-3 rounded-2xl"
-                    >
-                      <Sparkles className="w-4 h-4 text-yellow-400 mb-0.5" />
-                      <span className="text-yellow-300 font-bold text-lg leading-none">
-                        {profile.loyalty_points}
-                      </span>
-                      <span className="text-yellow-500 text-xs font-medium">points</span>
-                    </motion.div>
-                  )}
                 </div>
 
-                {/* Stats row */}
-                <div className="relative mt-6 pt-5 border-t border-zinc-800 grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'Commandes', value: '—', icon: Package },
-                    { label: 'Adresses', value: '—', icon: MapPin },
-                    { label: 'Avis', value: '—', icon: Star },
-                  ].map((stat) => (
-                    <div key={stat.label} className="flex flex-col items-center text-center">
-                      <stat.icon className="w-4 h-4 text-zinc-500 mb-1" />
-                      <span className="text-white font-semibold text-base">{stat.value}</span>
-                      <span className="text-zinc-500 text-xs">{stat.label}</span>
-                    </div>
-                  ))}
+                <div>
+                  <h2 className="text-2xl font-serif font-black tracking-tight">{profile?.full_name ?? 'Membre Anonyme'}</h2>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-500 mt-2">Membre depuis {new Date(profile?.created_at ?? Date.now()).getFullYear()}</p>
                 </div>
+              </div>
+
+              {/* Points Stats */}
+              <div className="bg-white/5 rounded-[2.5rem] p-8 space-y-4 border border-white/5 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                <div className="flex justify-between items-center text-zinc-500 text-[10px] font-black uppercase tracking-widest">
+                  <span>Fidélité</span>
+                  <Coins className="w-4 h-4 text-yellow-400" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-serif font-black text-white">{profile?.loyalty_points ?? 0}</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-yellow-400/60">CARATS</span>
+                </div>
+                <p className="text-[10px] text-zinc-600 font-mono tracking-widest leading-relaxed">
+                  VOTRE STATUT ACTUEL : <span className="text-white">MEMBRE MASTER</span>
+                </p>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="space-y-4 pt-10 border-t border-white/5">
+                <button
+                  onClick={signOut}
+                  className="w-full flex items-center justify-center gap-3 py-6 rounded-2xl bg-white/5 border border-white/5 text-zinc-500 hover:text-red-400 hover:bg-red-950/20 hover:border-red-500/20 transition-all text-xs font-black uppercase tracking-widest group"
+                >
+                  <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  Terminer la Session
+                </button>
               </div>
             </motion.div>
           </div>
-        </div>
 
-        {/* Navigation tiles */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4"
-          >
-            Mon espace
-          </motion.p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-            {tiles.map((tile, i) => (
-              <motion.div
-                key={tile.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.07, duration: 0.4, ease: 'easeOut' }}
-              >
-                <Link
-                  to={tile.to}
-                  className={`group relative flex items-center gap-4 rounded-2xl p-5 border border-zinc-800/80 bg-zinc-900/60 backdrop-blur-sm transition-all duration-300 ${tile.borderHover} hover:bg-zinc-900 hover:-translate-y-0.5 hover:shadow-lg overflow-hidden`}
+          {/* Right: Service Grid */}
+          <div className="lg:col-span-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {services.map((service, i) => (
+                <motion.div
+                  key={service.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.1 }}
                 >
-                  {/* Subtle gradient bg on hover */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${tile.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <Link
+                    to={service.to}
+                    className="group relative flex flex-col gap-8 p-10 bg-white/[0.02] border border-white/[0.05] rounded-[3rem] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500 h-full overflow-hidden"
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${service.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
 
-                  <div className={`relative flex-shrink-0 w-11 h-11 rounded-xl ${tile.iconBg} flex items-center justify-center transition-all duration-300`}>
-                    <tile.icon className={`w-5 h-5 ${tile.iconColor}`} />
-                  </div>
+                    <div className="flex justify-between items-start relative z-10">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center group-hover:bg-green-neon group-hover:text-black transition-all duration-500">
+                        <service.icon className="w-7 h-7" />
+                      </div>
+                      <div className="p-3 rounded-full border border-white/5 group-hover:border-green-neon/30 transition-colors">
+                        <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-green-neon transition-all group-hover:translate-x-1" />
+                      </div>
+                    </div>
 
-                  <div className="relative flex-1 min-w-0">
-                    <p className="font-semibold text-white text-sm">{tile.label}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5 truncate">{tile.description}</p>
-                  </div>
+                    <div className="relative z-10 space-y-2">
+                      <h3 className="text-2xl font-serif font-black tracking-tight text-white">{service.label}</h3>
+                      <p className="text-[10px] font-mono tracking-[0.2em] text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                        {service.description}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
 
-                  <ChevronRight className="relative flex-shrink-0 w-4 h-4 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-0.5 transition-all duration-300" />
-                </Link>
-              </motion.div>
-            ))}
+            <div className="mt-12 p-10 bg-white/[0.01] border border-dashed border-white/5 rounded-[3rem] flex flex-col md:flex-row items-center gap-8 text-center md:text-left transition-all hover:bg-white/[0.02] hover:border-white/10 group">
+              <div className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center group-hover:border-green-neon/30 transition-all">
+                <CreditCard className="w-8 h-8 text-zinc-700" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h4 className="text-lg font-serif font-black italic">Besoin d'assistance ?</h4>
+                <p className="text-zinc-500 text-sm max-w-md">Notre conciergerie est à votre disposition 7j/7 pour vous accompagner dans votre sélection.</p>
+              </div>
+              <Link to="/contact" className="px-8 py-4 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-green-neon transition-all shrink-0">
+                Contacter l'Expert
+              </Link>
+            </div>
           </div>
-
-          {/* Sign out */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-          >
-            <button
-              onClick={signOut}
-              className="group w-full flex items-center justify-center gap-2.5 rounded-2xl py-3.5 border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-900/60 hover:bg-red-950/20 transition-all duration-300 text-sm font-medium"
-            >
-              <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-300" />
-              Se déconnecter
-            </button>
-          </motion.div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

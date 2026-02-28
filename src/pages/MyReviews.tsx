@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, Star, Clock, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Star, Clock, CheckCircle, MessageSquareQuote } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import type { Review } from '../lib/types';
@@ -27,116 +27,136 @@ export default function MyReviews() {
   }, [user]);
 
   return (
-    <>
-      <SEO title="Mes avis — Green Mood CBD" description="Consultez et gérez vos avis produits." />
+    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+      <SEO title="Mes Impressions — L'Excellence Green Mood" description="Consultez et gérez vos avis produits." />
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex items-center gap-3 mb-8">
-          <Link
-            to="/compte"
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Mon compte
-          </Link>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+          <div className="space-y-4">
+            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
+              <ArrowLeft className="w-4 h-4" />
+              Retour au Hub
+            </Link>
+            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none uppercase">
+              MES <br /><span className="text-green-neon italic">IMPRESSIONS.</span>
+            </h1>
+          </div>
+          <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
+            VOS TÉMOIGNAGES — {reviews.length} CONTRIBUTIONS
+          </p>
         </div>
 
-        <h1 className="font-serif text-3xl font-bold mb-2">Mes avis</h1>
-        <p className="text-zinc-400 text-sm mb-8">
-          Les avis soumis sont vérifiés par notre équipe avant publication.
-        </p>
-
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-pulse h-28" />
+              <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 animate-pulse h-32" />
             ))}
           </div>
         ) : reviews.length === 0 ? (
-          <div className="text-center py-16 text-zinc-500">
-            <Star className="w-12 h-12 mx-auto mb-4 opacity-30" />
-            <p className="font-medium">Aucun avis pour l'instant</p>
-            <p className="text-sm mt-1 mb-6">
-              Après avoir reçu votre commande, vous pouvez laisser un avis sur les produits achetés.
-            </p>
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 bg-white/[0.01] border border-dashed border-white/5 rounded-[3rem]">
+            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-green-neon/5 rounded-full blur-xl" />
+              <MessageSquareQuote className="w-10 h-10 text-zinc-800" />
+            </div>
+            <div className="space-y-3">
+              <p className="font-serif text-2xl font-black text-white">Le silence est d'or</p>
+              <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto italic">
+                Partagez vos impressions après avoir savouré vos sélections d'exception.
+              </p>
+            </div>
             <Link
               to="/compte/commandes"
-              className="inline-flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              className="bg-white text-black font-black uppercase tracking-widest px-10 py-5 rounded-2xl hover:bg-green-neon transition-all"
             >
-              Voir mes commandes
+              Voir mes Commandes
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {reviews.map((review, i) => (
               <motion.div
                 key={review.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
+                transition={{ delay: i * 0.1 }}
+                className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-10 hover:bg-white/[0.04] hover:border-white/10 transition-all group"
               >
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
                   {/* Product image */}
-                  {review.product?.image_url ? (
-                    <Link to={`/catalogue/${review.product.slug}`}>
-                      <img
-                        src={review.product.image_url}
-                        alt={review.product.name}
-                        className="w-14 h-14 object-cover rounded-xl flex-shrink-0 hover:opacity-80 transition-opacity"
-                      />
-                    </Link>
-                  ) : (
-                    <div className="w-14 h-14 bg-zinc-800 rounded-xl flex-shrink-0" />
-                  )}
+                  <div className="relative shrink-0">
+                    <div className="absolute inset-0 bg-green-neon/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {review.product?.image_url ? (
+                      <Link to={`/catalogue/${review.product.slug}`}>
+                        <img
+                          src={review.product.image_url}
+                          alt={review.product.name}
+                          className="w-24 h-24 object-cover rounded-2xl border border-white/10 group-hover:border-green-neon/30 transition-all"
+                        />
+                      </Link>
+                    ) : (
+                      <div className="w-24 h-24 bg-white/5 rounded-2xl flex items-center justify-center">
+                        <Star className="w-8 h-8 text-zinc-800" />
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div>
                         <Link
                           to={`/catalogue/${review.product?.slug ?? ''}`}
-                          className="font-semibold text-white hover:text-green-neon transition-colors text-sm"
+                          className="text-xl font-serif font-black text-white hover:text-green-neon transition-colors uppercase tracking-tight"
                         >
-                          {review.product?.name ?? 'Produit'}
+                          {review.product?.name ?? 'Produit Inconnu'}
                         </Link>
-                        <div className="mt-1">
+                        <div className="mt-2 flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
+                          <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest ml-2">Note de dégustation</span>
                         </div>
                       </div>
 
                       {/* Status badge */}
                       {review.is_published ? (
-                        <span className="flex items-center gap-1 text-xs text-green-400 bg-green-900/30 border border-green-800 px-2.5 py-1 rounded-full flex-shrink-0">
+                        <span className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-neon bg-green-neon/5 border border-green-neon/20 px-4 py-2 rounded-full shadow-lg">
                           <CheckCircle className="w-3 h-3" />
-                          Publié
+                          PUBLIÉ AVEC SUCCÈS
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-900/30 border border-yellow-800 px-2.5 py-1 rounded-full flex-shrink-0">
+                        <span className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-yellow-500 bg-yellow-500/5 border border-yellow-500/20 px-4 py-2 rounded-full shadow-lg">
                           <Clock className="w-3 h-3" />
-                          En attente
+                          MODÉRATION EN COURS
                         </span>
                       )}
                     </div>
 
                     {review.comment && (
-                      <p className="text-sm text-zinc-400 mt-2 line-clamp-2">{review.comment}</p>
+                      <p className="text-zinc-400 italic font-serif leading-relaxed text-lg border-l-2 border-green-neon/20 pl-6 py-1">
+                        "{review.comment}"
+                      </p>
                     )}
 
-                    <p className="text-xs text-zinc-600 mt-2">
-                      Soumis le{' '}
-                      {new Date(review.created_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
+                    <div className="pt-4 border-t border-white/5">
+                      <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-600">
+                        SÉLECTION TRANSMISE LE {new Date(review.created_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        }).toUpperCase()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
         )}
+
+        <div className="mt-20 text-center">
+          <p className="text-[10px] font-mono uppercase tracking-[0.5em] text-zinc-700">L'EXPRESSION DE VOTRE SATISFACTION EST NOTRE PRIORITÉ.</p>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -18,6 +18,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Account from "./pages/Account";
 import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
+import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Subscriptions from "./pages/Subscriptions";
 import LoyaltyHistory from "./pages/LoyaltyHistory";
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="compte/abonnements" element={<Subscriptions />} />
             <Route path="compte/fidelite" element={<LoyaltyHistory />} />
             <Route path="compte/avis" element={<MyReviews />} />
+            <Route path="compte/profil" element={<Profile />} />
           </Route>
 
           {/* Routes admin */}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus } from 'lucide-react';
+import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCartStore } from '../store/cartStore';
 import FreeShippingGauge from './FreeShippingGauge';
@@ -33,9 +33,8 @@ export default function CartSidebar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
             onClick={closeSidebar}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60]"
           />
 
           {/* Sidebar panel */}
@@ -43,239 +42,209 @@ export default function CartSidebar() {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="fixed right-0 top-0 bottom-0 w-full max-w-[420px] z-[60] flex flex-col bg-zinc-950 border-l border-white/[0.06] shadow-2xl"
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-[480px] z-[60] flex flex-col bg-zinc-950 border-l border-white/[0.08] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden"
           >
             {/* ── Header ─────────────────────────────────────────────── */}
-            <div className="relative flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/[0.06]">
-              {/* subtle top accent line */}
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-neon/40 to-transparent" />
-
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-green-neon/10 flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 text-green-neon" />
+            <div className="relative px-8 pt-10 pb-8 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-serif font-black tracking-tight text-white uppercase italic">
+                    CONCIERGERIE.
+                  </h2>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600">
+                    PANIER — {count} PIÈCE{count > 1 ? 'S' : ''}
+                  </p>
                 </div>
-                <div>
-                  <h2 className="font-semibold text-white text-base leading-tight">Mon Panier</h2>
-                  {count > 0 && (
-                    <p className="text-[11px] text-zinc-500 leading-none mt-0.5">
-                      {count} article{count > 1 ? 's' : ''}
-                    </p>
-                  )}
-                </div>
+                <button
+                  onClick={closeSidebar}
+                  className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-zinc-400 hover:text-white flex items-center justify-center transition-all group"
+                >
+                  <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+                </button>
               </div>
-
-              <button
-                onClick={closeSidebar}
-                aria-label="Fermer le panier"
-                className="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
-            {/* ── Empty state ─────────────────────────────────────────── */}
-            {items.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 text-center">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            {/* ── Content ─────────────────────────────────────────────── */}
+            <div className="flex-1 flex flex-col min-h-0">
+              {items.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center px-10 text-center space-y-8">
+                  <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center relative">
+                    <div className="absolute inset-0 bg-green-neon/5 rounded-full blur-xl" />
                     <ShoppingBag className="w-10 h-10 text-zinc-700" />
                   </div>
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-500 text-[10px] font-bold flex items-center justify-center">
-                    0
-                  </span>
-                </div>
-                <div>
-                  <p className="text-white font-semibold text-base">Votre panier est vide</p>
-                  <p className="text-zinc-500 text-sm mt-1 leading-relaxed">
-                    Découvrez nos produits CBD premium et commencez votre sélection.
-                  </p>
-                </div>
-                <Link
-                  to="/catalogue"
-                  onClick={closeSidebar}
-                  className="group flex items-center gap-2 bg-green-neon text-black font-bold px-6 py-3 rounded-xl hover:bg-green-400 transition-colors text-sm"
-                >
-                  Voir le catalogue
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-            ) : (
-              <>
-                {/* ── Delivery toggle ───────────────────────────────────── */}
-                <div className="px-5 py-3 border-b border-white/[0.06]">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600 mb-2">
-                    Mode de réception
-                  </p>
-                  <div className="relative grid grid-cols-2 gap-1.5 bg-zinc-900 rounded-xl p-1">
-                    {/* Sliding pill */}
-                    <motion.div
-                      layout
-                      className="absolute inset-y-1 w-[calc(50%-6px)] rounded-lg bg-zinc-700"
-                      animate={{ left: deliveryType === 'click_collect' ? 4 : 'calc(50% + 2px)' }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                    />
-                    <button
-                      onClick={() => setDeliveryType('click_collect')}
-                      className={`relative z-10 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${deliveryType === 'click_collect' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                    >
-                      <Package className="w-3.5 h-3.5" />
-                      Click &amp; Collect
-                    </button>
-                    <button
-                      onClick={() => setDeliveryType('delivery')}
-                      className={`relative z-10 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${deliveryType === 'delivery' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-                        }`}
-                    >
-                      <Truck className="w-3.5 h-3.5" />
-                      Livraison
-                    </button>
+                  <div className="space-y-3">
+                    <p className="font-serif text-2xl font-black text-white">Votre sélection est vide</p>
+                    <p className="text-zinc-500 text-sm leading-relaxed max-w-xs mx-auto">
+                      Explorez l'excellence de nos collections pour commencer votre expérience.
+                    </p>
                   </div>
-
-                  {/* Gauge */}
-                  <div className="mt-2.5">
-                    <FreeShippingGauge variant="compact" />
-                  </div>
-                </div>
-
-                {/* ── Items list ────────────────────────────────────────── */}
-                <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2 scrollbar-thin">
-                  <AnimatePresence initial={false}>
-                    {items.map(({ product, quantity }) => (
-                      <motion.div
-                        key={product.id}
-                        layout
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="group flex gap-3 bg-zinc-900/60 border border-white/[0.05] rounded-2xl p-3 hover:border-zinc-700/60 transition-colors"
-                      >
-                        {/* Product image */}
-                        <div className="relative flex-shrink-0">
-                          <img
-                            src={product.image_url ?? ''}
-                            alt={product.name}
-                            className="w-[68px] h-[68px] object-cover rounded-xl"
-                          />
-                          {product.cbd_percentage && (
-                            <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold bg-green-neon text-black px-1.5 py-0.5 rounded-full leading-none">
-                              {product.cbd_percentage}%
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div className="flex items-start justify-between gap-1">
-                            <p className="font-semibold text-sm text-white leading-tight line-clamp-2 pr-1">
-                              {product.name}
-                            </p>
-                            <button
-                              onClick={() => removeItem(product.id)}
-                              aria-label="Supprimer"
-                              className="flex-shrink-0 w-6 h-6 rounded-lg bg-zinc-800 hover:bg-red-500/20 text-zinc-500 hover:text-red-400 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between mt-2">
-                            {/* Inline qty controls */}
-                            <div className="flex items-center gap-1 bg-zinc-800 rounded-lg p-0.5">
-                              <button
-                                onClick={() => updateQuantity(product.id, quantity - 1)}
-                                disabled={quantity <= 1}
-                                aria-label="Diminuer"
-                                className="w-6 h-6 rounded-md bg-zinc-700 hover:bg-zinc-600 disabled:opacity-30 flex items-center justify-center transition-colors"
-                              >
-                                <Minus className="w-3 h-3 text-white" />
-                              </button>
-                              <span className="w-6 text-center text-xs font-bold text-white">
-                                {quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(product.id, quantity + 1)}
-                                disabled={quantity >= product.stock_quantity}
-                                aria-label="Augmenter"
-                                className="w-6 h-6 rounded-md bg-zinc-700 hover:bg-zinc-600 disabled:opacity-30 flex items-center justify-center transition-colors"
-                              >
-                                <Plus className="w-3 h-3 text-white" />
-                              </button>
-                            </div>
-
-                            <div className="text-right">
-                              <p className="text-sm font-bold text-white">
-                                {(product.price * quantity).toFixed(2)} €
-                              </p>
-                              {quantity > 1 && (
-                                <p className="text-[10px] text-zinc-500">
-                                  {product.price.toFixed(2)} € / u
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-
-                {/* ── Footer / Summary ──────────────────────────────────── */}
-                <div className="border-t border-white/[0.06] px-5 pt-4 pb-5 space-y-3 bg-zinc-950/90 backdrop-blur-sm">
-                  {/* Totals */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-sm text-zinc-400">
-                      <span>Sous-total</span>
-                      <span className="font-medium text-zinc-300">{sub.toFixed(2)} €</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-zinc-400">
-                      <span>Livraison</span>
-                      <span className={`font-medium ${fee === 0 ? 'text-green-neon' : 'text-zinc-300'}`}>
-                        {fee === 0
-                          ? deliveryType === 'click_collect'
-                            ? 'Retrait gratuit'
-                            : '🎁 Offerte'
-                          : `${fee.toFixed(2)} €`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 border-t border-white/[0.06]">
-                      <span className="font-bold text-white text-base">Total TTC</span>
-                      <motion.span
-                        key={tot}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="font-bold text-xl text-white"
-                      >
-                        {tot.toFixed(2)} €
-                      </motion.span>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <Link
-                    to="/commande"
-                    onClick={closeSidebar}
-                    className="group relative block w-full overflow-hidden rounded-xl"
-                  >
-                    <div className="relative bg-green-neon hover:bg-green-400 transition-colors text-black font-bold text-sm text-center py-3.5 px-4 flex items-center justify-center gap-2">
-                      <span>Commander</span>
-                      <span className="opacity-70">—</span>
-                      <span>{tot.toFixed(2)} €</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform ml-1" />
-                    </div>
-                  </Link>
-
                   <button
                     onClick={closeSidebar}
-                    className="w-full text-zinc-500 hover:text-zinc-300 text-xs text-center py-1.5 transition-colors"
+                    className="bg-white text-black font-black uppercase tracking-widest px-10 py-5 rounded-2xl hover:bg-green-neon transition-all shadow-xl"
                   >
-                    ← Continuer mes achats
+                    Découvrir.
                   </button>
                 </div>
-              </>
-            )}
+              ) : (
+                <>
+                  {/* Delivery toggle & Gauge */}
+                  <div className="px-8 pb-6 border-b border-white/[0.05] space-y-6">
+                    <div className="relative grid grid-cols-2 gap-2 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-1.5 focus-within:border-white/20 transition-all">
+                      <motion.div
+                        layout
+                        className="absolute inset-y-1.5 w-[calc(50%-6px)] rounded-xl bg-white shadow-xl"
+                        animate={{ left: deliveryType === 'click_collect' ? 6 : 'calc(50% + 1px)' }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                      />
+                      <button
+                        onClick={() => setDeliveryType('click_collect')}
+                        className={`relative z-10 flex items-center justify-center gap-3 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors ${deliveryType === 'click_collect' ? 'text-black' : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                      >
+                        <Package className="w-4 h-4" />
+                        Click & Collect
+                      </button>
+                      <button
+                        onClick={() => setDeliveryType('delivery')}
+                        className={`relative z-10 flex items-center justify-center gap-3 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors ${deliveryType === 'delivery' ? 'text-black' : 'text-zinc-500 hover:text-zinc-300'
+                          }`}
+                      >
+                        <Truck className="w-4 h-4" />
+                        Livraison
+                      </button>
+                    </div>
+
+                    <div className="bg-white/[0.02] rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-green-neon/5 blur-3xl -z-10 group-hover:bg-green-neon/10 transition-all" />
+                      <FreeShippingGauge variant="compact" />
+                    </div>
+                  </div>
+
+                  {/* Items list */}
+                  <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 scrollbar-hide">
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {items.map(({ product, quantity }) => (
+                        <motion.div
+                          key={product.id}
+                          layout
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, x: 20 }}
+                          className="group relative flex gap-6 bg-white/[0.02] border border-white/[0.05] rounded-[2rem] p-5 hover:bg-white/[0.04] transition-all"
+                        >
+                          {/* Image */}
+                          <div className="relative w-24 h-24 aspect-square rounded-2xl overflow-hidden border border-white/10 shrink-0">
+                            <img
+                              src={product.image_url ?? ''}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                            {product.cbd_percentage && (
+                              <span className="absolute top-2 right-2 text-[9px] font-black uppercase tracking-widest bg-green-neon text-black px-2 py-0.5 rounded-full leading-none border border-black/10">
+                                {product.cbd_percentage}%
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                            <div className="flex justify-between items-start gap-4">
+                              <h4 className="flex-1 font-serif text-lg font-black leading-tight text-white truncate group-hover:text-green-neon transition-colors">
+                                {product.name}
+                              </h4>
+                              <button
+                                onClick={() => removeItem(product.id)}
+                                className="w-8 h-8 rounded-xl bg-white/5 hover:bg-red-400/20 text-zinc-600 hover:text-red-400 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-4 border-t border-white/5 pt-4">
+                              <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1">
+                                <button
+                                  onClick={() => updateQuantity(product.id, quantity - 1)}
+                                  disabled={quantity <= 1}
+                                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-20 flex items-center justify-center transition-all"
+                                >
+                                  <Minus className="w-3 h-3 text-white" />
+                                </button>
+                                <span className="w-6 text-center text-xs font-black font-mono text-white">
+                                  {quantity}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(product.id, quantity + 1)}
+                                  disabled={quantity >= product.stock_quantity}
+                                  className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-20 flex items-center justify-center transition-all"
+                                >
+                                  <Plus className="w-3 h-3 text-white" />
+                                </button>
+                              </div>
+
+                              <div className="text-right">
+                                <p className="text-lg font-serif font-black text-white">
+                                  {(product.price * quantity).toFixed(2)}<span className="text-[10px] text-green-neon ml-1 font-sans">€</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* ── Footer ─────────────────────────────────────────────── */}
+                  <div className="px-8 pt-8 pb-10 border-t border-white/[0.08] bg-zinc-950 space-y-8 relative overflow-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-green-neon/5 to-transparent -z-10 pointer-events-none" />
+
+                    {/* Totals */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                        <span>Sous-total</span>
+                        <span className="text-sm font-medium text-white">{sub.toFixed(2)} €</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                        <span>Expédition</span>
+                        <span className={`text-sm ${fee === 0 ? 'text-green-neon' : 'text-white'}`}>
+                          {fee === 0 ? (deliveryType === 'click_collect' ? 'OFFERT' : 'OFFERT') : `${fee.toFixed(2)} €`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-end pt-6 border-t border-white/10">
+                        <span className="text-xs font-black uppercase tracking-[0.3em] text-zinc-600 mb-1">TOTAL MASTER</span>
+                        <motion.span
+                          key={tot}
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="text-4xl font-serif font-black text-white tracking-tight"
+                        >
+                          {tot.toFixed(2)}<span className="text-green-neon text-lg ml-1">€</span>
+                        </motion.span>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="space-y-4">
+                      <Link
+                        to="/commande"
+                        onClick={closeSidebar}
+                        className="group relative block w-full overflow-hidden rounded-[2rem] shadow-2xl shadow-green-neon/5 hover:shadow-green-neon/15 transition-all"
+                      >
+                        <div className="relative bg-white hover:bg-green-neon transition-all duration-500 text-black font-black text-sm uppercase tracking-[0.25em] text-center py-6 px-10 flex items-center justify-center gap-4 group">
+                          <span>Finaliser la Sélection</span>
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-500" />
+                        </div>
+                      </Link>
+
+                      <div className="flex items-center justify-center gap-3 opacity-40">
+                        <ShieldCheck className="w-4 h-4 text-green-neon" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Transaction Securisée</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </motion.div>
         </>
       )}

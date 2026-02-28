@@ -13,6 +13,7 @@ interface AuthStore {
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<void>;
+  setProfile: (profile: Profile | null) => void;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -52,6 +53,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     if (data) set({ profile: data as Profile });
   },
+
+  setProfile: (profile: Profile | null) => set({ profile }),
 
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
