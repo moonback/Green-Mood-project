@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import AgeGate from "./AgeGate";
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +34,9 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
+      {/* Age Verification Popup */}
+      <AgeGate />
+
       {/* Promotional Banner */}
       <AnimatePresence>
         {isBannerVisible && (

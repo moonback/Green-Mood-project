@@ -43,7 +43,7 @@ Cette phase concerne la personnalisation du site avec les vraies données de la 
 
 Ces fonctionnalités viendront enrichir l'expérience utilisateur une fois le site en ligne.
 
-- [ ] **Popup de vérification d'âge (Age Gate)** : Obligatoire pour les sites liés au CBD. Un popup à l'arrivée sur le site demandant "Avez-vous plus de 18 ans ?".
+- [x] **Popup de vérification d'âge (Age Gate)** : Obligatoire pour les sites liés au CBD. Un popup à l'arrivée sur le site demandant "Avez-vous plus de 18 ans ?".
 - [ ] **Formulaire de contact fonctionnel** : Remplacer les simples coordonnées par un formulaire de contact direct (utilisant un service comme EmailJS ou Formspree pour éviter d'avoir un backend complexe).
 - [ ] **Bouton WhatsApp flottant** : Un bouton fixe en bas à droite de l'écran pour permettre aux clients de poser des questions instantanément via WhatsApp.
 - [ ] **Intégration Instagram** : Afficher un flux (feed) des dernières publications Instagram de la boutique directement sur la page d'accueil.
