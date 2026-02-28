@@ -40,6 +40,7 @@ import SEO from '../components/SEO';
 import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminReviewsTab from '../components/admin/AdminReviewsTab';
+import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -605,21 +606,11 @@ export default function Admin() {
                   </div>
 
                   <div className="col-span-2">
-                    <label className={LABEL}>URL de l'image</label>
-                    <input
-                      type="url"
-                      value={productForm.image_url ?? ''}
-                      onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value || null })}
-                      className={INPUT}
-                      placeholder="https://images.unsplash.com/…"
+                    <label className={LABEL}>Image du produit</label>
+                    <ProductImageUpload
+                      value={productForm.image_url}
+                      onChange={(url) => setProductForm({ ...productForm, image_url: url })}
                     />
-                    {productForm.image_url && (
-                      <img
-                        src={productForm.image_url}
-                        alt="Aperçu"
-                        className="mt-2 h-20 w-20 object-cover rounded-xl border border-zinc-700"
-                      />
-                    )}
                   </div>
 
                   <div className="col-span-2 flex flex-wrap gap-5 pt-1">

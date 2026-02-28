@@ -376,3 +376,55 @@ CREATE POLICY "reviews_admin_all" ON reviews FOR ALL
   USING (
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
   );
+
+-- ─── Storage : bucket product-images ─────────────────────────────────────────
+-- Exécuter dans : Supabase Dashboard → SQL Editor
+-- Crée le bucket public pour les images produits et les politiques RLS associées.
+
+-- 1. Bucket (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'product-images') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'product-images',
+      'product-images',
+      true,
+      5242880,  -- 5 Mo
+      ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    );
+  END IF;
+END $$;
+
+-- 2. Politique lecture publique
+DROP POLICY IF EXISTS "product_images_public_read" ON storage.objects;
+CREATE POLICY "product_images_public_read"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'product-images');
+
+-- 3. Upload réservé aux admins
+DROP POLICY IF EXISTS "product_images_admin_insert" ON storage.objects;
+CREATE POLICY "product_images_admin_insert"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- 4. Mise à jour réservée aux admins
+DROP POLICY IF EXISTS "product_images_admin_update" ON storage.objects;
+CREATE POLICY "product_images_admin_update"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- 5. Suppression réservée aux admins
+DROP POLICY IF EXISTS "product_images_admin_delete" ON storage.objects;
+CREATE POLICY "product_images_admin_delete"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );
