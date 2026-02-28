@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Dancing+Script:wght@700&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -6,6 +6,7 @@
   --font-serif:
     "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times,
     serif;
+  --font-script: "Dancing Script", cursive;
 
   --color-green-neon: #39ff14;
   --color-green-dark: #0a2e15;
@@ -14,7 +15,7 @@
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-50 font-sans antialiased selection:bg-green-primary selection:text-white;
+    @apply bg-zinc-950 text-zinc-50 font-sans antialiased selection:bg-green-neon selection:text-black;
   }
 
   h1,
@@ -24,5 +25,59 @@
   h5,
   h6 {
     @apply font-serif;
+  }
+}
+
+@layer utilities {
+  /* Neon text glow — identique à l'effet lumineux du logo */
+  .glow-green {
+    text-shadow:
+      0 0 8px #39ff14,
+      0 0 20px #39ff1488,
+      0 0 45px #39ff1444;
+  }
+
+  /* Neon box glow — pour les boutons et badges */
+  .glow-box-green {
+    box-shadow:
+      0 0 10px rgba(57, 255, 20, 0.45),
+      0 0 25px rgba(57, 255, 20, 0.2),
+      inset 0 0 0 1px rgba(57, 255, 20, 0.15);
+  }
+
+  /* Subtil — bordures, icônes secondaires */
+  .glow-box-green-sm {
+    box-shadow:
+      0 0 6px rgba(57, 255, 20, 0.35),
+      0 0 14px rgba(57, 255, 20, 0.12);
+  }
+
+  /* Logo : lueur diffuse autour de l'image */
+  .glow-logo {
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))
+            drop-shadow(0 0 20px rgba(57, 255, 20, 0.25));
+  }
+
+  /* Pulsation lente — pour les badges "En direct" ou featured */
+  .glow-pulse-green {
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow:
+        0 0 6px rgba(57, 255, 20, 0.4),
+        0 0 14px rgba(57, 255, 20, 0.15);
+    }
+    50% {
+      box-shadow:
+        0 0 14px rgba(57, 255, 20, 0.75),
+        0 0 30px rgba(57, 255, 20, 0.35),
+        0 0 50px rgba(57, 255, 20, 0.1);
+    }
+  }
+
+  .font-script {
+    font-family: var(--font-script);
   }
 }

@@ -72,7 +72,8 @@ export default function Home() {
             className="space-y-8"
           >
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tighter text-white">
-              L'Excellence du <span className="text-green-primary">CBD</span>
+              L'Excellence du{" "}
+              <span className="text-green-neon glow-green">CBD</span>
             </h1>
             <p className="text-xl md:text-2xl text-zinc-300 max-w-2xl mx-auto font-light leading-relaxed">
               Découvrez une sélection premium de fleurs, résines et huiles.
@@ -81,14 +82,14 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
               <Link
                 to="/boutique"
-                className="w-full sm:w-auto px-8 py-4 bg-green-primary hover:bg-green-600 text-white rounded-full font-medium transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-green-primary/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-4 bg-green-neon hover:bg-green-neon text-black font-bold rounded-full transition-all transform hover:scale-105 glow-box-green hover:shadow-[0_0_25px_rgba(57,255,20,0.6),0_0_50px_rgba(57,255,20,0.25)] flex items-center justify-center gap-2"
               >
                 Découvrir la boutique
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 to="/produits"
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium backdrop-blur-sm transition-all transform hover:scale-105 flex items-center justify-center"
+                className="w-full sm:w-auto px-8 py-4 border border-green-neon/40 hover:border-green-neon text-green-neon/80 hover:text-green-neon rounded-full font-medium backdrop-blur-sm transition-all transform hover:scale-105 hover:glow-box-green-sm flex items-center justify-center"
               >
                 Voir nos produits
               </Link>

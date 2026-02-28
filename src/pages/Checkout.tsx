@@ -86,6 +86,9 @@ export default function Checkout() {
 
     try {
       // 1. Create order in Supabase
+      const pointsRedeemed = usePoints && profile
+        ? Math.floor(profile.loyalty_points / 100) * 100
+        : 0;
       const pointsEarned = Math.floor(tot);
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -97,6 +100,7 @@ export default function Checkout() {
           delivery_fee: fee,
           total: tot,
           loyalty_points_earned: pointsEarned,
+          loyalty_points_redeemed: pointsRedeemed,
           payment_status: 'pending',
           status: 'pending',
         })
@@ -150,14 +154,38 @@ export default function Checkout() {
         });
       }
 
-      // 5. Add loyalty points
+      // 5. Update loyalty points
+      const newBalance = Math.max(0, (profile?.loyalty_points ?? 0) - pointsRedeemed + pointsEarned);
+      await supabase
+        .from('profiles')
+        .update({ loyalty_points: newBalance })
+        .eq('id', user.id);
+
+      // Log earned points transaction
       if (pointsEarned > 0) {
-        await supabase
-          .from('profiles')
-          .update({ loyalty_points: (profile?.loyalty_points ?? 0) + pointsEarned - (usePoints ? profile?.loyalty_points ?? 0 : 0) })
-          .eq('id', user.id);
-        fetchProfile(user.id);
+        await supabase.from('loyalty_transactions').insert({
+          user_id: user.id,
+          order_id: order.id,
+          type: 'earned',
+          points: pointsEarned,
+          balance_after: newBalance,
+          note: `Commande #${order.id.slice(0, 8).toUpperCase()}`,
+        });
       }
+
+      // Log redeemed points transaction
+      if (pointsRedeemed > 0) {
+        await supabase.from('loyalty_transactions').insert({
+          user_id: user.id,
+          order_id: order.id,
+          type: 'redeemed',
+          points: pointsRedeemed,
+          balance_after: newBalance,
+          note: `Utilisation de ${pointsRedeemed} pts (−${pointsValue.toFixed(2)} €)`,
+        });
+      }
+
+      fetchProfile(user.id);
 
       // 6. Clear cart and redirect
       clearCart();

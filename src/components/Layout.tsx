@@ -88,31 +88,33 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <img src="/logo.jpeg" alt="Green Mood Logo" className="h-12 w-12 object-contain rounded-full border border-green-primary/30 group-hover:border-green-neon transition-colors" />
-              <span className="font-serif text-2xl font-bold tracking-tight">
-                Green{" "}
-                <span className="text-green-primary group-hover:text-green-neon transition-colors">
-                  Mood
-                </span>
-              </span>
+            <Link to="/" className="flex items-center group" aria-label="Green Mood CBD Shop — Accueil">
+              <img
+                src="/logo.png"
+                alt="Green Mood CBD Shop"
+                className="h-26 w-auto object-contain transition-all duration-500 group-hover:[filter:drop-shadow(0_0_8px_rgba(57,255,20,0.65))_drop-shadow(0_0_22px_rgba(57,255,20,0.3))]"
+              />
             </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex gap-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-green-primary ${location.pathname === link.path ||
-                    (link.path !== "/" && location.pathname.startsWith(link.path))
-                    ? "text-green-primary"
-                    : "text-zinc-300"
-                    }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.path ||
+                  (link.path !== "/" && location.pathname.startsWith(link.path));
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`relative text-sm font-medium transition-all duration-200 hover:text-green-neon ${isActive ? "text-green-neon" : "text-zinc-300"
+                      }`}
+                  >
+                    {link.name}
+                    {isActive && (
+                      <span className="absolute -bottom-1 left-0 right-0 h-px bg-green-neon rounded-full [box-shadow:0_0_6px_rgba(57,255,20,0.8)]" />
+                    )}
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Right actions */}
@@ -125,7 +127,7 @@ export default function Layout() {
               >
                 <ShoppingCart className="h-6 w-6" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-green-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 bg-green-neon text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center glow-pulse-green">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
@@ -220,8 +222,8 @@ export default function Layout() {
                     key={link.path}
                     to={link.path}
                     className={`text-lg font-medium transition-colors ${location.pathname === link.path
-                      ? "text-green-primary"
-                      : "text-zinc-300"
+                      ? "text-green-neon glow-green"
+                      : "text-zinc-300 hover:text-green-neon"
                       }`}
                   >
                     {link.name}
@@ -268,19 +270,22 @@ export default function Layout() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="space-y-4">
-              <Link to="/" className="flex items-center gap-3">
-                <img src="/logo.jpeg" alt="Green Mood Logo" className="h-10 w-10 object-contain rounded-full" />
-                <span className="font-serif text-xl font-bold">Green Mood</span>
+              <Link to="/" className="flex items-center group" aria-label="Green Mood CBD Shop">
+                <img
+                  src="/logo.jpeg"
+                  alt="Green Mood CBD Shop"
+                  className="h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-all duration-500 group-hover:[filter:drop-shadow(0_0_8px_rgba(57,255,20,0.5))_drop-shadow(0_0_18px_rgba(57,255,20,0.2))]"
+                />
               </Link>
               <p className="text-zinc-400 text-sm leading-relaxed">
                 Votre CBD Shop premium. Produits naturels, traçabilité garantie
                 et conseils d'experts pour votre bien-être.
               </p>
               <div className="flex gap-4 pt-2">
-                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-neon transition-colors">
                   <Instagram className="h-5 w-5" />
                 </a>
-                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-neon transition-colors">
                   <Facebook className="h-5 w-5" />
                 </a>
               </div>
@@ -294,7 +299,7 @@ export default function Layout() {
                   <li key={link.path}>
                     <Link
                       to={link.path}
-                      className="text-zinc-400 hover:text-green-primary transition-colors text-sm"
+                      className="text-zinc-400 hover:text-green-neon transition-colors text-sm"
                     >
                       {link.name}
                     </Link>

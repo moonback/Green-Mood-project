@@ -246,3 +246,185 @@ BEGIN
     ('banner_enabled', 'true')
   ON CONFLICT (key) DO NOTHING;
 END $$;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Phase 3 — Expansion Future
+-- ═══════════════════════════════════════════════════════════════════
+
+-- ─── Colonne loyalty_points_redeemed sur orders ───────────────────
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS loyalty_points_redeemed int NOT NULL DEFAULT 0;
+
+-- ─── Table loyalty_transactions ──────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS loyalty_transactions (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  order_id      uuid REFERENCES orders(id) ON DELETE SET NULL,
+  type          text NOT NULL CHECK (type IN ('earned', 'redeemed', 'adjusted', 'expired')),
+  points        int NOT NULL,
+  balance_after int NOT NULL,
+  note          text,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE loyalty_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "loyalty_tx_owner_read" ON loyalty_transactions FOR SELECT
+  USING (
+    user_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+CREATE POLICY "loyalty_tx_auth_insert" ON loyalty_transactions FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "loyalty_tx_admin_all" ON loyalty_transactions FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- ─── Table subscriptions ─────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  product_id         uuid NOT NULL REFERENCES products(id),
+  quantity           int NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  frequency          text NOT NULL CHECK (frequency IN ('weekly', 'biweekly', 'monthly')),
+  next_delivery_date date NOT NULL,
+  status             text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'cancelled')),
+  created_at         timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "subscriptions_owner_read" ON subscriptions FOR SELECT
+  USING (
+    user_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+CREATE POLICY "subscriptions_owner_insert" ON subscriptions FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "subscriptions_owner_update" ON subscriptions FOR UPDATE
+  USING (
+    user_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- ─── Table subscription_orders ───────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS subscription_orders (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  subscription_id uuid NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
+  order_id        uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE subscription_orders ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "sub_orders_owner_read" ON subscription_orders FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM subscriptions s WHERE s.id = subscription_id AND (
+        s.user_id = auth.uid() OR
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+      )
+    )
+  );
+
+CREATE POLICY "sub_orders_admin_insert" ON subscription_orders FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- ─── Table reviews ───────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id   uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id      uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  order_id     uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  rating       smallint NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment      text,
+  is_verified  boolean NOT NULL DEFAULT false,
+  is_published boolean NOT NULL DEFAULT false,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (product_id, user_id, order_id)
+);
+
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "reviews_public_read" ON reviews FOR SELECT
+  USING (
+    is_published = true OR
+    user_id = auth.uid() OR
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+CREATE POLICY "reviews_owner_insert" ON reviews FOR INSERT
+  WITH CHECK (
+    auth.uid() IS NOT NULL AND
+    user_id = auth.uid()
+  );
+
+CREATE POLICY "reviews_owner_update" ON reviews FOR UPDATE
+  USING (user_id = auth.uid() AND is_published = false);
+
+CREATE POLICY "reviews_admin_all" ON reviews FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- ─── Storage : bucket product-images ─────────────────────────────────────────
+-- Exécuter dans : Supabase Dashboard → SQL Editor
+-- Crée le bucket public pour les images produits et les politiques RLS associées.
+
+-- 1. Bucket (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'product-images') THEN
+    INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    VALUES (
+      'product-images',
+      'product-images',
+      true,
+      5242880,  -- 5 Mo
+      ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    );
+  END IF;
+END $$;
+
+-- 2. Politique lecture publique
+DROP POLICY IF EXISTS "product_images_public_read" ON storage.objects;
+CREATE POLICY "product_images_public_read"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'product-images');
+
+-- 3. Upload réservé aux admins
+DROP POLICY IF EXISTS "product_images_admin_insert" ON storage.objects;
+CREATE POLICY "product_images_admin_insert"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- 4. Mise à jour réservée aux admins
+DROP POLICY IF EXISTS "product_images_admin_update" ON storage.objects;
+CREATE POLICY "product_images_admin_update"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- 5. Suppression réservée aux admins
+DROP POLICY IF EXISTS "product_images_admin_delete" ON storage.objects;
+CREATE POLICY "product_images_admin_delete"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'product-images'
+    AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+  );

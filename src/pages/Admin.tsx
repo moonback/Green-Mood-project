@@ -30,15 +30,21 @@ import {
   Eye,
   TrendingUp,
   Instagram,
+  MessageSquare,
+  LineChart,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
 import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
+import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
+import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
+import AdminReviewsTab from '../components/admin/AdminReviewsTab';
+import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -161,7 +167,10 @@ export default function Admin() {
     { key: 'stock', label: 'Stock', icon: BarChart3 },
     { key: 'customers', label: 'Clients', icon: Users },
     { key: 'settings', label: 'Paramètres', icon: Settings },
-  ];
+    { key: 'subscriptions', label: 'Abonnements', icon: RefreshCw },
+    { key: 'reviews', label: 'Avis', icon: MessageSquare },
+    { key: 'analytics', label: 'Analytique', icon: LineChart },
+  ] as { key: Tab; label: string; icon: ElementType }[];
 
   // ─── Data loading ─────────────────────────────────────────────────────────
 
@@ -177,6 +186,9 @@ export default function Admin() {
       case 'stock': await loadStock(); break;
       case 'customers': await loadCustomers(); break;
       case 'settings': await loadSettings(); break;
+      case 'subscriptions': break; // handled by AdminSubscriptionsTab
+      case 'reviews': break; // handled by AdminReviewsTab
+      case 'analytics': break; // handled by AdminAnalyticsTab
     }
     setIsLoading(false);
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -594,21 +606,11 @@ export default function Admin() {
                   </div>
 
                   <div className="col-span-2">
-                    <label className={LABEL}>URL de l'image</label>
-                    <input
-                      type="url"
-                      value={productForm.image_url ?? ''}
-                      onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value || null })}
-                      className={INPUT}
-                      placeholder="https://images.unsplash.com/…"
+                    <label className={LABEL}>Image du produit</label>
+                    <ProductImageUpload
+                      value={productForm.image_url}
+                      onChange={(url) => setProductForm({ ...productForm, image_url: url })}
                     />
-                    {productForm.image_url && (
-                      <img
-                        src={productForm.image_url}
-                        alt="Aperçu"
-                        className="mt-2 h-20 w-20 object-cover rounded-xl border border-zinc-700"
-                      />
-                    )}
                   </div>
 
                   <div className="col-span-2 flex flex-wrap gap-5 pt-1">
@@ -762,44 +764,164 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* ── Page ───────────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-serif text-3xl font-bold">Administration</h1>
-          <button
-            onClick={loadData}
-            className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Actualiser
-          </button>
-        </div>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-8 bg-zinc-900 rounded-2xl p-1.5 border border-zinc-800 overflow-x-auto">
-          {tabs.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${tab === key
-                ? 'bg-green-primary text-white shadow'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-green-primary border-t-transparent rounded-full animate-spin" />
+      {/* ── Sidebar + Page Layout ─────────────────────────────────────────── */}
+      <div className="flex min-h-screen">
+        {/* Sidebar — desktop only */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800">
+          {/* Brand */}
+          <div className="px-4 py-4 border-b border-zinc-800/60">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.jpeg"
+                alt="Green Mood"
+                className="h-10 w-auto object-contain"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.5))' }}
+              />
+              <div>
+                <p className="font-semibold text-sm text-white leading-tight">Green Mood</p>
+                <p className="text-[10px] text-green-neon/70 font-medium tracking-widest uppercase">Administration</p>
+              </div>
+            </div>
           </div>
-        ) : (
-          <>
+
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
+            {[
+              {
+                group: 'Aperçu',
+                items: [{ key: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard }],
+              },
+              {
+                group: 'Catalogue',
+                items: [
+                  { key: 'products' as Tab, label: 'Produits', icon: ShoppingBag },
+                  { key: 'categories' as Tab, label: 'Catégories', icon: Tag },
+                ],
+              },
+              {
+                group: 'Commerce',
+                items: [
+                  { key: 'orders' as Tab, label: 'Commandes', icon: Package },
+                  { key: 'stock' as Tab, label: 'Stock', icon: BarChart3 },
+                  { key: 'subscriptions' as Tab, label: 'Abonnements', icon: RefreshCw },
+                ],
+              },
+              {
+                group: 'Clients',
+                items: [
+                  { key: 'customers' as Tab, label: 'Clients', icon: Users },
+                  { key: 'reviews' as Tab, label: 'Avis', icon: MessageSquare },
+                ],
+              },
+              {
+                group: 'Analytique',
+                items: [{ key: 'analytics' as Tab, label: 'Analytique', icon: LineChart }],
+              },
+              {
+                group: 'Système',
+                items: [{ key: 'settings' as Tab, label: 'Paramètres', icon: Settings }],
+              },
+            ].map(({ group, items }) => (
+              <div key={group}>
+                <p className="px-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-1.5">
+                  {group}
+                </p>
+                {items.map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${
+                      tab === key
+                        ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    {label}
+                    {key === 'orders' && stats && stats.ordersPending > 0 && (
+                      <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        {stats.ordersPending}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+
+          {/* Sidebar footer */}
+          <div className="px-3 py-4 border-t border-zinc-800">
+            <button
+              onClick={loadData}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Actualiser les données
+            </button>
+          </div>
+        </aside>
+
+        {/* Main column */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+          {/* Top header bar */}
+          <div className="bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 py-4 flex items-center gap-4 shrink-0">
+            <div className="lg:hidden w-9 h-9 bg-green-neon/10 border border-green-neon/25 rounded-xl flex items-center justify-center" style={{ boxShadow: '0 0 8px rgba(57,255,20,0.2)' }}>
+              <Store className="w-4 h-4 text-green-neon" />
+            </div>
+            <div>
+              <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-semibold hidden lg:block">
+                Administration
+              </p>
+              <h1 className="font-serif text-lg font-bold text-white leading-tight">
+                {tabs.find((t) => t.key === tab)?.label ?? 'Dashboard'}
+              </h1>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              {stats && stats.ordersPending > 0 && (
+                <button
+                  onClick={() => setTab('orders')}
+                  className="hidden sm:flex items-center gap-2 bg-orange-900/30 border border-orange-800 text-orange-400 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {stats.ordersPending} en attente
+                </button>
+              )}
+              <button
+                onClick={loadData}
+                className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-3 py-2 rounded-xl transition-all"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline text-xs">Actualiser</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile tab bar */}
+          <div className="lg:hidden flex gap-1 px-3 py-2 bg-zinc-950 border-b border-zinc-800 overflow-x-auto shrink-0">
+            {tabs.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  tab === key
+                    ? 'bg-green-primary text-white'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <main className="flex-1 p-4 sm:p-6 overflow-auto bg-black/20">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-24">
+                <div className="w-8 h-8 border-2 border-green-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <>
             {/* ══════════════════════════════════ DASHBOARD ══════════════════ */}
             {tab === 'dashboard' && stats && (
               <div className="space-y-6">
@@ -811,6 +933,8 @@ export default function Admin() {
                       value: `${stats.totalRevenue.toFixed(2)} €`,
                       sub: `${stats.revenueThisMonth.toFixed(2)} € ce mois`,
                       color: 'text-green-400',
+                      accent: 'bg-green-400',
+                      iconBg: 'bg-green-400/10 border-green-400/20',
                       icon: TrendingUp,
                     },
                     {
@@ -818,6 +942,8 @@ export default function Admin() {
                       value: stats.ordersTotal,
                       sub: `${stats.ordersToday} aujourd'hui`,
                       color: 'text-blue-400',
+                      accent: 'bg-blue-400',
+                      iconBg: 'bg-blue-400/10 border-blue-400/20',
                       icon: Package,
                     },
                     {
@@ -825,6 +951,8 @@ export default function Admin() {
                       value: stats.ordersPending,
                       sub: 'à traiter en priorité',
                       color: stats.ordersPending > 0 ? 'text-orange-400' : 'text-zinc-400',
+                      accent: stats.ordersPending > 0 ? 'bg-orange-400' : 'bg-zinc-700',
+                      iconBg: stats.ordersPending > 0 ? 'bg-orange-400/10 border-orange-400/20' : 'bg-zinc-800 border-zinc-700',
                       icon: AlertTriangle,
                     },
                     {
@@ -832,16 +960,26 @@ export default function Admin() {
                       value: stats.totalCustomers,
                       sub: 'comptes créés',
                       color: 'text-purple-400',
+                      accent: 'bg-purple-400',
+                      iconBg: 'bg-purple-400/10 border-purple-400/20',
                       icon: Users,
                     },
-                  ].map(({ label, value, sub, color, icon: Icon }) => (
-                    <div key={label} className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs text-zinc-500 uppercase tracking-wider leading-tight">{label}</p>
-                        <Icon className={`w-5 h-5 ${color} opacity-60`} />
+                  ].map(({ label, value, sub, color, accent, iconBg, icon: Icon }) => (
+                    <div
+                      key={label}
+                      className="relative bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors overflow-hidden"
+                    >
+                      <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${accent}`} />
+                      <div className="pl-3">
+                        <div className="flex items-start justify-between mb-3">
+                          <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider leading-tight pr-2">{label}</p>
+                          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconBg}`}>
+                            <Icon className={`w-4 h-4 ${color}`} />
+                          </div>
+                        </div>
+                        <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                        <p className="text-xs text-zinc-500 mt-1.5">{sub}</p>
                       </div>
-                      <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                      <p className="text-xs text-zinc-500 mt-1">{sub}</p>
                     </div>
                   ))}
                 </div>
@@ -877,33 +1015,45 @@ export default function Admin() {
                 {/* Recent orders */}
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                   <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-                    <h2 className="font-serif font-semibold text-lg">Dernières commandes</h2>
-                    <button onClick={() => setTab('orders')} className="text-sm text-green-primary hover:underline">
-                      Voir tout →
+                    <div>
+                      <h2 className="font-serif font-semibold text-lg">Dernières commandes</h2>
+                      <p className="text-xs text-zinc-500 mt-0.5">Les {stats.recentOrders.length} commandes les plus récentes</p>
+                    </div>
+                    <button
+                      onClick={() => setTab('orders')}
+                      className="flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 bg-green-400/10 border border-green-400/20 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      Voir tout
                     </button>
                   </div>
                   {stats.recentOrders.length === 0 ? (
                     <p className="text-zinc-500 text-sm text-center py-10">Aucune commande pour l'instant.</p>
                   ) : (
-                    <div className="divide-y divide-zinc-800">
+                    <div className="divide-y divide-zinc-800/60">
                       {stats.recentOrders.map((order) => {
                         const st = ORDER_STATUS_OPTIONS.find((s) => s.value === order.status);
                         return (
-                          <div key={order.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-sm font-semibold text-white">
-                                #{order.id.slice(0, 8).toUpperCase()}
-                              </p>
-                              <p className="text-xs text-zinc-500 mt-0.5">
-                                {new Date(order.created_at).toLocaleDateString('fr-FR')} ·{' '}
-                                {order.delivery_type === 'click_collect' ? 'Click & Collect' : 'Livraison'}
-                              </p>
+                          <div key={order.id} className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-zinc-800/30 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
+                                <Package className="w-3.5 h-3.5 text-zinc-400" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-white font-mono">
+                                  #{order.id.slice(0, 8).toUpperCase()}
+                                </p>
+                                <p className="text-xs text-zinc-500 mt-0.5">
+                                  {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                                  {' · '}
+                                  {order.delivery_type === 'click_collect' ? 'Click & Collect' : 'Livraison'}
+                                </p>
+                              </div>
                             </div>
                             <div className="flex items-center gap-3 ml-auto">
-                              <span className={`text-xs px-2 py-0.5 rounded-full border ${st?.color ?? ''}`}>
+                              <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${st?.color ?? ''}`}>
                                 {st?.label ?? order.status}
                               </span>
-                              <span className="font-bold text-white">{order.total.toFixed(2)} €</span>
+                              <span className="font-bold text-white text-sm min-w-[60px] text-right">{order.total.toFixed(2)} €</span>
                             </div>
                           </div>
                         );
@@ -1810,8 +1960,25 @@ export default function Admin() {
                 </div>
               </div>
             )}
-          </>
-        )}
+
+            {/* ── Subscriptions tab ── */}
+            {tab === 'subscriptions' && !isLoading && (
+              <AdminSubscriptionsTab />
+            )}
+
+            {/* ── Reviews tab ── */}
+            {tab === 'reviews' && !isLoading && (
+              <AdminReviewsTab />
+            )}
+
+            {/* ── Analytics tab ── */}
+            {tab === 'analytics' && !isLoading && (
+              <AdminAnalyticsTab />
+            )}
+              </>
+            )}
+          </main>
+        </div>
       </div>
     </>
   );
