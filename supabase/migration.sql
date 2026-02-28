@@ -428,3 +428,50 @@ CREATE POLICY "product_images_admin_delete"
     bucket_id = 'product-images'
     AND EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
   );
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Promo Codes — Codes de réduction
+-- ═══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS promo_codes (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  code             text UNIQUE NOT NULL,
+  description      text,
+  discount_type    text NOT NULL CHECK (discount_type IN ('percent', 'fixed')),
+  discount_value   numeric(10,2) NOT NULL CHECK (discount_value > 0),
+  min_order_value  numeric(10,2) NOT NULL DEFAULT 0,
+  max_uses         int,
+  uses_count       int NOT NULL DEFAULT 0,
+  expires_at       timestamptz,
+  is_active        boolean NOT NULL DEFAULT true,
+  created_at       timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "promo_codes_auth_read" ON promo_codes;
+CREATE POLICY "promo_codes_auth_read" ON promo_codes FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
+DROP POLICY IF EXISTS "promo_codes_admin_all" ON promo_codes;
+CREATE POLICY "promo_codes_admin_all" ON promo_codes FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_code     text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_discount  numeric(10,2) NOT NULL DEFAULT 0;
+
+CREATE OR REPLACE FUNCTION public.increment_promo_uses(code_text text)
+RETURNS void AS $$
+BEGIN
+  UPDATE promo_codes SET uses_count = uses_count + 1 WHERE code = code_text;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+INSERT INTO promo_codes (code, description, discount_type, discount_value, min_order_value, max_uses, expires_at)
+VALUES
+  ('WEEDKEND-20', 'Weekend spécial -20%', 'percent', 20, 30, 100, now() + interval '30 days'),
+  ('BIENVENUE10', 'Réduction de bienvenue 10%', 'percent', 10, 0, NULL, NULL),
+  ('CBD5EUR', 'Bon de réduction 5€', 'fixed', 5, 20, 50, now() + interval '60 days')
+ON CONFLICT (code) DO NOTHING;

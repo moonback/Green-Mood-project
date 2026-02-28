@@ -40,11 +40,12 @@ import SEO from '../components/SEO';
 import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminReviewsTab from '../components/admin/AdminReviewsTab';
+import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -189,6 +190,7 @@ export default function Admin() {
       case 'subscriptions': break; // handled by AdminSubscriptionsTab
       case 'reviews': break; // handled by AdminReviewsTab
       case 'analytics': break; // handled by AdminAnalyticsTab
+      case 'promo_codes': break; // handled by AdminPromoCodesTab
     }
     setIsLoading(false);
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -804,6 +806,7 @@ export default function Admin() {
                   { key: 'orders' as Tab, label: 'Commandes', icon: Package },
                   { key: 'stock' as Tab, label: 'Stock', icon: BarChart3 },
                   { key: 'subscriptions' as Tab, label: 'Abonnements', icon: RefreshCw },
+                  { key: 'promo_codes' as Tab, label: 'Codes Promo', icon: Tag },
                 ],
               },
               {
@@ -1972,6 +1975,11 @@ export default function Admin() {
                 {/* ── Analytics tab ── */}
                 {tab === 'analytics' && !isLoading && (
                   <AdminAnalyticsTab />
+                )}
+
+                {/* ── Promo Codes tab ── */}
+                {tab === 'promo_codes' && !isLoading && (
+                  <AdminPromoCodesTab />
                 )}
               </>
             )}

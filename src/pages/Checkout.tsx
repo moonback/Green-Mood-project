@@ -8,6 +8,7 @@ import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
+import PromoCodeInput, { AppliedPromo } from '../components/PromoCodeInput';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [usePoints, setUsePoints] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,7 +43,8 @@ export default function Checkout() {
   const sub = subtotal();
   const fee = deliveryFee();
   const pointsValue = usePoints && profile ? Math.floor(profile.loyalty_points / 100) * 5 : 0;
-  const tot = Math.max(0, total() - pointsValue);
+  const promoDiscount = appliedPromo ? appliedPromo.discount_amount : 0;
+  const tot = Math.max(0, total() - pointsValue - promoDiscount);
 
   useEffect(() => {
     if (!user) return;
@@ -101,6 +104,8 @@ export default function Checkout() {
           total: tot,
           loyalty_points_earned: pointsEarned,
           loyalty_points_redeemed: pointsRedeemed,
+          promo_code: appliedPromo?.code ?? null,
+          promo_discount: promoDiscount,
           payment_status: 'pending',
           status: 'pending',
         })
@@ -183,6 +188,11 @@ export default function Checkout() {
           balance_after: newBalance,
           note: `Utilisation de ${pointsRedeemed} pts (−${pointsValue.toFixed(2)} €)`,
         });
+      }
+
+      // 5b. Increment promo uses
+      if (appliedPromo) {
+        await supabase.rpc('increment_promo_uses', { code_text: appliedPromo.code });
       }
 
       fetchProfile(user.id);
@@ -333,6 +343,13 @@ export default function Checkout() {
               </div>
             )}
 
+            {/* Promo code */}
+            <PromoCodeInput
+              subtotal={sub}
+              onApply={setAppliedPromo}
+              applied={appliedPromo}
+            />
+
             {/* Loyalty points */}
             {profile && profile.loyalty_points >= 100 && (
               <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
@@ -387,6 +404,14 @@ export default function Checkout() {
                   <div className="flex justify-between text-green-400">
                     <span>Réduction fidélité</span>
                     <span>−{pointsValue.toFixed(2)} €</span>
+                  </div>
+                )}
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-green-400">
+                    <span className="flex items-center gap-1">
+                      Code <span className="font-mono font-bold">{appliedPromo?.code}</span>
+                    </span>
+                    <span>−{promoDiscount.toFixed(2)} €</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-base pt-1 border-t border-zinc-700">
