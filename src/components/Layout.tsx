@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
   const location = useLocation();
 
   // Close menu on route change
@@ -31,6 +32,29 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
+      {/* Promotional Banner */}
+      <AnimatePresence>
+        {isBannerVisible && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-green-primary text-white relative flex items-center justify-center overflow-hidden"
+          >
+            <div className="px-4 py-2.5 text-sm font-medium text-center w-full max-w-7xl mx-auto pr-10">
+              🌿 Offre de bienvenue : -10% sur votre première visite en boutique avec le code <span className="font-bold">GREENMOON</span> !
+            </div>
+            <button
+              onClick={() => setIsBannerVisible(false)}
+              className="absolute right-4 p-1.5 hover:bg-black/20 rounded-full transition-colors"
+              aria-label="Fermer la bannière"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
