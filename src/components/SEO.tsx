@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async';
 
 interface SEOProps {
   title: string;
@@ -12,7 +11,7 @@ export default function SEO({ title, description, keywords, schema }: SEOProps) 
   const siteUrl = 'https://greenmoon-cbd.fr'; // Replace with actual domain
 
   return (
-    <Helmet>
+    <>
       {/* Standard SEO */}
       <title>{title}</title>
       <meta name="description" content={description} />
@@ -37,6 +36,6 @@ export default function SEO({ title, description, keywords, schema }: SEOProps) 
           {JSON.stringify(schema)}
         </script>
       )}
-    </Helmet>
+    </>
   );
 }

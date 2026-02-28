@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
@@ -10,19 +9,17 @@ import Legal from "./pages/Legal";
 
 export default function App() {
   return (
-    <HelmetProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="boutique" element={<Shop />} />
-            <Route path="produits" element={<Products />} />
-            <Route path="qualite" element={<Quality />} />
-            <Route path="contact" element={<Contact />} />
-            <Route path="mentions-legales" element={<Legal />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </HelmetProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="boutique" element={<Shop />} />
+          <Route path="produits" element={<Products />} />
+          <Route path="qualite" element={<Quality />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="mentions-legales" element={<Legal />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
