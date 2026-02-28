@@ -19,6 +19,9 @@ import Account from "./pages/Account";
 import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
 import Admin from "./pages/Admin";
+import Subscriptions from "./pages/Subscriptions";
+import LoyaltyHistory from "./pages/LoyaltyHistory";
+import MyReviews from "./pages/MyReviews";
 import { useAuthStore } from "./store/authStore";
 import { useSettingsStore } from "./store/settingsStore";
 import SplashScreen from "./components/SplashScreen";
@@ -58,6 +61,9 @@ export default function App() {
             <Route path="compte" element={<Account />} />
             <Route path="compte/commandes" element={<Orders />} />
             <Route path="compte/adresses" element={<Addresses />} />
+            <Route path="compte/abonnements" element={<Subscriptions />} />
+            <Route path="compte/fidelite" element={<LoyaltyHistory />} />
+            <Route path="compte/avis" element={<MyReviews />} />
           </Route>
 
           {/* Routes admin */}

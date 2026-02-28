@@ -30,15 +30,20 @@ import {
   Eye,
   TrendingUp,
   Instagram,
+  MessageSquare,
+  LineChart,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
 import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
+import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
+import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
+import AdminReviewsTab from '../components/admin/AdminReviewsTab';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -161,7 +166,10 @@ export default function Admin() {
     { key: 'stock', label: 'Stock', icon: BarChart3 },
     { key: 'customers', label: 'Clients', icon: Users },
     { key: 'settings', label: 'Paramètres', icon: Settings },
-  ];
+    { key: 'subscriptions', label: 'Abonnements', icon: RefreshCw },
+    { key: 'reviews', label: 'Avis', icon: MessageSquare },
+    { key: 'analytics', label: 'Analytique', icon: LineChart },
+  ] as { key: Tab; label: string; icon: ElementType }[];
 
   // ─── Data loading ─────────────────────────────────────────────────────────
 
@@ -177,6 +185,9 @@ export default function Admin() {
       case 'stock': await loadStock(); break;
       case 'customers': await loadCustomers(); break;
       case 'settings': await loadSettings(); break;
+      case 'subscriptions': break; // handled by AdminSubscriptionsTab
+      case 'reviews': break; // handled by AdminReviewsTab
+      case 'analytics': break; // handled by AdminAnalyticsTab
     }
     setIsLoading(false);
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1809,6 +1820,21 @@ export default function Admin() {
                   )}
                 </div>
               </div>
+            )}
+
+            {/* ── Subscriptions tab ── */}
+            {tab === 'subscriptions' && !isLoading && (
+              <AdminSubscriptionsTab />
+            )}
+
+            {/* ── Reviews tab ── */}
+            {tab === 'reviews' && !isLoading && (
+              <AdminReviewsTab />
+            )}
+
+            {/* ── Analytics tab ── */}
+            {tab === 'analytics' && !isLoading && (
+              <AdminAnalyticsTab />
             )}
           </>
         )}

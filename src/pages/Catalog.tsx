@@ -26,7 +26,33 @@ export default function Catalog() {
           .order('name'),
       ]);
       setCategories((cats as Category[]) ?? []);
-      setProducts((prods as Product[]) ?? []);
+
+      const productList = (prods as Product[]) ?? [];
+
+      // Batch-fetch published reviews to compute avg ratings without N+1
+      if (productList.length > 0) {
+        const productIds = productList.map((p) => p.id);
+        const { data: ratingsData } = await supabase
+          .from('reviews')
+          .select('product_id, rating')
+          .in('product_id', productIds)
+          .eq('is_published', true);
+
+        const ratingMap = new Map<string, { sum: number; count: number }>();
+        (ratingsData ?? []).forEach((r: { product_id: string; rating: number }) => {
+          const cur = ratingMap.get(r.product_id) ?? { sum: 0, count: 0 };
+          ratingMap.set(r.product_id, { sum: cur.sum + r.rating, count: cur.count + 1 });
+        });
+
+        const withRatings = productList.map((p) => {
+          const r = ratingMap.get(p.id);
+          return r ? { ...p, avg_rating: r.sum / r.count, review_count: r.count } : p;
+        });
+        setProducts(withRatings);
+      } else {
+        setProducts(productList);
+      }
+
       setIsLoading(false);
     }
     load();

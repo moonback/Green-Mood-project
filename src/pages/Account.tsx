@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { User, Package, MapPin, Coins, ChevronRight, LogOut } from 'lucide-react';
+import { User, Package, MapPin, Coins, ChevronRight, LogOut, RefreshCw, Star } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import SEO from '../components/SEO';
 
@@ -23,8 +23,20 @@ export default function Account() {
     {
       icon: Coins,
       label: 'Mes points fidélité',
-      description: `${profile?.loyalty_points ?? 0} points accumulés`,
-      to: null,
+      description: `${profile?.loyalty_points ?? 0} points — voir l'historique`,
+      to: '/compte/fidelite',
+    },
+    {
+      icon: RefreshCw,
+      label: 'Mes abonnements',
+      description: 'Gérer vos livraisons automatiques',
+      to: '/compte/abonnements',
+    },
+    {
+      icon: Star,
+      label: 'Mes avis',
+      description: 'Consulter et rédiger vos avis produits',
+      to: '/compte/avis',
     },
   ];
 
@@ -67,8 +79,7 @@ export default function Account() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
             >
-              {tile.to ? (
-                <Link
+                  <Link
                   to={tile.to}
                   className="flex items-center gap-4 bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-600 transition-all group"
                 >
@@ -81,20 +92,6 @@ export default function Account() {
                   </div>
                   <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                 </Link>
-              ) : (
-                <div className="flex items-center gap-4 bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
-                  <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center">
-                    <tile.icon className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-white">{tile.label}</p>
-                    <p className="text-sm text-zinc-400">{tile.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-zinc-500">100 pts = 5 € de réduction</p>
-                  </div>
-                </div>
-              )}
             </motion.div>
           ))}
         </div>

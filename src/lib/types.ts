@@ -30,6 +30,9 @@ export interface Product {
   created_at: string;
   // joined
   category?: Category;
+  // computed (from reviews batch query)
+  avg_rating?: number;
+  review_count?: number;
 }
 
 export interface Profile {
@@ -127,4 +130,86 @@ export interface CreateOrderPayload {
 
 export interface VivaOrderResponse {
   orderCode: number;
+}
+
+// ─── Phase 3 Types ────────────────────────────────────────────────────────────
+
+export type LoyaltyTransactionType = 'earned' | 'redeemed' | 'adjusted' | 'expired';
+
+export interface LoyaltyTransaction {
+  id: string;
+  user_id: string;
+  order_id: string | null;
+  type: LoyaltyTransactionType;
+  points: number;
+  balance_after: number;
+  note: string | null;
+  created_at: string;
+  // joined
+  order?: Pick<Order, 'id' | 'created_at' | 'total'>;
+}
+
+export type SubscriptionFrequency = 'weekly' | 'biweekly' | 'monthly';
+export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  frequency: SubscriptionFrequency;
+  next_delivery_date: string;
+  status: SubscriptionStatus;
+  created_at: string;
+  // joined
+  product?: Product;
+  profile?: Pick<Profile, 'id' | 'full_name'>;
+}
+
+export interface SubscriptionOrder {
+  id: string;
+  subscription_id: string;
+  order_id: string;
+  created_at: string;
+  // joined
+  order?: Order;
+}
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string;
+  order_id: string;
+  rating: number;
+  comment: string | null;
+  is_verified: boolean;
+  is_published: boolean;
+  created_at: string;
+  // joined
+  profile?: Pick<Profile, 'full_name'>;
+  product?: Pick<Product, 'id' | 'name' | 'slug' | 'image_url'>;
+}
+
+// ─── Analytics Types ──────────────────────────────────────────────────────────
+
+export interface RevenueDataPoint {
+  date: string;
+  revenue: number;
+}
+
+export interface TopProduct {
+  product_id: string;
+  product_name: string;
+  total_quantity: number;
+  total_revenue: number;
+}
+
+export interface OrderStatusDistribution {
+  status: string;
+  count: number;
+}
+
+export interface CustomerAcquisitionPoint {
+  date: string;
+  new_customers: number;
 }

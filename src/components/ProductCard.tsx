@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import StockBadge from './StockBadge';
+import StarRating from './StarRating';
 
 interface ProductCardProps {
   product: Product;
@@ -74,6 +75,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             THC &lt; {product.thc_max ?? 0.2}%
           </span>
         </div>
+
+        {/* Star rating (if product has ratings) */}
+        {product.avg_rating !== undefined && product.avg_rating > 0 && (
+          <StarRating
+            rating={product.avg_rating}
+            size="sm"
+            showCount
+            count={product.review_count}
+          />
+        )}
 
         <StockBadge stock={product.stock_quantity} />
 

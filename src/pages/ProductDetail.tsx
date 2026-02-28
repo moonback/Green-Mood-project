@@ -1,21 +1,60 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ArrowLeft, ShoppingCart, Leaf, FlaskConical, Weight, Star } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Leaf,
+  FlaskConical,
+  Weight,
+  Star,
+  RefreshCw,
+  CheckCircle,
+  Send,
+  MessageSquare,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Product } from '../lib/types';
+import { Product, Review, SubscriptionFrequency } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
+import { useAuthStore } from '../store/authStore';
 import StockBadge from '../components/StockBadge';
 import QuantitySelector from '../components/QuantitySelector';
+import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
+
+const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
+  weekly: 'Chaque semaine',
+  biweekly: 'Toutes les 2 semaines',
+  monthly: 'Chaque mois',
+};
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
+
+  // Subscription state
+  const [subFrequency, setSubFrequency] = useState<SubscriptionFrequency>('monthly');
+  const [subQty, setSubQty] = useState(1);
+  const [subSuccess, setSubSuccess] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewableOrderId, setReviewableOrderId] = useState<string | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
@@ -34,10 +73,113 @@ export default function ProductDetail() {
           navigate('/catalogue', { replace: true });
           return;
         }
-        setProduct(data as Product);
+        const p = data as Product;
+        setProduct(p);
         setIsLoading(false);
+        loadReviews(p.id);
+        if (user) checkCanReview(p.id, user.id);
       });
-  }, [slug, navigate]);
+  }, [slug, navigate, user]);
+
+  async function loadReviews(productId: string) {
+    const { data } = await supabase
+      .from('reviews')
+      .select('*, profile:profiles(full_name)')
+      .eq('product_id', productId)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
+    const list = (data as Review[]) ?? [];
+    setReviews(list);
+    if (list.length > 0) {
+      setAvgRating(list.reduce((s, r) => s + r.rating, 0) / list.length);
+    }
+  }
+
+  async function checkCanReview(productId: string, userId: string) {
+    // Find delivered order items for this product by this user
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('order_id')
+      .eq('product_id', productId);
+
+    if (!items || items.length === 0) return;
+    const orderIds = items.map((i: { order_id: string }) => i.order_id);
+
+    const { data: deliveredOrders } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'delivered')
+      .in('id', orderIds);
+
+    if (!deliveredOrders || deliveredOrders.length === 0) return;
+
+    // Check no existing review for this product
+    const { data: existing } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('product_id', productId)
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (!existing || existing.length === 0) {
+      setCanReview(true);
+      setReviewableOrderId(deliveredOrders[0].id);
+    }
+  }
+
+  async function handleSubscribe() {
+    if (!user) {
+      navigate('/connexion');
+      return;
+    }
+    if (!product) return;
+    setSubLoading(true);
+
+    const next = new Date();
+    if (subFrequency === 'weekly') next.setDate(next.getDate() + 7);
+    else if (subFrequency === 'biweekly') next.setDate(next.getDate() + 14);
+    else next.setMonth(next.getMonth() + 1);
+
+    await supabase.from('subscriptions').insert({
+      user_id: user.id,
+      product_id: product.id,
+      quantity: subQty,
+      frequency: subFrequency,
+      next_delivery_date: next.toISOString().split('T')[0],
+      status: 'active',
+    });
+
+    setSubLoading(false);
+    setSubSuccess(true);
+  }
+
+  async function handleSubmitReview() {
+    if (!user || !product || !reviewableOrderId) return;
+    setIsSubmittingReview(true);
+    setReviewError('');
+
+    const { error } = await supabase.from('reviews').insert({
+      product_id: product.id,
+      user_id: user.id,
+      order_id: reviewableOrderId,
+      rating: reviewRating,
+      comment: reviewComment.trim() || null,
+      is_verified: true,
+      is_published: false,
+    });
+
+    if (error) {
+      setReviewError('Erreur lors de l\'envoi. Veuillez réessayer.');
+      setIsSubmittingReview(false);
+      return;
+    }
+
+    setReviewSuccess(true);
+    setShowReviewForm(false);
+    setCanReview(false);
+    setIsSubmittingReview(false);
+  }
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -47,6 +189,8 @@ export default function ProductDetail() {
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   };
+
+  const isOil = product?.category?.slug === 'huiles';
 
   if (isLoading) {
     return (
@@ -121,6 +265,16 @@ export default function ProductDetail() {
 
             <h1 className="font-serif text-4xl font-bold">{product.name}</h1>
 
+            {/* Average rating (if reviews exist) */}
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2">
+                <StarRating rating={avgRating} size="md" />
+                <span className="text-sm text-zinc-400">
+                  {avgRating.toFixed(1)} ({reviews.length} avis)
+                </span>
+              </div>
+            )}
+
             {product.description && (
               <p className="text-zinc-400 leading-relaxed text-lg">{product.description}</p>
             )}
@@ -183,12 +337,264 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* ── Subscription panel (oils only) ── */}
+            {isOil && !subSuccess && (
+              <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 space-y-4">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 text-green-primary" />
+                  <h3 className="font-semibold">S'abonner & recevoir automatiquement</h3>
+                </div>
+                <p className="text-sm text-zinc-400">
+                  Livraison automatique sans effort. Modifiable ou résiliable à tout moment depuis votre compte.
+                </p>
+
+                {/* Frequency */}
+                <div>
+                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Fréquence</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.keys(FREQUENCY_LABELS) as SubscriptionFrequency[]).map((freq) => (
+                      <button
+                        key={freq}
+                        onClick={() => setSubFrequency(freq)}
+                        className={`py-2 px-2 rounded-xl text-xs text-center border transition-colors ${
+                          subFrequency === freq
+                            ? 'bg-green-primary/20 border-green-primary text-green-400 font-medium'
+                            : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                        }`}
+                      >
+                        {FREQUENCY_LABELS[freq]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Quantité</p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSubQty((q) => Math.max(1, q - 1))}
+                      className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center text-lg"
+                    >
+                      −
+                    </button>
+                    <span className="text-white font-semibold w-6 text-center">{subQty}</span>
+                    <button
+                      onClick={() => setSubQty((q) => Math.min(10, q + 1))}
+                      className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center text-lg"
+                    >
+                      +
+                    </button>
+                    <span className="text-sm text-zinc-500">
+                      = {(product.price * subQty).toFixed(2)} € / livraison
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSubscribe}
+                  disabled={subLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-green-primary text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${subLoading ? 'animate-spin' : ''}`} />
+                  {subLoading ? 'En cours…' : 'S\'abonner'}
+                </button>
+              </div>
+            )}
+
+            {isOil && subSuccess && (
+              <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
+                <div>
+                  <p className="text-green-400 font-semibold">Abonnement créé !</p>
+                  <p className="text-sm text-zinc-400 mt-0.5">
+                    Gérez vos livraisons depuis{' '}
+                    <Link to="/compte/abonnements" className="text-green-primary hover:underline">
+                      Mon compte
+                    </Link>.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Legal */}
             <p className="text-xs text-zinc-600 leading-relaxed">
               Produit contenant moins de 0,3% de THC. Conforme à la réglementation française (décret n°2021-1282).
               Vente réservée aux personnes âgées de 18 ans et plus.
             </p>
           </motion.div>
+        </div>
+
+        {/* ── Reviews Section ── */}
+        <div className="mt-16 max-w-3xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-serif text-2xl font-bold">Avis clients</h2>
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2">
+                <StarRating rating={avgRating} size="md" />
+                <span className="text-zinc-400 text-sm">{avgRating.toFixed(1)} / 5 ({reviews.length})</span>
+              </div>
+            )}
+          </div>
+
+          {/* Can review CTA */}
+          {canReview && !reviewSuccess && !showReviewForm && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-zinc-900 border border-green-800/50 rounded-2xl p-5 mb-6"
+            >
+              <p className="text-sm text-zinc-300 mb-3">
+                Vous avez acheté ce produit. Partagez votre expérience !
+              </p>
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Rédiger un avis
+              </button>
+            </motion.div>
+          )}
+
+          {/* Review success message */}
+          {reviewSuccess && (
+            <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 mb-6 flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <p className="text-sm text-green-300">
+                Merci pour votre avis ! Il sera publié après validation par notre équipe.
+              </p>
+            </div>
+          )}
+
+          {/* Review form */}
+          <AnimatePresence>
+            {showReviewForm && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-6 space-y-4"
+              >
+                <h3 className="font-semibold">Votre avis sur {product.name}</h3>
+
+                {/* Star picker */}
+                <div>
+                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Note</p>
+                  <StarRating
+                    rating={reviewRating}
+                    size="lg"
+                    interactive
+                    onRate={setReviewRating}
+                  />
+                </div>
+
+                {/* Comment */}
+                <div>
+                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">
+                    Commentaire <span className="text-zinc-600 normal-case">(optionnel)</span>
+                  </p>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    rows={4}
+                    placeholder="Décrivez votre expérience avec ce produit…"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary transition-colors resize-none"
+                  />
+                </div>
+
+                {reviewError && (
+                  <p className="text-sm text-red-400">{reviewError}</p>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={isSubmittingReview}
+                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                    {isSubmittingReview ? 'Envoi…' : 'Soumettre'}
+                  </button>
+                  <button
+                    onClick={() => setShowReviewForm(false)}
+                    className="text-zinc-400 hover:text-white text-sm px-4 py-2.5 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Reviews list */}
+          {reviews.length === 0 ? (
+            <div className="text-center py-12 text-zinc-500 border border-zinc-800 rounded-2xl">
+              <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>Aucun avis pour l'instant.</p>
+              {!user && (
+                <p className="text-sm mt-1">
+                  <Link to="/connexion" className="text-green-primary hover:underline">
+                    Connectez-vous
+                  </Link>{' '}
+                  pour laisser un avis après votre achat.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review, i) => {
+                const initials = (review.profile?.full_name ?? 'Client')
+                  .split(' ')
+                  .map((w) => w[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase();
+                return (
+                  <motion.div
+                    key={review.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="w-9 h-9 rounded-full bg-green-primary/20 flex items-center justify-center text-green-400 text-sm font-bold flex-shrink-0">
+                        {initials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm text-white">
+                            {review.profile?.full_name ?? 'Client'}
+                          </span>
+                          {review.is_verified && (
+                            <span className="flex items-center gap-1 text-xs text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full">
+                              <CheckCircle className="w-3 h-3" />
+                              Achat vérifié
+                            </span>
+                          )}
+                          <span className="text-xs text-zinc-600 ml-auto">
+                            {new Date(review.created_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <div className="mt-1 mb-2">
+                          <StarRating rating={review.rating} size="sm" />
+                        </div>
+                        {review.comment && (
+                          <p className="text-sm text-zinc-400 leading-relaxed">{review.comment}</p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </>
