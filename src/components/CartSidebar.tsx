@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { X, ShoppingCart, Trash2, Package, Truck } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCartStore, DELIVERY_FREE_THRESHOLD } from '../store/cartStore';
+import { useCartStore } from '../store/cartStore';
+import { useSettingsStore } from '../store/settingsStore';
 import QuantitySelector from './QuantitySelector';
 
 export default function CartSidebar() {
@@ -18,6 +19,7 @@ export default function CartSidebar() {
     deliveryFee,
     total,
   } = useCartStore();
+  const { settings } = useSettingsStore();
 
   const sub = subtotal();
   const fee = deliveryFee();
@@ -94,33 +96,31 @@ export default function CartSidebar() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setDeliveryType('click_collect')}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                        deliveryType === 'click_collect'
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${deliveryType === 'click_collect'
                           ? 'bg-green-primary border-green-primary text-white'
                           : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                      }`}
+                        }`}
                     >
                       <Package className="w-4 h-4" />
                       Click & Collect
                     </button>
                     <button
                       onClick={() => setDeliveryType('delivery')}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                        deliveryType === 'delivery'
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${deliveryType === 'delivery'
                           ? 'bg-green-primary border-green-primary text-white'
                           : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                      }`}
+                        }`}
                     >
                       <Truck className="w-4 h-4" />
                       Livraison
                     </button>
                   </div>
-                  {deliveryType === 'delivery' && sub < DELIVERY_FREE_THRESHOLD && (
+                  {deliveryType === 'delivery' && sub < settings.delivery_free_threshold && (
                     <p className="text-xs text-orange-400 mt-2">
-                      Plus que {(DELIVERY_FREE_THRESHOLD - sub).toFixed(2)} € pour la livraison offerte !
+                      Plus que {(settings.delivery_free_threshold - sub).toFixed(2)} € pour la livraison offerte !
                     </p>
                   )}
-                  {deliveryType === 'delivery' && sub >= DELIVERY_FREE_THRESHOLD && (
+                  {deliveryType === 'delivery' && sub >= settings.delivery_free_threshold && (
                     <p className="text-xs text-green-400 mt-2">Livraison offerte !</p>
                   )}
                 </div>
