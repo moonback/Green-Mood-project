@@ -769,14 +769,17 @@ export default function Admin() {
         {/* Sidebar — desktop only */}
         <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800">
           {/* Brand */}
-          <div className="px-5 py-5 border-b border-zinc-800">
+          <div className="px-4 py-4 border-b border-zinc-800/60">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-green-primary rounded-xl flex items-center justify-center shadow-lg shadow-green-primary/20">
-                <Store className="w-4 h-4 text-white" />
-              </div>
+              <img
+                src="/logo.jpeg"
+                alt="Green Mood"
+                className="h-10 w-auto object-contain"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.5))' }}
+              />
               <div>
-                <p className="font-semibold text-sm text-white leading-tight">Green Moon</p>
-                <p className="text-xs text-zinc-500">Administration</p>
+                <p className="font-semibold text-sm text-white leading-tight">Green Mood</p>
+                <p className="text-[10px] text-green-neon/70 font-medium tracking-widest uppercase">Administration</p>
               </div>
             </div>
           </div>
@@ -829,7 +832,7 @@ export default function Admin() {
                     onClick={() => setTab(key)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${
                       tab === key
-                        ? 'bg-green-primary/15 text-green-400 border border-green-primary/25'
+                        ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
                         : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
                     }`}
                   >
@@ -862,8 +865,8 @@ export default function Admin() {
         <div className="flex-1 flex flex-col min-w-0 min-h-screen">
           {/* Top header bar */}
           <div className="bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 py-4 flex items-center gap-4 shrink-0">
-            <div className="lg:hidden w-9 h-9 bg-green-primary/10 border border-green-primary/20 rounded-xl flex items-center justify-center">
-              <Store className="w-4 h-4 text-green-400" />
+            <div className="lg:hidden w-9 h-9 bg-green-neon/10 border border-green-neon/25 rounded-xl flex items-center justify-center" style={{ boxShadow: '0 0 8px rgba(57,255,20,0.2)' }}>
+              <Store className="w-4 h-4 text-green-neon" />
             </div>
             <div>
               <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-semibold hidden lg:block">

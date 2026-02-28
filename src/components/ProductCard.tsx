@@ -26,11 +26,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="group relative bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-zinc-600 transition-all duration-300"
+      className="group relative bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-green-neon/30 transition-all duration-300"
     >
       {/* Featured badge */}
       {product.is_featured && (
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-green-primary px-2 py-0.5 rounded-full text-xs font-semibold text-white">
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-green-neon px-2 py-0.5 rounded-full text-xs font-bold text-black glow-pulse-green">
           <Star className="w-3 h-3" />
           Populaire
         </div>
@@ -50,7 +50,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div>
           <Link
             to={`/catalogue/${product.slug}`}
-            className="font-serif font-semibold text-white hover:text-green-primary transition-colors line-clamp-1"
+            className="font-serif font-semibold text-white hover:text-green-neon transition-colors line-clamp-1"
           >
             {product.name}
           </Link>
@@ -90,13 +90,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Price + Add to cart */}
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xl font-bold text-white">
+          <span className="text-xl font-bold text-green-neon glow-green">
             {product.price.toFixed(2)} €
           </span>
           <button
             onClick={handleAddToCart}
             disabled={!product.is_available || product.stock_quantity === 0}
-            className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-2 bg-green-neon hover:bg-green-neon text-black text-sm font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:glow-box-green-sm hover:[box-shadow:0_0_12px_rgba(57,255,20,0.5),0_0_25px_rgba(57,255,20,0.2)]"
           >
             <ShoppingCart className="w-4 h-4" />
             Ajouter
