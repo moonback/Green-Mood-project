@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { Address } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
 
 export default function Checkout() {
@@ -20,6 +21,7 @@ export default function Checkout() {
     deliveryFee,
     total,
   } = useCartStore();
+  const { settings } = useSettingsStore();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
@@ -188,11 +190,10 @@ export default function Checkout() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setDeliveryType('click_collect')}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                    deliveryType === 'click_collect'
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'click_collect'
                       ? 'bg-green-primary/10 border-green-primary'
                       : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
-                  }`}
+                    }`}
                 >
                   <Package className="w-5 h-5 text-green-primary" />
                   <div className="text-left">
@@ -202,11 +203,10 @@ export default function Checkout() {
                 </button>
                 <button
                   onClick={() => setDeliveryType('delivery')}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                    deliveryType === 'delivery'
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${deliveryType === 'delivery'
                       ? 'bg-green-primary/10 border-green-primary'
                       : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
-                  }`}
+                    }`}
                 >
                   <Truck className="w-5 h-5 text-green-primary" />
                   <div className="text-left">
@@ -221,9 +221,9 @@ export default function Checkout() {
                     <MapPin className="w-4 h-4" />
                     Adresse de retrait
                   </div>
-                  123 Rue de la Nature, 75000 Paris
+                  {settings.store_address}
                   <br />
-                  Lun–Sam 10h–19h30 | Tel : 01 23 45 67 89
+                  {settings.store_hours} | Tel : {settings.store_phone}
                 </div>
               )}
             </div>
@@ -237,11 +237,10 @@ export default function Checkout() {
                     <button
                       key={addr.id}
                       onClick={() => setSelectedAddress(addr.id)}
-                      className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        selectedAddress === addr.id
+                      className={`w-full text-left p-4 rounded-xl border transition-all ${selectedAddress === addr.id
                           ? 'bg-green-primary/10 border-green-primary'
                           : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
-                      }`}
+                        }`}
                     >
                       <p className="font-medium text-sm">{addr.label}</p>
                       <p className="text-xs text-zinc-400 mt-0.5">

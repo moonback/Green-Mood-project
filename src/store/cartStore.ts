@@ -2,8 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItem, DeliveryType, Product } from '../lib/types';
 
-const DELIVERY_FEE = 5.90;
-const DELIVERY_FREE_THRESHOLD = 50;
+import { useSettingsStore } from './settingsStore';
 
 interface CartStore {
   items: CartItem[];
@@ -81,7 +80,8 @@ export const useCartStore = create<CartStore>()(
 
       deliveryFee: () => {
         if (get().deliveryType === 'click_collect') return 0;
-        return get().subtotal() >= DELIVERY_FREE_THRESHOLD ? 0 : DELIVERY_FEE;
+        const { settings } = useSettingsStore.getState();
+        return get().subtotal() >= settings.delivery_free_threshold ? 0 : settings.delivery_fee;
       },
 
       total: () => get().subtotal() + get().deliveryFee(),
@@ -93,4 +93,5 @@ export const useCartStore = create<CartStore>()(
   )
 );
 
-export { DELIVERY_FEE, DELIVERY_FREE_THRESHOLD };
+
+
