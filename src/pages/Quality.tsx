@@ -6,8 +6,8 @@ export default function Quality() {
   const qualitySchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "Qualité et Légalité du CBD - Green Mood Shop",
-    "description": "Tous nos produits respectent la législation française avec un taux de THC inférieur à 0.3%. Analyses laboratoires disponibles en boutique."
+    "name": "Qualité, Légalité & Innovation N10 - Green Mood Shop",
+    "description": "Découvrez l'excellence de la molécule N10 et de notre CBD. Tous nos produits respectent la législation française avec un taux de THC inférieur à 0.3%."
   };
 
   const certificates = [
@@ -20,9 +20,9 @@ export default function Quality() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <SEO
-        title="Qualité & Légalité — L'Excellence Green Mood"
-        description="Votre sécurité est une priorité absolue. Nos produits CBD respectent la législation française (THC < 0.3%). Traçabilité et analyses laboratoires garanties."
-        keywords="légalité CBD, CBD légal France, analyses CBD, qualité CBD, THC inférieur 0.3, traçabilité CBD"
+        title="Qualité & Innovation — L'Excellence N10 & CBD"
+        description="Votre sécurité est une priorité absolue. Nos produits N10 et CBD respectent la législation française (THC < 0.3%). Purity standards et analyses labo."
+        keywords="qualité N10, légalité CBD, N10 puissant, CBD premium, THC inférieur 0.3, traçabilité cannabinoïdes"
         schema={qualitySchema}
       />
 
@@ -57,8 +57,8 @@ export default function Quality() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-[0.9] mb-10"
           >
-            QUALITÉ SANS <br />
-            <span className="text-green-neon italic glow-green">COMPROMIS.</span>
+            L'INNOVATION <br />
+            <span className="text-green-neon italic glow-green">MOLÉCULAIRE.</span>
           </motion.h1>
 
           <motion.p
@@ -121,20 +121,20 @@ export default function Quality() {
                   <div className="flex gap-4 p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
                     <CheckCircle className="w-6 h-6 text-green-neon shrink-0" />
                     <div>
-                      <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-2">Taux THC Garanti</h4>
+                      <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-2">Molécule N10 & CBD</h4>
                       <p className="text-sm text-zinc-500 leading-relaxed font-light">
-                        Tous nos produits affichent un taux de THC &lt; 0.3%, certifié par des tests
-                        rigoureux avant chaque mise en vente.
+                        Le N10 est un dérivé du THC avec un taux <span className="text-green-neon font-bold">&lt; 0.3%</span>,
+                        alliant puissance légale et pureté moléculaire absolue.
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-4 p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
                     <CheckCircle className="w-6 h-6 text-green-neon shrink-0" />
                     <div>
-                      <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-2">Variétés Autorisées</h4>
+                      <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-2">Passeport Labo</h4>
                       <p className="text-sm text-zinc-500 leading-relaxed font-light">
-                        Nous n'utilisons que des variétés de cannabis sativa L issues du catalogue européen,
-                        assurant un usage parfaitement légal et serein.
+                        Chaque extraction N10 et chaque fleur CBD subit un triple test indépendant pour garantir
+                        l'absence de résidus et une concentration exacte.
                       </p>
                     </div>
                   </div>

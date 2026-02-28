@@ -67,13 +67,13 @@ export default function Legal() {
 
             <div>
               <h2 className="text-2xl font-serif font-bold text-white mb-4">
-                3. Avertissement Légal CBD
+                3. Avertissement Légal N10 & CBD
               </h2>
               <p className="text-zinc-400 leading-relaxed">
-                Les produits proposés sur ce site et en boutique (fleurs,
-                résines, huiles, etc.) sont strictement conformes à la
-                législation européenne et française en vigueur. Leur taux de THC
-                est inférieur à 0.3%.
+                Les produits proposés sur ce site et en boutique, incluant nos
+                gammes exclusives N10 et CBD, sont strictement conformes à la
+                législation européenne et française en vigueur. Leur taux de
+                Delta-9-THC est rigoureusement inférieur à 0.3%.
               </p>
               <p className="text-zinc-400 leading-relaxed mt-4">
                 <strong>Ces produits ne sont pas des médicaments.</strong> Ils
