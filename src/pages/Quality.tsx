@@ -55,7 +55,7 @@ export default function Quality() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-[0.9] mb-10"
+            className="text-4xl md:text-6xl font-serif font-black tracking-tight leading-[0.9] mb-10"
           >
             L'INNOVATION <br />
             <span className="text-green-neon italic glow-green">MOLÉCULAIRE.</span>

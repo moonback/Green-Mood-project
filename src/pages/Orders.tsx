@@ -49,7 +49,7 @@ export default function Orders() {
               <ArrowLeft className="w-4 h-4" />
               Retour au Hub
             </Link>
-            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none">
+            <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight leading-none">
               HISTORIQUE <br /><span className="text-green-neon italic">SÉLECT.</span>
             </h1>
           </div>

@@ -53,7 +53,7 @@ export default function Contact() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tight leading-[0.9]"
+            className="text-4xl md:text-6xl font-serif font-black tracking-tight leading-[0.9]"
           >
             ENTRONS EN <br />
             <span className="text-green-neon italic glow-green">RÉSONANCE.</span>

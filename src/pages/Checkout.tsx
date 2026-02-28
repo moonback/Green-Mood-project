@@ -225,7 +225,7 @@ export default function Checkout() {
               <ArrowLeft className="w-4 h-4" />
               Retour au Panier
             </Link>
-            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none">
+            <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight leading-none">
               FINALISATION <br /><span className="text-green-neon italic">MASTR.</span>
             </h1>
           </div>

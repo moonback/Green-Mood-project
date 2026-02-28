@@ -147,7 +147,7 @@ export default function Home() {
 
             {/* Main Headline */}
             <div className="space-y-4">
-              <h1 className="text-7xl md:text-9xl lg:text-[11rem] font-serif font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
                 <span className="text-white">L'ÈRE DU</span>
                 <span className="text-green-neon italic glow-green-strong">N10.</span>
               </h1>
@@ -496,7 +496,7 @@ export default function Home() {
           viewport={{ once: true }}
           className="space-y-10"
         >
-          <h2 className="text-6xl md:text-8xl font-serif font-black text-white tracking-tighter">
+          <h2 className="text-4xl md:text-6xl font-serif font-black text-white tracking-tighter">
             RESSENTEZ <br />
             <span className="text-green-neon">LA DIFFÉRENCE.</span>
           </h2>

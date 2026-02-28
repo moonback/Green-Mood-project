@@ -135,7 +135,7 @@ export default function Catalog() {
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="text-6xl md:text-8xl lg:text-[10rem] font-serif font-black tracking-tighter leading-[0.85] uppercase italic"
+              className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tighter leading-[0.85] uppercase italic"
             >
               ARCHIVES <br />
               <span className="not-italic text-green-neon glow-green-strong">MOLECUL'</span>
