@@ -76,6 +76,7 @@ interface StoreSettings {
   social_instagram: string;
   social_facebook: string;
   budtender_enabled: boolean;
+  subscriptions_enabled: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -92,6 +93,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   social_instagram: 'https://instagram.com/greenMood_cbd',
   social_facebook: 'https://facebook.com/greenMood_cbd',
   budtender_enabled: true,
+  subscriptions_enabled: true,
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -775,8 +777,8 @@ export default function Admin() {
                                   setProductForm({ ...productForm, attributes: { ...productForm.attributes, benefits: next } });
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isSelected
-                                    ? 'bg-green-neon border-green-primary text-black font-bold'
-                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                                  ? 'bg-green-neon border-green-primary text-black font-bold'
+                                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                                   }`}
                               >
                                 {benefit}
@@ -802,8 +804,8 @@ export default function Admin() {
                                   setProductForm({ ...productForm, attributes: { ...productForm.attributes, aromas: next } });
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isSelected
-                                    ? 'bg-zinc-100 border-white text-black font-bold'
-                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                                  ? 'bg-zinc-100 border-white text-black font-bold'
+                                  : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                                   }`}
                               >
                                 {aroma}
@@ -2140,6 +2142,28 @@ export default function Admin() {
                       </div>
                       <p className="text-xs text-zinc-500">
                         Affiche la bulle de chat flottante en bas à droite de l'écran pour conseiller les clients.
+                      </p>
+                    </div>
+
+                    {/* Abonnements */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-5 h-5 text-green-neon" />
+                          <h2 className="font-serif font-semibold text-lg">Système d'abonnements</h2>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={localSettings.subscriptions_enabled}
+                            onChange={(e) => setLocalSettings({ ...localSettings, subscriptions_enabled: e.target.checked })}
+                            className="w-4 h-4 accent-green-600"
+                          />
+                          <span className="text-sm text-zinc-300">Activé</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        Permet aux clients de s'abonner aux produits (huiles) pour recevoir des livraisons récurrentes.
                       </p>
                     </div>
 

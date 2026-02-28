@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
 
 export default function Account() {
@@ -26,6 +27,8 @@ export default function Account() {
       .slice(0, 2)
       .toUpperCase()
     : '?';
+
+  const settings = useSettingsStore((s) => s.settings);
 
   const tiles = [
     {
@@ -67,6 +70,7 @@ export default function Account() {
       iconColor: 'text-green-neon',
       iconBg: 'bg-green-neon/10 group-hover:bg-green-neon/20',
       borderHover: 'hover:border-green-neon/40',
+      enabled: settings.subscriptions_enabled,
     },
     {
       icon: Star,
@@ -78,7 +82,7 @@ export default function Account() {
       iconBg: 'bg-orange-500/10 group-hover:bg-orange-500/20',
       borderHover: 'hover:border-orange-500/40',
     },
-  ];
+  ].filter(t => t.enabled !== false);
 
   return (
     <>

@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, RefreshCw, Pause, Play, X, ChevronDown, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 import type { Subscription, SubscriptionFrequency } from '../lib/types';
 import SEO from '../components/SEO';
+import { useNavigate } from 'react-router-dom';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -21,14 +23,20 @@ const STATUS_CONFIG = {
 
 export default function Subscriptions() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const settings = useSettingsStore((s) => s.settings);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [changingFreq, setChangingFreq] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!settings.subscriptions_enabled) {
+      navigate('/compte');
+      return;
+    }
     if (!user) return;
     loadSubscriptions();
-  }, [user]);
+  }, [user, settings.subscriptions_enabled, navigate]);
 
   async function loadSubscriptions() {
     if (!user) return;
@@ -199,8 +207,8 @@ export default function Subscriptions() {
                                   key={freq}
                                   onClick={() => handleChangeFrequency(sub.id, freq)}
                                   className={`block w-full text-left px-4 py-2.5 text-xs transition-colors ${sub.frequency === freq
-                                      ? 'bg-green-neon/20 text-green-400'
-                                      : 'text-zinc-300 hover:bg-zinc-700'
+                                    ? 'bg-green-neon/20 text-green-400'
+                                    : 'text-zinc-300 hover:bg-zinc-700'
                                     }`}
                                 >
                                   {FREQUENCY_LABELS[freq]}

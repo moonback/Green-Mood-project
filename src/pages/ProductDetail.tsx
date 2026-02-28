@@ -24,6 +24,7 @@ import QuantitySelector from '../components/QuantitySelector';
 import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
 import RelatedProducts from '../components/RelatedProducts';
+import { useSettingsStore } from '../store/settingsStore';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -63,6 +64,7 @@ export default function ProductDetail() {
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const openSidebar = useCartStore((s) => s.openSidebar);
+  const settings = useSettingsStore((s) => s.settings);
 
   useEffect(() => {
     if (!slug) return;
@@ -443,7 +445,7 @@ export default function ProductDetail() {
             )}
 
             {/* ── Subscription panel (oils only, not bundles) ── */}
-            {isOil && !subSuccess && (
+            {settings.subscriptions_enabled && isOil && !subSuccess && (
               <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 space-y-4">
                 <div className="flex items-center gap-2">
                   <RefreshCw className="w-5 h-5 text-green-neon" />
@@ -506,7 +508,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {isOil && subSuccess && (
+            {settings.subscriptions_enabled && isOil && subSuccess && (
               <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 flex items-center gap-3">
                 <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
                 <div>

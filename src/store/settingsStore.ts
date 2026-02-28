@@ -13,6 +13,7 @@ export interface StoreSettings {
     social_instagram: string;
     social_facebook: string;
     budtender_enabled: boolean;
+    subscriptions_enabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     social_instagram: 'https://instagram.com/greenMood_cbd',
     social_facebook: 'https://facebook.com/greenMood_cbd',
     budtender_enabled: true,
+    subscriptions_enabled: true,
 };
 
 interface SettingsStore {
