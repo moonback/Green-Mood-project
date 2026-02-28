@@ -2,10 +2,52 @@ import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Leaf, HeartHandshake, ArrowRight } from "lucide-react";
 import FAQ from "../components/FAQ";
+import SEO from "../components/SEO";
 
 export default function Home() {
+  const homeSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Green Moon CBD Shop",
+    "image": "https://images.unsplash.com/photo-1603908064973-206e23114d59?q=80&w=2070&auto=format&fit=crop",
+    "@id": "https://greenmoon-cbd.fr",
+    "url": "https://greenmoon-cbd.fr",
+    "telephone": "0123456789",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "123 Rue de la Nature",
+      "addressLocality": "Paris",
+      "postalCode": "75000",
+      "addressCountry": "FR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 48.8566,
+      "longitude": 2.3522
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "opens": "10:00",
+      "closes": "19:30"
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
+      <SEO 
+        title="Acheter CBD à Paris - Green Moon Shop | Fleurs, Résines, Huiles"
+        description="Découvrez Green Moon, votre CBD Shop premium à Paris. Fleurs, résines et huiles 100% légales. Qualité supérieure, traçabilité et conseils d'experts."
+        keywords="CBD Paris, acheter CBD, boutique CBD, fleurs CBD, résine CBD, huile CBD, CBD légal, Green Moon"
+        schema={homeSchema}
+      />
       {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Background Image */}

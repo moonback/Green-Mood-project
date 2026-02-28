@@ -1,8 +1,43 @@
 import { motion } from "motion/react";
 import { Leaf, Droplet, Coffee, Info } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 
 export default function Products() {
+  const productsSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Product",
+          "name": "Fleurs CBD",
+          "description": "Des fleurs cultivées en intérieur, sous serre ou en extérieur. Sélectionnées pour leurs profils terpéniques uniques et leur qualité irréprochable."
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Product",
+          "name": "Résines & Pollens CBD",
+          "description": "Des extractions traditionnelles et modernes offrant des textures variées et des arômes puissants."
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@type": "Product",
+          "name": "Huiles & Infusions CBD",
+          "description": "Des huiles Full Spectrum et Broad Spectrum pressées à froid pour conserver tous les bienfaits de la plante."
+        }
+      }
+    ]
+  };
+
   const categories = [
     {
       id: "fleurs",
@@ -47,6 +82,12 @@ export default function Products() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
+      <SEO 
+        title="Fleurs, Résines et Huiles CBD Premium - Green Moon Shop"
+        description="Découvrez notre sélection rigoureuse de produits CBD : fleurs cultivées avec soin, résines puissantes et huiles pressées à froid. Disponibles en boutique."
+        keywords="produits CBD, fleurs CBD, résine CBD, huile CBD, infusion CBD, achat CBD, qualité premium"
+        schema={productsSchema}
+      />
       {/* Header */}
       <section className="py-24 text-center px-4 sm:px-6 lg:px-8">
         <motion.h1

@@ -1,8 +1,14 @@
 import { motion } from "motion/react";
+import SEO from "../components/SEO";
 
 export default function Legal() {
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
+      <SEO 
+        title="Mentions Légales - Green Moon CBD Shop"
+        description="Consultez les mentions légales, conditions générales d'utilisation et avertissements légaux de Green Moon CBD Shop."
+        keywords="mentions légales CBD, CGU Green Moon"
+      />
       {/* Header */}
       <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
         <motion.h1

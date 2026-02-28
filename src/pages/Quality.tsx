@@ -1,9 +1,23 @@
 import { motion } from "motion/react";
 import { ShieldCheck, FileText, CheckCircle, Search } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Quality() {
+  const qualitySchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Qualité et Légalité du CBD - Green Moon Shop",
+    "description": "Tous nos produits respectent la législation française avec un taux de THC inférieur à 0.3%. Analyses laboratoires disponibles en boutique."
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
+      <SEO 
+        title="Qualité, Légalité et Analyses CBD - Green Moon Shop"
+        description="Votre sécurité est notre priorité. Nos produits CBD respectent la législation française (THC < 0.3%). Traçabilité et analyses laboratoires garanties."
+        keywords="légalité CBD, CBD légal France, analyses CBD, qualité CBD, THC inférieur 0.3, traçabilité CBD"
+        schema={qualitySchema}
+      />
       {/* Header */}
       <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
         <motion.h1

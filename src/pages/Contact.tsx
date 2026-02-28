@@ -1,9 +1,34 @@
 import { motion } from "motion/react";
 import { MapPin, Phone, Clock, Mail, MessageCircle } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Contact() {
+  const contactSchema = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "mainEntity": {
+      "@type": "LocalBusiness",
+      "name": "Green Moon CBD Shop",
+      "telephone": "0123456789",
+      "email": "contact@greenmoon-cbd.fr",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Rue de la Nature",
+        "addressLocality": "Paris",
+        "postalCode": "75000",
+        "addressCountry": "FR"
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
+      <SEO 
+        title="Contactez notre CBD Shop à Paris - Green Moon Shop"
+        description="Une question ? Besoin d'un conseil ? Contactez Green Moon CBD Shop ou venez nous rendre visite dans notre boutique à Paris. Horaires et accès."
+        keywords="contact CBD Paris, horaires Green Moon, adresse CBD Paris, téléphone CBD shop"
+        schema={contactSchema}
+      />
       {/* Header */}
       <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
         <motion.h1

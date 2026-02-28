@@ -1,10 +1,25 @@
 import { motion } from "motion/react";
 import { MapPin, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 
 export default function Shop() {
+  const shopSchema = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "La Boutique Green Moon",
+    "description": "Un espace pensé pour la détente, la découverte et le conseil personnalisé autour du CBD.",
+    "image": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2070&auto=format&fit=crop"
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 pt-20">
+      <SEO 
+        title="Notre Boutique CBD à Paris - Green Moon Shop"
+        description="Plongez dans l'univers Green Moon. Découvrez notre histoire, nos valeurs de transparence et d'exigence, et venez nous rencontrer dans notre boutique à Paris."
+        keywords="boutique CBD Paris, magasin CBD, histoire Green Moon, valeurs CBD, achat CBD en boutique"
+        schema={shopSchema}
+      />
       {/* Hero Section */}
       <section className="relative py-24 overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 z-0">

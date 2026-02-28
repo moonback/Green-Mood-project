@@ -31,9 +31,10 @@ Cette phase concerne la personnalisation du site avec les vraies données de la 
 - [ ] **Intégration des vraies photos** : Remplacer les images génériques (Unsplash) par des photos professionnelles de la boutique, de l'équipe et des produits.
 - [ ] **Mise à jour des coordonnées** : Renseigner l'adresse exacte, le numéro de téléphone, l'email et le SIRET dans les pages Contact, Footer et Mentions Légales.
 - [ ] **Intégration Google Maps** : Remplacer le bloc "Carte Interactive" par l'iframe officielle de Google Maps pointant vers la boutique.
-- [ ] **Optimisation SEO (Balises Meta)** :
-  - Ajouter la bibliothèque `react-helmet-async`.
-  - Définir des balises `<title>` et `<meta description>` uniques et optimisées pour chaque page (ex: "Acheter CBD à [Ville] - Green Moon Shop").
+- [x] **Optimisation SEO (Balises Meta) & GEO** :
+  - Ajout de la bibliothèque `react-helmet-async`.
+  - Définition de balises `<title>` et `<meta description>` uniques et optimisées pour chaque page.
+  - Implémentation du GEO (Generative Engine Optimization) via l'ajout de données structurées JSON-LD (LocalBusiness, Store, Product, FAQPage) pour optimiser la compréhension par les IA (Google SGE, ChatGPT, etc.).
 - [ ] **Google Business Profile** : S'assurer que la fiche Google My Business est créée, validée et liée au site web.
 - [ ] **Favicon** : Créer et ajouter un favicon (logo Green Moon) dans le dossier `public/`.
 
