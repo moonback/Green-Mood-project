@@ -91,6 +91,12 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS store_settings (
+  key        text PRIMARY KEY,
+  value      jsonb NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- ─── Trigger : créer profil automatiquement à l'inscription ──────────
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -116,43 +122,56 @@ ALTER TABLE addresses       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE store_settings  ENABLE ROW LEVEL SECURITY;
 
 -- Categories : lecture publique
+DROP POLICY IF EXISTS "categories_public_read" ON categories;
 CREATE POLICY "categories_public_read" ON categories FOR SELECT USING (true);
+DROP POLICY IF EXISTS "categories_admin_write" ON categories;
 CREATE POLICY "categories_admin_write" ON categories FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
 -- Products : lecture publique
+DROP POLICY IF EXISTS "products_public_read" ON products;
 CREATE POLICY "products_public_read" ON products FOR SELECT USING (true);
+DROP POLICY IF EXISTS "products_admin_write" ON products;
 CREATE POLICY "products_admin_write" ON products FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
 -- Profiles : lecture/écriture par propriétaire ou admin
+DROP POLICY IF EXISTS "profiles_self_read" ON profiles;
 CREATE POLICY "profiles_self_read" ON profiles FOR SELECT USING (
   id = auth.uid() OR
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
+DROP POLICY IF EXISTS "profiles_self_update" ON profiles;
 CREATE POLICY "profiles_self_update" ON profiles FOR UPDATE USING (id = auth.uid());
+DROP POLICY IF EXISTS "profiles_admin_all" ON profiles;
 CREATE POLICY "profiles_admin_all" ON profiles FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
 -- Addresses : propriétaire uniquement
+DROP POLICY IF EXISTS "addresses_owner" ON addresses;
 CREATE POLICY "addresses_owner" ON addresses FOR ALL USING (user_id = auth.uid());
 
 -- Orders : propriétaire ou admin
+DROP POLICY IF EXISTS "orders_owner_read" ON orders;
 CREATE POLICY "orders_owner_read" ON orders FOR SELECT USING (
   user_id = auth.uid() OR
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
+DROP POLICY IF EXISTS "orders_auth_insert" ON orders;
 CREATE POLICY "orders_auth_insert" ON orders FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "orders_admin_update" ON orders;
 CREATE POLICY "orders_admin_update" ON orders FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
 -- Order items : propriétaire ou admin
+DROP POLICY IF EXISTS "order_items_owner_read" ON order_items;
 CREATE POLICY "order_items_owner_read" ON order_items FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM orders o WHERE o.id = order_id AND (
@@ -161,10 +180,20 @@ CREATE POLICY "order_items_owner_read" ON order_items FOR SELECT USING (
     )
   )
 );
+DROP POLICY IF EXISTS "order_items_auth_insert" ON order_items;
 CREATE POLICY "order_items_auth_insert" ON order_items FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 -- Stock movements : admin uniquement
+DROP POLICY IF EXISTS "stock_admin_all" ON stock_movements;
 CREATE POLICY "stock_admin_all" ON stock_movements FOR ALL USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+
+-- Store settings : lecture publique, admin tout
+DROP POLICY IF EXISTS "store_settings_public_read" ON store_settings;
+CREATE POLICY "store_settings_public_read" ON store_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "store_settings_admin_all" ON store_settings;
+CREATE POLICY "store_settings_admin_all" ON store_settings FOR ALL USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 
@@ -204,4 +233,16 @@ BEGIN
     (cat_huiles, 'infusion-detente', 'Infusion Détente', 'Mélange de plantes bio avec fleurs de CBD. Camomille, tilleul et lavande. Boîte 30 sachets.', 5.0, 0.1, null, 16.90, 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800', 45, false),
     (cat_huiles, 'infusion-digestion', 'Infusion Digestion', 'Association fenouil, menthe et CBD pour soutenir le confort digestif. Boîte 30 sachets.', 5.0, 0.1, null, 16.90, 'https://images.unsplash.com/photo-1585435421671-0c16764628a9?w=800', 45, false)
   ON CONFLICT (slug) DO NOTHING;
+
+  -- Settings par défaut
+  INSERT INTO store_settings (key, value) VALUES
+    ('delivery_fee', '5.90'),
+    ('delivery_free_threshold', '50.00'),
+    ('store_name', '"Green Moon CBD"'),
+    ('store_address', '"123 Rue de la Nature, 75000 Paris"'),
+    ('store_phone', '"01 23 45 67 89"'),
+    ('store_hours', '"Lun–Sam 10h00–19h30"'),
+    ('banner_text', '"🌿 Offre de bienvenue : -10% avec le code GREENMOON !"'),
+    ('banner_enabled', 'true')
+  ON CONFLICT (key) DO NOTHING;
 END $$;

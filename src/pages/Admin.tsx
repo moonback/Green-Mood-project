@@ -123,6 +123,7 @@ export default function Admin() {
   // ── UI ──
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -395,12 +396,26 @@ export default function Admin() {
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
-    for (const [key, value] of Object.entries(settings)) {
-      await supabase
-        .from('store_settings')
-        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    setSaveSuccess(false);
+    try {
+      const payload = Object.entries(settings).map(([key, value]) => ({
+        key,
+        value,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error } = await supabase.from('store_settings').upsert(payload, { onConflict: 'key' });
+
+      if (error) throw error;
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('Erreur lors de la sauvegarde des paramètres.');
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   // ─── Filtered lists ───────────────────────────────────────────────────────
@@ -763,8 +778,8 @@ export default function Admin() {
               key={key}
               onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${tab === key
-                  ? 'bg-green-primary text-white shadow'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                ? 'bg-green-primary text-white shadow'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
             >
               <Icon className="w-4 h-4" />
@@ -962,10 +977,10 @@ export default function Admin() {
                             <td className="px-4 py-3">
                               <span
                                 className={`font-semibold text-sm ${product.stock_quantity === 0
-                                    ? 'text-red-400'
-                                    : product.stock_quantity <= 5
-                                      ? 'text-orange-400'
-                                      : 'text-white'
+                                  ? 'text-red-400'
+                                  : product.stock_quantity <= 5
+                                    ? 'text-orange-400'
+                                    : 'text-white'
                                   }`}
                               >
                                 {product.stock_quantity}
@@ -975,8 +990,8 @@ export default function Admin() {
                               <div className="flex gap-1.5 flex-wrap">
                                 <span
                                   className={`text-xs px-2 py-0.5 rounded-full border ${product.is_active
-                                      ? 'text-green-400 bg-green-900/30 border-green-800'
-                                      : 'text-red-400 bg-red-900/30 border-red-800'
+                                    ? 'text-green-400 bg-green-900/30 border-green-800'
+                                    : 'text-red-400 bg-red-900/30 border-red-800'
                                     }`}
                                 >
                                   {product.is_active ? 'Actif' : 'Inactif'}
@@ -1114,8 +1129,8 @@ export default function Admin() {
                           </div>
                           <span
                             className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${cat.is_active
-                                ? 'text-green-400 bg-green-900/30 border-green-800'
-                                : 'text-red-400 bg-red-900/30 border-red-800'
+                              ? 'text-green-400 bg-green-900/30 border-green-800'
+                              : 'text-red-400 bg-red-900/30 border-red-800'
                               }`}
                           >
                             {cat.is_active ? 'Active' : 'Inactive'}
@@ -1213,8 +1228,8 @@ export default function Admin() {
                             </div>
                             <span
                               className={`text-xs px-2 py-0.5 rounded-full border hidden sm:inline-flex ${order.delivery_type === 'click_collect'
-                                  ? 'text-purple-400 bg-purple-900/20 border-purple-800'
-                                  : 'text-sky-400 bg-sky-900/20 border-sky-800'
+                                ? 'text-purple-400 bg-purple-900/20 border-purple-800'
+                                : 'text-sky-400 bg-sky-900/20 border-sky-800'
                                 }`}
                             >
                               {order.delivery_type === 'click_collect' ? (
@@ -1396,10 +1411,10 @@ export default function Admin() {
                         <div key={product.id} className="px-5 py-3.5 flex items-center gap-4">
                           <div
                             className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${product.stock_quantity === 0
-                                ? 'bg-red-400'
-                                : product.stock_quantity <= 5
-                                  ? 'bg-orange-400'
-                                  : 'bg-green-400'
+                              ? 'bg-red-400'
+                              : product.stock_quantity <= 5
+                                ? 'bg-orange-400'
+                                : 'bg-green-400'
                               }`}
                           />
                           <span className="text-sm text-white flex-1">{product.name}</span>
@@ -1407,10 +1422,10 @@ export default function Admin() {
                             <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${product.stock_quantity === 0
-                                    ? 'bg-red-500'
-                                    : product.stock_quantity <= 5
-                                      ? 'bg-orange-500'
-                                      : 'bg-green-500'
+                                  ? 'bg-red-500'
+                                  : product.stock_quantity <= 5
+                                    ? 'bg-orange-500'
+                                    : 'bg-green-500'
                                   }`}
                                 style={{ width: `${pct}%` }}
                               />
@@ -1418,10 +1433,10 @@ export default function Admin() {
                           </div>
                           <span
                             className={`font-semibold text-sm w-16 text-right ${product.stock_quantity === 0
-                                ? 'text-red-400'
-                                : product.stock_quantity <= 5
-                                  ? 'text-orange-400'
-                                  : 'text-white'
+                              ? 'text-red-400'
+                              : product.stock_quantity <= 5
+                                ? 'text-orange-400'
+                                : 'text-white'
                               }`}
                           >
                             {product.stock_quantity}
@@ -1476,12 +1491,12 @@ export default function Admin() {
                             <td className="px-5 py-3">
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full border ${mv.type === 'sale'
-                                    ? 'text-blue-400 bg-blue-900/20 border-blue-800'
-                                    : mv.type === 'restock'
-                                      ? 'text-green-400 bg-green-900/20 border-green-800'
-                                      : mv.type === 'return'
-                                        ? 'text-purple-400 bg-purple-900/20 border-purple-800'
-                                        : 'text-zinc-400 bg-zinc-800 border-zinc-700'
+                                  ? 'text-blue-400 bg-blue-900/20 border-blue-800'
+                                  : mv.type === 'restock'
+                                    ? 'text-green-400 bg-green-900/20 border-green-800'
+                                    : mv.type === 'return'
+                                      ? 'text-purple-400 bg-purple-900/20 border-purple-800'
+                                      : 'text-zinc-400 bg-zinc-800 border-zinc-700'
                                   }`}
                               >
                                 {mv.type}
@@ -1584,8 +1599,8 @@ export default function Admin() {
                             <td className="px-5 py-3.5">
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full border ${customer.is_admin
-                                    ? 'text-green-400 bg-green-900/30 border-green-800'
-                                    : 'text-zinc-400 bg-zinc-800 border-zinc-700'
+                                  ? 'text-green-400 bg-green-900/30 border-green-800'
+                                  : 'text-zinc-400 bg-zinc-800 border-zinc-700'
                                   }`}
                               >
                                 {customer.is_admin ? 'Admin' : 'Client'}
@@ -1595,8 +1610,8 @@ export default function Admin() {
                               <button
                                 onClick={() => handleToggleAdmin(customer.id, customer.is_admin)}
                                 className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${customer.is_admin
-                                    ? 'text-red-400 border-red-800 hover:bg-red-900/20'
-                                    : 'text-green-400 border-green-800 hover:bg-green-900/20'
+                                  ? 'text-red-400 border-red-800 hover:bg-red-900/20'
+                                  : 'text-green-400 border-green-800 hover:bg-green-900/20'
                                   }`}
                               >
                                 {customer.is_admin ? (
@@ -1739,14 +1754,25 @@ export default function Admin() {
                   )}
                 </div>
 
-                <button
-                  onClick={handleSaveSettings}
-                  disabled={isSaving}
-                  className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white font-bold px-8 py-3.5 rounded-2xl transition-colors"
-                >
-                  <Save className="w-5 h-5" />
-                  {isSaving ? 'Enregistrement…' : 'Sauvegarder les paramètres'}
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white font-bold px-8 py-3.5 rounded-2xl transition-colors"
+                  >
+                    <Save className="w-5 h-5" />
+                    {isSaving ? 'Enregistrement…' : 'Sauvegarder les paramètres'}
+                  </button>
+                  {saveSuccess && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-green-400 text-sm font-medium"
+                    >
+                      Paramètres enregistrés !
+                    </motion.span>
+                  )}
+                </div>
               </div>
             )}
           </>
