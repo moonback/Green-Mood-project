@@ -26,10 +26,10 @@
 ## ✨ Fonctionnalités
 
 ### 🛍️ Boutique & Catalogue
-- **Vitrine premium** : page d'accueil animée avec splash screen vidéo + logo
-- **Catalogue dynamique** : fleurs, résines, huiles — chargés depuis Supabase
-- **Fiche produit** : galerie, specs (CBD %, THC, poids), badges, avis clients vérifiés
-- **Recherche & filtres** par catégorie
+- **Vitrine premium** : page d'accueil animée centrée sur l'innovation **N10** avec splash screen vidéo
+- **Catalogue dynamique N10 & CBD** : fleurs, résines, huiles et molécules de synthèse maîtrisée (N10)
+- **Fiche produit immersive** : galerie, specs moléculaires (N10 %, CBD %, THC), badges de pureté, avis vérifiés
+- **Recherche & filtres intelligents** par catégorie et puissance (N10)
 
 ### 🛒 Panier & Commande
 - **Sidebar panier** interactive (glassmorphism, animations Framer Motion)
@@ -219,6 +219,25 @@ Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](./CONTRIBUTI
 
 ---
 
-## 📄 Licence
+---
 
-Ce projet est sous licence **MIT** — voir le fichier `LICENSE` pour plus de détails.
+## 🗺️ Roadmap : L'Ascension Green Mood
+
+### 🎯 Phase 1 : Fondations (Terminé)
+- Architecture React 19 / Vite 6 / Supabase.
+- Design System Glassmorphism & Micro-animations.
+
+### 🧪 Phase 2 : L'Ère N10 (En Cours)
+- Lancement de la gamme **N10** (plus puissant que le CBNO).
+- Hub éducatif sur les cannabinoides de synthèse maîtrisée.
+- IA BudTender pour recommandations personnalisées.
+
+### 🚀 Phase 3 : Scale & Global (V1+)
+- Intégration Viva Wallet Production.
+- SEO international & logistique automatisée.
+
+---
+
+## 📄 Licence
+Ce projet est sous licence **MIT**.
+

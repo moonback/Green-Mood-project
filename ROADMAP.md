@@ -1,27 +1,33 @@
-# 🗺️ Roadmap du Projet
+# 🗺️ Roadmap du Projet : L'Ascension Green Mood
 
-## 🎯 Phase 1 : Produit Minimum Viable (État Actuel)
-*Objectif : Déployer une vitrine entièrement fonctionnelle avec gestion des stocks et navigation dans le catalogue.*
-- [x] Configuration initiale React 19 + Vite
-- [x] Intégration Tailwind CSS v4 et Framer Motion pour des visuels premium
-- [x] Implémentation Base de Données et Auth avec Supabase (`profiles`, `products`, `orders`)
-- [x] Gestion de l'état global via Zustand (Cart, Auth, Settings)
-- [x] Panneau d'administration (Gérer les produits, voir le statut des commandes, ajuster les paramètres boutique)
-- [x] Catalogue public, vue détaillée des produits, et tunnel de commande responsive
-- [x] Routage côté client avec React Router v7
+## 🎯 Phase 1 : Fondations & Excellence Visuelle (Terminé)
+*Objectif : Déployer une infrastructure e-commerce robuste avec une esthétique premium.*
+- [x] Architecture **React 19 + Vite 6** haute performance.
+- [x] Design System **Glassmorphism** avec Tailwind CSS v4.
+- [x] Backend **Supabase** temps réel (Auth, RLS, PostgreSQL).
+- [x] Gestion d'état avancée avec **Zustand**.
+- [x] Panneau d'administration complet (12 onglets de gestion).
+- [x] Système de **Fidélité** (Loyalty Points) et Abonnements fonctionnels.
 
-## 🚀 Phase 2 : Version 1.0 (Focus Pré-lancement)
-*Objectif : Plateforme E-Commerce pleinement opérationnelle traitant les transactions.*
-- [ ] **Intégration Viva Wallet** : Finaliser les requêtes serveur/API pour traiter les paiements réels et connecter les webhooks des commandes.
-- [ ] **Notifications par Email** : Intégration Resend/SendGrid pour des emails automatisés de confirmation de commande, d'envoi de colis et de bienvenue.
-- [ ] **Optimisation SEO** : Implémenter des données structurées (Schema.org), balises dynamiques `<title>` et `<meta>` avec `react-helmet-async` pour le SEO local.
-- [ ] **Achat en mode Invité** : Permettre aux utilisateurs non authentifiés d'acheter et de suivre leurs commandes avec un lien par email.
-- [ ] **Fonctionnalités PWA** : Ajouter un Web Manifest et un Service Worker pour une consultation hors ligne et la possibilité d'"Ajouter à l'écran d'accueil".
+## 🧪 Phase 2 : L'Ère N10 - Innovation Moléculaire (En Cours)
+*Objectif : Positionner Green Mood comme le leader technologique des nouveaux cannabinoïdes.*
+- [x] **Lancement de la Molécule N10** : Intégration complète dans le catalogue et le Hero.
+- [x] **Branding N10** : Animations cinématiques et visuels haute définition.
+- [x] **Transparence Lab** : Affichage des certificats d'analyse N10 sur les fiches produits.
+- [ ] **Centre de Science Moléculaire** : Hub éducatif sur les spécificités biochimiques du N10.
+- [ ] **IA BudTender 2.0** : Algorithme prédictif pour recommander le dosage N10 idéal par profil.
+- [ ] **Expansion de Gamme** : Déclinaison du N10 en formats Concentrés et Vape haut de gamme.
 
-## 🌟 Phase 3 : Expansion Future (V1+)
-*Objectif : Augmenter la fidélisation des utilisateurs et offrir des capacités de vente avancées.*
-- [ ] **Programme de Fidélité & Récompenses** : Enregistrer automatiquement des points de fidélité (`loyalty_points`) après achat pour offrir des réductions.
-- [ ] **Système d'Abonnement** : Permettre des livraisons hebdomadaires/mensuelles automatiques pour les consommables (huiles).
-- [ ] **Avis Clients** : Permettre aux acheteurs vérifiés de laisser des avis de 1 à 5 étoiles sur chaque fiche produit.
-- [ ] **Analytique Admin Avancée** : Graphiques de ventes, produits performants et tunnels de conversion au sein du dashboard.
-- [ ] **Support Multi-langue (i18n)** : Traduire le catalogue en FR/EN pour cibler les clients frontaliers européens.
+## 🚀 Phase 3 : Puissance Opérationnelle & Global (V1+)
+*Objectif : Passer à l'échelle industrielle et conquérir de nouveaux marchés.*
+- [ ] **Paiement Production** : Finalisation de l'intégration Viva Wallet (Production Ready).
+- [ ] **Logistique Automatisée** : Connexion aux APIs de transporteurs (Délivrance/Colissimo).
+- [ ] **SEO Sémantique & Local** : Occupation du SERP sur les mots-clés "N10", "Innovation CBD".
+- [ ] **Conformité Européenne** : Adaptation du site pour le marché UE (Multi-devises/TVA).
+- [ ] **Application Mobile Native** : Expérience d'achat ultra-rapide via iOS & Android.
+
+## 🌟 Phase 4 : Écosystème Connecté (Vision Long Terme)
+- [ ] **NFT Loyalty Rewards** : Récompenses exclusives sous forme d'actifs numériques.
+- [ ] **Boutiques Connectées** : QR Codes en rayon synchronisant le panier physique et numérique.
+- [ ] **R&D Collaborative** : Proposer aux membres Master de voter pour les prochaines variétés N10.
+
