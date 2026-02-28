@@ -71,37 +71,47 @@ export default function Layout() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-green-neon text-white relative flex items-center justify-center overflow-hidden"
+            className="bg-green-neon text-black relative flex items-center justify-center overflow-hidden z-[60]"
           >
-            <div className="px-4 py-2.5 text-sm font-medium text-center w-full max-w-7xl mx-auto pr-10">
+            <div className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-center w-full max-w-7xl mx-auto pr-10">
+              <span className="inline-block animate-pulse mr-2">✦</span>
               {settings.banner_text}
+              <span className="inline-block animate-pulse ml-2">✦</span>
             </div>
             <button
               onClick={() => setIsBannerVisible(false)}
-              className="absolute right-4 p-1.5 hover:bg-black/20 rounded-full transition-colors"
+              className="absolute right-4 p-1.5 hover:bg-black/10 rounded-full transition-colors group"
               aria-label="Fermer la bannière"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 transition-transform group-hover:rotate-90" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+        className="sticky top-0 z-50 w-full"
+      >
+        <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]" />
+
+        <div className="max-w-12xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex justify-between items-center h-20 md:h-24">
             {/* Logo */}
-            <Link to="/" className="flex items-center group" aria-label="Green Mood CBD Shop — Accueil">
+            <Link to="/" className="flex items-center group relative" aria-label="Green Mood CBD Shop — Accueil">
+              <div className="absolute -inset-4 bg-green-neon/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <img
                 src="/logo.png"
                 alt="Green Mood CBD Shop"
-                className="h-26 w-auto object-contain transition-all duration-500 group-hover:[filter:drop-shadow(0_0_8px_rgba(57,255,20,0.65))_drop-shadow(0_0_22px_rgba(57,255,20,0.3))]"
+                className="h-20 w-auto object-contain transition-all duration-700 group-hover:scale-105 group-hover:[filter:drop-shadow(0_0_12px_rgba(57,255,20,0.8))]"
               />
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex gap-6">
+            <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path ||
                   (link.path !== "/" && location.pathname.startsWith(link.path));
@@ -109,12 +119,20 @@ export default function Layout() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`relative text-sm font-medium transition-all duration-200 hover:text-green-neon ${isActive ? "text-green-neon" : "text-zinc-300"
+                    className={`relative px-4 py-2 text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 group ${isActive ? "text-green-neon" : "text-zinc-400 hover:text-white"
                       }`}
                   >
-                    {link.name}
+                    <span className="relative z-10">{link.name}</span>
+                    {isActive ? (
+                      <motion.span
+                        layoutId="nav-active"
+                        className="absolute inset-0 bg-white/5 rounded-xl border border-white/10 -z-0"
+                      />
+                    ) : (
+                      <span className="absolute inset-0 bg-white/0 rounded-xl group-hover:bg-white/5 transition-all duration-300 -z-0" />
+                    )}
                     {isActive && (
-                      <span className="absolute -bottom-1 left-0 right-0 h-px bg-green-neon rounded-full [box-shadow:0_0_6px_rgba(57,255,20,0.8)]" />
+                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-neon rounded-full shadow-[0_0_10px_rgba(57,255,20,1)]" />
                     )}
                   </Link>
                 );
@@ -122,16 +140,16 @@ export default function Layout() {
             </nav>
 
             {/* Right actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* Cart button */}
               <button
                 onClick={openSidebar}
-                className="relative p-2 text-zinc-300 hover:text-white transition-colors"
+                className="group relative p-3 text-zinc-400 hover:text-green-neon transition-all duration-300 bg-white/0 hover:bg-white/5 rounded-2xl border border-transparent hover:border-white/10"
                 aria-label="Ouvrir le panier"
               >
-                <ShoppingCart className="h-6 w-6" />
+                <ShoppingCart className="h-5 w-5 transition-transform group-hover:scale-110" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-green-neon text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center glow-pulse-green">
+                  <span className="absolute -top-1 -right-1 bg-green-neon text-black text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_15px_rgba(57,255,20,0.4)]">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
@@ -139,52 +157,61 @@ export default function Layout() {
 
               {/* Account */}
               {user ? (
-                <div className="relative hidden md:block">
+                <div className="relative hidden md:block group/account">
                   <button
                     onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
-                    className="flex items-center gap-2 p-2 text-zinc-300 hover:text-white transition-colors"
+                    className={`flex items-center gap-3 p-2 pr-4 rounded-2xl border transition-all duration-300 ${isAccountMenuOpen
+                      ? "bg-green-neon border-green-neon text-black"
+                      : "bg-white/5 border-white/10 text-zinc-300 hover:border-green-neon/50 hover:text-white"
+                      }`}
                   >
-                    <User className="h-5 w-5" />
-                    <span className="text-sm">{profile?.full_name?.split(" ")[0] ?? "Mon compte"}</span>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isAccountMenuOpen ? "bg-black/20" : "bg-white/10"
+                      }`}>
+                      <User className="h-4 w-4" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {profile?.full_name?.split(" ")[0] ?? "Profil"}
+                    </span>
                   </button>
 
                   <AnimatePresence>
                     {isAccountMenuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl overflow-hidden z-50"
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-4 w-56 bg-zinc-900/90 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden z-50 p-2"
                       >
                         <Link
                           to="/compte"
-                          className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                          className="flex items-center gap-3 px-4 py-3 text-xs font-bold text-zinc-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all uppercase tracking-widest"
                         >
                           <User className="h-4 w-4" />
-                          Mon compte
+                          Tableau de bord
                         </Link>
                         <Link
                           to="/compte/commandes"
-                          className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                          className="flex items-center gap-3 px-4 py-3 text-xs font-bold text-zinc-400 hover:bg-white/5 hover:text-white rounded-2xl transition-all uppercase tracking-widest"
                         >
                           <Clock className="h-4 w-4" />
-                          Mes commandes
+                          Historique
                         </Link>
                         {profile?.is_admin && (
                           <Link
                             to="/admin"
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-green-neon hover:bg-zinc-800 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 text-xs font-black text-green-neon hover:bg-green-neon/10 rounded-2xl transition-all uppercase tracking-widest"
                           >
                             <ShieldCheck className="h-4 w-4" />
-                            Administration
+                            Admin Space
                           </Link>
                         )}
+                        <div className="h-px bg-white/5 my-2 mx-4" />
                         <button
                           onClick={signOut}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-zinc-800 transition-colors border-t border-zinc-700"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-400 hover:bg-red-400/10 rounded-2xl transition-all uppercase tracking-widest"
                         >
                           <LogOut className="h-4 w-4" />
-                          Déconnexion
+                          Logout
                         </button>
                       </motion.div>
                     )}
@@ -193,19 +220,19 @@ export default function Layout() {
               ) : (
                 <Link
                   to="/connexion"
-                  className="hidden md:flex items-center gap-2 text-sm text-zinc-300 hover:text-white px-3 py-2 rounded-lg hover:bg-zinc-800 transition-colors"
+                  className="hidden md:flex items-center gap-3 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-white rounded-2xl transition-all group"
                 >
-                  <User className="h-5 w-5" />
-                  Connexion
+                  <User className="h-4 w-4 text-zinc-500 group-hover:text-green-neon transition-colors" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Accès Client</span>
                 </Link>
               )}
 
               {/* Mobile Menu Button */}
               <button
-                className="lg:hidden p-2 text-zinc-300 hover:text-white"
+                className="lg:hidden p-3 text-zinc-400 hover:text-white bg-white/5 rounded-2xl border border-white/10 transition-all"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
@@ -215,53 +242,60 @@ export default function Layout() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-zinc-900 border-b border-white/10 overflow-hidden"
+              initial={{ opacity: 0, x: "100%" }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-0 z-50 lg:hidden bg-zinc-950/95 backdrop-blur-2xl p-8 flex flex-col pt-32"
             >
-              <div className="px-4 py-6 space-y-4 flex flex-col">
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="absolute top-8 right-8 p-4 text-zinc-500 hover:text-white"
+              >
+                <X className="w-8 h-8" />
+              </button>
+
+              <div className="space-y-8">
                 {navLinks.map((link) => (
-                  <Link
+                  <motion.div
                     key={link.path}
-                    to={link.path}
-                    className={`text-lg font-medium transition-colors ${location.pathname === link.path
-                      ? "text-green-neon glow-green"
-                      : "text-zinc-300 hover:text-green-neon"
-                      }`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
                   >
-                    {link.name}
-                  </Link>
-                ))}
-                <div className="border-t border-zinc-700 pt-4 space-y-3">
-                  {user ? (
-                    <>
-                      <Link to="/compte" className="flex items-center gap-2 text-zinc-300">
-                        <User className="h-4 w-4" /> Mon compte
-                      </Link>
-                      <Link to="/compte/commandes" className="flex items-center gap-2 text-zinc-300">
-                        <Clock className="h-4 w-4" /> Mes commandes
-                      </Link>
-                      {profile?.is_admin && (
-                        <Link to="/admin" className="flex items-center gap-2 text-green-neon">
-                          <ShieldCheck className="h-4 w-4" /> Administration
-                        </Link>
-                      )}
-                      <button onClick={signOut} className="flex items-center gap-2 text-red-400">
-                        <LogOut className="h-4 w-4" /> Déconnexion
-                      </button>
-                    </>
-                  ) : (
-                    <Link to="/connexion" className="flex items-center gap-2 text-zinc-300">
-                      <User className="h-4 w-4" /> Connexion / Inscription
+                    <Link
+                      to={link.path}
+                      className={`text-4xl font-serif font-black transition-all ${location.pathname === link.path
+                        ? "text-green-neon italic"
+                        : "text-zinc-600 hover:text-white"
+                        }`}
+                    >
+                      {link.name}
                     </Link>
-                  )}
-                </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="mt-auto pt-10 border-t border-white/5 space-y-6">
+                {user ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Link to="/compte" className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl text-sm font-bold uppercase tracking-widest">
+                      <User className="h-5 w-5 text-green-neon" /> Profil
+                    </Link>
+                    <button onClick={signOut} className="flex items-center gap-3 p-4 bg-red-400/10 rounded-2xl text-sm font-bold uppercase tracking-widest text-red-400">
+                      <LogOut className="h-5 w-5" /> Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Link to="/connexion" className="flex items-center justify-center gap-4 p-6 bg-green-neon text-black rounded-3xl text-sm font-black uppercase tracking-[0.3em]">
+                    <User className="h-5 w-5" /> Connexion
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </header>
+      </motion.header>
 
       {/* Main Content */}
       <main className="flex-grow">

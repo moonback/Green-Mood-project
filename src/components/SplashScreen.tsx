@@ -5,10 +5,9 @@ export default function SplashScreen() {
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
-        // Hide splash screen when video ends or after a timeout
         const timer = setTimeout(() => {
             setIsVisible(false);
-        }, 4500); // Fail-safe timeout 4.5s
+        }, 4500);
 
         return () => clearTimeout(timer);
     }, []);
@@ -27,7 +26,7 @@ export default function SplashScreen() {
                         muted
                         playsInline
                         onEnded={() => setIsVisible(false)}
-                        className="w-full h-full object-cover"
+                        className="max-w-[80%] max-h-[80%] w-auto h-auto object-contain"
                     >
                         <source src="/splash.mp4" type="video/mp4" />
                         Votre navigateur ne supporte pas la vidéo.
@@ -37,3 +36,4 @@ export default function SplashScreen() {
         </AnimatePresence>
     );
 }
+
