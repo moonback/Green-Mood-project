@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
-import { MapPin, Phone, Clock, Mail, MessageCircle } from "lucide-react";
+import { MapPin, Phone, Clock, Mail, MessageCircle, Send, Sparkles, Globe, ShieldCheck } from "lucide-react";
 import { useSettingsStore } from "../store/settingsStore";
+import { Link } from "react-router-dom";
 import SEO from "../components/SEO";
 
 export default function Contact() {
@@ -25,133 +26,212 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 pt-20">
+    <div className="min-h-screen bg-zinc-950 text-white pb-32">
       <SEO
-        title="Contactez notre CBD Shop à Paris - Green Mood Shop"
-        description="Une question ? Besoin d'un conseil ? Contactez Green Mood CBD Shop ou venez nous rendre visite dans notre boutique à Paris. Horaires et accès."
+        title="Conciergerie & Contact — Green Mood Paris"
+        description="Une question ? Besoin d'un conseil ? Contactez l'expertise Green Mood ou rendez-vous dans notre écrin parisien."
         keywords="contact CBD Paris, horaires Green Mood, adresse CBD Paris, téléphone CBD shop"
         schema={contactSchema}
       />
-      {/* Header */}
-      <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
-        >
-          Nous <span className="text-green-neon">Contacter</span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-xl text-zinc-400 max-w-2xl mx-auto font-light"
-        >
-          Une question ? Besoin d'un conseil ? N'hésitez pas à nous joindre ou à
-          passer en boutique.
-        </motion.p>
+
+      {/* Hero Header */}
+      <section className="relative pt-40 pb-24 px-4 overflow-hidden">
+        {/* Decorative Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-green-neon/5 rounded-full blur-[120px] -z-10" />
+
+        <div className="max-w-7xl mx-auto text-center space-y-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-green-neon text-xs font-black uppercase tracking-[0.2em]"
+          >
+            <Sparkles className="w-4 h-4" />
+            Service Client d'Elite
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tight leading-[0.9]"
+          >
+            ENTRONS EN <br />
+            <span className="text-green-neon italic glow-green">RÉSONANCE.</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-zinc-400 max-w-2xl mx-auto font-light leading-relaxed"
+          >
+            Que vous soyez néophyte ou connaisseur averti, notre équipe
+            est à votre entière disposition pour un accompagnement sur-mesure.
+          </motion.p>
+        </div>
       </section>
 
-      {/* Main Content */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            {/* Contact Info */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-12"
-            >
-              <div>
-                <h2 className="text-3xl font-serif font-bold text-white mb-8">
-                  Coordonnées
-                </h2>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4 group cursor-default">
-                    <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <MapPin className="h-6 w-6 text-green-neon" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Adresse</h3>
-                      <p className="text-zinc-400">
-                        {settings.store_address.split(',')[0]}
-                        <br />
-                        {settings.store_address.split(',').slice(1).join(',').trim()}
-                      </p>
-                    </div>
-                  </div>
+      {/* Main Content Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
-                  <div className="flex items-start gap-4 group cursor-default">
-                    <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <Phone className="h-6 w-6 text-green-neon" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Téléphone</h3>
-                      <p className="text-zinc-400">{settings.store_phone}</p>
-                    </div>
+          {/* Contact Methods (Left) */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Location Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group"
+              >
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-2xl bg-green-neon/10 flex items-center justify-center group-hover:bg-green-neon/20 transition-colors">
+                    <MapPin className="w-7 h-7 text-green-neon" />
                   </div>
-
-                  <div className="flex items-start gap-4 group cursor-default">
-                    <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <MessageCircle className="h-6 w-6 text-green-neon" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">WhatsApp</h3>
-                      <p className="text-zinc-400">06 12 34 56 78</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4 group cursor-default">
-                    <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
-                      <Mail className="h-6 w-6 text-green-neon" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-neon transition-colors">Email</h3>
-                      <p className="text-zinc-400">contact@greenMood-cbd.fr</p>
-                    </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">Notre Écrin</h3>
+                    <p className="text-lg font-bold text-white leading-snug">
+                      {settings.store_address.split(',')[0]}<br />
+                      {settings.store_address.split(',').slice(1).join(',').trim()}
+                    </p>
+                    <button className="text-xs text-green-neon font-black uppercase tracking-widest pt-2 hover:underline">
+                      Itinéraire Expert
+                    </button>
                   </div>
                 </div>
+              </motion.div>
+
+              {/* Communication Methods */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all flex flex-col items-center text-center space-y-4"
+                >
+                  <Phone className="w-6 h-6 text-green-neon" />
+                  <div className="space-y-1">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Appel Direct</h4>
+                    <p className="font-bold text-white text-sm">{settings.store_phone}</p>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  viewport={{ once: true }}
+                  className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all flex flex-col items-center text-center space-y-4"
+                >
+                  <MessageCircle className="w-6 h-6 text-green-neon" />
+                  <div className="space-y-1">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">WhatsApp</h4>
+                    <p className="font-bold text-white text-sm">06 12 34 56 78</p>
+                  </div>
+                </motion.div>
               </div>
 
-              <div>
-                <h2 className="text-3xl font-serif font-bold text-white mb-8">
-                  Horaires d'ouverture
-                </h2>
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
-                  <ul className="space-y-4">
-                    <li className="flex justify-between items-center text-zinc-300">
-                      <span className="font-medium">Lundi - Samedi</span>
-                      <span>{settings.store_hours.split(' ').slice(1).join(' ')}</span>
-                    </li>
-                    <li className="flex justify-between items-center text-zinc-500">
-                      <span className="font-medium">Dimanche</span>
-                      <span>Fermé</span>
-                    </li>
-                  </ul>
+              {/* Hours Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-6"
+              >
+                <div className="flex items-center gap-4">
+                  <Clock className="w-5 h-5 text-green-neon" />
+                  <h4 className="text-xs font-black uppercase tracking-widest text-zinc-500">Horaires d'Exception</h4>
                 </div>
-              </div>
-            </motion.div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-zinc-400 font-medium">Lundi — Samedi</span>
+                    <span className="font-bold text-white">{settings.store_hours.split(' ').slice(1).join(' ')}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm opacity-50">
+                    <span className="text-zinc-500 font-medium">Dimanche</span>
+                    <span className="font-bold">Privatisé / Fermé</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
 
-            {/* Google Maps Placeholder */}
+          {/* Contact Form (Right) */}
+          <div className="lg:col-span-7">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="h-full min-h-[400px] bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 relative"
+              className="bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 lg:p-16 space-y-10"
             >
-              {/* Replace with actual Google Maps iframe in production */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 p-8 text-center">
-                <MapPin className="h-16 w-16 text-zinc-700 mb-4" />
-                <p className="text-lg font-medium text-zinc-400 mb-2">
-                  Carte Interactive
-                </p>
-                <p className="text-sm">
-                  Intégration Google Maps à configurer avec l'adresse exacte de
-                  la boutique.
-                </p>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-serif font-black">Laissez un <br /><span className="text-green-neon italic">Message.</span></h2>
+                <p className="text-zinc-500 text-sm font-light">Réponse sous 24h par un expert Green Mood.</p>
               </div>
+
+              <form className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-4">Votre Identité</label>
+                    <input
+                      type="text"
+                      placeholder="Nom complet"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white placeholder-zinc-700 focus:outline-none focus:border-green-neon transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-4">Courriel Personnel</label>
+                    <input
+                      type="email"
+                      placeholder="votre@email.fr"
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white placeholder-zinc-700 focus:outline-none focus:border-green-neon transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-4">Objet de la Demande</label>
+                  <select className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-zinc-400 focus:outline-none focus:border-green-neon transition-all appearance-none cursor-pointer">
+                    <option>Conseil Personnalisé</option>
+                    <option>Question Commande</option>
+                    <option>Demande Partenariat</option>
+                    <option>Autre</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-4">Votre Message</label>
+                  <textarea
+                    rows={5}
+                    placeholder="Comment pouvons-nous vous aider ?"
+                    className="w-full bg-white/5 border border-white/5 rounded-3xl px-6 py-6 text-white placeholder-zinc-700 focus:outline-none focus:border-green-neon transition-all resize-none"
+                  ></textarea>
+                </div>
+
+                <button className="w-full bg-white text-black font-black uppercase tracking-widest py-6 rounded-2xl flex items-center justify-center gap-3 hover:bg-green-neon transition-all group overflow-hidden relative">
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    Envoyer au Concierge
+                  </span>
+                </button>
+              </form>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Decorative Brand Bar */}
+      <section className="mt-32 border-y border-white/5 py-12 px-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-30 grayscale">
+          <div className="flex items-center gap-3 font-serif font-black italic text-2xl">
+            <Globe className="w-6 h-6" /> GREEN MOOD PARIS
+          </div>
+          <div className="flex items-center gap-3 font-serif font-black italic text-2xl">
+            <Sparkles className="w-6 h-6" /> LUXURY CANNABINOIDS
+          </div>
+          <div className="flex items-center gap-3 font-serif font-black italic text-2xl">
+            <ShieldCheck className="w-6 h-6" /> SUPREME QUALITY
           </div>
         </div>
       </section>
