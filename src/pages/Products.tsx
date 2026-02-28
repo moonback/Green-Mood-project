@@ -25,26 +25,8 @@ export default function Products() {
         "position": 1,
         "item": {
           "@type": "Product",
-          "name": "Fleurs CBD",
-          "description": "Des fleurs cultivées en intérieur, sous serre ou en extérieur. Sélectionnées pour leurs profils terpéniques uniques et leur qualité irréprochable."
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "item": {
-          "@type": "Product",
-          "name": "Résines & Pollens CBD",
-          "description": "Des extractions traditionnelles et modernes offrant des textures variées et des arômes puissants."
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "item": {
-          "@type": "Product",
-          "name": "Huiles & Infusions CBD",
-          "description": "Des huiles Full Spectrum et Broad Spectrum pressées à froid pour conserver tous les bienfaits de la plante."
+          "name": "N10 Premium",
+          "description": "Le N10 est un dérivé du THC, avec une teneur en tétrahydrocannabinol plus faible. Cette molécule est plus puissante et plus intense que le CBNO."
         }
       }
     ]
@@ -52,128 +34,100 @@ export default function Products() {
 
   const categories = [
     {
-      id: "fleurs",
-      title: "Fleurs CBD Premium",
-      subtitle: "Culture d'Excellence",
-      icon: <Leaf className="h-6 w-6 text-green-neon" />,
-      description:
-        "Nos fleurs sont le fruit d'une sélection rigoureuse parmi les meilleurs producteurs européens. Cultivées sans pesticides ni métaux lourds, elles offrent des arômes complexes et des effets équilibrés.",
-      image: "/images/products-flower.png",
-      tag: "Indoor & Greenhouse",
+      id: "n10",
+      title: "Molécule N10 Exclusive",
+      subtitle: "L'Innovation Moléculaire",
+      icon: <Zap className="h-6 w-6 text-green-neon" />,
+      description: "Le N10 est un dérivé du THC, avec une teneur en tétrahydrocannabinol plus faible. Cette molécule est plus puissante et plus intense que le CBNO.",
+      image: "/images/presentation-cbd.png",
+      tag: "Advanced Cannabinoids",
       features: [
-        { icon: <Zap className="w-4 h-4" />, text: "Arômes Exceptionnels" },
-        { icon: <ShieldCheck className="w-4 h-4" />, text: "Tests Labo Systématiques" },
+        { icon: <Zap className="w-4 h-4" />, text: "Intensité Maximale" },
+        { icon: <ShieldCheck className="w-4 h-4" />, text: "Pureté Labo" },
       ],
-      items: ["Amnesia Haze", "Gelato", "White Widow", "Purple Punch", "Orange Bud", "Strawberry"],
-    },
-    {
-      id: "resines",
-      title: "Résines & Pollens",
-      subtitle: "Extractions Millénaires",
-      icon: <Sparkles className="h-6 w-6 text-green-neon" />,
-      description:
-        "Découvrez des textures variées allant de la mousse aérienne au gras onctueux. Nos extractions préservent l'intégralité du profil terpénique pour une puissance aromatique décuplée.",
-      image: "/images/products-resin.png",
-      tag: "Tradition & Innovation",
-      features: [
-        { icon: <Wind className="w-4 h-4" />, text: "Textures Uniques" },
-        { icon: <Sparkles className="w-4 h-4" />, text: "Haute Concentration" },
-      ],
-      items: ["Afghan Gold", "Jaune Mousseux", "Filtré x3", "Ice O Lator", "Caramelo", "Moonrock"],
-    },
-    {
-      id: "huiles",
-      title: "Huiles & Élixirs",
-      subtitle: "Bien-être Holistique",
-      icon: <Droplet className="h-6 w-6 text-green-neon" />,
-      description:
-        "Pressées à froid et enrichies en terpènes, nos huiles Full Spectrum vous accompagnent au quotidien pour apaiser l'esprit et revitaliser le corps.",
-      image: "/images/products-oil.png",
-      tag: "Full & Broad Spectrum",
-      features: [
-        { icon: <Moon className="w-4 h-4" />, text: "Qualité Sommeil" },
-        { icon: <ShieldCheck className="w-4 h-4" />, text: "Hautement Bio-assimilable" },
-      ],
-      items: [
-        "Huile 10% Quotidienne",
-        "Huile 20% Sommeil Profond",
-        "Huile 30% Récupération",
-        "Infusion Détente Soirée",
-        "Élixir Focus & Énergie",
-        "Baume Apaisant"
-      ],
+      items: ["Amnesia N10", "White Widow N10", "Purple Haze N10", "Gorilla Glue N10", "OG Kush N10", "Blue Dream N10"],
     },
   ];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white overflow-hidden pb-32">
       <SEO
-        title="Collections CBD Premium — Green Mood Shop"
-        description="Explorez l'univers Green Mood : fleurs d'exception, résines artisanales et huiles de bien-être. Une qualité supérieure pour une expérience sans compromis."
-        keywords="produits CBD, fleurs CBD, résine CBD, huile CBD, infusion CBD, achat CBD, qualité premium"
+        title="N10 Innovation : Puissance & Intensité — Green Mood Shop"
+        description="Le N10 est un dérivé du THC, avec une teneur en tétrahydrocannabinol plus faible. Cette molécule est plus puissante et plus intense que le CBNO. Découvrez l'excellence."
+        keywords="N10, dérivé THC, CBD puissant, CBNO vs N10, innovation cannabinoïde, Green Mood N10"
         schema={productsSchema}
       />
 
       {/* Hero Header - Architectural Depth */}
-      <section className="relative min-h-[80vh] flex items-center justify-center pt-32 pb-40 overflow-hidden px-4">
+      <section className="relative min-h-[90vh] flex items-center justify-center pt-32 pb-40 overflow-hidden px-4">
         {/* Cinematic Background */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 left-0 w-full h-full bg-zinc-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(9,9,11,1)_100%)] z-10" />
+          <img
+            src="/images/presentation-cbd.png"
+            className="w-full h-full object-cover opacity-20 filter grayscale blur-[2px]"
+            alt="N10 Mood"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/80 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950 opacity-90" />
 
-          {/* Moving Glows */}
+          {/* Animated Glows */}
           <motion.div
             animate={{
               scale: [1, 1.2, 1],
               opacity: [0.1, 0.2, 0.1],
-              x: [-100, 100, -100],
-              y: [-50, 50, -50]
+              x: [-100, 100, -100]
             }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-green-neon/5 rounded-full blur-[180px]"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.05, 0.1, 0.05],
-              x: [100, -100, 100],
-              y: [50, -50, 50]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[150px]"
+            className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-green-neon/10 rounded-full blur-[180px]"
           />
         </div>
 
-        <div className="max-w-7xl mx-auto text-center relative z-20">
+        <div className="max-w-7xl mx-auto text-center relative z-20 space-y-16">
           <motion.div
             initial={{ opacity: 0, letterSpacing: "0.2em" }}
             animate={{ opacity: 1, letterSpacing: "0.6em" }}
             transition={{ duration: 1.5 }}
-            className="text-green-neon font-black uppercase text-[10px] mb-12"
+            className="text-green-neon font-black uppercase text-xs mb-8"
           >
-            L'EXCELLENCE PAR NATURE.
+            L'ÈRE DE L'EXCELLENCE MOLÉCULAIRE.
           </motion.div>
 
-          <motion.div
+          <motion.h1
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="space-y-4"
+            className="text-8xl md:text-9xl lg:text-[14rem] font-serif font-black tracking-tighter leading-[0.8] uppercase"
           >
-            <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-serif font-black tracking-tighter leading-[0.8] uppercase grayscale hover:grayscale-0 transition-all duration-1000 cursor-default">
-              LES <br />
-              <span className="text-green-neon italic glow-green">SIGNATURES.</span>
-            </h1>
+            L'APOGÉE <br />
+            <span className="text-green-neon italic glow-green-strong">N10.</span>
+          </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 1 }}
-              className="text-xl md:text-3xl text-zinc-500 max-w-4xl mx-auto font-serif italic font-light leading-relaxed pt-12"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 1 }}
+            className="max-w-4xl mx-auto"
+          >
+            <p className="text-2xl md:text-4xl text-white font-serif italic font-light leading-relaxed mb-6">
+              Le N10 est un dérivé du THC, avec une teneur en tétrahydrocannabinol plus faible.
+            </p>
+            <p className="text-lg md:text-xl text-zinc-400 font-sans font-light uppercase tracking-widest leading-relaxed">
+              Cette molécule est plus puissante et plus intense que le CBNO.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="pt-12"
+          >
+            <Link
+              to="/catalogue?search=N10"
+              className="px-12 py-6 bg-white text-black font-black rounded-2xl hover:bg-green-neon transition-all hover:scale-110 shadow-2xl uppercase tracking-widest text-xs"
             >
-              Une collection sculptée par le temps et la passion, <br />
-              où chaque variété narre une épopée botanique unique.
-            </motion.p>
+              Découvrir la Gamme N10
+            </Link>
           </motion.div>
         </div>
 
@@ -184,7 +138,7 @@ export default function Products() {
           className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
         >
           <div className="w-px h-20 bg-gradient-to-b from-transparent via-green-neon/40 to-transparent" />
-          <span className="text-[8px] font-black uppercase tracking-[0.5em] text-zinc-600">DÉCOUVREZ LES ARCHIVES</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600">DÉCOUVREZ LES COLLECTIONS</span>
         </motion.div>
       </section>
 
