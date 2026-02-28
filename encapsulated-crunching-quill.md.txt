@@ -1,0 +1,346 @@
+# Plan : Implémentation e-commerce complet — Green Moon CBD
+
+## Contexte
+La boutique passe d'un site vitrine statique à une plateforme e-commerce complète avec catalogue dynamique (Supabase), panier, paiement Viva Wallet, comptes utilisateurs, et gestion des stocks. L'utilisateur a déjà un projet Supabase actif, pas encore de compte Viva Wallet (placeholders), et souhaite un admin panel intégré — tout en une fois.
+
+---
+
+## Dépendances à installer
+
+```bash
+npm install @supabase/supabase-js zustand
+```
+
+---
+
+## 1. Base de données Supabase
+
+### Script SQL à exécuter dans Supabase Dashboard → SQL Editor
+
+**Tables :**
+
+```sql
+-- Catégories
+CREATE TABLE categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text UNIQUE NOT NULL,
+  name text NOT NULL,
+  description text,
+  icon_name text,
+  image_url text,
+  sort_order int NOT NULL DEFAULT 0,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Produits
+CREATE TABLE products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id uuid NOT NULL REFERENCES categories(id),
+  slug text UNIQUE NOT NULL,
+  name text NOT NULL,
+  description text,
+  cbd_percentage numeric(5,2),
+  thc_max numeric(5,3),
+  weight_grams numeric(8,2),
+  price numeric(10,2) NOT NULL,
+  image_url text,
+  stock_quantity int NOT NULL DEFAULT 0,
+  is_available boolean NOT NULL DEFAULT true,
+  is_featured boolean NOT NULL DEFAULT false,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Profils utilisateurs (étend auth.users)
+CREATE TABLE profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name text,
+  phone text,
+  loyalty_points int NOT NULL DEFAULT 0,
+  is_admin boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Adresses de livraison
+CREATE TABLE addresses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  label text NOT NULL DEFAULT 'Domicile',
+  street text NOT NULL,
+  city text NOT NULL,
+  postal_code text NOT NULL,
+  country text NOT NULL DEFAULT 'France',
+  is_default boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Commandes
+CREATE TABLE orders (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles(id),
+  status text NOT NULL DEFAULT 'pending',
+  -- status: pending | paid | processing | ready | shipped | delivered | cancelled
+  delivery_type text NOT NULL DEFAULT 'click_collect',
+  -- delivery_type: click_collect | delivery
+  address_id uuid REFERENCES addresses(id),
+  subtotal numeric(10,2) NOT NULL,
+  delivery_fee numeric(10,2) NOT NULL DEFAULT 0,
+  total numeric(10,2) NOT NULL,
+  loyalty_points_earned int NOT NULL DEFAULT 0,
+  viva_order_code text,
+  payment_status text NOT NULL DEFAULT 'pending',
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Lignes de commande
+CREATE TABLE order_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL REFERENCES products(id),
+  product_name text NOT NULL,
+  unit_price numeric(10,2) NOT NULL,
+  quantity int NOT NULL,
+  total_price numeric(10,2) NOT NULL
+);
+
+-- Mouvements de stock
+CREATE TABLE stock_movements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id uuid NOT NULL REFERENCES products(id),
+  quantity_change int NOT NULL,
+  type text NOT NULL, -- sale | restock | adjustment | return
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Trigger: créer un profil auto à l'inscription
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name');
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+```
+
+**RLS Policies :**
+- `categories` / `products` : lecture publique, écriture admin uniquement
+- `profiles` : lecture/écriture par l'utilisateur lui-même ou admin
+- `addresses` : lecture/écriture par propriétaire
+- `orders` / `order_items` : lecture par propriétaire ou admin, création authentifiée
+- `stock_movements` : admin uniquement
+
+**Données de seed (dans Supabase Dashboard) :**
+Migrer les 12 produits hardcodés de `Products.tsx` vers la DB avec leurs catégories.
+
+---
+
+## 2. Nouvelles variables d'environnement
+
+Fichier `.env` (ajouter à `.gitignore`) :
+```
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJxxx
+VITE_VIVA_WALLET_BASE_URL=https://demo.vivapayments.com  # sandbox pour tests
+VITE_VIVA_CLIENT_ID=placeholder
+VITE_VIVA_CLIENT_SECRET=placeholder
+```
+
+---
+
+## 3. Nouveaux fichiers à créer
+
+### Infrastructure
+| Fichier | Rôle |
+|---|---|
+| `src/lib/supabase.ts` | Client Supabase singleton |
+| `src/lib/types.ts` | TypeScript interfaces (Product, Order, Profile, etc.) |
+| `src/store/cartStore.ts` | Zustand store du panier (localStorage persisté) |
+| `src/store/authStore.ts` | Zustand store auth (session Supabase) |
+
+### Composants
+| Fichier | Rôle |
+|---|---|
+| `src/components/ProductCard.tsx` | Carte produit (image, prix, bouton ajout panier) |
+| `src/components/CartSidebar.tsx` | Panier latéral slide-out (quantités, total, CTA checkout) |
+| `src/components/QuantitySelector.tsx` | Sélecteur +/- quantité |
+| `src/components/ProtectedRoute.tsx` | HOC route protégée (auth requis) |
+| `src/components/AdminRoute.tsx` | HOC route admin (is_admin requis) |
+| `src/components/StockBadge.tsx` | Badge stock (En stock / Stock limité / Rupture) |
+
+### Pages
+| Fichier | Route | Rôle |
+|---|---|---|
+| `src/pages/Catalog.tsx` | `/catalogue` | Catalogue en ligne (fetch Supabase, filtres par catégorie) |
+| `src/pages/ProductDetail.tsx` | `/catalogue/:slug` | Page produit détaillée |
+| `src/pages/Cart.tsx` | `/panier` | Page panier complète |
+| `src/pages/Checkout.tsx` | `/commande` | Checkout (Click&Collect ou livraison, adresse, paiement) |
+| `src/pages/OrderConfirmation.tsx` | `/commande/confirmation` | Confirmation post-paiement |
+| `src/pages/Login.tsx` | `/connexion` | Login + Inscription (Supabase Auth) |
+| `src/pages/Account.tsx` | `/compte` | Dashboard utilisateur |
+| `src/pages/Orders.tsx` | `/compte/commandes` | Historique des commandes |
+| `src/pages/Addresses.tsx` | `/compte/adresses` | Gestion des adresses |
+| `src/pages/Admin.tsx` | `/admin` | Panel admin (produits, commandes, stocks) |
+
+---
+
+## 4. Fichiers existants à modifier
+
+| Fichier | Modification |
+|---|---|
+| `src/App.tsx` | Ajouter toutes les nouvelles routes, envelopper avec Providers (authStore init) |
+| `src/components/Layout.tsx` | Ajouter icône panier dans le header (badge nombre d'articles), lien "Catalogue en ligne" dans nav, lien compte utilisateur |
+| `src/pages/Products.tsx` | Garder comme page vitrine `/produits` mais ajouter CTA "Commander en ligne →" vers `/catalogue` |
+
+---
+
+## 5. Architecture des stores Zustand
+
+### `cartStore.ts`
+```typescript
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+interface CartStore {
+  items: CartItem[];
+  isOpen: boolean;           // sidebar ouverte
+  deliveryType: 'click_collect' | 'delivery';
+  addItem: (product: Product) => void;
+  removeItem: (productId: string) => void;
+  updateQuantity: (productId: string, qty: number) => void;
+  clearCart: () => void;
+  toggleSidebar: () => void;
+  setDeliveryType: (type: ...) => void;
+  // computed
+  total: number;
+  itemCount: number;
+}
+// Persisté via zustand/middleware persist → localStorage
+```
+
+### `authStore.ts`
+```typescript
+interface AuthStore {
+  user: User | null;
+  profile: Profile | null;
+  session: Session | null;
+  isLoading: boolean;
+  signIn: (email, password) => Promise<void>;
+  signUp: (email, password, fullName) => Promise<void>;
+  signOut: () => Promise<void>;
+  initialize: () => void;     // écoute supabase.auth.onAuthStateChange
+}
+```
+
+---
+
+## 6. Flux Viva Wallet (placeholders prêts pour activation)
+
+L'intégration utilise l'Express server déjà installé (`server/index.ts`) :
+
+```
+Client → POST /api/payment/create-order
+  → Express → Viva Wallet API (créer order)
+  → Retourne orderCode
+  → Redirect vers Viva Wallet checkout URL
+
+Viva Wallet → Webhook POST /api/payment/webhook
+  → Vérifier signature
+  → Mettre à jour order.payment_status = 'paid'
+  → Décrémenter stock
+  → Ajouter loyalty_points
+  → Redirect vers /commande/confirmation
+```
+
+Fichiers serveur : `server/index.ts`, `server/routes/payment.ts`, `server/routes/orders.ts`
+
+En mode placeholder (sans compte Viva Wallet) : simuler le paiement avec un bouton "Payer (simulation)" qui marque l'ordre comme `paid`.
+
+---
+
+## 7. Admin Panel (`/admin`)
+
+Protégé par `is_admin = true` dans `profiles`.
+
+Sections :
+- **Produits** : tableau CRUD (créer, éditer prix/stock/disponibilité, désactiver)
+- **Commandes** : liste avec statuts, mise à jour statut (processing → ready → shipped)
+- **Stocks** : ajustement manuel des quantités + historique des mouvements
+- **Fidélité** : consultation des points par utilisateur
+
+---
+
+## 8. Fidélité (Loyalty)
+
+Règle simple : **1€ dépensé = 1 point**. 100 points = -5€ de réduction.
+- Points calculés et enregistrés à la confirmation du paiement
+- Affichés dans `/compte` (tableau de bord)
+- Déductibles au checkout (champ optionnel "Utiliser mes points")
+
+---
+
+## 9. Nouveaux routes dans `App.tsx`
+
+```tsx
+<Route path="catalogue" element={<Catalog />} />
+<Route path="catalogue/:slug" element={<ProductDetail />} />
+<Route path="panier" element={<Cart />} />
+<Route path="connexion" element={<Login />} />
+
+{/* Routes protégées (auth) */}
+<Route element={<ProtectedRoute />}>
+  <Route path="commande" element={<Checkout />} />
+  <Route path="commande/confirmation" element={<OrderConfirmation />} />
+  <Route path="compte" element={<Account />} />
+  <Route path="compte/commandes" element={<Orders />} />
+  <Route path="compte/adresses" element={<Addresses />} />
+</Route>
+
+{/* Route admin */}
+<Route element={<AdminRoute />}>
+  <Route path="admin" element={<Admin />} />
+</Route>
+```
+
+---
+
+## 10. Ordre d'implémentation
+
+1. **Infra** : installer deps, `.env`, `supabase.ts`, `types.ts`
+2. **DB** : exécuter le SQL dans Supabase + seed des 12 produits existants
+3. **Auth store** : `authStore.ts` + init dans `App.tsx`
+4. **Auth pages** : `Login.tsx` (connexion + inscription), `ProtectedRoute.tsx`, `AdminRoute.tsx`
+5. **Cart store** : `cartStore.ts` (Zustand + persist)
+6. **Layout header** : icône panier avec badge, lien catalogue, lien compte
+7. **Catalogue** : `ProductCard.tsx`, `Catalog.tsx` (fetch Supabase), `StockBadge.tsx`
+8. **CartSidebar** : `CartSidebar.tsx`, `QuantitySelector.tsx`
+9. **Page produit** : `ProductDetail.tsx`
+10. **Panier** : `Cart.tsx` (page complète)
+11. **Checkout** : `Checkout.tsx` (Click&Collect / livraison, adresse, récap)
+12. **Paiement** : server Express `payment.ts`, Viva Wallet placeholder + webhook
+13. **Confirmation** : `OrderConfirmation.tsx`, décrémentation stock, loyalty points
+14. **Compte** : `Account.tsx`, `Orders.tsx`, `Addresses.tsx`
+15. **Admin** : `Admin.tsx` (CRUD produits, gestion commandes/stocks)
+
+---
+
+## 11. Vérification end-to-end
+
+1. `npm run dev` — vérifier que l'app démarre sans erreur
+2. Naviguer vers `/catalogue` — vérifier le chargement depuis Supabase
+3. Ajouter un produit → vérifier badge panier dans le header
+4. Ouvrir `/panier` → modifier quantités, vérifier totaux
+5. S'inscrire via `/connexion` → vérifier création `profiles` dans Supabase
+6. Aller sur `/commande` → sélectionner Click&Collect, valider commande (simulation)
+7. Vérifier `/commande/confirmation` + entrée dans table `orders`
+8. Aller sur `/compte/commandes` → vérifier historique
+9. Se connecter avec un compte `is_admin = true` → accéder `/admin`
+10. Dans l'admin, modifier le stock d'un produit → vérifier `stock_movements`

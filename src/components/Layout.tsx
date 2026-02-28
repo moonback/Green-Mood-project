@@ -39,7 +39,7 @@ export default function Layout() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const navLinks = [
+  const baseNavLinks = [
     { name: "Accueil", path: "/" },
     { name: "La Boutique", path: "/boutique" },
     { name: "Catalogue", path: "/catalogue" },
@@ -47,6 +47,10 @@ export default function Layout() {
     { name: "Qualité & Légalité", path: "/qualite" },
     { name: "Contact", path: "/contact" },
   ];
+
+  const navLinks = profile?.is_admin
+    ? [...baseNavLinks, { name: "Administration", path: "/admin" }]
+    : baseNavLinks;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
@@ -84,8 +88,8 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
-              <Leaf className="h-8 w-8 text-green-primary group-hover:text-green-neon transition-colors" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <img src="/logo.jpeg" alt="Green Moon Logo" className="h-12 w-12 object-contain rounded-full border border-green-primary/30 group-hover:border-green-neon transition-colors" />
               <span className="font-serif text-2xl font-bold tracking-tight">
                 Green{" "}
                 <span className="text-green-primary group-hover:text-green-neon transition-colors">
@@ -264,8 +268,8 @@ export default function Layout() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand */}
             <div className="space-y-4">
-              <Link to="/" className="flex items-center gap-2">
-                <Leaf className="h-6 w-6 text-green-primary" />
+              <Link to="/" className="flex items-center gap-3">
+                <img src="/logo.jpeg" alt="Green Moon Logo" className="h-10 w-10 object-contain rounded-full" />
                 <span className="font-serif text-xl font-bold">Green Moon</span>
               </Link>
               <p className="text-zinc-400 text-sm leading-relaxed">

@@ -40,11 +40,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   fetchProfile: async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
+
+    if (error) {
+      return;
+    }
+
     if (data) set({ profile: data as Profile });
   },
 

@@ -68,8 +68,8 @@ export default function Login() {
         >
           {/* Logo */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-green-neon">
-              <Leaf className="w-8 h-8" />
+            <Link to="/" className="inline-flex items-center gap-3">
+              <img src="/logo.jpeg" alt="Green Moon Logo" className="w-12 h-12 object-contain rounded-full" />
               <span className="font-serif text-2xl text-white">Green Moon</span>
             </Link>
           </div>
@@ -81,11 +81,10 @@ export default function Login() {
                 <button
                   key={m}
                   onClick={() => { setMode(m); setError(''); setSuccess(''); }}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                    mode === m
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
                       ? 'bg-green-primary text-white'
                       : 'text-zinc-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   {m === 'login' ? 'Connexion' : 'Inscription'}
                 </button>
