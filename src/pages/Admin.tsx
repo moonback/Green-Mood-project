@@ -14,6 +14,10 @@ import {
   Plus,
   Edit3,
   Trash2,
+  Leaf,
+  MapPin,
+  Phone,
+  Clock,
   Save,
   X,
   ArrowUpDown,
@@ -71,6 +75,7 @@ interface StoreSettings {
   banner_enabled: boolean;
   social_instagram: string;
   social_facebook: string;
+  budtender_enabled: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -86,6 +91,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   banner_enabled: true,
   social_instagram: 'https://instagram.com/greenMood_cbd',
   social_facebook: 'https://facebook.com/greenMood_cbd',
+  budtender_enabled: true,
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -2044,6 +2050,28 @@ export default function Admin() {
                           Aperçu : {localSettings.banner_text || '…'}
                         </div>
                       )}
+                    </div>
+
+                    {/* BudTender IA */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Leaf className="w-5 h-5 text-green-neon" />
+                          <h2 className="font-serif font-semibold text-lg">Conseiller BudTender IA</h2>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={localSettings.budtender_enabled}
+                            onChange={(e) => setLocalSettings({ ...localSettings, budtender_enabled: e.target.checked })}
+                            className="w-4 h-4 accent-green-600"
+                          />
+                          <span className="text-sm text-zinc-300">Activé</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        Affiche la bulle de chat flottante en bas à droite de l'écran pour conseiller les clients.
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-4">

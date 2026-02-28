@@ -62,7 +62,7 @@ export default function Layout() {
       <CartSidebar />
 
       {/* BudTender IA Widget */}
-      <BudTender />
+      {settings.budtender_enabled && <BudTender />}
 
       {/* Promotional Banner */}
       <AnimatePresence>
