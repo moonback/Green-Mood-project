@@ -417,7 +417,7 @@ export default function Admin() {
           thc_max: 0.1,
           weight_grams: 1,
           price: 12.90 + i,
-          image_url: "https://images.unsplash.com/photo-1556928580-0f96844a41ee?auto=format&fit=crop&q=80&w=800", // Generic CBD flower image
+          image_url: "https://green-mood.netlify.app/images/N10.png", // Generic CBD flower image
           stock_quantity: 100,
           is_available: true,
           is_featured: i < 3,
