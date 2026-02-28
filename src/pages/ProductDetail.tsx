@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Package,
   Tag,
+  Shield,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Review, SubscriptionFrequency, BundleItem } from '../lib/types';
@@ -219,292 +220,256 @@ export default function ProductDetail() {
   if (!product) return null;
 
   return (
-    <>
+    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
       <SEO
-        title={`${product.name} — Green Mood CBD`}
-        description={product.description ?? `Achetez ${product.name} en ligne sur Green Mood CBD. Click & Collect ou livraison.`}
+        title={`${product.name} — Excellence Green Mood`}
+        description={product.description ?? `Découvrez ${product.name} par Green Mood. L'excellence du CBD.`}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
-          <Link to="/catalogue" className="flex items-center gap-1 hover:text-green-neon transition-colors">
+        <nav className="flex items-center gap-4 text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-600 mb-12">
+          <Link to="/catalogue" className="flex items-center gap-2 hover:text-green-neon transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Catalogue
+            Archives
           </Link>
           {product.category && (
             <>
-              <span>/</span>
-              <span>{product.category.name}</span>
+              <span className="opacity-30">/</span>
+              <span className="hover:text-white cursor-default">{product.category.name}</span>
             </>
           )}
-          <span>/</span>
-          <span className="text-zinc-300">{product.name}</span>
+          <span className="opacity-30">/</span>
+          <span className="text-zinc-400">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Image */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 xl:gap-24 items-start">
+          {/* Image Section */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="relative"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative group"
           >
-            {/* Bundle badge on image */}
-            {product.is_bundle && (
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-purple-600 px-3 py-1 rounded-full text-sm font-bold text-white shadow-lg">
-                <Package className="w-4 h-4" />
-                Pack Découverte
-              </div>
-            )}
-            {product.is_featured && !product.is_bundle && (
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-green-neon px-3 py-1 rounded-full text-sm font-semibold text-white">
-                <Star className="w-3.5 h-3.5" />
-                Populaire
-              </div>
-            )}
-            <div className="aspect-square rounded-3xl overflow-hidden bg-zinc-900">
+            {/* Decorative Glow */}
+            <div className="absolute inset-0 bg-green-neon/5 blur-[120px] -z-10 group-hover:bg-green-neon/10 transition-all duration-1000" />
+
+            {/* Badges */}
+            <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
+              {product.is_bundle && (
+                <div className="flex items-center gap-2 bg-purple-600/90 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-2xl">
+                  <Package className="w-3 h-3" />
+                  Écrin Prestige
+                </div>
+              )}
+              {product.is_featured && !product.is_bundle && (
+                <div className="flex items-center gap-2 bg-green-neon px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-black shadow-2xl">
+                  <Star className="w-3 h-3 fill-current" />
+                  Sélection Maître
+                </div>
+              )}
+            </div>
+
+            <div className="aspect-[4/5] rounded-[3rem] overflow-hidden bg-white/[0.02] border border-white/5 relative">
               <img
                 src={product.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
+            </div>
+
+            {/* Specifications Overlay (Desktop Only) */}
+            <div className="hidden md:flex absolute -bottom-6 -right-6 gap-3 z-30">
+              {product.cbd_percentage != null && (
+                <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-3xl">
+                  <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">Concentration</p>
+                  <p className="text-3xl font-serif font-black text-green-neon leading-none">{product.cbd_percentage}% <span className="text-xs uppercase font-sans tracking-tight">CBD</span></p>
+                </div>
+              )}
             </div>
           </motion.div>
 
-          {/* Info */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-10"
           >
-            {product.category && (
-              <Link
-                to={`/catalogue`}
-                className="text-sm text-green-neon font-medium hover:underline"
-              >
-                {product.category.name}
-              </Link>
-            )}
+            <div className="space-y-4">
+              {product.category && (
+                <p className="text-xs font-mono text-green-neon uppercase tracking-[0.5em]">{product.category.name.toUpperCase()}</p>
+              )}
+              <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-[0.9] uppercase italic grayscale hover:grayscale-0 transition-all duration-1000">
+                {product.name}.
+              </h1>
 
-            <h1 className="font-serif text-4xl font-bold">{product.name}</h1>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-4 py-2">
+                  <div className="flex text-yellow-500">
+                    <StarRating rating={avgRating} size="sm" />
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+                    EXPÉRIENCE CLIENT : {avgRating.toFixed(1)}/5 — {reviews.length} TÉMOIGNAGES
+                  </span>
+                </div>
+              )}
+            </div>
 
-            {/* Average rating (if reviews exist) */}
-            {reviews.length > 0 && (
-              <div className="flex items-center gap-2">
-                <StarRating rating={avgRating} size="md" />
-                <span className="text-sm text-zinc-400">
-                  {avgRating.toFixed(1)} ({reviews.length} avis)
-                </span>
-              </div>
-            )}
+            <div className="space-y-6">
+              <p className="text-zinc-400 font-serif text-xl italic leading-relaxed max-w-xl">
+                {product.description || "Une création singulière, élaborée avec la plus grande exigence pour une expérience sensorielle hors du temps."}
+              </p>
 
-            {product.description && (
-              <p className="text-zinc-400 leading-relaxed text-lg">{product.description}</p>
-            )}
-
-            {/* Benefits & Aromas */}
-            {((product.attributes?.benefits || []).length > 0 || (product.attributes?.aromas || []).length > 0) && (
-              <div className="flex flex-wrap gap-6 pt-2">
+              <div className="flex flex-wrap gap-8">
                 {(product.attributes?.benefits || []).length > 0 && (
-                  <div className="space-y-2 flex-1 min-w-[140px]">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                      <Leaf className="w-3.5 h-3.5 text-green-neon" />
-                      Bénéfices
-                    </h3>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1 h-1 bg-green-neon rounded-full" /> EFFETS RECHERCHÉS
+                    </p>
+                    <div className="flex flex-wrap gap-2">
                       {product.attributes.benefits!.map(b => (
-                        <span key={b} className="text-xs bg-green-900/20 text-green-400 px-2.5 py-1 rounded-lg border border-green-800/40 font-medium">
+                        <span key={b} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 border border-white/10 px-3 py-1.5 rounded-full hover:border-green-neon/50 transition-colors">
                           {b}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
-                {(product.attributes?.aromas || []).length > 0 && (
-                  <div className="space-y-2 flex-1 min-w-[140px]">
-                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                      <Tag className="w-3.5 h-3.5 text-zinc-400" />
-                      Arômes
-                    </h3>
-                    <div className="flex flex-wrap gap-1.5">
-                      {product.attributes.aromas!.map(a => (
-                        <span key={a} className="text-xs bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg border border-zinc-700 font-medium">
-                          {a}
-                        </span>
+              </div>
+            </div>
+
+            <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 md:p-10 space-y-10 relative overflow-hidden group/panel">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-neon/20 to-transparent" />
+
+              <div className="flex items-end justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">VALEUR UNITAIRE</p>
+                  <p className="text-6xl font-serif font-black text-white leading-none">
+                    {product.price.toFixed(2)}<span className="text-lg ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
+                  </p>
+                </div>
+                <StockBadge stock={product.stock_quantity} />
+              </div>
+
+              {product.is_available && product.stock_quantity > 0 ? (
+                <div className="space-y-6">
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-2 flex items-center">
+                      <QuantitySelector
+                        quantity={quantity}
+                        onChange={setQuantity}
+                        max={product.stock_quantity}
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 w-full bg-white text-black font-black uppercase tracking-[0.3em] py-6 rounded-2xl hover:bg-green-neon transition-all shadow-2xl group flex items-center justify-center gap-4"
+                    >
+                      <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      {addedFeedback ? 'DÉPOSÉ AU PANIER' : 'ACQUÉRIR MAINTENANT'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[10px] font-mono text-zinc-600 uppercase tracking-widest justify-center">
+                    <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-green-neon" /> LIVRAISON DISCRÈTE</span>
+                    <div className="w-1 h-1 bg-white/10 rounded-full" />
+                    <span className="flex items-center gap-1.5"><Shield className="w-3 h-3 text-zinc-500" /> PAIEMENT SÉCURISÉ</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 border-2 border-dashed border-white/5 rounded-2xl text-center">
+                  <p className="text-[10px] font-mono text-zinc-700 uppercase tracking-[0.4em]">ÉDITION TEMPORAIREMENT ÉPUISÉE</p>
+                </div>
+              )}
+            </div>
+
+            {/* Bundle Content */}
+            {product.is_bundle && bundleItems.length > 0 && (
+              <div className="space-y-6">
+                <h3 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-2 flex items-center gap-3">
+                  <Package className="w-3 h-3 text-purple-500" /> COMPOSITION DE L'ÉCRIN
+                </h3>
+                <div className="grid gap-4">
+                  {bundleItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      whileHover={{ x: 5 }}
+                      className="flex items-center gap-6 bg-white/[0.02] border border-white/5 rounded-3xl p-4 group/item"
+                    >
+                      {item.product?.image_url && (
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900">
+                          <img
+                            src={item.product.image_url}
+                            alt={item.product?.name}
+                            className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-700"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          to={`/catalogue/${item.product?.slug}`}
+                          className="text-sm font-black uppercase tracking-widest text-white hover:text-green-neon transition-colors line-clamp-1"
+                        >
+                          {item.quantity > 1 && <span className="text-green-neon mr-2">{item.quantity}×</span>}
+                          {item.product?.name}
+                        </Link>
+                        {item.product?.cbd_percentage && (
+                          <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mt-1">CONCENTRATION : {item.product.cbd_percentage}%</p>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Subscription Card */}
+            {settings.subscriptions_enabled && isOil && !subSuccess && (
+              <div className="bg-gradient-to-br from-green-neon/5 to-transparent border border-green-neon/20 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-green-neon/10 flex items-center justify-center text-green-neon">
+                    <RefreshCw className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-xl font-black uppercase italic text-white tracking-tight">Rituel d'Excellence.</h3>
+                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1">Abonnement Automatisé</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-[10px] font-mono text-zinc-600 mb-4 uppercase tracking-[0.3em]">FRÉQUENCE DE LIVRAISON</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(Object.keys(FREQUENCY_LABELS) as SubscriptionFrequency[]).map((freq) => (
+                        <button
+                          key={freq}
+                          onClick={() => setSubFrequency(freq)}
+                          className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subFrequency === freq
+                            ? 'bg-green-neon text-black shadow-lg shadow-green-neon/20'
+                            : 'bg-white/5 border border-white/5 text-zinc-500 hover:border-white/10'
+                            }`}
+                        >
+                          {FREQUENCY_LABELS[freq]}
+                        </button>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* Specs */}
-            <div className="grid grid-cols-2 gap-3">
-              {product.cbd_percentage != null && (
-                <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                  <div className="flex items-center gap-2 text-green-neon mb-1">
-                    <Leaf className="w-4 h-4" />
-                    <span className="text-xs font-medium uppercase tracking-wider">CBD</span>
-                  </div>
-                  <span className="text-2xl font-bold">{product.cbd_percentage}%</span>
-                </div>
-              )}
-              {product.thc_max != null && (
-                <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    <FlaskConical className="w-4 h-4" />
-                    <span className="text-xs font-medium uppercase tracking-wider">THC max</span>
-                  </div>
-                  <span className="text-2xl font-bold">{product.thc_max}%</span>
-                </div>
-              )}
-              {product.weight_grams != null && (
-                <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    <Weight className="w-4 h-4" />
-                    <span className="text-xs font-medium uppercase tracking-wider">Poids</span>
-                  </div>
-                  <span className="text-2xl font-bold">{product.weight_grams}g</span>
-                </div>
-              )}
-            </div>
-
-            <StockBadge stock={product.stock_quantity} />
-
-            {/* Price */}
-            <div>
-              <div className="text-4xl font-bold">{product.price.toFixed(2)} €</div>
-              {product.is_bundle && product.original_value && product.original_value > product.price && (
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-lg text-zinc-500 line-through">{product.original_value.toFixed(2)} €</span>
-                  <span className="flex items-center gap-1 text-sm font-bold text-purple-400 bg-purple-900/30 border border-purple-700/40 px-2.5 py-1 rounded-full">
-                    <Tag className="w-3.5 h-3.5" />
-                    Vous économisez {(product.original_value - product.price).toFixed(2)} €
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Add to cart */}
-            {product.is_available && product.stock_quantity > 0 ? (
-              <div className="flex items-center gap-4">
-                <QuantitySelector
-                  quantity={quantity}
-                  onChange={setQuantity}
-                  max={product.stock_quantity}
-                />
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-600 text-white font-bold py-4 rounded-2xl transition-all"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  {addedFeedback ? 'Ajouté !' : 'Ajouter au panier'}
-                </button>
-              </div>
-            ) : (
-              <div className="bg-zinc-900 rounded-2xl p-4 text-center text-zinc-500 border border-zinc-800">
-                Produit temporairement indisponible
-              </div>
-            )}
-
-            {/* ── Bundle content section ── */}
-            {product.is_bundle && bundleItems.length > 0 && (
-              <div className="bg-zinc-900/70 border border-purple-800/40 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Package className="w-4 h-4 text-purple-400" />
-                  <h3 className="font-semibold text-sm text-white">Contenu du Pack</h3>
-                  <span className="ml-auto text-xs text-purple-400 font-medium">{bundleItems.length} produit{bundleItems.length > 1 ? 's' : ''}</span>
-                </div>
-                {bundleItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 bg-zinc-800/60 rounded-xl p-3 border border-zinc-700/50">
-                    {item.product?.image_url && (
-                      <img
-                        src={item.product.image_url}
-                        alt={item.product?.name}
-                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                      />
+                  <button
+                    onClick={handleSubscribe}
+                    disabled={subLoading}
+                    className="w-full flex items-center justify-center gap-4 bg-zinc-900 border border-white/10 hover:border-green-neon/50 text-white font-black uppercase tracking-[0.3em] py-5 rounded-2xl transition-all"
+                  >
+                    {subLoading ? (
+                      <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        INITIER LE RITUEL
+                      </>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <Link
-                        to={`/catalogue/${item.product?.slug}`}
-                        className="text-sm font-semibold text-white hover:text-green-neon transition-colors line-clamp-1"
-                      >
-                        {item.quantity > 1 && <span className="text-green-neon mr-1">{item.quantity}×</span>}
-                        {item.product?.name}
-                      </Link>
-                      {item.product?.cbd_percentage && (
-                        <p className="text-xs text-zinc-500 mt-0.5">CBD {item.product.cbd_percentage}%</p>
-                      )}
-                    </div>
-                    <span className="text-sm font-bold text-zinc-300 flex-shrink-0">
-                      {item.product ? (item.product.price * item.quantity).toFixed(2) : '—'} €
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* ── Subscription panel (oils only, not bundles) ── */}
-            {settings.subscriptions_enabled && isOil && !subSuccess && (
-              <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 space-y-4">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-green-neon" />
-                  <h3 className="font-semibold">S'abonner & recevoir automatiquement</h3>
+                  </button>
                 </div>
-                <p className="text-sm text-zinc-400">
-                  Livraison automatique sans effort. Modifiable ou résiliable à tout moment depuis votre compte.
-                </p>
-
-                {/* Frequency */}
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Fréquence</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(Object.keys(FREQUENCY_LABELS) as SubscriptionFrequency[]).map((freq) => (
-                      <button
-                        key={freq}
-                        onClick={() => setSubFrequency(freq)}
-                        className={`py-2 px-2 rounded-xl text-xs text-center border transition-colors ${subFrequency === freq
-                          ? 'bg-green-neon/20 border-green-primary text-green-400 font-medium'
-                          : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                          }`}
-                      >
-                        {FREQUENCY_LABELS[freq]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quantity */}
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Quantité</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setSubQty((q) => Math.max(1, q - 1))}
-                      className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center text-lg"
-                    >
-                      −
-                    </button>
-                    <span className="text-white font-semibold w-6 text-center">{subQty}</span>
-                    <button
-                      onClick={() => setSubQty((q) => Math.min(10, q + 1))}
-                      className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center text-lg"
-                    >
-                      +
-                    </button>
-                    <span className="text-sm text-zinc-500">
-                      = {(product.price * subQty).toFixed(2)} € / livraison
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleSubscribe}
-                  disabled={subLoading}
-                  className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-green-primary text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 ${subLoading ? 'animate-spin' : ''}`} />
-                  {subLoading ? 'En cours…' : 'S\'abonner'}
-                </button>
               </div>
             )}
 
@@ -531,14 +496,18 @@ export default function ProductDetail() {
           </motion.div>
         </div>
 
-        {/* ── Reviews Section ── */}
-        <div className="mt-16 max-w-3xl">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-serif text-2xl font-bold">Avis clients</h2>
+        {/* Reviews Section */}
+        <div className="mt-32 space-y-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/5 pb-8">
+            <div className="space-y-4">
+              <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em]">EXPÉRIENCE & TÉMOIGNAGES</h2>
+              <p className="text-4xl font-serif font-black italic text-white uppercase tracking-tight">L'Expression de nos Membres.</p>
+            </div>
             {reviews.length > 0 && (
-              <div className="flex items-center gap-2">
-                <StarRating rating={avgRating} size="md" />
-                <span className="text-zinc-400 text-sm">{avgRating.toFixed(1)} / 5 ({reviews.length})</span>
+              <div className="flex items-center gap-6 bg-white/5 border border-white/5 px-8 py-4 rounded-2xl backdrop-blur-3xl">
+                <StarRating rating={avgRating} size="sm" />
+                <div className="w-px h-6 bg-white/10" />
+                <span className="text-sm font-black text-white">{avgRating.toFixed(1)} <span className="text-[10px] text-zinc-500 font-mono ml-1">/ 5.0</span></span>
               </div>
             )}
           </div>
@@ -546,30 +515,34 @@ export default function ProductDetail() {
           {/* Can review CTA */}
           {canReview && !reviewSuccess && !showReviewForm && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-zinc-900 border border-green-800/50 rounded-2xl p-5 mb-6"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-green-neon/5 border border-dashed border-green-neon/20 rounded-[2rem] p-10 text-center space-y-6"
             >
-              <p className="text-sm text-zinc-300 mb-3">
-                Vous avez acheté ce produit. Partagez votre expérience !
-              </p>
+              <MessageSquare className="w-12 h-12 mx-auto text-green-neon/40" />
+              <div className="space-y-2">
+                <p className="font-serif text-2xl font-black text-white">Partagez votre voyage sensoriel.</p>
+                <p className="text-zinc-500 text-sm max-w-sm mx-auto italic">Votre expertise contribue à l'excellence de notre catalogue.</p>
+              </div>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                className="bg-white text-black font-black uppercase tracking-widest px-8 py-4 rounded-xl hover:bg-green-neon transition-all"
               >
-                <MessageSquare className="w-4 h-4" />
-                Rédiger un avis
+                Rédiger mon Impression
               </button>
             </motion.div>
           )}
 
           {/* Review success message */}
           {reviewSuccess && (
-            <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 mb-6 flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-green-300">
-                Merci pour votre avis ! Il sera publié après validation par notre équipe.
-              </p>
+            <div className="bg-green-neon/5 border border-green-neon/20 rounded-[2rem] p-8 flex items-center gap-6">
+              <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center text-green-neon">
+                <CheckCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-white font-black uppercase tracking-widest text-xs">Impression Transmise</p>
+                <p className="text-zinc-500 text-sm italic mt-1 font-serif">Votre témoignage est en cours de modération par notre comité d'excellence.</p>
+              </div>
             </div>
           )}
 
@@ -577,16 +550,13 @@ export default function ProductDetail() {
           <AnimatePresence>
             {showReviewForm && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-6 space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-10 space-y-10"
               >
-                <h3 className="font-semibold">Votre avis sur {product.name}</h3>
-
-                {/* Star picker */}
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">Note</p>
+                <div className="space-y-2">
+                  <h3 className="font-serif text-2xl font-black italic text-white leading-none">Votre Note.</h3>
                   <StarRating
                     rating={reviewRating}
                     size="lg"
@@ -595,38 +565,35 @@ export default function ProductDetail() {
                   />
                 </div>
 
-                {/* Comment */}
-                <div>
-                  <p className="text-xs text-zinc-500 mb-2 uppercase tracking-wider font-medium">
-                    Commentaire <span className="text-zinc-600 normal-case">(optionnel)</span>
-                  </p>
+                <div className="space-y-4">
+                  <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">VOTRE TÉMOIGNAGE</p>
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
-                    rows={4}
-                    placeholder="Décrivez votre expérience avec ce produit…"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary transition-colors resize-none"
+                    rows={5}
+                    placeholder="Décrivez les nuances, l'arôme, et l'expérience vécue..."
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-8 py-6 text-lg font-serif italic text-white placeholder:text-zinc-800 focus:outline-none focus:border-green-neon transition-all resize-none"
                   />
                 </div>
 
                 {reviewError && (
-                  <p className="text-sm text-red-400">{reviewError}</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-red-500">{reviewError}</p>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex flex-col md:flex-row gap-4">
                   <button
                     onClick={handleSubmitReview}
                     disabled={isSubmittingReview}
-                    className="flex items-center gap-2 bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    className="flex-1 bg-white text-black font-black uppercase tracking-[0.3em] py-5 rounded-xl hover:bg-green-neon transition-all flex items-center justify-center gap-3 shadow-2xl"
                   >
                     <Send className="w-4 h-4" />
-                    {isSubmittingReview ? 'Envoi…' : 'Soumettre'}
+                    {isSubmittingReview ? 'TRANSMISSION...' : 'TRANSMETTRE'}
                   </button>
                   <button
                     onClick={() => setShowReviewForm(false)}
-                    className="text-zinc-400 hover:text-white text-sm px-4 py-2.5 transition-colors"
+                    className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-colors"
                   >
-                    Annuler
+                    ANNULER
                   </button>
                 </div>
               </motion.div>
@@ -635,22 +602,17 @@ export default function ProductDetail() {
 
           {/* Reviews list */}
           {reviews.length === 0 ? (
-            <div className="text-center py-12 text-zinc-500 border border-zinc-800 rounded-2xl">
-              <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Aucun avis pour l'instant.</p>
-              {!user && (
-                <p className="text-sm mt-1">
-                  <Link to="/connexion" className="text-green-neon hover:underline">
-                    Connectez-vous
-                  </Link>{' '}
-                  pour laisser un avis après votre achat.
-                </p>
-              )}
+            <div className="py-24 text-center space-y-6 bg-white/[0.01] border border-dashed border-white/5 rounded-[3rem]">
+              <MessageSquare className="w-16 h-16 mx-auto text-zinc-800" />
+              <div className="space-y-2">
+                <p className="font-serif text-2xl font-black text-white italic">Silence Éloquent.</p>
+                <p className="text-zinc-600 text-sm max-w-xs mx-auto font-serif">Aucune impression n'a encore été consignée pour cette édition.</p>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-8">
               {reviews.map((review, i) => {
-                const initials = (review.profile?.full_name ?? 'Client')
+                const initials = (review.profile?.full_name ?? 'C L')
                   .split(' ')
                   .map((w) => w[0])
                   .slice(0, 2)
@@ -659,40 +621,38 @@ export default function ProductDetail() {
                 return (
                   <motion.div
                     key={review.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 hover:bg-white/[0.04] transition-all group"
                   >
-                    <div className="flex items-start gap-3">
-                      {/* Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-green-neon/20 flex items-center justify-center text-green-400 text-sm font-bold flex-shrink-0">
+                    <div className="flex flex-col md:flex-row gap-8">
+                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-black text-xs tracking-widest shrink-0">
                         {initials}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm text-white">
-                            {review.profile?.full_name ?? 'Client'}
-                          </span>
-                          {review.is_verified && (
-                            <span className="flex items-center gap-1 text-xs text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full">
-                              <CheckCircle className="w-3 h-3" />
-                              Achat vérifié
-                            </span>
-                          )}
-                          <span className="text-xs text-zinc-600 ml-auto">
-                            {new Date(review.created_at).toLocaleDateString('fr-FR', {
+                      <div className="flex-1 space-y-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <p className="text-sm font-black uppercase tracking-widest text-white">{review.profile?.full_name ?? 'Membre Anonyme'}</p>
+                            <div className="flex items-center gap-4">
+                              <StarRating rating={review.rating} size="sm" />
+                              {review.is_verified && (
+                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-green-neon px-2 py-1 bg-green-neon/5 rounded-full">ACHAT CERTIFIÉ</span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-[10px] font-mono text-zinc-700 uppercase tracking-widest">
+                            ARCHIVÉ LE {new Date(review.created_at).toLocaleDateString('fr-FR', {
                               day: 'numeric',
                               month: 'long',
                               year: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                        <div className="mt-1 mb-2">
-                          <StarRating rating={review.rating} size="sm" />
+                            }).toUpperCase()}
+                          </p>
                         </div>
                         {review.comment && (
-                          <p className="text-sm text-zinc-400 leading-relaxed">{review.comment}</p>
+                          <p className="text-zinc-400 font-serif italic text-lg leading-relaxed border-l border-white/10 pl-8">
+                            "{review.comment}"
+                          </p>
                         )}
                       </div>
                     </div>
@@ -703,9 +663,23 @@ export default function ProductDetail() {
           )}
         </div>
 
-        {/* ── Related Products ── */}
-        <RelatedProducts productId={product.id} categoryId={product.category_id} />
+        {/* Related Products Section */}
+        <div className="mt-40 pt-20 border-t border-white/5">
+          <div className="mb-16 space-y-4">
+            <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em]">VOUS POURRIEZ AUSSI APPRÉCIER</h2>
+            <p className="text-5xl font-serif font-black italic text-white uppercase tracking-tight">Suite de l'Odyssée.</p>
+          </div>
+          <RelatedProducts productId={product.id} categoryId={product.category_id} />
+        </div>
+
+        {/* Legal Footer */}
+        <div className="mt-32 pt-16 border-t border-white/5 text-center">
+          <p className="text-[9px] font-mono text-zinc-700 uppercase tracking-[0.5em] leading-loose max-w-2xl mx-auto">
+            LES PRODUITS PRÉSENTÉS SONT CONFORMES AUX DÉCRETS N°2021-1282. TAUX DE THC INFÉRIEUR À 0.3%.
+            DESTINÉS EXCLUSIVEMENT À UN PUBLIC MAJEUR ET AVERTI.
+          </p>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

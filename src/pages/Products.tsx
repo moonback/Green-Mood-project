@@ -114,29 +114,78 @@ export default function Products() {
         schema={productsSchema}
       />
 
-      {/* Hero Header - Sleek Architecture */}
-      <section className="relative pt-40 pb-32 overflow-hidden px-4">
-        {/* Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[500px] bg-green-neon/5 rounded-full blur-[150px] -z-10" />
+      {/* Hero Header - Architectural Depth */}
+      <section className="relative min-h-[80vh] flex items-center justify-center pt-32 pb-40 overflow-hidden px-4">
+        {/* Cinematic Background */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-zinc-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0)_0%,rgba(9,9,11,1)_100%)] z-10" />
 
-        <div className="max-w-7xl mx-auto text-center relative z-10">
+          {/* Moving Glows */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-6"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.2, 0.1],
+              x: [-100, 100, -100],
+              y: [-50, 50, -50]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/4 left-1/4 w-[800px] h-[800px] bg-green-neon/5 rounded-full blur-[180px]"
+          />
+          <motion.div
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.05, 0.1, 0.05],
+              x: [100, -100, 100],
+              y: [50, -50, 50]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[150px]"
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto text-center relative z-20">
+          <motion.div
+            initial={{ opacity: 0, letterSpacing: "0.2em" }}
+            animate={{ opacity: 1, letterSpacing: "0.6em" }}
+            transition={{ duration: 1.5 }}
+            className="text-green-neon font-black uppercase text-[10px] mb-12"
           >
-            <span className="text-green-neon font-black tracking-[0.4em] uppercase text-xs">Notre Savoir-Faire</span>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-black tracking-tighter leading-[0.85]">
-              L'ART DU <br />
-              <span className="text-green-neon italic glow-green">CHANVRE.</span>
+            L'EXCELLENCE PAR NATURE.
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="space-y-4"
+          >
+            <h1 className="text-7xl md:text-9xl lg:text-[12rem] font-serif font-black tracking-tighter leading-[0.8] uppercase grayscale hover:grayscale-0 transition-all duration-1000 cursor-default">
+              LES <br />
+              <span className="text-green-neon italic glow-green">SIGNATURES.</span>
             </h1>
-            <p className="text-xl md:text-2xl text-zinc-400 max-w-3xl mx-auto font-light leading-relaxed pt-6">
-              Une gamme structurée pour répondre à chaque besoin, chaque palais
-              et chaque moment de votre journée.
-            </p>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 1 }}
+              className="text-xl md:text-3xl text-zinc-500 max-w-4xl mx-auto font-serif italic font-light leading-relaxed pt-12"
+            >
+              Une collection sculptée par le temps et la passion, <br />
+              où chaque variété narre une épopée botanique unique.
+            </motion.p>
           </motion.div>
         </div>
+
+        {/* Scroll Indicator */}
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
+        >
+          <div className="w-px h-20 bg-gradient-to-b from-transparent via-green-neon/40 to-transparent" />
+          <span className="text-[8px] font-black uppercase tracking-[0.5em] text-zinc-600">DÉCOUVREZ LES ARCHIVES</span>
+        </motion.div>
       </section>
 
       {/* Main Collections */}

@@ -83,77 +83,92 @@ export default function Catalog() {
       />
 
       {/* Modern Hero Header */}
-      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-        {/* Decorative Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-green-neon/5 rounded-full blur-[120px] -z-10" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-green-neon/10 rounded-full blur-[100px] -z-10" />
+      <section className="relative min-h-[60vh] flex items-center pt-32 pb-20 px-4 overflow-hidden">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/products-flower.png"
+            alt="Fleurs de CBD d'exception"
+            className="w-full h-full object-cover opacity-30 scale-110 blur-[2px] group-hover:scale-100 transition-transform duration-[10s]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/80 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950 opacity-60" />
 
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col items-center text-center space-y-8 mb-16">
+          {/* Decorative Glows */}
+          <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[150px]" />
+          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-green-neon/10 rounded-full blur-[120px]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto w-full relative z-10">
+          <div className="flex flex-col items-center text-center space-y-10 mb-20">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-green-neon text-xs font-bold uppercase tracking-widest"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-2xl text-green-neon text-[10px] font-black uppercase tracking-[0.4em] shadow-2xl"
             >
-              <Sparkles className="w-4 h-4" />
-              Collections de Prestige
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              Archives d'Excellence
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tight leading-[0.9]"
-            >
-              LE CATALOGUE <br />
-              <span className="text-green-neon italic glow-green">MASTER.</span>
-            </motion.h1>
+            <div className="space-y-4">
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-6xl md:text-8xl lg:text-9xl font-serif font-black tracking-tighter leading-[0.8] uppercase italic"
+              >
+                L'ODYSSEE <br />
+                <span className="not-italic text-green-neon glow-green">TACTILE.</span>
+              </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-xl text-zinc-400 max-w-2xl mx-auto font-light leading-relaxed"
-            >
-              Une curatoriale rigoureuse des meilleures génétiques et extractions
-              pour une expérience CBD sans compromis.
-            </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto font-serif italic leading-relaxed pt-4"
+              >
+                Une curatoriale rigoureuse des meilleures génétiques et extractions terrestres.
+              </motion.p>
+            </div>
           </div>
 
-          {/* Search & Filter Bar */}
-          <div className="relative max-w-4xl mx-auto z-10 flex flex-col md:flex-row gap-4 p-2 bg-zinc-900/50 backdrop-blur-2xl border border-white/5 rounded-[2rem] shadow-2xl">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 group-focus-within:text-green-neon transition-colors" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Quelle sensation recherchez-vous ?"
-                className="w-full bg-transparent border-none rounded-2xl pl-16 pr-10 py-5 text-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-0"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+          {/* Search & Filter Bar - Refined */}
+          <div className="relative max-w-4xl mx-auto group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-green-neon/20 via-white/5 to-green-neon/20 rounded-[2.5rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="relative flex flex-col md:flex-row gap-4 p-3 bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl transition-all hover:border-white/20">
+              <div className="relative flex-1">
+                <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-600 group-focus-within:text-green-neon transition-colors" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="QUELLE SENSATION RECHERCHEZ-VOUS ?"
+                  className="w-full bg-transparent border-none rounded-3xl pl-20 pr-12 py-6 text-lg font-serif italic text-white placeholder:text-zinc-700 placeholder:font-mono placeholder:not-italic placeholder:text-xs placeholder:tracking-[0.2em] focus:outline-none focus:ring-0"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
 
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center justify-center gap-3 px-8 py-5 rounded-[1.5rem] transition-all font-black text-sm uppercase tracking-widest ${showFilters || selectedBenefit || selectedAroma
-                ? 'bg-green-neon text-black'
-                : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/5'
-                }`}
-            >
-              <SlidersHorizontal className="w-5 h-5" />
-              Filtres Expert
-              {(selectedBenefit || selectedAroma) && (
-                <span className="px-2 py-0.5 rounded-full bg-black/20 text-[10px] ml-1">Active</span>
-              )}
-            </button>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center justify-center gap-4 px-10 py-6 rounded-[1.8rem] transition-all font-black text-[10px] uppercase tracking-[0.3em] ${showFilters || selectedBenefit || selectedAroma
+                  ? 'bg-green-neon text-black shadow-lg shadow-green-neon/20'
+                  : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/5'
+                  }`}
+              >
+                <SlidersHorizontal className="w-5 h-5" />
+                FILTRES AVANCÉS
+                {(selectedBenefit || selectedAroma) && (
+                  <div className="w-2 h-2 rounded-full bg-black/40 animate-pulse ml-1" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </section>
