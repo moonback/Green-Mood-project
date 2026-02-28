@@ -5,6 +5,7 @@ import { useCartStore } from '../store/cartStore';
 import { useSettingsStore } from '../store/settingsStore';
 import QuantitySelector from '../components/QuantitySelector';
 import SEO from '../components/SEO';
+import FreeShippingGauge from '../components/FreeShippingGauge';
 
 export default function Cart() {
   const {
@@ -148,6 +149,9 @@ export default function Cart() {
                 </button>
               </div>
             </div>
+
+            {/* Free shipping gauge */}
+            <FreeShippingGauge variant="full" />
 
             {/* Total */}
             <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 space-y-3">
