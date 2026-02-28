@@ -82,7 +82,7 @@ export default function Shop() {
               <Eye className="w-4 h-4" />
               Vision & ADN
             </div>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-black tracking-tighter leading-none italic">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tighter leading-[0.85] uppercase italic">
               L'EXPERIENCE <br />
               <span className="not-italic text-green-neon glow-green">GREEN MOOD.</span>
             </h1>

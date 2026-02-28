@@ -96,7 +96,7 @@ export default function Products() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="text-6xl md:text-8xl lg:text-9xl font-serif font-black tracking-tighter leading-[0.8] uppercase"
+            className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tighter leading-[0.85] uppercase"
           >
             L'APOGÉE <br />
             <span className="text-green-neon italic glow-green-strong">N10.</span>
