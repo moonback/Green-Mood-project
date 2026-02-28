@@ -12,7 +12,8 @@ import {
   Sparkles,
   Search,
   MessageCircle,
-  CheckCircle2
+  CheckCircle2,
+  Zap
 } from "lucide-react";
 import FAQ from "../components/FAQ";
 import SEO from "../components/SEO";
@@ -93,83 +94,177 @@ export default function Home() {
         schema={homeSchema}
       />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[92vh] flex items-center justify-center pt-20 px-4">
-        {/* Abstract Background Elements */}
+      {/* Hero Section - N10 Refocus */}
+      <section className="relative min-h-[92vh] flex items-center justify-center pt-24 px-4 overflow-hidden">
+        {/* Dynamic Background Elements */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-green-neon/3 rounded-full blur-[100px]" />
+          {/* Animated Glows */}
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.2, 0.1],
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/4 -left-20 w-[800px] h-[800px] bg-green-neon/5 rounded-full blur-[150px]"
+          />
+          <motion.div
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.05, 0.1, 0.05],
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-0 -right-20 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[120px]"
+          />
         </div>
 
+        {/* Backdrop Visual */}
         <div className="absolute inset-x-0 top-0 h-full overflow-hidden">
           <img
-            src="/images/hero-premium.png"
-            alt="Premium CBD Flowers"
-            className="w-full h-full object-cover opacity-40 scale-105"
+            src="/images/presentation-cbd.png"
+            alt="N10 - L'Intensité Pure"
+            className="w-full h-full object-cover opacity-30 scale-105 blur-[2px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/60 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950 opacity-80" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto text-center">
+        <div className="relative z-10 max-w-7xl mx-auto text-center w-full">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="space-y-8"
+            className="space-y-12"
           >
+            {/* Exclusive Badge */}
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-neon/10 border border-green-neon/20 text-green-neon text-sm font-medium backdrop-blur-md"
+              initial={{ opacity: 0, scale: 0.9, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-green-neon/10 border border-green-neon/30 text-green-neon text-[10px] font-black uppercase tracking-[0.4em] backdrop-blur-3xl shadow-[0_0_50px_rgba(57,255,20,0.1)] mb-4"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Nouveautés : Récolte Outdoor 2024 disponible</span>
+              <span>Nouveauté Mondiale : La Molécule N10</span>
             </motion.div>
 
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-black tracking-tighter leading-[0.9]">
-              PURE <br />
-              <span className="text-green-neon glow-green-strong">ESSENCE.</span>
-            </h1>
-
-            <p className="text-xl md:text-3xl text-zinc-300 max-w-3xl mx-auto font-light leading-relaxed">
-              L'excellence du <span className="text-white font-semibold">CBD premium</span> sélectionné
-              pour son profil terpénique unique et sa pureté inégalée.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
-              <Link
-                to="/catalogue"
-                className="w-full sm:w-auto px-10 py-5 bg-green-neon text-black font-black rounded-2xl transition-all transform hover:scale-105 hover:glow-box-green shadow-[0_20px_40px_-15px_rgba(57,255,20,0.3)] flex items-center justify-center gap-3 group"
-              >
-                Explorer la Collection
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                to="/catalogue"
-                className="w-full sm:w-auto px-10 py-5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl font-bold backdrop-blur-xl transition-all flex items-center justify-center gap-3"
-              >
-                <Search className="h-5 w-5 opacity-50" />
-                Fleurs & Résines
-              </Link>
+            {/* Main Headline */}
+            <div className="space-y-4">
+              <h1 className="text-7xl md:text-9xl lg:text-[11rem] font-serif font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
+                <span className="text-white">L'ÈRE DU</span>
+                <span className="text-green-neon italic glow-green-strong">N10.</span>
+              </h1>
             </div>
 
-            {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center items-center gap-8 pt-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-700">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5" />
-                <span className="text-sm font-semibold tracking-widest uppercase">100% Légal</span>
+            {/* Content Subtitle */}
+            <div className="max-w-4xl mx-auto space-y-8">
+              <p className="text-xl md:text-3xl text-zinc-400 font-serif italic leading-relaxed max-w-3xl mx-auto">
+                Plus puissante, plus intense, plus radicale que le CBNO. <br />
+                <span className="text-white not-italic font-sans font-light uppercase tracking-widest text-sm opacity-60">Découvrez l'apogée des cannabinoides de synthèse maîtrisée.</span>
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
+                <Link
+                  to="/catalogue?search=N10"
+                  className="w-full sm:w-auto px-12 py-6 bg-white text-black font-black rounded-2xl transition-all transform hover:scale-105 hover:bg-green-neon shadow-[0_30px_60px_-15px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 group"
+                >
+                  DÉCOUVRIR LE N10
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-2" />
+                </Link>
+                <Link
+                  to="/catalogue"
+                  className="w-full sm:w-auto px-12 py-6 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl font-bold backdrop-blur-xl transition-all flex items-center justify-center gap-4"
+                >
+                  Toute la Collection
+                </Link>
               </div>
-              <div className="flex items-center gap-2">
-                <Truck className="w-5 h-5" />
-                <span className="text-sm font-semibold tracking-widest uppercase">Livraison 24/48h</span>
+            </div>
+
+            {/* Key USPs */}
+            <div className="flex flex-wrap justify-center items-center gap-12 pt-20 border-t border-white/5">
+              <div className="flex flex-col items-center gap-3">
+                <Zap className="w-5 h-5 text-green-neon" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Puissance Absolue</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm font-semibold tracking-widest uppercase">4.9/5 TrustScore</span>
+              <div className="flex flex-col items-center gap-3">
+                <ShieldCheck className="w-5 h-5 text-green-neon" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Conformité Totale</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <Clock className="w-5 h-5 text-green-neon" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Effet Prolongé</span>
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* N10 Deep Dive - The Core Focus */}
+      <section className="py-24 relative px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white/[0.01] backdrop-blur-3xl border border-white/5 rounded-[4rem] p-12 md:p-24 overflow-hidden relative">
+            {/* Background Accent */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-green-neon/5 rounded-full blur-[120px] -z-10" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+              <div className="space-y-12">
+                <div className="space-y-6">
+                  <h2 className="text-5xl md:text-7xl font-serif font-black text-white leading-tight uppercase">
+                    LA GRÂCE DU <br />
+                    <span className="text-green-neon italic">CONTRÔLE.</span>
+                  </h2>
+                  <p className="text-xl text-zinc-400 font-light leading-relaxed">
+                    Le N10 marque une rupture technologique dans l'univers des cannabinoides.
+                    Conçu pour ceux qui recherchent une <span className="text-white font-bold italic">profondeur sensorielle</span> sans précédent,
+                    il surpasse le CBNO par sa biodisponibilité et sa puissance d'action.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4 group hover:bg-white/5 transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-green-neon/10 flex items-center justify-center text-green-neon">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Puissance Brute</h3>
+                    <p className="text-zinc-500 text-xs leading-relaxed uppercase tracking-tighter">Une intensité décuplée par rapport aux standards du marché.</p>
+                  </div>
+                  <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4 group hover:bg-white/5 transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-400">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Clarté Mentale</h3>
+                    <p className="text-zinc-500 text-xs leading-relaxed uppercase tracking-tighter">Un équilibre parfait entre relaxation physique et éveil cognitif.</p>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <Link
+                    to="/catalogue?search=N10"
+                    className="inline-flex items-center gap-6 px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-green-neon transition-all uppercase tracking-[0.2em] text-[10px]"
+                  >
+                    Acquérir l'Exclusivité
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="relative aspect-square rounded-[3.5rem] overflow-hidden group shadow-3xl border border-white/10"
+              >
+                <img
+                  src="/images/presentation-cbd2.png"
+                  alt="N10 Extraction Process"
+                  className="w-full h-full object-cover grayscale-[40%] group-hover:grayscale-0 transition-all duration-[2s]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-60" />
+                <div className="absolute bottom-10 left-10">
+                  <div className="px-6 py-2 rounded-full bg-black/80 backdrop-blur-xl border border-white/10 text-[9px] font-black uppercase tracking-[0.4em] text-green-neon">
+                    LABORATORY GRADE N10
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 
