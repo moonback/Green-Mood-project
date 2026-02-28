@@ -475,3 +475,117 @@ VALUES
   ('BIENVENUE10', 'Réduction de bienvenue 10%', 'percent', 10, 0, NULL, NULL),
   ('CBD5EUR', 'Bon de réduction 5€', 'fixed', 5, 20, 50, now() + interval '60 days')
 ON CONFLICT (code) DO NOTHING;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Bundles / Packs Découverte
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Colonne is_bundle sur les produits
+ALTER TABLE products ADD COLUMN IF NOT EXISTS is_bundle boolean NOT NULL DEFAULT false;
+
+-- Colonne economic_value : prix total si achetés séparément (calculé côté app)
+ALTER TABLE products ADD COLUMN IF NOT EXISTS original_value numeric(10,2);
+
+-- Table des articles composant un bundle
+CREATE TABLE IF NOT EXISTS bundle_items (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bundle_id    uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  product_id   uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  quantity     int NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (bundle_id, product_id)
+);
+
+ALTER TABLE bundle_items ENABLE ROW LEVEL SECURITY;
+
+-- Lecture publique
+DROP POLICY IF EXISTS "bundle_items_public_read" ON bundle_items;
+CREATE POLICY "bundle_items_public_read" ON bundle_items FOR SELECT USING (true);
+
+-- Écriture admin uniquement
+DROP POLICY IF EXISTS "bundle_items_admin_all" ON bundle_items;
+CREATE POLICY "bundle_items_admin_all" ON bundle_items FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+  );
+
+-- Fonction : recalcule le stock d'un bundle = min(floor(component.stock / qty)) pour chaque item
+CREATE OR REPLACE FUNCTION public.sync_bundle_stock(p_bundle_id uuid)
+RETURNS void AS $$
+DECLARE
+  min_stock int;
+BEGIN
+  SELECT MIN(FLOOR(p.stock_quantity::float / bi.quantity))::int
+    INTO min_stock
+    FROM bundle_items bi
+    JOIN products p ON p.id = bi.product_id
+   WHERE bi.bundle_id = p_bundle_id;
+
+  UPDATE products
+     SET stock_quantity = COALESCE(min_stock, 0)
+   WHERE id = p_bundle_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger sur les produits : quand le stock d'un produit change, resynchronise tous les bundles qui le contiennent
+CREATE OR REPLACE FUNCTION public.trigger_sync_bundles_on_stock_change()
+RETURNS trigger AS $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN
+    SELECT DISTINCT bundle_id FROM bundle_items WHERE product_id = NEW.id
+  LOOP
+    PERFORM public.sync_bundle_stock(r.bundle_id);
+  END LOOP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_sync_bundle_stock ON products;
+CREATE TRIGGER trg_sync_bundle_stock
+  AFTER UPDATE OF stock_quantity ON products
+  FOR EACH ROW
+  WHEN (OLD.stock_quantity IS DISTINCT FROM NEW.stock_quantity AND NEW.is_bundle = false)
+  EXECUTE FUNCTION public.trigger_sync_bundles_on_stock_change();
+
+-- Exemple de bundle (seed — nécessite que les produits seed existent)
+DO $$
+DECLARE
+  bundle_id   uuid;
+  oil_id      uuid;
+  infusion_id uuid;
+BEGIN
+  SELECT id INTO oil_id      FROM products WHERE slug = 'huile-20-sommeil'    LIMIT 1;
+  SELECT id INTO infusion_id FROM products WHERE slug = 'infusion-detente'    LIMIT 1;
+
+  IF oil_id IS NOT NULL AND infusion_id IS NOT NULL THEN
+    -- Insérer le bundle produit
+    INSERT INTO products (
+      category_id, slug, name, description,
+      price, original_value, image_url, stock_quantity,
+      is_available, is_featured, is_active, is_bundle
+    )
+    SELECT
+      (SELECT id FROM categories WHERE slug = 'huiles'),
+      'pack-nuit-paisible',
+      'Pack Nuit Paisible',
+      'Le duo parfait pour des nuits sereines : Huile CBD 20% Sommeil + Infusion Détente. Économisez 10€ vs l''achat séparé.',
+      64.90,
+      71.80,
+      'https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=800',
+      0,
+      true, true, true, true
+    WHERE NOT EXISTS (SELECT 1 FROM products WHERE slug = 'pack-nuit-paisible')
+    RETURNING id INTO bundle_id;
+
+    IF bundle_id IS NOT NULL THEN
+      INSERT INTO bundle_items (bundle_id, product_id, quantity) VALUES
+        (bundle_id, oil_id, 1),
+        (bundle_id, infusion_id, 1)
+      ON CONFLICT DO NOTHING;
+
+      PERFORM public.sync_bundle_stock(bundle_id);
+    END IF;
+  END IF;
+END $$;

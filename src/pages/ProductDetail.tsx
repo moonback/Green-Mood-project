@@ -12,9 +12,11 @@ import {
   CheckCircle,
   Send,
   MessageSquare,
+  Package,
+  Tag,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Product, Review, SubscriptionFrequency } from '../lib/types';
+import { Product, Review, SubscriptionFrequency, BundleItem } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import StockBadge from '../components/StockBadge';
@@ -34,6 +36,7 @@ export default function ProductDetail() {
   const { user } = useAuthStore();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -78,6 +81,16 @@ export default function ProductDetail() {
         setIsLoading(false);
         loadReviews(p.id);
         if (user) checkCanReview(p.id, user.id);
+        // Load bundle items if applicable
+        if (p.is_bundle) {
+          supabase
+            .from('bundle_items')
+            .select('*, product:products(id, name, slug, price, image_url, cbd_percentage, weight_grams)')
+            .eq('bundle_id', p.id)
+            .then(({ data: items }) => {
+              if (items) setBundleItems(items as BundleItem[]);
+            });
+        }
       });
   }, [slug, navigate, user]);
 
@@ -190,7 +203,7 @@ export default function ProductDetail() {
     setTimeout(() => setAddedFeedback(false), 2000);
   };
 
-  const isOil = product?.category?.slug === 'huiles';
+  const isOil = product?.category?.slug === 'huiles' && !product?.is_bundle;
 
   if (isLoading) {
     return (
@@ -233,7 +246,14 @@ export default function ProductDetail() {
             animate={{ opacity: 1, x: 0 }}
             className="relative"
           >
-            {product.is_featured && (
+            {/* Bundle badge on image */}
+            {product.is_bundle && (
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-purple-600 px-3 py-1 rounded-full text-sm font-bold text-white shadow-lg">
+                <Package className="w-4 h-4" />
+                Pack Découverte
+              </div>
+            )}
+            {product.is_featured && !product.is_bundle && (
               <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-green-neon px-3 py-1 rounded-full text-sm font-semibold text-white">
                 <Star className="w-3.5 h-3.5" />
                 Populaire
@@ -313,7 +333,18 @@ export default function ProductDetail() {
             <StockBadge stock={product.stock_quantity} />
 
             {/* Price */}
-            <div className="text-4xl font-bold">{product.price.toFixed(2)} €</div>
+            <div>
+              <div className="text-4xl font-bold">{product.price.toFixed(2)} €</div>
+              {product.is_bundle && product.original_value && product.original_value > product.price && (
+                <div className="flex items-center gap-3 mt-1.5">
+                  <span className="text-lg text-zinc-500 line-through">{product.original_value.toFixed(2)} €</span>
+                  <span className="flex items-center gap-1 text-sm font-bold text-purple-400 bg-purple-900/30 border border-purple-700/40 px-2.5 py-1 rounded-full">
+                    <Tag className="w-3.5 h-3.5" />
+                    Vous économisez {(product.original_value - product.price).toFixed(2)} €
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Add to cart */}
             {product.is_available && product.stock_quantity > 0 ? (
@@ -337,7 +368,44 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* ── Subscription panel (oils only) ── */}
+            {/* ── Bundle content section ── */}
+            {product.is_bundle && bundleItems.length > 0 && (
+              <div className="bg-zinc-900/70 border border-purple-800/40 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Package className="w-4 h-4 text-purple-400" />
+                  <h3 className="font-semibold text-sm text-white">Contenu du Pack</h3>
+                  <span className="ml-auto text-xs text-purple-400 font-medium">{bundleItems.length} produit{bundleItems.length > 1 ? 's' : ''}</span>
+                </div>
+                {bundleItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 bg-zinc-800/60 rounded-xl p-3 border border-zinc-700/50">
+                    {item.product?.image_url && (
+                      <img
+                        src={item.product.image_url}
+                        alt={item.product?.name}
+                        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to={`/catalogue/${item.product?.slug}`}
+                        className="text-sm font-semibold text-white hover:text-green-neon transition-colors line-clamp-1"
+                      >
+                        {item.quantity > 1 && <span className="text-green-neon mr-1">{item.quantity}×</span>}
+                        {item.product?.name}
+                      </Link>
+                      {item.product?.cbd_percentage && (
+                        <p className="text-xs text-zinc-500 mt-0.5">CBD {item.product.cbd_percentage}%</p>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-zinc-300 flex-shrink-0">
+                      {item.product ? (item.product.price * item.quantity).toFixed(2) : '—'} €
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Subscription panel (oils only, not bundles) ── */}
             {isOil && !subSuccess && (
               <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 space-y-4">
                 <div className="flex items-center gap-2">

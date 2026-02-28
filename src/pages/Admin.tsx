@@ -106,11 +106,13 @@ const EMPTY_PRODUCT = {
   thc_max: 0.2 as number | null,
   weight_grams: null as number | null,
   price: 0,
+  original_value: null as number | null,
   image_url: null as string | null,
   stock_quantity: 0,
   is_available: true,
   is_featured: false,
   is_active: true,
+  is_bundle: false,
 };
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -150,6 +152,8 @@ export default function Admin() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  // Bundle items editor (list of {product_id, quantity})
+  const [bundleItemsEditor, setBundleItemsEditor] = useState<{ product_id: string; quantity: number }[]>([]);
 
   // ── Category modal ──
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -297,15 +301,30 @@ export default function Admin() {
         thc_max: product.thc_max,
         weight_grams: product.weight_grams,
         price: product.price,
+        original_value: product.original_value ?? null,
         image_url: product.image_url,
         stock_quantity: product.stock_quantity,
         is_available: product.is_available,
         is_featured: product.is_featured,
         is_active: product.is_active,
+        is_bundle: product.is_bundle ?? false,
       });
+      // Load existing bundle items
+      if (product.is_bundle) {
+        supabase
+          .from('bundle_items')
+          .select('product_id, quantity')
+          .eq('bundle_id', product.id)
+          .then(({ data }) => {
+            setBundleItemsEditor((data ?? []) as { product_id: string; quantity: number }[]);
+          });
+      } else {
+        setBundleItemsEditor([]);
+      }
     } else {
       setEditingProductId(null);
       setProductForm({ ...EMPTY_PRODUCT, category_id: categories[0]?.id ?? '' });
+      setBundleItemsEditor([]);
     }
     setShowProductModal(true);
   };
@@ -317,10 +336,23 @@ export default function Admin() {
     e.preventDefault();
     setIsSaving(true);
     const payload = { ...productForm, slug: productForm.slug || slugify(productForm.name) };
+    let savedId = editingProductId;
     if (editingProductId) {
       await supabase.from('products').update(payload).eq('id', editingProductId);
     } else {
-      await supabase.from('products').insert(payload);
+      const { data: newProd } = await supabase.from('products').insert(payload).select('id').single();
+      if (newProd) savedId = newProd.id;
+    }
+    // Save bundle items if bundle
+    if (productForm.is_bundle && savedId) {
+      await supabase.from('bundle_items').delete().eq('bundle_id', savedId);
+      if (bundleItemsEditor.length > 0) {
+        await supabase.from('bundle_items').insert(
+          bundleItemsEditor.filter((i) => i.product_id).map((i) => ({ bundle_id: savedId, ...i }))
+        );
+      }
+      // Recalculate bundle stock
+      await supabase.rpc('sync_bundle_stock', { p_bundle_id: savedId });
     }
     setShowProductModal(false);
     await loadProducts();
@@ -621,6 +653,7 @@ export default function Admin() {
                         { key: 'is_available', label: 'Disponible à la vente' },
                         { key: 'is_featured', label: '⭐ Produit vedette' },
                         { key: 'is_active', label: 'Actif (visible dans le catalogue)' },
+                        { key: 'is_bundle', label: '📦 Pack / Bundle' },
                       ] as { key: keyof typeof productForm; label: string }[]
                     ).map(({ key, label }) => (
                       <label key={key} className="flex items-center gap-2 cursor-pointer">
@@ -634,6 +667,76 @@ export default function Admin() {
                       </label>
                     ))}
                   </div>
+
+                  {/* Prix original (bundles) */}
+                  {productForm.is_bundle && (
+                    <div className="col-span-2">
+                      <label className={LABEL}>Prix si achetés séparément (€) — valeur barrée</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={productForm.original_value ?? ''}
+                        onChange={(e) => setProductForm({ ...productForm, original_value: e.target.value ? parseFloat(e.target.value) : null })}
+                        className={INPUT}
+                        placeholder="ex : 71.80"
+                      />
+                    </div>
+                  )}
+
+                  {/* Bundle items editor */}
+                  {productForm.is_bundle && (
+                    <div className="col-span-2">
+                      <label className={LABEL}>Produits inclus dans le pack</label>
+                      <div className="space-y-2">
+                        {bundleItemsEditor.map((item, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <select
+                              value={item.product_id}
+                              onChange={(e) => {
+                                const updated = [...bundleItemsEditor];
+                                updated[idx] = { ...item, product_id: e.target.value };
+                                setBundleItemsEditor(updated);
+                              }}
+                              className={INPUT + ' flex-1'}
+                            >
+                              <option value="">Choisir un produit…</option>
+                              {products
+                                .filter((p) => !p.is_bundle)
+                                .map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const updated = [...bundleItemsEditor];
+                                updated[idx] = { ...item, quantity: parseInt(e.target.value) || 1 };
+                                setBundleItemsEditor(updated);
+                              }}
+                              className="w-16 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white text-center focus:outline-none focus:border-green-primary"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setBundleItemsEditor(bundleItemsEditor.filter((_, i) => i !== idx))}
+                              className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setBundleItemsEditor([...bundleItemsEditor, { product_id: '', quantity: 1 }])}
+                          className="text-sm text-green-neon hover:text-green-400 font-medium flex items-center gap-1 transition-colors"
+                        >
+                          + Ajouter un produit
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-2">

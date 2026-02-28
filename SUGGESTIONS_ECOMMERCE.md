@@ -12,13 +12,7 @@ Actuellement, l'application dispose d'un catalogue standard et d'un panier simpl
   - *Idée* : Sur la page `ProductDetail.tsx`, ou lors de l'ajout au panier, proposer des produits liés. Par exemple, si le client achète une "Fleur", lui suggérer "Avez-vous pensé aux feuilles à rouler ou à un grinder ?" ou "Découvrez notre infusion douce pour accompagner votre soirée".
   - *Tech* : Ajouter une table de relation `product_recommendations (product_id, recommended_id)` ou baser la recommandation sur la même catégorie.
 
-- **Upselling via Bundles (Packs Découverte)**
-  - *Idée* : Créer de nouveaux produits de type "Pack" (ex: "Pack Nuit Paisible" avec 1 Huile 20% + 1 Infusion). Vendre le lot légèrement moins cher que les produits séparés.
-  - *Tech* : Ajouter une notion de `is_bundle` (booléen) dans la table `products`, et une table `bundle_items` pour lier le "produit bundle" aux produits réels et calculer les stocks intelligemment.
 
-- **Jauge de Frais de Port Offerts Améliorée**
-  - *Idée* : Dans `CartSidebar.tsx` et `Cart.tsx`, rendre la jauge plus visuelle "Plus que X€ pour la livraison gratuite !". Ajouter des boutons rapides "Ajouter tel accessoire à X€ pour ne pas payer les frais de port".
-  - *Tech* : Utiliser les variables globales de `store_settings` (`delivery_free_threshold`).
 
 ## 💖 2. Fidélisation & Rétention
 
@@ -52,9 +46,7 @@ La table `profiles` contient déjà un champ `loyalty_points`. Il faut maintenan
 
 ## ⚙️ 4. Gestion Opérationnelle & Admin Back-Office
 
-- **Code Promos & Réductions Avancées**
-  - *Idée* : Permettre aux administrateurs de créer des codes (ex: "WEEDKEND-20") applicables dans le `Checkout.tsx`.
-  - *Tech* : Table `promo_codes (code, discount_type, discount_value, expires_at, min_order_value)`. À vérifier lors de la finalisation de commande pour recalculer le `total`.
+
 
 - **Analytique Poussée (Tableau de Bord Admin)**
   - *Idée* : Remplacer l'admin basique par des graphiques montrant le Chiffre d'Affaires du mois comparé au mois précédent, les 5 produits les plus vendus, et le taux de conversion du panier.

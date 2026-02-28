@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Star } from 'lucide-react';
+import { ShoppingCart, Star, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -28,8 +28,16 @@ export default function ProductCard({ product }: ProductCardProps) {
       viewport={{ once: true }}
       className="group relative bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-green-neon/30 transition-all duration-300"
     >
-      {/* Featured badge */}
-      {product.is_featured && (
+      {/* Bundle badge */}
+      {product.is_bundle && (
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-purple-600 px-2 py-0.5 rounded-full text-xs font-bold text-white">
+          <Package className="w-3 h-3" />
+          Pack
+        </div>
+      )}
+
+      {/* Featured badge (only if not bundle) */}
+      {product.is_featured && !product.is_bundle && (
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-green-neon px-2 py-0.5 rounded-full text-xs font-bold text-black glow-pulse-green">
           <Star className="w-3 h-3" />
           Populaire
@@ -90,9 +98,21 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Price + Add to cart */}
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xl font-bold text-green-neon glow-green">
-            {product.price.toFixed(2)} €
-          </span>
+          <div>
+            <span className="text-xl font-bold text-green-neon glow-green">
+              {product.price.toFixed(2)} €
+            </span>
+            {product.is_bundle && product.original_value && product.original_value > product.price && (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-xs text-zinc-500 line-through">
+                  {product.original_value.toFixed(2)} €
+                </span>
+                <span className="text-xs font-bold text-purple-400 bg-purple-900/30 px-1.5 py-0.5 rounded-full">
+                  −{(product.original_value - product.price).toFixed(2)} €
+                </span>
+              </div>
+            )}
+          </div>
           <button
             onClick={handleAddToCart}
             disabled={!product.is_available || product.stock_quantity === 0}

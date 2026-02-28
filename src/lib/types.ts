@@ -22,17 +22,30 @@ export interface Product {
   thc_max: number | null;
   weight_grams: number | null;
   price: number;
+  original_value: number | null; // prix total des articles séparés
   image_url: string | null;
   stock_quantity: number;
   is_available: boolean;
   is_featured: boolean;
   is_active: boolean;
+  is_bundle: boolean;
   created_at: string;
   // joined
   category?: Category;
+  bundle_items?: BundleItem[]; // populated on detail page
   // computed (from reviews batch query)
   avg_rating?: number;
   review_count?: number;
+}
+
+export interface BundleItem {
+  id: string;
+  bundle_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+  // joined
+  product?: Pick<Product, 'id' | 'name' | 'slug' | 'price' | 'image_url' | 'cbd_percentage' | 'weight_grams'>;
 }
 
 export interface Profile {
