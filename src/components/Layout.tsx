@@ -67,7 +67,7 @@ export default function Layout() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-green-primary text-white relative flex items-center justify-center overflow-hidden"
+            className="bg-green-neon text-white relative flex items-center justify-center overflow-hidden"
           >
             <div className="px-4 py-2.5 text-sm font-medium text-center w-full max-w-7xl mx-auto pr-10">
               {settings.banner_text}
@@ -169,7 +169,7 @@ export default function Layout() {
                         {profile?.is_admin && (
                           <Link
                             to="/admin"
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-green-primary hover:bg-zinc-800 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-green-neon hover:bg-zinc-800 transition-colors"
                           >
                             <ShieldCheck className="h-4 w-4" />
                             Administration
@@ -239,7 +239,7 @@ export default function Layout() {
                         <Clock className="h-4 w-4" /> Mes commandes
                       </Link>
                       {profile?.is_admin && (
-                        <Link to="/admin" className="flex items-center gap-2 text-green-primary">
+                        <Link to="/admin" className="flex items-center gap-2 text-green-neon">
                           <ShieldCheck className="h-4 w-4" /> Administration
                         </Link>
                       )}
@@ -313,7 +313,7 @@ export default function Layout() {
               <h3 className="font-serif text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-4 text-sm text-zinc-400">
                 <li className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-green-primary shrink-0" />
+                  <MapPin className="h-5 w-5 text-green-neon shrink-0" />
                   <span>
                     {settings.store_address.split(',')[0]}
                     <br />
@@ -321,7 +321,7 @@ export default function Layout() {
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-green-primary shrink-0" />
+                  <Phone className="h-5 w-5 text-green-neon shrink-0" />
                   <span>{settings.store_phone}</span>
                 </li>
               </ul>

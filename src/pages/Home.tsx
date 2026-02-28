@@ -125,7 +125,7 @@ export default function Home() {
               </p>
               <Link
                 to="/contact"
-                className="inline-flex items-center gap-2 text-green-primary hover:text-green-400 font-medium transition-all hover:translate-x-2 pt-4"
+                className="inline-flex items-center gap-2 text-green-neon hover:text-green-400 font-medium transition-all hover:translate-x-2 pt-4"
               >
                 Nous rendre visite
                 <ArrowRight className="h-4 w-4" />
@@ -166,20 +166,20 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
               {
-                icon: <ShieldCheck className="h-10 w-10 text-green-primary" />,
+                icon: <ShieldCheck className="h-10 w-10 text-green-neon" />,
                 title: "100% Légal & Conforme",
                 description:
                   "Tous nos produits respectent strictement la législation française avec un taux de THC inférieur à 0.3%. Analyses laboratoires disponibles en boutique.",
               },
               {
-                icon: <Leaf className="h-10 w-10 text-green-primary" />,
+                icon: <Leaf className="h-10 w-10 text-green-neon" />,
                 title: "Qualité Premium",
                 description:
                   "Des fleurs cultivées avec soin, des extractions propres et des huiles pressées à froid. Nous ne faisons aucun compromis sur la qualité.",
               },
               {
                 icon: (
-                  <HeartHandshake className="h-10 w-10 text-green-primary" />
+                  <HeartHandshake className="h-10 w-10 text-green-neon" />
                 ),
                 title: "Conseil Personnalisé",
                 description:

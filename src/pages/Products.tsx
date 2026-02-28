@@ -42,7 +42,7 @@ export default function Products() {
     {
       id: "fleurs",
       title: "Fleurs CBD",
-      icon: <Leaf className="h-8 w-8 text-green-primary" />,
+      icon: <Leaf className="h-8 w-8 text-green-neon" />,
       description:
         "Des fleurs cultivées en intérieur, sous serre ou en extérieur. Sélectionnées pour leurs profils terpéniques uniques et leur qualité irréprochable.",
       image:
@@ -53,8 +53,8 @@ export default function Products() {
       id: "resines",
       title: "Résines & Pollens",
       icon: (
-        <div className="h-8 w-8 rounded-full bg-green-primary/20 border border-green-primary flex items-center justify-center">
-          <span className="text-green-primary font-bold text-xs">R</span>
+        <div className="h-8 w-8 rounded-full bg-green-neon/20 border border-green-primary flex items-center justify-center">
+          <span className="text-green-neon font-bold text-xs">R</span>
         </div>
       ),
       description:
@@ -66,7 +66,7 @@ export default function Products() {
     {
       id: "huiles",
       title: "Huiles & Infusions",
-      icon: <Droplet className="h-8 w-8 text-green-primary" />,
+      icon: <Droplet className="h-8 w-8 text-green-neon" />,
       description:
         "Des huiles Full Spectrum et Broad Spectrum pressées à froid pour conserver tous les bienfaits de la plante. Infusions relaxantes pour le soir.",
       image:
@@ -95,7 +95,7 @@ export default function Products() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
         >
-          Nos <span className="text-green-primary">Produits</span>
+          Nos <span className="text-green-neon">Produits</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -133,7 +133,7 @@ export default function Products() {
 
                 <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-6 mt-8">
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Coffee className="h-4 w-4 text-green-primary" />
+                    <Coffee className="h-4 w-4 text-green-neon" />
                     Aperçu de la gamme
                   </h3>
                   <ul className="grid grid-cols-2 gap-3">
@@ -142,7 +142,7 @@ export default function Products() {
                         key={i}
                         className="text-zinc-300 flex items-center gap-2 text-sm"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-primary/50" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-neon/50" />
                         {item}
                       </li>
                     ))}
@@ -167,9 +167,9 @@ export default function Products() {
       </section>
 
       {/* CTA Catalogue en ligne */}
-      <section className="py-16 bg-green-primary/10 border-y border-green-primary/20">
+      <section className="py-16 bg-green-neon/10 border-y border-green-primary/20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Info className="h-12 w-12 text-green-primary mx-auto mb-6" />
+          <Info className="h-12 w-12 text-green-neon mx-auto mb-6" />
           <h2 className="text-2xl font-serif font-bold text-white mb-4">
             Commandez maintenant en ligne
           </h2>
@@ -180,7 +180,7 @@ export default function Products() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/catalogue"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-green-primary hover:bg-green-600 text-white rounded-full font-medium transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-green-neon hover:bg-green-600 text-white rounded-full font-medium transition-all hover:scale-105"
             >
               Voir le catalogue en ligne →
             </Link>

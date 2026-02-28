@@ -116,13 +116,12 @@ export default function ProductImageUpload({ value, onChange }: Props) {
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onClick={() => !isUploading && inputRef.current?.click()}
-          className={`relative flex flex-col items-center justify-center gap-3 w-full h-40 border-2 border-dashed rounded-xl transition-all ${
-            isUploading
-              ? 'border-green-primary/60 bg-green-primary/5 cursor-wait'
-              : isDragging
-              ? 'border-green-primary bg-green-primary/10 cursor-copy'
+          className={`relative flex flex-col items-center justify-center gap-3 w-full h-40 border-2 border-dashed rounded-xl transition-all ${isUploading
+            ? 'border-green-primary/60 bg-green-neon/5 cursor-wait'
+            : isDragging
+              ? 'border-green-primary bg-green-neon/10 cursor-copy'
               : 'border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/40 cursor-pointer'
-          }`}
+            }`}
         >
           {isUploading ? (
             <>
@@ -131,20 +130,20 @@ export default function ProductImageUpload({ value, onChange }: Props) {
               {/* Progress bar */}
               <div className="absolute bottom-3 left-4 right-4 h-1 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-primary rounded-full transition-all duration-300"
+                  className="h-full bg-green-neon rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
             </>
           ) : (
             <>
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDragging ? 'bg-green-primary/20' : 'bg-zinc-800'}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDragging ? 'bg-green-neon/20' : 'bg-zinc-800'}`}>
                 <ImageIcon className={`w-6 h-6 ${isDragging ? 'text-green-400' : 'text-zinc-500'}`} />
               </div>
               <div className="text-center px-4">
                 <p className="text-sm text-zinc-300">
                   Glissez une image ou{' '}
-                  <span className="text-green-primary font-medium">cliquez pour parcourir</span>
+                  <span className="text-green-neon font-medium">cliquez pour parcourir</span>
                 </p>
                 <p className="text-xs text-zinc-600 mt-1">JPG, PNG, WebP · max 5 Mo</p>
               </div>

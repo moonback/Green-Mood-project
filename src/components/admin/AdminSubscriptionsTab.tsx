@@ -132,11 +132,10 @@ export default function AdminSubscriptionsTab() {
             <button
               key={f}
               onClick={() => setStatusFilter(f)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                statusFilter === f
-                  ? 'bg-green-primary text-white'
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${statusFilter === f
+                  ? 'bg-green-neon text-white'
                   : 'bg-zinc-800 text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               {f === 'all' ? 'Tous' : STATUS_CONFIG[f].label}
             </button>
@@ -216,7 +215,7 @@ export default function AdminSubscriptionsTab() {
                       <button
                         onClick={() => handleTriggerDelivery(sub)}
                         disabled={isTriggering === sub.id}
-                        className="flex items-center gap-1.5 text-xs text-white bg-green-primary hover:bg-green-600 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                        className="flex items-center gap-1.5 text-xs text-white bg-green-neon hover:bg-green-600 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors font-medium"
                       >
                         <Truck className="w-3.5 h-3.5" />
                         {isTriggering === sub.id ? '...' : 'Livrer'}

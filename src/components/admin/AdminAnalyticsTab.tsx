@@ -192,11 +192,10 @@ export default function AdminAnalyticsTab() {
           <button
             key={r}
             onClick={() => setRange(r)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              range === r
-                ? 'bg-green-primary text-white'
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${range === r
+                ? 'bg-green-neon text-white'
                 : 'bg-zinc-800 text-zinc-400 hover:text-white'
-            }`}
+              }`}
           >
             {RANGE_LABELS[r]}
           </button>

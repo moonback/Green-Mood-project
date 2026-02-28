@@ -51,8 +51,8 @@ export default function Account() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800 mb-6 flex items-center gap-4"
         >
-          <div className="w-14 h-14 rounded-full bg-green-primary/20 flex items-center justify-center">
-            <User className="w-7 h-7 text-green-primary" />
+          <div className="w-14 h-14 rounded-full bg-green-neon/20 flex items-center justify-center">
+            <User className="w-7 h-7 text-green-neon" />
           </div>
           <div>
             <h1 className="font-serif text-2xl font-bold">
@@ -79,19 +79,19 @@ export default function Account() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
             >
-                  <Link
-                  to={tile.to}
-                  className="flex items-center gap-4 bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-600 transition-all group"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-zinc-800 group-hover:bg-green-primary/20 flex items-center justify-center transition-colors">
-                    <tile.icon className="w-5 h-5 text-green-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-white">{tile.label}</p>
-                    <p className="text-sm text-zinc-400">{tile.description}</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
-                </Link>
+              <Link
+                to={tile.to}
+                className="flex items-center gap-4 bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-600 transition-all group"
+              >
+                <div className="w-11 h-11 rounded-xl bg-zinc-800 group-hover:bg-green-neon/20 flex items-center justify-center transition-colors">
+                  <tile.icon className="w-5 h-5 text-green-neon" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-white">{tile.label}</p>
+                  <p className="text-sm text-zinc-400">{tile.description}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+              </Link>
             </motion.div>
           ))}
         </div>

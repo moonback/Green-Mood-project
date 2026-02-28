@@ -109,7 +109,7 @@ export default function Subscriptions() {
             <p className="text-sm mt-1 mb-6">Abonnez-vous à vos huiles CBD préférées pour des livraisons automatiques.</p>
             <Link
               to="/catalogue"
-              className="inline-flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
             >
               <ShoppingBag className="w-4 h-4" />
               Découvrir les produits
@@ -198,11 +198,10 @@ export default function Subscriptions() {
                                 <button
                                   key={freq}
                                   onClick={() => handleChangeFrequency(sub.id, freq)}
-                                  className={`block w-full text-left px-4 py-2.5 text-xs transition-colors ${
-                                    sub.frequency === freq
-                                      ? 'bg-green-primary/20 text-green-400'
+                                  className={`block w-full text-left px-4 py-2.5 text-xs transition-colors ${sub.frequency === freq
+                                      ? 'bg-green-neon/20 text-green-400'
                                       : 'text-zinc-300 hover:bg-zinc-700'
-                                  }`}
+                                    }`}
                                 >
                                   {FREQUENCY_LABELS[freq]}
                                 </button>

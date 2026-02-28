@@ -212,7 +212,7 @@ export default function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
-          <Link to="/catalogue" className="flex items-center gap-1 hover:text-green-primary transition-colors">
+          <Link to="/catalogue" className="flex items-center gap-1 hover:text-green-neon transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Catalogue
           </Link>
@@ -234,7 +234,7 @@ export default function ProductDetail() {
             className="relative"
           >
             {product.is_featured && (
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-green-primary px-3 py-1 rounded-full text-sm font-semibold text-white">
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-green-neon px-3 py-1 rounded-full text-sm font-semibold text-white">
                 <Star className="w-3.5 h-3.5" />
                 Populaire
               </div>
@@ -257,7 +257,7 @@ export default function ProductDetail() {
             {product.category && (
               <Link
                 to={`/catalogue`}
-                className="text-sm text-green-primary font-medium hover:underline"
+                className="text-sm text-green-neon font-medium hover:underline"
               >
                 {product.category.name}
               </Link>
@@ -283,7 +283,7 @@ export default function ProductDetail() {
             <div className="grid grid-cols-2 gap-3">
               {product.cbd_percentage != null && (
                 <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                  <div className="flex items-center gap-2 text-green-primary mb-1">
+                  <div className="flex items-center gap-2 text-green-neon mb-1">
                     <Leaf className="w-4 h-4" />
                     <span className="text-xs font-medium uppercase tracking-wider">CBD</span>
                   </div>
@@ -325,7 +325,7 @@ export default function ProductDetail() {
                 />
                 <button
                   onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 bg-green-primary hover:bg-green-600 text-white font-bold py-4 rounded-2xl transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-600 text-white font-bold py-4 rounded-2xl transition-all"
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {addedFeedback ? 'Ajouté !' : 'Ajouter au panier'}
@@ -341,7 +341,7 @@ export default function ProductDetail() {
             {isOil && !subSuccess && (
               <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 space-y-4">
                 <div className="flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5 text-green-primary" />
+                  <RefreshCw className="w-5 h-5 text-green-neon" />
                   <h3 className="font-semibold">S'abonner & recevoir automatiquement</h3>
                 </div>
                 <p className="text-sm text-zinc-400">
@@ -356,11 +356,10 @@ export default function ProductDetail() {
                       <button
                         key={freq}
                         onClick={() => setSubFrequency(freq)}
-                        className={`py-2 px-2 rounded-xl text-xs text-center border transition-colors ${
-                          subFrequency === freq
-                            ? 'bg-green-primary/20 border-green-primary text-green-400 font-medium'
-                            : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                        }`}
+                        className={`py-2 px-2 rounded-xl text-xs text-center border transition-colors ${subFrequency === freq
+                          ? 'bg-green-neon/20 border-green-primary text-green-400 font-medium'
+                          : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                          }`}
                       >
                         {FREQUENCY_LABELS[freq]}
                       </button>
@@ -409,7 +408,7 @@ export default function ProductDetail() {
                   <p className="text-green-400 font-semibold">Abonnement créé !</p>
                   <p className="text-sm text-zinc-400 mt-0.5">
                     Gérez vos livraisons depuis{' '}
-                    <Link to="/compte/abonnements" className="text-green-primary hover:underline">
+                    <Link to="/compte/abonnements" className="text-green-neon hover:underline">
                       Mon compte
                     </Link>.
                   </p>
@@ -449,7 +448,7 @@ export default function ProductDetail() {
               </p>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
                 Rédiger un avis
@@ -511,7 +510,7 @@ export default function ProductDetail() {
                   <button
                     onClick={handleSubmitReview}
                     disabled={isSubmittingReview}
-                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                    className="flex items-center gap-2 bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                   >
                     <Send className="w-4 h-4" />
                     {isSubmittingReview ? 'Envoi…' : 'Soumettre'}
@@ -534,7 +533,7 @@ export default function ProductDetail() {
               <p>Aucun avis pour l'instant.</p>
               {!user && (
                 <p className="text-sm mt-1">
-                  <Link to="/connexion" className="text-green-primary hover:underline">
+                  <Link to="/connexion" className="text-green-neon hover:underline">
                     Connectez-vous
                   </Link>{' '}
                   pour laisser un avis après votre achat.
@@ -560,7 +559,7 @@ export default function ProductDetail() {
                   >
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-green-primary/20 flex items-center justify-center text-green-400 text-sm font-bold flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-green-neon/20 flex items-center justify-center text-green-400 text-sm font-bold flex-shrink-0">
                         {initials}
                       </div>
                       <div className="flex-1 min-w-0">

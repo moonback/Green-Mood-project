@@ -83,7 +83,7 @@ export default function Catalog() {
             animate={{ opacity: 1, y: 0 }}
             className="font-serif text-4xl md:text-5xl font-bold mb-4"
           >
-            Notre <span className="text-green-primary">Catalogue</span>
+            Notre <span className="text-green-neon">Catalogue</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -127,8 +127,8 @@ export default function Catalog() {
           <button
             onClick={() => setSelectedCategory(null)}
             className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${!selectedCategory
-                ? 'bg-green-primary border-green-primary text-white'
-                : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
+              ? 'bg-green-neon border-green-primary text-white'
+              : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
               }`}
           >
             Tous les produits
@@ -138,8 +138,8 @@ export default function Catalog() {
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
               className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${selectedCategory === cat.id
-                  ? 'bg-green-primary border-green-primary text-white'
-                  : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                ? 'bg-green-neon border-green-primary text-white'
+                : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
                 }`}
             >
               {cat.name}
@@ -169,7 +169,7 @@ export default function Catalog() {
             <p className="text-zinc-400 text-lg">Aucun produit trouvé.</p>
             <button
               onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
-              className="mt-4 text-green-primary hover:underline text-sm"
+              className="mt-4 text-green-neon hover:underline text-sm"
             >
               Réinitialiser les filtres
             </button>

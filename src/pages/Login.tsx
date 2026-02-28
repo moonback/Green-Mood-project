@@ -82,7 +82,7 @@ export default function Login() {
                   key={m}
                   onClick={() => { setMode(m); setError(''); setSuccess(''); }}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
-                    ? 'bg-green-primary text-white'
+                    ? 'bg-green-neon text-white'
                     : 'text-zinc-400 hover:text-white'
                     }`}
                 >
@@ -162,7 +162,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-green-primary hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+                className="w-full bg-green-neon hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -175,7 +175,7 @@ export default function Login() {
 
             <p className="text-center text-zinc-500 text-sm mt-6">
               En créant un compte, vous acceptez nos{' '}
-              <Link to="/mentions-legales" className="text-green-primary hover:underline">
+              <Link to="/mentions-legales" className="text-green-neon hover:underline">
                 conditions générales
               </Link>
               . Vous devez avoir 18 ans ou plus.

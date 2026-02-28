@@ -50,7 +50,7 @@ export default function CartSidebar() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800">
               <div className="flex items-center gap-3">
-                <ShoppingCart className="w-5 h-5 text-green-primary" />
+                <ShoppingCart className="w-5 h-5 text-green-neon" />
                 <h2 className="font-serif text-xl font-semibold">
                   Mon Panier
                   {count > 0 && (
@@ -83,7 +83,7 @@ export default function CartSidebar() {
                 <Link
                   to="/catalogue"
                   onClick={closeSidebar}
-                  className="mt-2 bg-green-primary hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                  className="mt-2 bg-green-neon hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
                 >
                   Voir le catalogue
                 </Link>
@@ -97,8 +97,8 @@ export default function CartSidebar() {
                     <button
                       onClick={() => setDeliveryType('click_collect')}
                       className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${deliveryType === 'click_collect'
-                          ? 'bg-green-primary border-green-primary text-white'
-                          : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                        ? 'bg-green-neon border-green-primary text-white'
+                        : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                         }`}
                     >
                       <Package className="w-4 h-4" />
@@ -107,8 +107,8 @@ export default function CartSidebar() {
                     <button
                       onClick={() => setDeliveryType('delivery')}
                       className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${deliveryType === 'delivery'
-                          ? 'bg-green-primary border-green-primary text-white'
-                          : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                        ? 'bg-green-neon border-green-primary text-white'
+                        : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                         }`}
                     >
                       <Truck className="w-4 h-4" />
@@ -182,7 +182,7 @@ export default function CartSidebar() {
                   <Link
                     to="/commande"
                     onClick={closeSidebar}
-                    className="block w-full bg-green-primary hover:bg-green-600 text-white text-center font-bold py-3.5 rounded-xl transition-colors"
+                    className="block w-full bg-green-neon hover:bg-green-600 text-white text-center font-bold py-3.5 rounded-xl transition-colors"
                   >
                     Commander — {tot.toFixed(2)} €
                   </Link>

@@ -638,7 +638,7 @@ export default function Admin() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex-1 flex items-center justify-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
                   >
                     <Save className="w-4 h-4" />
                     {isSaving ? 'Enregistrement…' : editingProductId ? 'Mettre à jour' : 'Créer le produit'}
@@ -746,7 +746,7 @@ export default function Admin() {
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="flex-1 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
+                    className="flex-1 bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
                   >
                     {isSaving ? 'Enregistrement…' : editingCategoryId ? 'Mettre à jour' : 'Créer'}
                   </button>
@@ -830,11 +830,10 @@ export default function Admin() {
                   <button
                     key={key}
                     onClick={() => setTab(key)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${
-                      tab === key
-                        ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
-                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${tab === key
+                      ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
+                      }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     {label}
@@ -902,11 +901,10 @@ export default function Admin() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                  tab === key
-                    ? 'bg-green-primary text-white'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${tab === key
+                  ? 'bg-green-neon text-white'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {label}
@@ -922,216 +920,672 @@ export default function Admin() {
               </div>
             ) : (
               <>
-            {/* ══════════════════════════════════ DASHBOARD ══════════════════ */}
-            {tab === 'dashboard' && stats && (
-              <div className="space-y-6">
-                {/* KPI cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    {
-                      label: 'Chiffre d\'affaires total',
-                      value: `${stats.totalRevenue.toFixed(2)} €`,
-                      sub: `${stats.revenueThisMonth.toFixed(2)} € ce mois`,
-                      color: 'text-green-400',
-                      accent: 'bg-green-400',
-                      iconBg: 'bg-green-400/10 border-green-400/20',
-                      icon: TrendingUp,
-                    },
-                    {
-                      label: 'Commandes totales',
-                      value: stats.ordersTotal,
-                      sub: `${stats.ordersToday} aujourd'hui`,
-                      color: 'text-blue-400',
-                      accent: 'bg-blue-400',
-                      iconBg: 'bg-blue-400/10 border-blue-400/20',
-                      icon: Package,
-                    },
-                    {
-                      label: 'En attente de traitement',
-                      value: stats.ordersPending,
-                      sub: 'à traiter en priorité',
-                      color: stats.ordersPending > 0 ? 'text-orange-400' : 'text-zinc-400',
-                      accent: stats.ordersPending > 0 ? 'bg-orange-400' : 'bg-zinc-700',
-                      iconBg: stats.ordersPending > 0 ? 'bg-orange-400/10 border-orange-400/20' : 'bg-zinc-800 border-zinc-700',
-                      icon: AlertTriangle,
-                    },
-                    {
-                      label: 'Clients inscrits',
-                      value: stats.totalCustomers,
-                      sub: 'comptes créés',
-                      color: 'text-purple-400',
-                      accent: 'bg-purple-400',
-                      iconBg: 'bg-purple-400/10 border-purple-400/20',
-                      icon: Users,
-                    },
-                  ].map(({ label, value, sub, color, accent, iconBg, icon: Icon }) => (
-                    <div
-                      key={label}
-                      className="relative bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors overflow-hidden"
-                    >
-                      <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${accent}`} />
-                      <div className="pl-3">
-                        <div className="flex items-start justify-between mb-3">
-                          <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider leading-tight pr-2">{label}</p>
-                          <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconBg}`}>
-                            <Icon className={`w-4 h-4 ${color}`} />
+                {/* ══════════════════════════════════ DASHBOARD ══════════════════ */}
+                {tab === 'dashboard' && stats && (
+                  <div className="space-y-6">
+                    {/* KPI cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        {
+                          label: 'Chiffre d\'affaires total',
+                          value: `${stats.totalRevenue.toFixed(2)} €`,
+                          sub: `${stats.revenueThisMonth.toFixed(2)} € ce mois`,
+                          color: 'text-green-400',
+                          accent: 'bg-green-400',
+                          iconBg: 'bg-green-400/10 border-green-400/20',
+                          icon: TrendingUp,
+                        },
+                        {
+                          label: 'Commandes totales',
+                          value: stats.ordersTotal,
+                          sub: `${stats.ordersToday} aujourd'hui`,
+                          color: 'text-blue-400',
+                          accent: 'bg-blue-400',
+                          iconBg: 'bg-blue-400/10 border-blue-400/20',
+                          icon: Package,
+                        },
+                        {
+                          label: 'En attente de traitement',
+                          value: stats.ordersPending,
+                          sub: 'à traiter en priorité',
+                          color: stats.ordersPending > 0 ? 'text-orange-400' : 'text-zinc-400',
+                          accent: stats.ordersPending > 0 ? 'bg-orange-400' : 'bg-zinc-700',
+                          iconBg: stats.ordersPending > 0 ? 'bg-orange-400/10 border-orange-400/20' : 'bg-zinc-800 border-zinc-700',
+                          icon: AlertTriangle,
+                        },
+                        {
+                          label: 'Clients inscrits',
+                          value: stats.totalCustomers,
+                          sub: 'comptes créés',
+                          color: 'text-purple-400',
+                          accent: 'bg-purple-400',
+                          iconBg: 'bg-purple-400/10 border-purple-400/20',
+                          icon: Users,
+                        },
+                      ].map(({ label, value, sub, color, accent, iconBg, icon: Icon }) => (
+                        <div
+                          key={label}
+                          className="relative bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors overflow-hidden"
+                        >
+                          <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${accent}`} />
+                          <div className="pl-3">
+                            <div className="flex items-start justify-between mb-3">
+                              <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider leading-tight pr-2">{label}</p>
+                              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${iconBg}`}>
+                                <Icon className={`w-4 h-4 ${color}`} />
+                              </div>
+                            </div>
+                            <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                            <p className="text-xs text-zinc-500 mt-1.5">{sub}</p>
                           </div>
                         </div>
-                        <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                        <p className="text-xs text-zinc-500 mt-1.5">{sub}</p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* Stock alerts */}
-                {(stats.productsOutOfStock > 0 || stats.productsLowStock > 0) && (
-                  <div className="flex flex-wrap gap-3">
-                    {stats.productsOutOfStock > 0 && (
-                      <div className="flex items-center gap-2 bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded-xl text-sm">
-                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                          <strong>{stats.productsOutOfStock}</strong> produit{stats.productsOutOfStock > 1 ? 's' : ''} en rupture de stock
-                        </span>
-                        <button onClick={() => setTab('stock')} className="underline hover:no-underline ml-1">
-                          Voir →
-                        </button>
+                    {/* Stock alerts */}
+                    {(stats.productsOutOfStock > 0 || stats.productsLowStock > 0) && (
+                      <div className="flex flex-wrap gap-3">
+                        {stats.productsOutOfStock > 0 && (
+                          <div className="flex items-center gap-2 bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded-xl text-sm">
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span>
+                              <strong>{stats.productsOutOfStock}</strong> produit{stats.productsOutOfStock > 1 ? 's' : ''} en rupture de stock
+                            </span>
+                            <button onClick={() => setTab('stock')} className="underline hover:no-underline ml-1">
+                              Voir →
+                            </button>
+                          </div>
+                        )}
+                        {stats.productsLowStock > 0 && (
+                          <div className="flex items-center gap-2 bg-orange-900/20 border border-orange-800 text-orange-400 px-4 py-3 rounded-xl text-sm">
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span>
+                              <strong>{stats.productsLowStock}</strong> produit{stats.productsLowStock > 1 ? 's' : ''} avec stock faible (≤ 5)
+                            </span>
+                            <button onClick={() => setTab('stock')} className="underline hover:no-underline ml-1">
+                              Voir →
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
-                    {stats.productsLowStock > 0 && (
-                      <div className="flex items-center gap-2 bg-orange-900/20 border border-orange-800 text-orange-400 px-4 py-3 rounded-xl text-sm">
-                        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                          <strong>{stats.productsLowStock}</strong> produit{stats.productsLowStock > 1 ? 's' : ''} avec stock faible (≤ 5)
-                        </span>
-                        <button onClick={() => setTab('stock')} className="underline hover:no-underline ml-1">
-                          Voir →
+
+                    {/* Recent orders */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                      <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                        <div>
+                          <h2 className="font-serif font-semibold text-lg">Dernières commandes</h2>
+                          <p className="text-xs text-zinc-500 mt-0.5">Les {stats.recentOrders.length} commandes les plus récentes</p>
+                        </div>
+                        <button
+                          onClick={() => setTab('orders')}
+                          className="flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 bg-green-400/10 border border-green-400/20 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          Voir tout
                         </button>
                       </div>
+                      {stats.recentOrders.length === 0 ? (
+                        <p className="text-zinc-500 text-sm text-center py-10">Aucune commande pour l'instant.</p>
+                      ) : (
+                        <div className="divide-y divide-zinc-800/60">
+                          {stats.recentOrders.map((order) => {
+                            const st = ORDER_STATUS_OPTIONS.find((s) => s.value === order.status);
+                            return (
+                              <div key={order.id} className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-zinc-800/30 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
+                                    <Package className="w-3.5 h-3.5 text-zinc-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-white font-mono">
+                                      #{order.id.slice(0, 8).toUpperCase()}
+                                    </p>
+                                    <p className="text-xs text-zinc-500 mt-0.5">
+                                      {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                                      {' · '}
+                                      {order.delivery_type === 'click_collect' ? 'Click & Collect' : 'Livraison'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3 ml-auto">
+                                  <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${st?.color ?? ''}`}>
+                                    {st?.label ?? order.status}
+                                  </span>
+                                  <span className="font-bold text-white text-sm min-w-[60px] text-right">{order.total.toFixed(2)} €</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════ PRODUCTS ═══════════════════ */}
+                {tab === 'products' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative flex-1 min-w-48">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Rechercher un produit…"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
+                        />
+                      </div>
+                      <button
+                        onClick={() => openProductModal()}
+                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Nouveau produit
+                      </button>
+                    </div>
+
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
+                              <th className="px-4 py-3">Produit</th>
+                              <th className="px-4 py-3">Catégorie</th>
+                              <th className="px-4 py-3">Prix</th>
+                              <th className="px-4 py-3">CBD</th>
+                              <th className="px-4 py-3">Stock</th>
+                              <th className="px-4 py-3">Statut</th>
+                              <th className="px-4 py-3">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800">
+                            {filteredProducts.map((product) => (
+                              <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-3">
+                                    <img
+                                      src={product.image_url ?? ''}
+                                      alt={product.name}
+                                      className="w-10 h-10 object-cover rounded-lg flex-shrink-0 bg-zinc-800"
+                                    />
+                                    <div>
+                                      <p className="font-medium text-white text-sm">{product.name}</p>
+                                      {product.is_featured && (
+                                        <span className="text-xs text-yellow-400 flex items-center gap-1">
+                                          <Star className="w-3 h-3" />Vedette
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-xs text-zinc-400">
+                                  {(product.category as Category | undefined)?.name ?? '—'}
+                                </td>
+                                <td className="px-4 py-3 text-sm font-semibold text-white">
+                                  {product.price.toFixed(2)} €
+                                </td>
+                                <td className="px-4 py-3 text-sm text-zinc-300">
+                                  {product.cbd_percentage != null ? `${product.cbd_percentage}%` : '—'}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span
+                                    className={`font-semibold text-sm ${product.stock_quantity === 0
+                                      ? 'text-red-400'
+                                      : product.stock_quantity <= 5
+                                        ? 'text-orange-400'
+                                        : 'text-white'
+                                      }`}
+                                  >
+                                    {product.stock_quantity}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex gap-1.5 flex-wrap">
+                                    <span
+                                      className={`text-xs px-2 py-0.5 rounded-full border ${product.is_active
+                                        ? 'text-green-400 bg-green-900/30 border-green-800'
+                                        : 'text-red-400 bg-red-900/30 border-red-800'
+                                        }`}
+                                    >
+                                      {product.is_active ? 'Actif' : 'Inactif'}
+                                    </span>
+                                    {!product.is_available && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full border text-orange-400 bg-orange-900/30 border-orange-800">
+                                        Indispo
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => openProductModal(product)}
+                                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
+                                      title="Modifier"
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
+                                      className="p-1.5 text-zinc-400 hover:text-green-neon hover:bg-zinc-700 rounded-lg transition-colors"
+                                      title="Ajuster le stock"
+                                    >
+                                      <ArrowUpDown className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteProduct(product.id)}
+                                      className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors"
+                                      title="Désactiver"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {filteredProducts.length === 0 && (
+                        <p className="text-zinc-500 text-center py-10">Aucun produit trouvé.</p>
+                      )}
+                    </div>
+
+                    {/* Stock adjustment inline */}
+                    <AnimatePresence>
+                      {stockAdjust && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="bg-zinc-900 border border-green-primary/40 rounded-2xl p-5"
+                        >
+                          <p className="text-sm font-medium text-white mb-3">
+                            Ajustement —{' '}
+                            <span className="text-green-neon">
+                              {products.find((p) => p.id === stockAdjust.id)?.name}
+                            </span>
+                            <span className="ml-2 text-zinc-500 text-xs">
+                              (stock actuel :{' '}
+                              {products.find((p) => p.id === stockAdjust.id)?.stock_quantity})
+                            </span>
+                          </p>
+                          <div className="flex gap-3 flex-wrap">
+                            <input
+                              type="number"
+                              placeholder="+10 ou -5"
+                              value={stockAdjust.qty}
+                              onChange={(e) => setStockAdjust({ ...stockAdjust, qty: e.target.value })}
+                              className="w-36 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Note (ex : réappro, retour, casse…)"
+                              value={stockAdjust.note}
+                              onChange={(e) => setStockAdjust({ ...stockAdjust, note: e.target.value })}
+                              className="flex-1 min-w-40 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
+                            />
+                            <button
+                              onClick={handleStockAdjust}
+                              disabled={isSaving}
+                              className="bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+                            >
+                              Confirmer
+                            </button>
+                            <button
+                              onClick={() => setStockAdjust(null)}
+                              className="text-zinc-400 hover:text-white px-3 text-sm transition-colors"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════ CATEGORIES ═════════════════ */}
+                {tab === 'categories' && (
+                  <div className="space-y-4">
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => openCategoryModal()}
+                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Nouvelle catégorie
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {categories.map((cat) => (
+                        <motion.div
+                          key={cat.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+                        >
+                          {cat.image_url && (
+                            <div className="relative h-36 overflow-hidden">
+                              <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
+                            </div>
+                          )}
+                          <div className="p-5">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-semibold text-white">{cat.name}</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">
+                                  /{cat.slug} · ordre {cat.sort_order}
+                                </p>
+                              </div>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${cat.is_active
+                                  ? 'text-green-400 bg-green-900/30 border-green-800'
+                                  : 'text-red-400 bg-red-900/30 border-red-800'
+                                  }`}
+                              >
+                                {cat.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            {cat.description && (
+                              <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{cat.description}</p>
+                            )}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openCategoryModal(cat)}
+                                className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg transition-colors"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                Modifier
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {categories.length === 0 && (
+                      <p className="text-zinc-500 text-center py-10">Aucune catégorie.</p>
                     )}
                   </div>
                 )}
 
-                {/* Recent orders */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-                    <div>
-                      <h2 className="font-serif font-semibold text-lg">Dernières commandes</h2>
-                      <p className="text-xs text-zinc-500 mt-0.5">Les {stats.recentOrders.length} commandes les plus récentes</p>
+                {/* ══════════════════════════════════ ORDERS ═════════════════════ */}
+                {tab === 'orders' && (
+                  <div className="space-y-4">
+                    <div className="flex gap-3 flex-wrap">
+                      <div className="relative flex-1 min-w-48">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Rechercher par n° de commande…"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
+                        />
+                      </div>
+                      <select
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 text-sm text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-green-primary"
+                      >
+                        <option value="all">Tous les statuts</option>
+                        {ORDER_STATUS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                      <span className="flex items-center text-sm text-zinc-500 px-2">
+                        {filteredOrders.length} commande{filteredOrders.length !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                    <button
-                      onClick={() => setTab('orders')}
-                      className="flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 bg-green-400/10 border border-green-400/20 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      Voir tout
-                    </button>
-                  </div>
-                  {stats.recentOrders.length === 0 ? (
-                    <p className="text-zinc-500 text-sm text-center py-10">Aucune commande pour l'instant.</p>
-                  ) : (
-                    <div className="divide-y divide-zinc-800/60">
-                      {stats.recentOrders.map((order) => {
+
+                    <div className="space-y-2">
+                      {filteredOrders.length === 0 && (
+                        <p className="text-zinc-500 text-center py-10">Aucune commande.</p>
+                      )}
+                      {filteredOrders.map((order) => {
                         const st = ORDER_STATUS_OPTIONS.find((s) => s.value === order.status);
+                        const isExpanded = expandedOrder === order.id;
+                        const items = order.order_items as OrderItem[] | undefined;
                         return (
-                          <div key={order.id} className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-zinc-800/30 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
-                                <Package className="w-3.5 h-3.5 text-zinc-400" />
+                          <motion.div
+                            key={order.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+                          >
+                            <button
+                              onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                              className="w-full flex items-center justify-between p-5 hover:bg-zinc-800/40 transition-colors text-left"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div>
+                                  <p className="font-semibold text-white text-sm">
+                                    #{order.id.slice(0, 8).toUpperCase()}
+                                  </p>
+                                  <p className="text-xs text-zinc-500 mt-0.5">
+                                    {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                                      day: 'numeric',
+                                      month: 'long',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-full border hidden sm:inline-flex ${order.delivery_type === 'click_collect'
+                                    ? 'text-purple-400 bg-purple-900/20 border-purple-800'
+                                    : 'text-sky-400 bg-sky-900/20 border-sky-800'
+                                    }`}
+                                >
+                                  {order.delivery_type === 'click_collect' ? (
+                                    <span className="flex items-center gap-1"><Store className="w-3 h-3" />Click & Collect</span>
+                                  ) : (
+                                    <span className="flex items-center gap-1"><Truck className="w-3 h-3" />Livraison</span>
+                                  )}
+                                </span>
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-white font-mono">
-                                  #{order.id.slice(0, 8).toUpperCase()}
-                                </p>
-                                <p className="text-xs text-zinc-500 mt-0.5">
-                                  {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                                  {' · '}
-                                  {order.delivery_type === 'click_collect' ? 'Click & Collect' : 'Livraison'}
-                                </p>
+                              <div className="flex items-center gap-3">
+                                <span className={`text-xs px-2 py-0.5 rounded-full border ${st?.color ?? ''}`}>
+                                  {st?.label ?? order.status}
+                                </span>
+                                <span className="font-bold text-white">{order.total.toFixed(2)} €</span>
+                                {isExpanded ? (
+                                  <ChevronUp className="w-4 h-4 text-zinc-500" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4 text-zinc-500" />
+                                )}
                               </div>
-                            </div>
-                            <div className="flex items-center gap-3 ml-auto">
-                              <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${st?.color ?? ''}`}>
-                                {st?.label ?? order.status}
-                              </span>
-                              <span className="font-bold text-white text-sm min-w-[60px] text-right">{order.total.toFixed(2)} €</span>
-                            </div>
-                          </div>
+                            </button>
+
+                            {isExpanded && (
+                              <div className="border-t border-zinc-800 p-5 space-y-4">
+                                {/* Order lines */}
+                                <div className="space-y-1.5">
+                                  {(items ?? []).map((item) => (
+                                    <div key={item.id} className="flex justify-between text-sm">
+                                      <span className="text-zinc-400">
+                                        {item.product_name} ×{item.quantity}
+                                      </span>
+                                      <span className="text-white">{item.total_price.toFixed(2)} €</span>
+                                    </div>
+                                  ))}
+                                  <div className="border-t border-zinc-700 pt-2 space-y-1">
+                                    <div className="flex justify-between text-xs text-zinc-500">
+                                      <span>Livraison</span>
+                                      <span>{order.delivery_fee === 0 ? 'Gratuit' : `${order.delivery_fee.toFixed(2)} €`}</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold text-white">
+                                      <span>Total</span>
+                                      <span>{order.total.toFixed(2)} €</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Status & metadata */}
+                                <div className="flex flex-wrap items-center gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-xs text-zinc-400">Statut :</label>
+                                    <select
+                                      value={order.status}
+                                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                      className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-green-primary"
+                                    >
+                                      {ORDER_STATUS_OPTIONS.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="flex gap-4 text-xs text-zinc-500 flex-wrap">
+                                    <span>
+                                      Paiement :{' '}
+                                      <span className={order.payment_status === 'paid' ? 'text-green-400' : 'text-orange-400'}>
+                                        {order.payment_status}
+                                      </span>
+                                    </span>
+                                    {order.viva_order_code && <span>Réf : {order.viva_order_code}</span>}
+                                    {order.loyalty_points_earned > 0 && (
+                                      <span className="text-yellow-400">+{order.loyalty_points_earned} pts fidélité</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </motion.div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════ PRODUCTS ═══════════════════ */}
-            {tab === 'products' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="relative flex-1 min-w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher un produit…"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                    />
                   </div>
-                  <button
-                    onClick={() => openProductModal()}
-                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Nouveau produit
-                  </button>
-                </div>
+                )}
 
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
-                          <th className="px-4 py-3">Produit</th>
-                          <th className="px-4 py-3">Catégorie</th>
-                          <th className="px-4 py-3">Prix</th>
-                          <th className="px-4 py-3">CBD</th>
-                          <th className="px-4 py-3">Stock</th>
-                          <th className="px-4 py-3">Statut</th>
-                          <th className="px-4 py-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800">
-                        {filteredProducts.map((product) => (
-                          <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={product.image_url ?? ''}
-                                  alt={product.name}
-                                  className="w-10 h-10 object-cover rounded-lg flex-shrink-0 bg-zinc-800"
-                                />
-                                <div>
-                                  <p className="font-medium text-white text-sm">{product.name}</p>
-                                  {product.is_featured && (
-                                    <span className="text-xs text-yellow-400 flex items-center gap-1">
-                                      <Star className="w-3 h-3" />Vedette
-                                    </span>
-                                  )}
+                {/* ══════════════════════════════════ STOCK ══════════════════════ */}
+                {tab === 'stock' && (
+                  <div className="space-y-6">
+                    {/* Alerts */}
+                    {products.some((p) => p.stock_quantity <= 5) && (
+                      <div className="bg-orange-900/10 border border-orange-800 rounded-2xl p-5">
+                        <p className="text-orange-400 font-medium text-sm flex items-center gap-2 mb-3">
+                          <AlertTriangle className="w-4 h-4" />
+                          Produits à réapprovisionner en priorité
+                        </p>
+                        <div className="space-y-2">
+                          {products
+                            .filter((p) => p.stock_quantity <= 5)
+                            .sort((a, b) => a.stock_quantity - b.stock_quantity)
+                            .map((p) => (
+                              <div key={p.id} className="flex items-center justify-between">
+                                <span className="text-sm text-zinc-300">{p.name}</span>
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`font-bold text-sm ${p.stock_quantity === 0 ? 'text-red-400' : 'text-orange-400'}`}
+                                  >
+                                    {p.stock_quantity === 0 ? 'Rupture' : `${p.stock_quantity} restant${p.stock_quantity > 1 ? 's' : ''}`}
+                                  </span>
+                                  <button
+                                    onClick={() => setStockAdjust({ id: p.id, qty: '', note: 'Réapprovisionnement' })}
+                                    className="text-xs bg-orange-900/40 hover:bg-orange-900/70 border border-orange-800 text-orange-400 px-3 py-1 rounded-lg transition-colors"
+                                  >
+                                    + Réappro
+                                  </button>
                                 </div>
                               </div>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-zinc-400">
-                              {(product.category as Category | undefined)?.name ?? '—'}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-semibold text-white">
-                              {product.price.toFixed(2)} €
-                            </td>
-                            <td className="px-4 py-3 text-sm text-zinc-300">
-                              {product.cbd_percentage != null ? `${product.cbd_percentage}%` : '—'}
-                            </td>
-                            <td className="px-4 py-3">
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stock adjustment form */}
+                    <AnimatePresence>
+                      {stockAdjust && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="bg-zinc-900 border border-green-primary/50 rounded-2xl p-5"
+                        >
+                          <p className="text-sm font-medium text-white mb-3">
+                            Ajustement —{' '}
+                            <span className="text-green-neon">
+                              {products.find((p) => p.id === stockAdjust.id)?.name}
+                            </span>
+                            <span className="ml-2 text-zinc-500 text-xs">
+                              (stock actuel : {products.find((p) => p.id === stockAdjust.id)?.stock_quantity})
+                            </span>
+                          </p>
+                          <div className="flex gap-3 flex-wrap">
+                            <input
+                              type="number"
+                              placeholder="+20 réappro ou -2 casse"
+                              value={stockAdjust.qty}
+                              onChange={(e) => setStockAdjust({ ...stockAdjust, qty: e.target.value })}
+                              className="w-44 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Raison (réappro, retour client, casse…)"
+                              value={stockAdjust.note}
+                              onChange={(e) => setStockAdjust({ ...stockAdjust, note: e.target.value })}
+                              className="flex-1 min-w-40 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
+                            />
+                            <button
+                              onClick={handleStockAdjust}
+                              disabled={isSaving}
+                              className="bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+                            >
+                              {isSaving ? 'Confirmation…' : 'Confirmer'}
+                            </button>
+                            <button
+                              onClick={() => setStockAdjust(null)}
+                              className="text-zinc-400 hover:text-white px-3 text-sm transition-colors"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* All products stock levels */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                      <div className="px-5 py-4 border-b border-zinc-800">
+                        <h2 className="font-serif font-semibold">Niveaux de stock</h2>
+                      </div>
+                      <div className="divide-y divide-zinc-800">
+                        {products.map((product) => {
+                          const pct = Math.min(100, (product.stock_quantity / 50) * 100);
+                          return (
+                            <div key={product.id} className="px-5 py-3.5 flex items-center gap-4">
+                              <div
+                                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${product.stock_quantity === 0
+                                  ? 'bg-red-400'
+                                  : product.stock_quantity <= 5
+                                    ? 'bg-orange-400'
+                                    : 'bg-green-400'
+                                  }`}
+                              />
+                              <span className="text-sm text-white flex-1">{product.name}</span>
+                              <div className="hidden sm:flex items-center gap-2 w-32">
+                                <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${product.stock_quantity === 0
+                                      ? 'bg-red-500'
+                                      : product.stock_quantity <= 5
+                                        ? 'bg-orange-500'
+                                        : 'bg-green-500'
+                                      }`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
                               <span
-                                className={`font-semibold text-sm ${product.stock_quantity === 0
+                                className={`font-semibold text-sm w-16 text-right ${product.stock_quantity === 0
                                   ? 'text-red-400'
                                   : product.stock_quantity <= 5
                                     ? 'text-orange-400'
@@ -1140,841 +1594,385 @@ export default function Admin() {
                               >
                                 {product.stock_quantity}
                               </span>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex gap-1.5 flex-wrap">
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded-full border ${product.is_active
-                                    ? 'text-green-400 bg-green-900/30 border-green-800'
-                                    : 'text-red-400 bg-red-900/30 border-red-800'
-                                    }`}
-                                >
-                                  {product.is_active ? 'Actif' : 'Inactif'}
-                                </span>
-                                {!product.is_available && (
-                                  <span className="text-xs px-2 py-0.5 rounded-full border text-orange-400 bg-orange-900/30 border-orange-800">
-                                    Indispo
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => openProductModal(product)}
-                                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
-                                  title="Modifier"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
-                                  className="p-1.5 text-zinc-400 hover:text-green-primary hover:bg-zinc-700 rounded-lg transition-colors"
-                                  title="Ajuster le stock"
-                                >
-                                  <ArrowUpDown className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteProduct(product.id)}
-                                  className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors"
-                                  title="Désactiver"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {filteredProducts.length === 0 && (
-                    <p className="text-zinc-500 text-center py-10">Aucun produit trouvé.</p>
-                  )}
-                </div>
-
-                {/* Stock adjustment inline */}
-                <AnimatePresence>
-                  {stockAdjust && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="bg-zinc-900 border border-green-primary/40 rounded-2xl p-5"
-                    >
-                      <p className="text-sm font-medium text-white mb-3">
-                        Ajustement —{' '}
-                        <span className="text-green-primary">
-                          {products.find((p) => p.id === stockAdjust.id)?.name}
-                        </span>
-                        <span className="ml-2 text-zinc-500 text-xs">
-                          (stock actuel :{' '}
-                          {products.find((p) => p.id === stockAdjust.id)?.stock_quantity})
-                        </span>
-                      </p>
-                      <div className="flex gap-3 flex-wrap">
-                        <input
-                          type="number"
-                          placeholder="+10 ou -5"
-                          value={stockAdjust.qty}
-                          onChange={(e) => setStockAdjust({ ...stockAdjust, qty: e.target.value })}
-                          className="w-36 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Note (ex : réappro, retour, casse…)"
-                          value={stockAdjust.note}
-                          onChange={(e) => setStockAdjust({ ...stockAdjust, note: e.target.value })}
-                          className="flex-1 min-w-40 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
-                        />
-                        <button
-                          onClick={handleStockAdjust}
-                          disabled={isSaving}
-                          className="bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-                        >
-                          Confirmer
-                        </button>
-                        <button
-                          onClick={() => setStockAdjust(null)}
-                          className="text-zinc-400 hover:text-white px-3 text-sm transition-colors"
-                        >
-                          Annuler
-                        </button>
+                              <button
+                                onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
+                                className="p-1.5 text-zinc-500 hover:text-green-neon hover:bg-zinc-800 rounded-lg transition-colors"
+                              >
+                                <ArrowUpDown className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+                    </div>
 
-            {/* ══════════════════════════════════ CATEGORIES ═════════════════ */}
-            {tab === 'categories' && (
-              <div className="space-y-4">
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => openCategoryModal()}
-                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Nouvelle catégorie
-                  </button>
-                </div>
+                    {/* Movements history */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                      <div className="px-5 py-4 border-b border-zinc-800">
+                        <h2 className="font-serif font-semibold">Historique des mouvements</h2>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/40">
+                              <th className="px-5 py-3">Date & heure</th>
+                              <th className="px-5 py-3">Produit</th>
+                              <th className="px-5 py-3">Variation</th>
+                              <th className="px-5 py-3">Type</th>
+                              <th className="px-5 py-3">Note</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800">
+                            {movements.map((mv) => (
+                              <tr key={mv.id} className="hover:bg-zinc-800/20 transition-colors">
+                                <td className="px-5 py-3 text-xs text-zinc-500">
+                                  {new Date(mv.created_at).toLocaleDateString('fr-FR')}{' '}
+                                  {new Date(mv.created_at).toLocaleTimeString('fr-FR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </td>
+                                <td className="px-5 py-3 text-sm text-white">
+                                  {(mv.product as { name?: string })?.name ?? '—'}
+                                </td>
+                                <td
+                                  className={`px-5 py-3 font-bold ${mv.quantity_change > 0 ? 'text-green-400' : 'text-red-400'}`}
+                                >
+                                  {mv.quantity_change > 0 ? '+' : ''}
+                                  {mv.quantity_change}
+                                </td>
+                                <td className="px-5 py-3">
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full border ${mv.type === 'sale'
+                                      ? 'text-blue-400 bg-blue-900/20 border-blue-800'
+                                      : mv.type === 'restock'
+                                        ? 'text-green-400 bg-green-900/20 border-green-800'
+                                        : mv.type === 'return'
+                                          ? 'text-purple-400 bg-purple-900/20 border-purple-800'
+                                          : 'text-zinc-400 bg-zinc-800 border-zinc-700'
+                                      }`}
+                                  >
+                                    {mv.type}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3 text-xs text-zinc-500">{mv.note ?? '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {movements.length === 0 && (
+                          <p className="text-zinc-500 text-center py-10">Aucun mouvement de stock.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((cat) => (
-                    <motion.div
-                      key={cat.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
-                    >
-                      {cat.image_url && (
-                        <div className="relative h-36 overflow-hidden">
-                          <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent" />
+                {/* ══════════════════════════════════ CUSTOMERS ══════════════════ */}
+                {tab === 'customers' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="relative flex-1 min-w-48">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Rechercher un client…"
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
+                        />
+                      </div>
+                      <span className="text-sm text-zinc-500">
+                        {filteredCustomers.length} client{filteredCustomers.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
+                              <th className="px-5 py-3">Client</th>
+                              <th className="px-5 py-3">Téléphone</th>
+                              <th className="px-5 py-3">Inscrit le</th>
+                              <th className="px-5 py-3">Points fidélité</th>
+                              <th className="px-5 py-3">Rôle</th>
+                              <th className="px-5 py-3">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800">
+                            {filteredCustomers.map((customer) => (
+                              <tr key={customer.id} className="hover:bg-zinc-800/20 transition-colors">
+                                <td className="px-5 py-3.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-full bg-green-neon/20 flex items-center justify-center text-green-neon font-bold text-sm flex-shrink-0">
+                                      {(customer.full_name ?? 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-white text-sm">
+                                        {customer.full_name ?? 'Utilisateur'}
+                                      </p>
+                                      <p className="text-xs text-zinc-600 font-mono">
+                                        {customer.id.slice(0, 12)}…
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3.5 text-sm text-zinc-400">{customer.phone ?? '—'}</td>
+                                <td className="px-5 py-3.5 text-sm text-zinc-400">
+                                  {new Date(customer.created_at).toLocaleDateString('fr-FR')}
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <div className="flex items-center gap-2">
+                                    <Coins className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      defaultValue={customer.loyalty_points}
+                                      onBlur={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val) && val !== customer.loyalty_points) {
+                                          supabase
+                                            .from('profiles')
+                                            .update({ loyalty_points: val })
+                                            .eq('id', customer.id)
+                                            .then(() => {
+                                              setCustomers((prev) =>
+                                                prev.map((c) =>
+                                                  c.id === customer.id ? { ...c, loyalty_points: val } : c
+                                                )
+                                              );
+                                            });
+                                        }
+                                      }}
+                                      className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-sm text-yellow-400 font-semibold focus:outline-none focus:border-green-primary"
+                                    />
+                                    <span className="text-xs text-zinc-500">pts</span>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full border ${customer.is_admin
+                                      ? 'text-green-400 bg-green-900/30 border-green-800'
+                                      : 'text-zinc-400 bg-zinc-800 border-zinc-700'
+                                      }`}
+                                  >
+                                    {customer.is_admin ? 'Admin' : 'Client'}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <button
+                                    onClick={() => handleToggleAdmin(customer.id, customer.is_admin)}
+                                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${customer.is_admin
+                                      ? 'text-red-400 border-red-800 hover:bg-red-900/20'
+                                      : 'text-green-400 border-green-800 hover:bg-green-900/20'
+                                      }`}
+                                  >
+                                    {customer.is_admin ? (
+                                      <><ShieldOff className="w-3 h-3" />Retirer admin</>
+                                    ) : (
+                                      <><ShieldCheck className="w-3 h-3" />Passer admin</>
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {filteredCustomers.length === 0 && (
+                        <p className="text-zinc-500 text-center py-10">Aucun client trouvé.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ══════════════════════════════════ SETTINGS ═══════════════════ */}
+                {tab === 'settings' && (
+                  <div className="max-w-2xl space-y-6 pb-20">
+                    {/* Delivery */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Truck className="w-5 h-5 text-green-neon" />
+                        <h2 className="font-serif font-semibold text-lg">Livraison</h2>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className={LABEL}>Frais de livraison (€)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={localSettings.delivery_fee}
+                            onChange={(e) =>
+                              setLocalSettings({ ...localSettings, delivery_fee: parseFloat(e.target.value) || 0 })
+                            }
+                            className={INPUT}
+                          />
+                        </div>
+                        <div>
+                          <label className={LABEL}>Seuil livraison gratuite (€)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={localSettings.delivery_free_threshold}
+                            onChange={(e) =>
+                              setLocalSettings({
+                                ...localSettings,
+                                delivery_free_threshold: parseInt(e.target.value) || 0,
+                              })
+                            }
+                            className={INPUT}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        Livraison offerte automatiquement dès {localSettings.delivery_free_threshold} € de commande.
+                      </p>
+                    </div>
+
+                    {/* Store info */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Store className="w-5 h-5 text-green-neon" />
+                        <h2 className="font-serif font-semibold text-lg">Informations boutique</h2>
+                      </div>
+                      <div>
+                        <label className={LABEL}>Nom de la boutique</label>
+                        <input
+                          value={localSettings.store_name}
+                          onChange={(e) => setLocalSettings({ ...localSettings, store_name: e.target.value })}
+                          className={INPUT}
+                        />
+                      </div>
+                      <div>
+                        <label className={LABEL}>Adresse</label>
+                        <input
+                          value={localSettings.store_address}
+                          onChange={(e) => setLocalSettings({ ...localSettings, store_address: e.target.value })}
+                          className={INPUT}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className={LABEL}>Téléphone</label>
+                          <input
+                            value={localSettings.store_phone}
+                            onChange={(e) => setLocalSettings({ ...localSettings, store_phone: e.target.value })}
+                            className={INPUT}
+                          />
+                        </div>
+                        <div>
+                          <label className={LABEL}>Horaires</label>
+                          <input
+                            value={localSettings.store_hours}
+                            onChange={(e) => setLocalSettings({ ...localSettings, store_hours: e.target.value })}
+                            className={INPUT}
+                            placeholder="Lun–Sam 10h00–19h30"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Social Networks */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Instagram className="w-5 h-5 text-green-neon" />
+                        <h2 className="font-serif font-semibold text-lg">Réseaux Sociaux</h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={LABEL}>Instagram (URL)</label>
+                          <input
+                            type="url"
+                            value={localSettings.social_instagram}
+                            onChange={(e) => setLocalSettings({ ...localSettings, social_instagram: e.target.value })}
+                            className={INPUT}
+                            placeholder="https://instagram.com/…"
+                          />
+                        </div>
+                        <div>
+                          <label className={LABEL}>Facebook (URL)</label>
+                          <input
+                            type="url"
+                            value={localSettings.social_facebook}
+                            onChange={(e) => setLocalSettings({ ...localSettings, social_facebook: e.target.value })}
+                            className={INPUT}
+                            placeholder="https://facebook.com/…"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Banner */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-5 h-5 text-green-neon" />
+                          <h2 className="font-serif font-semibold text-lg">Bannière promotionnelle</h2>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={localSettings.banner_enabled}
+                            onChange={(e) => setLocalSettings({ ...localSettings, banner_enabled: e.target.checked })}
+                            className="w-4 h-4 accent-green-600"
+                          />
+                          <span className="text-sm text-zinc-300">Activée</span>
+                        </label>
+                      </div>
+                      <div>
+                        <label className={LABEL}>Texte de la bannière</label>
+                        <input
+                          value={localSettings.banner_text}
+                          onChange={(e) => setLocalSettings({ ...localSettings, banner_text: e.target.value })}
+                          className={INPUT}
+                          placeholder="🌿 Offre de bienvenue…"
+                        />
+                      </div>
+                      {localSettings.banner_enabled && (
+                        <div className="bg-green-neon text-white px-4 py-3 rounded-xl text-sm text-center">
+                          Aperçu : {localSettings.banner_text || '…'}
                         </div>
                       )}
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-white">{cat.name}</h3>
-                            <p className="text-xs text-zinc-500 mt-0.5">
-                              /{cat.slug} · ordre {cat.sort_order}
-                            </p>
-                          </div>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${cat.is_active
-                              ? 'text-green-400 bg-green-900/30 border-green-800'
-                              : 'text-red-400 bg-red-900/30 border-red-800'
-                              }`}
-                          >
-                            {cat.is_active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        {cat.description && (
-                          <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{cat.description}</p>
-                        )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openCategoryModal(cat)}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg transition-colors"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            Modifier
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(cat.id)}
-                            className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-                {categories.length === 0 && (
-                  <p className="text-zinc-500 text-center py-10">Aucune catégorie.</p>
-                )}
-              </div>
-            )}
+                    </div>
 
-            {/* ══════════════════════════════════ ORDERS ═════════════════════ */}
-            {tab === 'orders' && (
-              <div className="space-y-4">
-                <div className="flex gap-3 flex-wrap">
-                  <div className="relative flex-1 min-w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher par n° de commande…"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                    />
-                  </div>
-                  <select
-                    value={orderStatusFilter}
-                    onChange={(e) => setOrderStatusFilter(e.target.value)}
-                    className="bg-zinc-900 border border-zinc-800 text-sm text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-green-primary"
-                  >
-                    <option value="all">Tous les statuts</option>
-                    {ORDER_STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                  <span className="flex items-center text-sm text-zinc-500 px-2">
-                    {filteredOrders.length} commande{filteredOrders.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {filteredOrders.length === 0 && (
-                    <p className="text-zinc-500 text-center py-10">Aucune commande.</p>
-                  )}
-                  {filteredOrders.map((order) => {
-                    const st = ORDER_STATUS_OPTIONS.find((s) => s.value === order.status);
-                    const isExpanded = expandedOrder === order.id;
-                    const items = order.order_items as OrderItem[] | undefined;
-                    return (
-                      <motion.div
-                        key={order.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden"
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={handleSaveSettings}
+                        disabled={isSaving}
+                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 disabled:opacity-50 text-white font-bold px-8 py-3.5 rounded-2xl transition-colors"
                       >
-                        <button
-                          onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                          className="w-full flex items-center justify-between p-5 hover:bg-zinc-800/40 transition-colors text-left"
+                        <Save className="w-5 h-5" />
+                        {isSaving ? 'Enregistrement…' : 'Sauvegarder les paramètres'}
+                      </button>
+                      {saveSuccess && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="text-green-400 text-sm font-medium"
                         >
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <p className="font-semibold text-white text-sm">
-                                #{order.id.slice(0, 8).toUpperCase()}
-                              </p>
-                              <p className="text-xs text-zinc-500 mt-0.5">
-                                {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </p>
-                            </div>
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full border hidden sm:inline-flex ${order.delivery_type === 'click_collect'
-                                ? 'text-purple-400 bg-purple-900/20 border-purple-800'
-                                : 'text-sky-400 bg-sky-900/20 border-sky-800'
-                                }`}
-                            >
-                              {order.delivery_type === 'click_collect' ? (
-                                <span className="flex items-center gap-1"><Store className="w-3 h-3" />Click & Collect</span>
-                              ) : (
-                                <span className="flex items-center gap-1"><Truck className="w-3 h-3" />Livraison</span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className={`text-xs px-2 py-0.5 rounded-full border ${st?.color ?? ''}`}>
-                              {st?.label ?? order.status}
-                            </span>
-                            <span className="font-bold text-white">{order.total.toFixed(2)} €</span>
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 text-zinc-500" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-zinc-500" />
-                            )}
-                          </div>
-                        </button>
-
-                        {isExpanded && (
-                          <div className="border-t border-zinc-800 p-5 space-y-4">
-                            {/* Order lines */}
-                            <div className="space-y-1.5">
-                              {(items ?? []).map((item) => (
-                                <div key={item.id} className="flex justify-between text-sm">
-                                  <span className="text-zinc-400">
-                                    {item.product_name} ×{item.quantity}
-                                  </span>
-                                  <span className="text-white">{item.total_price.toFixed(2)} €</span>
-                                </div>
-                              ))}
-                              <div className="border-t border-zinc-700 pt-2 space-y-1">
-                                <div className="flex justify-between text-xs text-zinc-500">
-                                  <span>Livraison</span>
-                                  <span>{order.delivery_fee === 0 ? 'Gratuit' : `${order.delivery_fee.toFixed(2)} €`}</span>
-                                </div>
-                                <div className="flex justify-between font-bold text-white">
-                                  <span>Total</span>
-                                  <span>{order.total.toFixed(2)} €</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Status & metadata */}
-                            <div className="flex flex-wrap items-center gap-4">
-                              <div className="flex items-center gap-2">
-                                <label className="text-xs text-zinc-400">Statut :</label>
-                                <select
-                                  value={order.status}
-                                  onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                                  className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-green-primary"
-                                >
-                                  {ORDER_STATUS_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="flex gap-4 text-xs text-zinc-500 flex-wrap">
-                                <span>
-                                  Paiement :{' '}
-                                  <span className={order.payment_status === 'paid' ? 'text-green-400' : 'text-orange-400'}>
-                                    {order.payment_status}
-                                  </span>
-                                </span>
-                                {order.viva_order_code && <span>Réf : {order.viva_order_code}</span>}
-                                {order.loyalty_points_earned > 0 && (
-                                  <span className="text-yellow-400">+{order.loyalty_points_earned} pts fidélité</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════ STOCK ══════════════════════ */}
-            {tab === 'stock' && (
-              <div className="space-y-6">
-                {/* Alerts */}
-                {products.some((p) => p.stock_quantity <= 5) && (
-                  <div className="bg-orange-900/10 border border-orange-800 rounded-2xl p-5">
-                    <p className="text-orange-400 font-medium text-sm flex items-center gap-2 mb-3">
-                      <AlertTriangle className="w-4 h-4" />
-                      Produits à réapprovisionner en priorité
-                    </p>
-                    <div className="space-y-2">
-                      {products
-                        .filter((p) => p.stock_quantity <= 5)
-                        .sort((a, b) => a.stock_quantity - b.stock_quantity)
-                        .map((p) => (
-                          <div key={p.id} className="flex items-center justify-between">
-                            <span className="text-sm text-zinc-300">{p.name}</span>
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`font-bold text-sm ${p.stock_quantity === 0 ? 'text-red-400' : 'text-orange-400'}`}
-                              >
-                                {p.stock_quantity === 0 ? 'Rupture' : `${p.stock_quantity} restant${p.stock_quantity > 1 ? 's' : ''}`}
-                              </span>
-                              <button
-                                onClick={() => setStockAdjust({ id: p.id, qty: '', note: 'Réapprovisionnement' })}
-                                className="text-xs bg-orange-900/40 hover:bg-orange-900/70 border border-orange-800 text-orange-400 px-3 py-1 rounded-lg transition-colors"
-                              >
-                                + Réappro
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          Paramètres enregistrés !
+                        </motion.span>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Stock adjustment form */}
-                <AnimatePresence>
-                  {stockAdjust && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="bg-zinc-900 border border-green-primary/50 rounded-2xl p-5"
-                    >
-                      <p className="text-sm font-medium text-white mb-3">
-                        Ajustement —{' '}
-                        <span className="text-green-primary">
-                          {products.find((p) => p.id === stockAdjust.id)?.name}
-                        </span>
-                        <span className="ml-2 text-zinc-500 text-xs">
-                          (stock actuel : {products.find((p) => p.id === stockAdjust.id)?.stock_quantity})
-                        </span>
-                      </p>
-                      <div className="flex gap-3 flex-wrap">
-                        <input
-                          type="number"
-                          placeholder="+20 réappro ou -2 casse"
-                          value={stockAdjust.qty}
-                          onChange={(e) => setStockAdjust({ ...stockAdjust, qty: e.target.value })}
-                          className="w-44 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Raison (réappro, retour client, casse…)"
-                          value={stockAdjust.note}
-                          onChange={(e) => setStockAdjust({ ...stockAdjust, note: e.target.value })}
-                          className="flex-1 min-w-40 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-primary"
-                        />
-                        <button
-                          onClick={handleStockAdjust}
-                          disabled={isSaving}
-                          className="bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-                        >
-                          {isSaving ? 'Confirmation…' : 'Confirmer'}
-                        </button>
-                        <button
-                          onClick={() => setStockAdjust(null)}
-                          className="text-zinc-400 hover:text-white px-3 text-sm transition-colors"
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* ── Subscriptions tab ── */}
+                {tab === 'subscriptions' && !isLoading && (
+                  <AdminSubscriptionsTab />
+                )}
 
-                {/* All products stock levels */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-zinc-800">
-                    <h2 className="font-serif font-semibold">Niveaux de stock</h2>
-                  </div>
-                  <div className="divide-y divide-zinc-800">
-                    {products.map((product) => {
-                      const pct = Math.min(100, (product.stock_quantity / 50) * 100);
-                      return (
-                        <div key={product.id} className="px-5 py-3.5 flex items-center gap-4">
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${product.stock_quantity === 0
-                              ? 'bg-red-400'
-                              : product.stock_quantity <= 5
-                                ? 'bg-orange-400'
-                                : 'bg-green-400'
-                              }`}
-                          />
-                          <span className="text-sm text-white flex-1">{product.name}</span>
-                          <div className="hidden sm:flex items-center gap-2 w-32">
-                            <div className="flex-1 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${product.stock_quantity === 0
-                                  ? 'bg-red-500'
-                                  : product.stock_quantity <= 5
-                                    ? 'bg-orange-500'
-                                    : 'bg-green-500'
-                                  }`}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                          </div>
-                          <span
-                            className={`font-semibold text-sm w-16 text-right ${product.stock_quantity === 0
-                              ? 'text-red-400'
-                              : product.stock_quantity <= 5
-                                ? 'text-orange-400'
-                                : 'text-white'
-                              }`}
-                          >
-                            {product.stock_quantity}
-                          </span>
-                          <button
-                            onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
-                            className="p-1.5 text-zinc-500 hover:text-green-primary hover:bg-zinc-800 rounded-lg transition-colors"
-                          >
-                            <ArrowUpDown className="w-4 h-4" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* ── Reviews tab ── */}
+                {tab === 'reviews' && !isLoading && (
+                  <AdminReviewsTab />
+                )}
 
-                {/* Movements history */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-zinc-800">
-                    <h2 className="font-serif font-semibold">Historique des mouvements</h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/40">
-                          <th className="px-5 py-3">Date & heure</th>
-                          <th className="px-5 py-3">Produit</th>
-                          <th className="px-5 py-3">Variation</th>
-                          <th className="px-5 py-3">Type</th>
-                          <th className="px-5 py-3">Note</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800">
-                        {movements.map((mv) => (
-                          <tr key={mv.id} className="hover:bg-zinc-800/20 transition-colors">
-                            <td className="px-5 py-3 text-xs text-zinc-500">
-                              {new Date(mv.created_at).toLocaleDateString('fr-FR')}{' '}
-                              {new Date(mv.created_at).toLocaleTimeString('fr-FR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </td>
-                            <td className="px-5 py-3 text-sm text-white">
-                              {(mv.product as { name?: string })?.name ?? '—'}
-                            </td>
-                            <td
-                              className={`px-5 py-3 font-bold ${mv.quantity_change > 0 ? 'text-green-400' : 'text-red-400'}`}
-                            >
-                              {mv.quantity_change > 0 ? '+' : ''}
-                              {mv.quantity_change}
-                            </td>
-                            <td className="px-5 py-3">
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full border ${mv.type === 'sale'
-                                  ? 'text-blue-400 bg-blue-900/20 border-blue-800'
-                                  : mv.type === 'restock'
-                                    ? 'text-green-400 bg-green-900/20 border-green-800'
-                                    : mv.type === 'return'
-                                      ? 'text-purple-400 bg-purple-900/20 border-purple-800'
-                                      : 'text-zinc-400 bg-zinc-800 border-zinc-700'
-                                  }`}
-                              >
-                                {mv.type}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3 text-xs text-zinc-500">{mv.note ?? '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {movements.length === 0 && (
-                      <p className="text-zinc-500 text-center py-10">Aucun mouvement de stock.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════ CUSTOMERS ══════════════════ */}
-            {tab === 'customers' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="relative flex-1 min-w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                    <input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Rechercher un client…"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
-                    />
-                  </div>
-                  <span className="text-sm text-zinc-500">
-                    {filteredCustomers.length} client{filteredCustomers.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
-                          <th className="px-5 py-3">Client</th>
-                          <th className="px-5 py-3">Téléphone</th>
-                          <th className="px-5 py-3">Inscrit le</th>
-                          <th className="px-5 py-3">Points fidélité</th>
-                          <th className="px-5 py-3">Rôle</th>
-                          <th className="px-5 py-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-800">
-                        {filteredCustomers.map((customer) => (
-                          <tr key={customer.id} className="hover:bg-zinc-800/20 transition-colors">
-                            <td className="px-5 py-3.5">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-green-primary/20 flex items-center justify-center text-green-primary font-bold text-sm flex-shrink-0">
-                                  {(customer.full_name ?? 'U').charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-white text-sm">
-                                    {customer.full_name ?? 'Utilisateur'}
-                                  </p>
-                                  <p className="text-xs text-zinc-600 font-mono">
-                                    {customer.id.slice(0, 12)}…
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3.5 text-sm text-zinc-400">{customer.phone ?? '—'}</td>
-                            <td className="px-5 py-3.5 text-sm text-zinc-400">
-                              {new Date(customer.created_at).toLocaleDateString('fr-FR')}
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <div className="flex items-center gap-2">
-                                <Coins className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                                <input
-                                  type="number"
-                                  min="0"
-                                  defaultValue={customer.loyalty_points}
-                                  onBlur={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    if (!isNaN(val) && val !== customer.loyalty_points) {
-                                      supabase
-                                        .from('profiles')
-                                        .update({ loyalty_points: val })
-                                        .eq('id', customer.id)
-                                        .then(() => {
-                                          setCustomers((prev) =>
-                                            prev.map((c) =>
-                                              c.id === customer.id ? { ...c, loyalty_points: val } : c
-                                            )
-                                          );
-                                        });
-                                    }
-                                  }}
-                                  className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-sm text-yellow-400 font-semibold focus:outline-none focus:border-green-primary"
-                                />
-                                <span className="text-xs text-zinc-500">pts</span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full border ${customer.is_admin
-                                  ? 'text-green-400 bg-green-900/30 border-green-800'
-                                  : 'text-zinc-400 bg-zinc-800 border-zinc-700'
-                                  }`}
-                              >
-                                {customer.is_admin ? 'Admin' : 'Client'}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <button
-                                onClick={() => handleToggleAdmin(customer.id, customer.is_admin)}
-                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${customer.is_admin
-                                  ? 'text-red-400 border-red-800 hover:bg-red-900/20'
-                                  : 'text-green-400 border-green-800 hover:bg-green-900/20'
-                                  }`}
-                              >
-                                {customer.is_admin ? (
-                                  <><ShieldOff className="w-3 h-3" />Retirer admin</>
-                                ) : (
-                                  <><ShieldCheck className="w-3 h-3" />Passer admin</>
-                                )}
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {filteredCustomers.length === 0 && (
-                    <p className="text-zinc-500 text-center py-10">Aucun client trouvé.</p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════ SETTINGS ═══════════════════ */}
-            {tab === 'settings' && (
-              <div className="max-w-2xl space-y-6 pb-20">
-                {/* Delivery */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Truck className="w-5 h-5 text-green-primary" />
-                    <h2 className="font-serif font-semibold text-lg">Livraison</h2>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={LABEL}>Frais de livraison (€)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={localSettings.delivery_fee}
-                        onChange={(e) =>
-                          setLocalSettings({ ...localSettings, delivery_fee: parseFloat(e.target.value) || 0 })
-                        }
-                        className={INPUT}
-                      />
-                    </div>
-                    <div>
-                      <label className={LABEL}>Seuil livraison gratuite (€)</label>
-                      <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        value={localSettings.delivery_free_threshold}
-                        onChange={(e) =>
-                          setLocalSettings({
-                            ...localSettings,
-                            delivery_free_threshold: parseInt(e.target.value) || 0,
-                          })
-                        }
-                        className={INPUT}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-zinc-500">
-                    Livraison offerte automatiquement dès {localSettings.delivery_free_threshold} € de commande.
-                  </p>
-                </div>
-
-                {/* Store info */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Store className="w-5 h-5 text-green-primary" />
-                    <h2 className="font-serif font-semibold text-lg">Informations boutique</h2>
-                  </div>
-                  <div>
-                    <label className={LABEL}>Nom de la boutique</label>
-                    <input
-                      value={localSettings.store_name}
-                      onChange={(e) => setLocalSettings({ ...localSettings, store_name: e.target.value })}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div>
-                    <label className={LABEL}>Adresse</label>
-                    <input
-                      value={localSettings.store_address}
-                      onChange={(e) => setLocalSettings({ ...localSettings, store_address: e.target.value })}
-                      className={INPUT}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={LABEL}>Téléphone</label>
-                      <input
-                        value={localSettings.store_phone}
-                        onChange={(e) => setLocalSettings({ ...localSettings, store_phone: e.target.value })}
-                        className={INPUT}
-                      />
-                    </div>
-                    <div>
-                      <label className={LABEL}>Horaires</label>
-                      <input
-                        value={localSettings.store_hours}
-                        onChange={(e) => setLocalSettings({ ...localSettings, store_hours: e.target.value })}
-                        className={INPUT}
-                        placeholder="Lun–Sam 10h00–19h30"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Social Networks */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Instagram className="w-5 h-5 text-green-primary" />
-                    <h2 className="font-serif font-semibold text-lg">Réseaux Sociaux</h2>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className={LABEL}>Instagram (URL)</label>
-                      <input
-                        type="url"
-                        value={localSettings.social_instagram}
-                        onChange={(e) => setLocalSettings({ ...localSettings, social_instagram: e.target.value })}
-                        className={INPUT}
-                        placeholder="https://instagram.com/…"
-                      />
-                    </div>
-                    <div>
-                      <label className={LABEL}>Facebook (URL)</label>
-                      <input
-                        type="url"
-                        value={localSettings.social_facebook}
-                        onChange={(e) => setLocalSettings({ ...localSettings, social_facebook: e.target.value })}
-                        className={INPUT}
-                        placeholder="https://facebook.com/…"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Banner */}
-                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-5 h-5 text-green-primary" />
-                      <h2 className="font-serif font-semibold text-lg">Bannière promotionnelle</h2>
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={localSettings.banner_enabled}
-                        onChange={(e) => setLocalSettings({ ...localSettings, banner_enabled: e.target.checked })}
-                        className="w-4 h-4 accent-green-600"
-                      />
-                      <span className="text-sm text-zinc-300">Activée</span>
-                    </label>
-                  </div>
-                  <div>
-                    <label className={LABEL}>Texte de la bannière</label>
-                    <input
-                      value={localSettings.banner_text}
-                      onChange={(e) => setLocalSettings({ ...localSettings, banner_text: e.target.value })}
-                      className={INPUT}
-                      placeholder="🌿 Offre de bienvenue…"
-                    />
-                  </div>
-                  {localSettings.banner_enabled && (
-                    <div className="bg-green-primary text-white px-4 py-3 rounded-xl text-sm text-center">
-                      Aperçu : {localSettings.banner_text || '…'}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={handleSaveSettings}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 bg-green-primary hover:bg-green-600 disabled:opacity-50 text-white font-bold px-8 py-3.5 rounded-2xl transition-colors"
-                  >
-                    <Save className="w-5 h-5" />
-                    {isSaving ? 'Enregistrement…' : 'Sauvegarder les paramètres'}
-                  </button>
-                  {saveSuccess && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="text-green-400 text-sm font-medium"
-                    >
-                      Paramètres enregistrés !
-                    </motion.span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ── Subscriptions tab ── */}
-            {tab === 'subscriptions' && !isLoading && (
-              <AdminSubscriptionsTab />
-            )}
-
-            {/* ── Reviews tab ── */}
-            {tab === 'reviews' && !isLoading && (
-              <AdminReviewsTab />
-            )}
-
-            {/* ── Analytics tab ── */}
-            {tab === 'analytics' && !isLoading && (
-              <AdminAnalyticsTab />
-            )}
+                {/* ── Analytics tab ── */}
+                {tab === 'analytics' && !isLoading && (
+                  <AdminAnalyticsTab />
+                )}
               </>
             )}
           </main>

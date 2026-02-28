@@ -37,7 +37,7 @@ export default function Cart() {
           </div>
           <Link
             to="/catalogue"
-            className="flex items-center gap-2 bg-green-primary hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-2xl transition-colors"
+            className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-2xl transition-colors"
           >
             Voir le catalogue
           </Link>
@@ -80,7 +80,7 @@ export default function Cart() {
                     <div>
                       <Link
                         to={`/catalogue/${product.slug}`}
-                        className="font-semibold text-white hover:text-green-primary transition-colors"
+                        className="font-semibold text-white hover:text-green-neon transition-colors"
                       >
                         {product.name}
                       </Link>
@@ -119,7 +119,7 @@ export default function Cart() {
                 <button
                   onClick={() => setDeliveryType('click_collect')}
                   className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${deliveryType === 'click_collect'
-                    ? 'bg-green-primary/10 border-green-primary text-white'
+                    ? 'bg-green-neon/10 border-green-primary text-white'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                     }`}
                 >
@@ -132,7 +132,7 @@ export default function Cart() {
                 <button
                   onClick={() => setDeliveryType('delivery')}
                   className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${deliveryType === 'delivery'
-                    ? 'bg-green-primary/10 border-green-primary text-white'
+                    ? 'bg-green-neon/10 border-green-primary text-white'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
                     }`}
                 >
@@ -167,7 +167,7 @@ export default function Cart() {
 
               <Link
                 to="/commande"
-                className="block w-full bg-green-primary hover:bg-green-600 text-white text-center font-bold py-4 rounded-2xl transition-colors mt-2"
+                className="block w-full bg-green-neon hover:bg-green-600 text-white text-center font-bold py-4 rounded-2xl transition-colors mt-2"
               >
                 Passer la commande
               </Link>

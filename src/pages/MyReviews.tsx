@@ -95,7 +95,7 @@ export default function MyReviews() {
                       <div>
                         <Link
                           to={`/catalogue/${review.product?.slug ?? ''}`}
-                          className="font-semibold text-white hover:text-green-primary transition-colors text-sm"
+                          className="font-semibold text-white hover:text-green-neon transition-colors text-sm"
                         >
                           {review.product?.name ?? 'Produit'}
                         </Link>
