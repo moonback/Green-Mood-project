@@ -29,6 +29,11 @@ export interface Product {
   is_featured: boolean;
   is_active: boolean;
   is_bundle: boolean;
+  attributes: {
+    benefits?: string[];
+    aromas?: string[];
+    [key: string]: any;
+  };
   created_at: string;
   // joined
   category?: Category;

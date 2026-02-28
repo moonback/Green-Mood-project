@@ -300,6 +300,42 @@ export default function ProductDetail() {
               <p className="text-zinc-400 leading-relaxed text-lg">{product.description}</p>
             )}
 
+            {/* Benefits & Aromas */}
+            {((product.attributes?.benefits || []).length > 0 || (product.attributes?.aromas || []).length > 0) && (
+              <div className="flex flex-wrap gap-6 pt-2">
+                {(product.attributes?.benefits || []).length > 0 && (
+                  <div className="space-y-2 flex-1 min-w-[140px]">
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                      <Leaf className="w-3.5 h-3.5 text-green-neon" />
+                      Bénéfices
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {product.attributes.benefits!.map(b => (
+                        <span key={b} className="text-xs bg-green-900/20 text-green-400 px-2.5 py-1 rounded-lg border border-green-800/40 font-medium">
+                          {b}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(product.attributes?.aromas || []).length > 0 && (
+                  <div className="space-y-2 flex-1 min-w-[140px]">
+                    <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                      <Tag className="w-3.5 h-3.5 text-zinc-400" />
+                      Arômes
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {product.attributes.aromas!.map(a => (
+                        <span key={a} className="text-xs bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg border border-zinc-700 font-medium">
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Specs */}
             <div className="grid grid-cols-2 gap-3">
               {product.cbd_percentage != null && (

@@ -682,3 +682,48 @@ BEGIN
     VALUES (amnesia, afghan, 1) ON CONFLICT DO NOTHING;
   END IF;
 END $$;
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Attributs de Produits (Bénéfices & Notes Aromatiques)
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 1. Ajout de la colonne JSONB
+ALTER TABLE products ADD COLUMN IF NOT EXISTS attributes jsonb DEFAULT '{}'::jsonb;
+
+-- 2. Mise à jour des produits existants avec des attributs
+-- (Exemples: Détente Profonde, Focus & Énergie, Récupération Sportive, Fruité, Terreux, Épicé)
+DO $$
+BEGIN
+  -- Fleurs
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Détente Profonde'),
+    'aromas', jsonb_build_array('Terreux', 'Épicé')
+  ) WHERE slug IN ('amnesia-haze', 'afghan');
+
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Focus & Énergie'),
+    'aromas', jsonb_build_array('Fruité')
+  ) WHERE slug = 'gelato';
+
+  -- Huiles
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Détente Profonde'),
+    'aromas', jsonb_build_array('Naturel')
+  ) WHERE slug LIKE 'huile%';
+
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Sommeil Réparateur'),
+    'aromas', jsonb_build_array('Naturel')
+  ) WHERE slug = 'huile-20-sommeil';
+
+  -- Infusions
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Détente Profonde'),
+    'aromas', jsonb_build_array('Fruité', 'Floral')
+  ) WHERE slug = 'infusion-detente';
+
+  UPDATE products SET attributes = jsonb_build_object(
+    'benefits', jsonb_build_array('Confort Digestif'),
+    'aromas', jsonb_build_array('Herbacé')
+  ) WHERE slug = 'infusion-digestion';
+END $$;

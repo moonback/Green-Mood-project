@@ -82,6 +82,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full">
             THC &lt; {product.thc_max ?? 0.2}%
           </span>
+          {(product.attributes?.benefits || []).slice(0, 2).map((b) => (
+            <span key={b} className="text-xs bg-green-900/30 text-green-400 px-2 py-0.5 rounded-full border border-green-800/50">
+              {b}
+            </span>
+          ))}
+          {(product.attributes?.aromas || []).slice(0, 2).map((a) => (
+            <span key={a} className="text-xs bg-zinc-100/10 text-zinc-100 px-2 py-0.5 rounded-full border border-zinc-700">
+              {a}
+            </span>
+          ))}
         </div>
 
         {/* Star rating (if product has ratings) */}

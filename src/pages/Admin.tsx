@@ -120,6 +120,10 @@ const EMPTY_PRODUCT = {
   is_featured: false,
   is_active: true,
   is_bundle: false,
+  attributes: {
+    benefits: [] as string[],
+    aromas: [] as string[],
+  },
 };
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -316,6 +320,7 @@ export default function Admin() {
         is_featured: product.is_featured,
         is_active: product.is_active,
         is_bundle: product.is_bundle ?? false,
+        attributes: product.attributes || { benefits: [], aromas: [] },
       });
       // Load existing bundle items
       if (product.is_bundle) {
@@ -745,6 +750,70 @@ export default function Admin() {
                       </div>
                     </div>
                   )}
+
+                  {/* Attributs (Bénéfices & Arômes) */}
+                  <div className="col-span-2 border-t border-zinc-800 pt-5 mt-2">
+                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-green-neon" />
+                      Attributs & Filtres
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Bénéfices */}
+                      <div className="space-y-3">
+                        <label className={LABEL}>Bénéfices attendus (Multi-sélection)</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['Détente Profonde', 'Focus & Énergie', 'Récupération Sportive', 'Sommeil Réparateur', 'Confort Digestif'].map((benefit) => {
+                            const isSelected = (productForm.attributes?.benefits || []).includes(benefit);
+                            return (
+                              <button
+                                key={benefit}
+                                type="button"
+                                onClick={() => {
+                                  const current = productForm.attributes?.benefits || [];
+                                  const next = isSelected ? current.filter(b => b !== benefit) : [...current, benefit];
+                                  setProductForm({ ...productForm, attributes: { ...productForm.attributes, benefits: next } });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isSelected
+                                    ? 'bg-green-neon border-green-primary text-black font-bold'
+                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                                  }`}
+                              >
+                                {benefit}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Arômes */}
+                      <div className="space-y-3">
+                        <label className={LABEL}>Notes Aromatiques</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['Fruité', 'Terreux', 'Épicé', 'Floral', 'Herbacé', 'Citronné', 'Boisé'].map((aroma) => {
+                            const isSelected = (productForm.attributes?.aromas || []).includes(aroma);
+                            return (
+                              <button
+                                key={aroma}
+                                type="button"
+                                onClick={() => {
+                                  const current = productForm.attributes?.aromas || [];
+                                  const next = isSelected ? current.filter(a => a !== aroma) : [...current, aroma];
+                                  setProductForm({ ...productForm, attributes: { ...productForm.attributes, aromas: next } });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${isSelected
+                                    ? 'bg-zinc-100 border-white text-black font-bold'
+                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                                  }`}
+                              >
+                                {aroma}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">
