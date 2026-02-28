@@ -166,24 +166,31 @@ export default function Products() {
         </div>
       </section>
 
-      {/* Info Banner */}
+      {/* CTA Catalogue en ligne */}
       <section className="py-16 bg-green-primary/10 border-y border-green-primary/20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Info className="h-12 w-12 text-green-primary mx-auto mb-6" />
           <h2 className="text-2xl font-serif font-bold text-white mb-4">
-            Vente en boutique uniquement
+            Commandez maintenant en ligne
           </h2>
           <p className="text-zinc-300 mb-8">
-            Pour vous garantir le meilleur conseil et respecter la législation
-            en vigueur, nos produits sont disponibles exclusivement dans notre
-            boutique physique.
+            Retrouvez tous nos produits dans notre boutique en ligne.
+            Choisissez le Click &amp; Collect ou la livraison à domicile.
           </p>
-          <Link
-            to="/contact"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-zinc-950 hover:bg-zinc-200 rounded-full font-medium transition-all hover:scale-105"
-          >
-            Voir nos horaires et accès
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/catalogue"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-green-primary hover:bg-green-600 text-white rounded-full font-medium transition-all hover:scale-105"
+            >
+              Voir le catalogue en ligne →
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-zinc-950 hover:bg-zinc-200 rounded-full font-medium transition-all hover:scale-105"
+            >
+              Voir nos horaires et accès
+            </Link>
+          </div>
         </div>
       </section>
     </div>

@@ -1,0 +1,130 @@
+// ─── Database Types ─────────────────────────────────────────────────────────
+
+export interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon_name: string | null;
+  image_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  category_id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cbd_percentage: number | null;
+  thc_max: number | null;
+  weight_grams: number | null;
+  price: number;
+  image_url: string | null;
+  stock_quantity: number;
+  is_available: boolean;
+  is_featured: boolean;
+  is_active: boolean;
+  created_at: string;
+  // joined
+  category?: Category;
+}
+
+export interface Profile {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  loyalty_points: number;
+  is_admin: boolean;
+  created_at: string;
+}
+
+export interface Address {
+  id: string;
+  user_id: string;
+  label: string;
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  is_default: boolean;
+  created_at: string;
+}
+
+export type OrderStatus =
+  | 'pending'
+  | 'paid'
+  | 'processing'
+  | 'ready'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
+
+export type DeliveryType = 'click_collect' | 'delivery';
+
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export interface Order {
+  id: string;
+  user_id: string | null;
+  status: OrderStatus;
+  delivery_type: DeliveryType;
+  address_id: string | null;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  loyalty_points_earned: number;
+  viva_order_code: string | null;
+  payment_status: PaymentStatus;
+  notes: string | null;
+  created_at: string;
+  // joined
+  address?: Address;
+  order_items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  product_name: string;
+  unit_price: number;
+  quantity: number;
+  total_price: number;
+  // joined
+  product?: Product;
+}
+
+export interface StockMovement {
+  id: string;
+  product_id: string;
+  quantity_change: number;
+  type: 'sale' | 'restock' | 'adjustment' | 'return';
+  note: string | null;
+  created_at: string;
+  // joined
+  product?: Product;
+}
+
+// ─── Cart Types ──────────────────────────────────────────────────────────────
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+// ─── Payment Types ────────────────────────────────────────────────────────────
+
+export interface CreateOrderPayload {
+  orderId: string;
+  amount: number; // en centimes
+  customerEmail: string;
+  customerName: string;
+  description: string;
+}
+
+export interface VivaOrderResponse {
+  orderCode: number;
+}
