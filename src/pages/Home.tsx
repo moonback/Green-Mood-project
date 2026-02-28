@@ -122,7 +122,7 @@ export default function Home() {
           <img
             src="/images/N10.png"
             alt="N10 - L'Intensité Pure"
-            className="w-full h-full object-cover opacity-100 scale-105 blur-[2px]"
+            className="w-full h-full object-cover opacity-100 scale-105"
           />
           {/* <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/70 to-zinc-950" /> */}
           {/* <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950 opacity-80" /> */}
