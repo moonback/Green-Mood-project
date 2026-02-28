@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/react/package.json''\\); console.log\\(pkg.types || pkg.typings || ''no types field''\\)\")",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm install --save-dev @types/react @types/react-dom)",
+      "Bash(npm run build)"
+    ]
+  }
+}
