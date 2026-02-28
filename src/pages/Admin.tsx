@@ -322,7 +322,11 @@ export default function Admin() {
         is_featured: product.is_featured,
         is_active: product.is_active,
         is_bundle: product.is_bundle ?? false,
-        attributes: product.attributes || { benefits: [], aromas: [] },
+        attributes: {
+          benefits: [],
+          aromas: [],
+          ...product.attributes,
+        },
       });
       // Load existing bundle items
       if (product.is_bundle) {
