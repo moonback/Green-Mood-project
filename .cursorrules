@@ -1,0 +1,56 @@
+# 🌿 Green Mood CBD Shop - Règles pour l'Assistant IA (Dev Guidelines)
+
+## 1. Contexte du Projet
+**Green Mood CBD Shop** est une Single Page Application (SPA) e-commerce conçue pour une boutique physique. L'objectif est de présenter les produits CBD de qualité (fleurs, résines, huiles), de rassurer quant à la légalité (THC < 0,3%) et de faciliter l'achat (Click & Collect, Livraison). L'accent est mis sur une interface utilisateur premium, animée et performante.
+
+## 2. Stack Technique
+- **Frontend** : React 19, Vite 6, TypeScript
+- **Style** : Tailwind CSS v4, Framer Motion (animations), Lucide React (icônes)
+- **Gestion d'État** : Zustand
+- **Routage** : React Router DOM v7
+- **Backend/DB** : Supabase (PostgreSQL, Authentification GoTrue, RLS)
+
+## 3. Style de Code & Conventions
+- **Nommage** :
+  - `PascalCase` pour les composants React (`HeroBanner.tsx`, `ProductCard.tsx`).
+  - `camelCase` pour les variables, fonctions, hooks personnalisés, et fichiers utilitaires (`useCart.ts`, `authStore.ts`).
+  - `kebab-case` pour les URL et variables CSS globales.
+- **Organisation des fichiers** : Grouper par fonctionnalité. Placer les composants isolés dans `src/components/`, les vues entières dans `src/pages/`, les sections d'état (slices) dans `src/store/`, et les utilitaires/types liés à la BDD dans `src/lib/`.
+- **Structure des Composants** : Utiliser exclusivement des composants fonctionnels et des hooks. Préférer la déstructuration explicite des props (`{ title, value }: Props`). Ne *pas* utiliser de composants à base de classes.
+- **Gestion d'État** :
+  - Utiliser `Zustand` pour l'état global (panier, auth, paramètres).
+  - Utiliser `useState`/`useReducer` locaux pour de l'état lié purement à l'UI au sein du composant (ex: onglets actifs, visibilité de modales).
+
+## 4. Modèles d'Architecture (Architecture Patterns)
+- **Frontend** :
+  - `App.tsx` gère le routage global et l'initialisation des stores Zustand au niveau supérieur.
+  - Les pages (`Home.tsx`, `Shop.tsx`) récupèrent les données directement depuis Supabase, les traitent, et passent les props vers le bas à leurs composants de présentation sans états particuliers.
+- **Backend/API** : Il n'y a pas d'API Node traditionnelle. La logique "API" repose systématiquement sur des appels du SDK client `@supabase/supabase-js`.
+- **Accès aux Données** : Les requêtes se font soit via les actions de stores Zustand (pour des configs globales) ou via des hooks useEffect à l'intérieur des composants de Page. Conserver un formatage strict des types en utilisant `src/lib/types.ts`.
+
+## 5. Bonnes Pratiques
+- **Gestion des Erreurs** : Utiliser des blocs `try/catch` de manière exhaustive pour isoler les appels réseau Supabase. Assigner un état d'`error` pour notifier l'utilisateur plutôt que de laisser le composant complet crasher.
+- **Sécurité Typographique** : Maintenir un haut degré d'exigence en TypeScript. Garder les interfaces à jour avec les requêtes et réponses DB. Bannir les types `any`.
+- **Sécurité Système** :
+  - Protéger la *Service Role Key* Supabase. Elle ne doit jamais fuiter côté code Front/Client.
+  - La protection des accès en lecture et en écriture se fait entièrement grâce aux politiques structurées (*RLS - Row Level Security*) de PostgreSQL.
+
+## 6. Tâches Courantes & Workflow (Workflow Patterns)
+- **Ajout d'une fonctionnalité UI** :
+  1. Construire les composants visuels de présentation sous `/components/`.
+  2. Créer ou ajuster la route dans `App.tsx`.
+  3. Lier au contexte métier et données Supabase depuis sa page dans `/pages/`.
+- **Création d'un Nouveau Flux "API" / Table de Données** :
+  1. Introduire le patch SQL (`CREATE TABLE` et stratégies RLS) dans `supabase/migration.sql`.
+  2. Mapper l'interface dans `src/lib/types.ts`.
+  3. Formuler l'action Supabase au sein d'une méthode de store ou de fetch composant.
+
+## 7. Dépendances à Privilégier
+- **Icônes** : `lucide-react`. (Ignorer *Heroicons* ou *FontAwesome*).
+- **Animations** : `framer-motion` lors de transitions complexes ou intéractions hover.
+- **Récupération des Données** : `@supabase/supabase-js`.
+
+## 8. Anti-Patterns & Choses à Éviter
+- **Éviter Redux**. Préférer strictement Zustand.
+- **Ne pas écrire de CSS complexe ad-hoc** à moins que ce ne soit vital. Compter presque entièrement sur les classes utilitaires proposées par *Tailwind v4*.
+- **Ne pas charger du calcul métier backend sur le Client Front** : Si possible, la manipulation lourde (statistiques, agrégations) doit être consolidée sous forme de "Views" SQL ou fonctions RPC dans PostgreSQL (Supabase).
