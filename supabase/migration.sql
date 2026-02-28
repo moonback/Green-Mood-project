@@ -124,12 +124,6 @@ ALTER TABLE order_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE store_settings  ENABLE ROW LEVEL SECURITY;
 
--- ─── Helper function for RLS ──────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean AS $$
-  SELECT is_admin FROM public.profiles WHERE id = auth.uid();
-$$ LANGUAGE sql SECURITY DEFINER;
-
 -- Categories : lecture publique
 DROP POLICY IF EXISTS "categories_public_read" ON categories;
 CREATE POLICY "categories_public_read" ON categories FOR SELECT USING (true);
@@ -166,7 +160,8 @@ CREATE POLICY "addresses_owner" ON addresses FOR ALL USING (user_id = auth.uid()
 -- Orders : propriétaire ou admin
 DROP POLICY IF EXISTS "orders_owner_read" ON orders;
 CREATE POLICY "orders_owner_read" ON orders FOR SELECT USING (
-  user_id = auth.uid() OR public.is_admin()
+  user_id = auth.uid() OR
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
 DROP POLICY IF EXISTS "orders_auth_insert" ON orders;
 CREATE POLICY "orders_auth_insert" ON orders FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
@@ -180,7 +175,8 @@ DROP POLICY IF EXISTS "order_items_owner_read" ON order_items;
 CREATE POLICY "order_items_owner_read" ON order_items FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM orders o WHERE o.id = order_id AND (
-      o.user_id = auth.uid() OR public.is_admin()
+      o.user_id = auth.uid() OR
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
     )
   )
 );
