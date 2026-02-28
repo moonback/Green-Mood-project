@@ -20,8 +20,8 @@
 
 ## 🌟 Phase 3 : Expansion Future (V1+)
 *Objectif : Augmenter la fidélisation des utilisateurs et offrir des capacités de vente avancées.*
-- [ ] **Programme de Fidélité & Récompenses** : Enregistrer automatiquement des points de fidélité (`loyalty_points`) après achat pour offrir des réductions.
-- [ ] **Système d'Abonnement** : Permettre des livraisons hebdomadaires/mensuelles automatiques pour les consommables (huiles).
-- [ ] **Avis Clients** : Permettre aux acheteurs vérifiés de laisser des avis de 1 à 5 étoiles sur chaque fiche produit.
-- [ ] **Analytique Admin Avancée** : Graphiques de ventes, produits performants et tunnels de conversion au sein du dashboard.
+- [x] **Programme de Fidélité & Récompenses** : Enregistrer automatiquement des points de fidélité (`loyalty_points`) après achat pour offrir des réductions.
+- [x] **Système d'Abonnement** : Permettre des livraisons hebdomadaires/mensuelles automatiques pour les consommables (huiles).
+- [x] **Avis Clients** : Permettre aux acheteurs vérifiés de laisser des avis de 1 à 5 étoiles sur chaque fiche produit.
+- [x] **Analytique Admin Avancée** : Graphiques de ventes, produits performants et tunnels de conversion au sein du dashboard.
 - [ ] **Support Multi-langue (i18n)** : Traduire le catalogue en FR/EN pour cibler les clients frontaliers européens.
