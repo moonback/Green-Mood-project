@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ShoppingCart, ArrowLeft, Trash2, Package, Truck } from 'lucide-react';
-import { useCartStore, DELIVERY_FREE_THRESHOLD, DELIVERY_FEE } from '../store/cartStore';
+import { useCartStore } from '../store/cartStore';
+import { useSettingsStore } from '../store/settingsStore';
 import QuantitySelector from '../components/QuantitySelector';
 import SEO from '../components/SEO';
 
@@ -16,6 +17,7 @@ export default function Cart() {
     deliveryFee,
     total,
   } = useCartStore();
+  const { settings } = useSettingsStore();
 
   const sub = subtotal();
   const fee = deliveryFee();
@@ -116,11 +118,10 @@ export default function Cart() {
               <div className="space-y-2">
                 <button
                   onClick={() => setDeliveryType('click_collect')}
-                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
-                    deliveryType === 'click_collect'
-                      ? 'bg-green-primary/10 border-green-primary text-white'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${deliveryType === 'click_collect'
+                    ? 'bg-green-primary/10 border-green-primary text-white'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                    }`}
                 >
                   <Package className="w-5 h-5 flex-shrink-0" />
                   <div>
@@ -130,19 +131,18 @@ export default function Cart() {
                 </button>
                 <button
                   onClick={() => setDeliveryType('delivery')}
-                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
-                    deliveryType === 'delivery'
-                      ? 'bg-green-primary/10 border-green-primary text-white'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
-                  }`}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${deliveryType === 'delivery'
+                    ? 'bg-green-primary/10 border-green-primary text-white'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                    }`}
                 >
                   <Truck className="w-5 h-5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">Livraison à domicile</p>
                     <p className="text-xs mt-0.5 opacity-70">
-                      {sub >= DELIVERY_FREE_THRESHOLD
+                      {sub >= settings.delivery_free_threshold
                         ? 'Offerte !'
-                        : `${DELIVERY_FEE.toFixed(2)} € (offerte dès ${DELIVERY_FREE_THRESHOLD} €)`}
+                        : `${settings.delivery_fee.toFixed(2)} € (offerte dès ${settings.delivery_free_threshold} €)`}
                     </p>
                   </div>
                 </button>
