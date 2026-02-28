@@ -38,7 +38,7 @@ export default function Shop() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
           >
-            La Boutique <span className="text-green-primary">Green Mood</span>
+            La Boutique <span className="text-green-neon">Green Mood</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -140,12 +140,12 @@ export default function Shop() {
           </h2>
           <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-12">
             <div className="flex items-center gap-3 text-zinc-300">
-              <MapPin className="h-6 w-6 text-green-primary" />
+              <MapPin className="h-6 w-6 text-green-neon" />
               <span className="text-lg">123 Rue de la Nature, 75000 Paris</span>
             </div>
             <div className="hidden md:block w-px h-8 bg-white/20"></div>
             <div className="flex items-center gap-3 text-zinc-300">
-              <Clock className="h-6 w-6 text-green-primary" />
+              <Clock className="h-6 w-6 text-green-neon" />
               <span className="text-lg">Lun-Sam : 10h00 - 19h30</span>
             </div>
           </div>

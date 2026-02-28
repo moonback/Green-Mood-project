@@ -195,7 +195,7 @@ export default function Checkout() {
                     : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
-                  <Package className="w-5 h-5 text-green-primary" />
+                  <Package className="w-5 h-5 text-green-neon" />
                   <div className="text-left">
                     <p className="font-medium text-sm">Click & Collect</p>
                     <p className="text-xs text-zinc-500">En boutique — Gratuit</p>
@@ -208,7 +208,7 @@ export default function Checkout() {
                     : 'bg-zinc-800 border-zinc-700 hover:border-zinc-600'
                     }`}
                 >
-                  <Truck className="w-5 h-5 text-green-primary" />
+                  <Truck className="w-5 h-5 text-green-neon" />
                   <div className="text-left">
                     <p className="font-medium text-sm">Livraison</p>
                     <p className="text-xs text-zinc-500">À domicile</p>
@@ -217,7 +217,7 @@ export default function Checkout() {
               </div>
               {deliveryType === 'click_collect' && (
                 <div className="mt-4 p-4 bg-zinc-800 rounded-xl text-sm text-zinc-400">
-                  <div className="flex items-center gap-2 text-green-primary font-medium mb-1">
+                  <div className="flex items-center gap-2 text-green-neon font-medium mb-1">
                     <MapPin className="w-4 h-4" />
                     Adresse de retrait
                   </div>
@@ -296,7 +296,7 @@ export default function Checkout() {
                 ) : (
                   <button
                     onClick={() => setShowAddressForm(true)}
-                    className="flex items-center gap-2 text-green-primary hover:text-green-400 text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 text-green-neon hover:text-green-400 text-sm font-medium transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     Ajouter une adresse
@@ -320,7 +320,7 @@ export default function Checkout() {
                     <Coins className="w-4 h-4 text-yellow-400" />
                     <span className="text-sm">
                       Utiliser mes {profile.loyalty_points} points
-                      <span className="text-green-primary font-semibold ml-1">
+                      <span className="text-green-neon font-semibold ml-1">
                         (−{pointsValue.toFixed(2)} €)
                       </span>
                     </span>

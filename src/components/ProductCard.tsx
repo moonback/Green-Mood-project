@@ -49,7 +49,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div>
           <Link
             to={`/catalogue/${product.slug}`}
-            className="font-serif font-semibold text-white hover:text-green-primary transition-colors line-clamp-1"
+            className="font-serif font-semibold text-white hover:text-green-neon transition-colors line-clamp-1"
           >
             {product.name}
           </Link>

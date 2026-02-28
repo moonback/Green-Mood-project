@@ -48,7 +48,7 @@ export default function FAQ() {
       </script>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -56,7 +56,7 @@ export default function FAQ() {
           >
             Questions Fréquentes
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -69,7 +69,7 @@ export default function FAQ() {
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -82,8 +82,8 @@ export default function FAQ() {
                 className="w-full px-6 py-4 flex items-center justify-between text-left focus:outline-none"
               >
                 <span className="font-medium text-white pr-4">{faq.question}</span>
-                <ChevronDown 
-                  className={`h-5 w-5 text-green-primary shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`} 
+                <ChevronDown
+                  className={`h-5 w-5 text-green-neon shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}
                 />
               </button>
               <AnimatePresence>

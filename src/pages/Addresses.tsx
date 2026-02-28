@@ -157,12 +157,12 @@ export default function Addresses() {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-green-primary flex-shrink-0 mt-0.5" />
+                    <MapPin className="w-5 h-5 text-green-neon flex-shrink-0 mt-0.5" />
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-white">{addr.label}</p>
                         {addr.is_default && (
-                          <span className="flex items-center gap-1 text-xs text-green-primary bg-green-primary/10 px-2 py-0.5 rounded-full">
+                          <span className="flex items-center gap-1 text-xs text-green-neon bg-green-primary/10 px-2 py-0.5 rounded-full">
                             <Star className="w-2.5 h-2.5" />
                             Par défaut
                           </span>
@@ -179,7 +179,7 @@ export default function Addresses() {
                     {!addr.is_default && (
                       <button
                         onClick={() => handleSetDefault(addr.id)}
-                        className="text-xs text-zinc-500 hover:text-green-primary transition-colors"
+                        className="text-xs text-zinc-500 hover:text-green-neon transition-colors"
                       >
                         Par défaut
                       </button>

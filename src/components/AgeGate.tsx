@@ -45,15 +45,15 @@ export default function AgeGate() {
             className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl shadow-green-primary/10 text-center"
           >
             <div className="mx-auto w-16 h-16 bg-green-primary/20 rounded-full flex items-center justify-center mb-6">
-              <ShieldAlert className="h-8 w-8 text-green-primary" />
+              <ShieldAlert className="h-8 w-8 text-green-neon" />
             </div>
-            
+
             <h2 className="text-2xl font-serif font-bold text-white mb-4">
               Vérification d'âge
             </h2>
-            
+
             <p className="text-zinc-400 mb-8 leading-relaxed">
-              L'accès à ce site est strictement réservé aux personnes majeures. 
+              L'accès à ce site est strictement réservé aux personnes majeures.
               Les produits à base de CBD sont interdits aux mineurs.
               <br /><br />
               <strong className="text-white">Avez-vous plus de 18 ans ?</strong>
@@ -73,7 +73,7 @@ export default function AgeGate() {
                 Non, je n'ai pas 18 ans
               </button>
             </div>
-            
+
             <p className="mt-6 text-xs text-zinc-500">
               En entrant sur ce site, vous acceptez nos conditions générales d'utilisation.
             </p>

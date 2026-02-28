@@ -68,7 +68,7 @@ export default function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-zinc-500 mb-8">
-          <Link to="/catalogue" className="flex items-center gap-1 hover:text-green-primary transition-colors">
+          <Link to="/catalogue" className="flex items-center gap-1 hover:text-green-neon transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Catalogue
           </Link>
@@ -113,7 +113,7 @@ export default function ProductDetail() {
             {product.category && (
               <Link
                 to={`/catalogue`}
-                className="text-sm text-green-primary font-medium hover:underline"
+                className="text-sm text-green-neon font-medium hover:underline"
               >
                 {product.category.name}
               </Link>
@@ -129,7 +129,7 @@ export default function ProductDetail() {
             <div className="grid grid-cols-2 gap-3">
               {product.cbd_percentage != null && (
                 <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                  <div className="flex items-center gap-2 text-green-primary mb-1">
+                  <div className="flex items-center gap-2 text-green-neon mb-1">
                     <Leaf className="w-4 h-4" />
                     <span className="text-xs font-medium uppercase tracking-wider">CBD</span>
                   </div>

@@ -92,7 +92,7 @@ export default function Layout() {
               <img src="/logo.jpeg" alt="Green Mood Logo" className="h-12 w-12 object-contain rounded-full border border-green-primary/30 group-hover:border-green-neon transition-colors" />
               <span className="font-serif text-2xl font-bold tracking-tight">
                 Green{" "}
-                <span className="text-green-primary group-hover:text-green-neon transition-colors">
+                <span className="text-green-neon group-hover:text-green-neon transition-colors">
                   Mood
                 </span>
               </span>
@@ -104,9 +104,9 @@ export default function Layout() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-green-primary ${location.pathname === link.path ||
+                  className={`text-sm font-medium transition-colors hover:text-green-neon ${location.pathname === link.path ||
                     (link.path !== "/" && location.pathname.startsWith(link.path))
-                    ? "text-green-primary"
+                    ? "text-green-neon"
                     : "text-zinc-300"
                     }`}
                 >
@@ -167,7 +167,7 @@ export default function Layout() {
                         {profile?.is_admin && (
                           <Link
                             to="/admin"
-                            className="flex items-center gap-3 px-4 py-3 text-sm text-green-primary hover:bg-zinc-800 transition-colors"
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-green-neon hover:bg-zinc-800 transition-colors"
                           >
                             <ShieldCheck className="h-4 w-4" />
                             Administration
@@ -220,7 +220,7 @@ export default function Layout() {
                     key={link.path}
                     to={link.path}
                     className={`text-lg font-medium transition-colors ${location.pathname === link.path
-                      ? "text-green-primary"
+                      ? "text-green-neon"
                       : "text-zinc-300"
                       }`}
                   >
@@ -237,7 +237,7 @@ export default function Layout() {
                         <Clock className="h-4 w-4" /> Mes commandes
                       </Link>
                       {profile?.is_admin && (
-                        <Link to="/admin" className="flex items-center gap-2 text-green-primary">
+                        <Link to="/admin" className="flex items-center gap-2 text-green-neon">
                           <ShieldCheck className="h-4 w-4" /> Administration
                         </Link>
                       )}
@@ -277,10 +277,10 @@ export default function Layout() {
                 et conseils d'experts pour votre bien-être.
               </p>
               <div className="flex gap-4 pt-2">
-                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_instagram} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-neon transition-colors">
                   <Instagram className="h-5 w-5" />
                 </a>
-                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-primary transition-colors">
+                <a href={settings.social_facebook} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-green-neon transition-colors">
                   <Facebook className="h-5 w-5" />
                 </a>
               </div>
@@ -294,7 +294,7 @@ export default function Layout() {
                   <li key={link.path}>
                     <Link
                       to={link.path}
-                      className="text-zinc-400 hover:text-green-primary transition-colors text-sm"
+                      className="text-zinc-400 hover:text-green-neon transition-colors text-sm"
                     >
                       {link.name}
                     </Link>
@@ -308,7 +308,7 @@ export default function Layout() {
               <h3 className="font-serif text-lg font-semibold mb-4">Contact</h3>
               <ul className="space-y-4 text-sm text-zinc-400">
                 <li className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-green-primary shrink-0" />
+                  <MapPin className="h-5 w-5 text-green-neon shrink-0" />
                   <span>
                     {settings.store_address.split(',')[0]}
                     <br />
@@ -316,7 +316,7 @@ export default function Layout() {
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-green-primary shrink-0" />
+                  <Phone className="h-5 w-5 text-green-neon shrink-0" />
                   <span>{settings.store_phone}</span>
                 </li>
               </ul>

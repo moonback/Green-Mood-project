@@ -878,7 +878,7 @@ export default function Admin() {
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                   <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
                     <h2 className="font-serif font-semibold text-lg">Dernières commandes</h2>
-                    <button onClick={() => setTab('orders')} className="text-sm text-green-primary hover:underline">
+                    <button onClick={() => setTab('orders')} className="text-sm text-green-neon hover:underline">
                       Voir tout →
                     </button>
                   </div>
@@ -1019,7 +1019,7 @@ export default function Admin() {
                                 </button>
                                 <button
                                   onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
-                                  className="p-1.5 text-zinc-400 hover:text-green-primary hover:bg-zinc-700 rounded-lg transition-colors"
+                                  className="p-1.5 text-zinc-400 hover:text-green-neon hover:bg-zinc-700 rounded-lg transition-colors"
                                   title="Ajuster le stock"
                                 >
                                   <ArrowUpDown className="w-4 h-4" />
@@ -1054,7 +1054,7 @@ export default function Admin() {
                     >
                       <p className="text-sm font-medium text-white mb-3">
                         Ajustement —{' '}
-                        <span className="text-green-primary">
+                        <span className="text-green-neon">
                           {products.find((p) => p.id === stockAdjust.id)?.name}
                         </span>
                         <span className="ml-2 text-zinc-500 text-xs">
@@ -1364,7 +1364,7 @@ export default function Admin() {
                     >
                       <p className="text-sm font-medium text-white mb-3">
                         Ajustement —{' '}
-                        <span className="text-green-primary">
+                        <span className="text-green-neon">
                           {products.find((p) => p.id === stockAdjust.id)?.name}
                         </span>
                         <span className="ml-2 text-zinc-500 text-xs">
@@ -1448,7 +1448,7 @@ export default function Admin() {
                           </span>
                           <button
                             onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
-                            className="p-1.5 text-zinc-500 hover:text-green-primary hover:bg-zinc-800 rounded-lg transition-colors"
+                            className="p-1.5 text-zinc-500 hover:text-green-neon hover:bg-zinc-800 rounded-lg transition-colors"
                           >
                             <ArrowUpDown className="w-4 h-4" />
                           </button>
@@ -1556,7 +1556,7 @@ export default function Admin() {
                           <tr key={customer.id} className="hover:bg-zinc-800/20 transition-colors">
                             <td className="px-5 py-3.5">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-green-primary/20 flex items-center justify-center text-green-primary font-bold text-sm flex-shrink-0">
+                                <div className="w-9 h-9 rounded-full bg-green-primary/20 flex items-center justify-center text-green-neon font-bold text-sm flex-shrink-0">
                                   {(customer.full_name ?? 'U').charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -1644,7 +1644,7 @@ export default function Admin() {
                 {/* Delivery */}
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Truck className="w-5 h-5 text-green-primary" />
+                    <Truck className="w-5 h-5 text-green-neon" />
                     <h2 className="font-serif font-semibold text-lg">Livraison</h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1686,7 +1686,7 @@ export default function Admin() {
                 {/* Store info */}
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Store className="w-5 h-5 text-green-primary" />
+                    <Store className="w-5 h-5 text-green-neon" />
                     <h2 className="font-serif font-semibold text-lg">Informations boutique</h2>
                   </div>
                   <div>
@@ -1729,7 +1729,7 @@ export default function Admin() {
                 {/* Social Networks */}
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Instagram className="w-5 h-5 text-green-primary" />
+                    <Instagram className="w-5 h-5 text-green-neon" />
                     <h2 className="font-serif font-semibold text-lg">Réseaux Sociaux</h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1760,7 +1760,7 @@ export default function Admin() {
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Eye className="w-5 h-5 text-green-primary" />
+                      <Eye className="w-5 h-5 text-green-neon" />
                       <h2 className="font-serif font-semibold text-lg">Bannière promotionnelle</h2>
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
