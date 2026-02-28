@@ -42,7 +42,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <SEO 
+      <SEO
         title="Acheter CBD à Paris - Green Moon Shop | Fleurs, Résines, Huiles"
         description="Découvrez Green Moon, votre CBD Shop premium à Paris. Fleurs, résines et huiles 100% légales. Qualité supérieure, traçabilité et conseils d'experts."
         keywords="CBD Paris, acheter CBD, boutique CBD, fleurs CBD, résine CBD, huile CBD, CBD légal, Green Moon"
@@ -51,15 +51,17 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
         {/* Background Image */}
+        ```tsx
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1603908064973-206e23114d59?q=80&w=2070&auto=format&fit=crop"
+            src="/images/hero-bg.png"
             alt="Intérieur de la boutique Green Moon"
-            className="w-full h-full object-cover opacity-40"
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/50 via-zinc-950/80 to-zinc-950"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/40 to-zinc-950/80"></div>
         </div>
+        ```
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -137,7 +139,7 @@ export default function Home() {
               className="relative aspect-[4/5] rounded-2xl overflow-hidden"
             >
               <img
-                src="https://images.unsplash.com/photo-1620331311520-246422fd82f9?q=80&w=1974&auto=format&fit=crop"
+                src="/images/presentation-cbd.png"
                 alt="Produits CBD"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
