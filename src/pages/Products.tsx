@@ -139,7 +139,7 @@ export default function Products() {
           </p>
           <Link
             to="/contact"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-zinc-950 hover:bg-zinc-200 rounded-full font-medium transition-all"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-zinc-950 hover:bg-zinc-200 rounded-full font-medium transition-all hover:scale-105"
           >
             Voir nos horaires et accès
           </Link>

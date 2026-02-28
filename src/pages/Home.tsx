@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Leaf, HeartHandshake, ArrowRight } from "lucide-react";
+import FAQ from "../components/FAQ";
 
 export default function Home() {
   return (
@@ -36,14 +37,14 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
               <Link
                 to="/boutique"
-                className="w-full sm:w-auto px-8 py-4 bg-green-primary hover:bg-green-600 text-white rounded-full font-medium transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-4 bg-green-primary hover:bg-green-600 text-white rounded-full font-medium transition-all transform hover:scale-105 hover:shadow-lg hover:shadow-green-primary/20 flex items-center justify-center gap-2"
               >
                 Découvrir la boutique
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 to="/produits"
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium backdrop-blur-sm transition-all flex items-center justify-center"
+                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium backdrop-blur-sm transition-all transform hover:scale-105 flex items-center justify-center"
               >
                 Voir nos produits
               </Link>
@@ -79,7 +80,7 @@ export default function Home() {
               </p>
               <Link
                 to="/contact"
-                className="inline-flex items-center gap-2 text-green-primary hover:text-green-400 font-medium transition-colors pt-4"
+                className="inline-flex items-center gap-2 text-green-primary hover:text-green-400 font-medium transition-all hover:translate-x-2 pt-4"
               >
                 Nous rendre visite
                 <ArrowRight className="h-4 w-4" />
@@ -146,7 +147,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-zinc-900/50 p-8 rounded-2xl border border-white/5 hover:border-green-primary/30 transition-colors"
+                className="bg-zinc-900/50 p-8 rounded-2xl border border-white/5 hover:border-green-primary/30 transition-all hover:-translate-y-2 hover:shadow-xl hover:shadow-green-primary/5"
               >
                 <div className="mb-6 bg-zinc-950 w-16 h-16 rounded-xl flex items-center justify-center border border-white/10">
                   {feature.icon}
@@ -162,6 +163,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQ />
     </div>
   );
 }

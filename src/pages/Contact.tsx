@@ -40,14 +40,12 @@ export default function Contact() {
                   Coordonnées
                 </h2>
                 <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                  <div className="flex items-start gap-4 group cursor-default">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
                       <MapPin className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        Adresse
-                      </h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Adresse</h3>
                       <p className="text-zinc-400">
                         123 Rue de la Nature
                         <br />
@@ -56,38 +54,32 @@ export default function Contact() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                  <div className="flex items-start gap-4 group cursor-default">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
                       <Phone className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        Téléphone
-                      </h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Téléphone</h3>
                       <p className="text-zinc-400">01 23 45 67 89</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                  <div className="flex items-start gap-4 group cursor-default">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
                       <MessageCircle className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        WhatsApp
-                      </h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">WhatsApp</h3>
                       <p className="text-zinc-400">06 12 34 56 78</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                  <div className="flex items-start gap-4 group cursor-default">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
                       <Mail className="h-6 w-6 text-green-primary" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white mb-1">
-                        Email
-                      </h3>
+                      <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-primary transition-colors">Email</h3>
                       <p className="text-zinc-400">contact@greenmoon-cbd.fr</p>
                     </div>
                   </div>
