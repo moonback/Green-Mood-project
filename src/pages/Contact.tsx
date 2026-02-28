@@ -1,0 +1,140 @@
+import { motion } from "motion/react";
+import { MapPin, Phone, Clock, Mail, MessageCircle } from "lucide-react";
+
+export default function Contact() {
+  return (
+    <div className="min-h-screen bg-zinc-950 pt-20">
+      {/* Header */}
+      <section className="py-24 text-center px-4 sm:px-6 lg:px-8 border-b border-white/10">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl md:text-6xl font-serif font-bold text-white mb-6"
+        >
+          Nous <span className="text-green-primary">Contacter</span>
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-xl text-zinc-400 max-w-2xl mx-auto font-light"
+        >
+          Une question ? Besoin d'un conseil ? N'hésitez pas à nous joindre ou à
+          passer en boutique.
+        </motion.p>
+      </section>
+
+      {/* Main Content */}
+      <section className="py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            {/* Contact Info */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="space-y-12"
+            >
+              <div>
+                <h2 className="text-3xl font-serif font-bold text-white mb-8">
+                  Coordonnées
+                </h2>
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                      <MapPin className="h-6 w-6 text-green-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Adresse
+                      </h3>
+                      <p className="text-zinc-400">
+                        123 Rue de la Nature
+                        <br />
+                        75000 Paris
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                      <Phone className="h-6 w-6 text-green-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Téléphone
+                      </h3>
+                      <p className="text-zinc-400">01 23 45 67 89</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                      <MessageCircle className="h-6 w-6 text-green-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        WhatsApp
+                      </h3>
+                      <p className="text-zinc-400">06 12 34 56 78</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-primary/20 flex items-center justify-center shrink-0">
+                      <Mail className="h-6 w-6 text-green-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white mb-1">
+                        Email
+                      </h3>
+                      <p className="text-zinc-400">contact@greenmoon-cbd.fr</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-3xl font-serif font-bold text-white mb-8">
+                  Horaires d'ouverture
+                </h2>
+                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-white/5">
+                  <ul className="space-y-4">
+                    <li className="flex justify-between items-center text-zinc-300">
+                      <span className="font-medium">Lundi - Samedi</span>
+                      <span>10h00 - 19h30</span>
+                    </li>
+                    <li className="flex justify-between items-center text-zinc-500">
+                      <span className="font-medium">Dimanche</span>
+                      <span>Fermé</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Google Maps Placeholder */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="h-full min-h-[400px] bg-zinc-900 rounded-3xl overflow-hidden border border-white/10 relative"
+            >
+              {/* Replace with actual Google Maps iframe in production */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 p-8 text-center">
+                <MapPin className="h-16 w-16 text-zinc-700 mb-4" />
+                <p className="text-lg font-medium text-zinc-400 mb-2">
+                  Carte Interactive
+                </p>
+                <p className="text-sm">
+                  Intégration Google Maps à configurer avec l'adresse exacte de
+                  la boutique.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
