@@ -37,7 +37,7 @@ export default function Layout() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const navLinks = [
+  const baseNavLinks = [
     { name: "Accueil", path: "/" },
     { name: "La Boutique", path: "/boutique" },
     { name: "Catalogue", path: "/catalogue" },
@@ -45,6 +45,10 @@ export default function Layout() {
     { name: "Qualité & Légalité", path: "/qualite" },
     { name: "Contact", path: "/contact" },
   ];
+
+  const navLinks = profile?.is_admin
+    ? [...baseNavLinks, { name: "Administration", path: "/admin" }]
+    : baseNavLinks;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
@@ -99,12 +103,11 @@ export default function Layout() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-green-primary ${
-                    location.pathname === link.path ||
+                  className={`text-sm font-medium transition-colors hover:text-green-primary ${location.pathname === link.path ||
                     (link.path !== "/" && location.pathname.startsWith(link.path))
-                      ? "text-green-primary"
-                      : "text-zinc-300"
-                  }`}
+                    ? "text-green-primary"
+                    : "text-zinc-300"
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -215,11 +218,10 @@ export default function Layout() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`text-lg font-medium transition-colors ${
-                      location.pathname === link.path
-                        ? "text-green-primary"
-                        : "text-zinc-300"
-                    }`}
+                    className={`text-lg font-medium transition-colors ${location.pathname === link.path
+                      ? "text-green-primary"
+                      : "text-zinc-300"
+                      }`}
                   >
                     {link.name}
                   </Link>
