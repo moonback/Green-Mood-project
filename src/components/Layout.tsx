@@ -17,9 +17,10 @@ export default function Layout() {
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const location = useLocation();
 
-  // Close menu on route change
+  // Close menu and scroll to top on route change
   useEffect(() => {
     setIsMenuOpen(false);
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   const navLinks = [
