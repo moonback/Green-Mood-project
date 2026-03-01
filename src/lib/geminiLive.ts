@@ -168,7 +168,7 @@ export class GeminiLiveSession {
     // ── Message handler ────────────────────────────────────────────────────────
 
     private _handleMessage(message: any): void {
-        console.log('[GeminiLive] message received:', JSON.stringify(message).slice(0, 500));
+        // console.log('[GeminiLive] message received:', JSON.stringify(message).slice(0, 500));
 
         // 1. Setup Complete
         if (message?.setupComplete) {
