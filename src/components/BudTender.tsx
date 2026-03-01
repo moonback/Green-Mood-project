@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2 } from 'lucide-react';
+import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
+import { getQuizPrompt, getChatPrompt } from '../lib/budtenderPrompts';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 
@@ -181,24 +182,11 @@ async function callGemini(answers: Answers, products: Product[], context?: strin
 
     const contextBlock = context ? `\nContexte client : ${context}\n` : '';
 
-    const prompt = `Tu es BudTender, conseiller CBD expert et bienveillant de la boutique Green Mood CBD.
-Un client a répondu au quiz suivant :
-- Besoin principal : ${answers.goal}
-- Expérience CBD : ${answers.experience}
-- Format préféré : ${answers.format}
-- Budget : ${answers.budget}
-${contextBlock}
-Voici le catalogue disponible :
-${catalog}
-
-Génère en 3-4 phrases maximum :
-1. Un conseil personnalisé (ton chaleureux, professionnel)
-2. Mentionne 1-2 produits spécifiques du catalogue par leur nom exact
-Réponds en français, sans mention d'avertissement légal. Rappelle-toi que tu es dans un tchat.`;
+    const prompt = getQuizPrompt(answers, catalog, context);
 
     try {
         const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -208,9 +196,16 @@ Réponds en français, sans mention d'avertissement légal. Rappelle-toi que tu 
                 }),
             }
         );
+
+        if (res.status === 429) {
+            console.error('Gemini API 429: Too Many Requests');
+            return null;
+        }
+
         const json = await res.json();
         return json?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
-    } catch {
+    } catch (err) {
+        console.error('Gemini callGemini error:', err);
         return null;
     }
 }
@@ -252,6 +247,11 @@ export default function BudTender() {
     // Terpene multi-select state
     const [terpeneSelection, setTerpeneSelection] = useState<string[]>([]);
     const [awaitingTerpene, setAwaitingTerpene] = useState(false);
+    // Ambassador state
+    const [hasShared, setHasShared] = useState(false);
+    const [showPromoTooltip, setShowPromoTooltip] = useState(false);
+    // Free chat input
+    const [chatInput, setChatInput] = useState('');
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -482,7 +482,91 @@ export default function BudTender() {
         setAnswers({});
         setTerpeneSelection([]);
         setAwaitingTerpene(false);
+        setHasShared(false);
         setTimeout(() => buildWelcomeMessages(), 100);
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: 'Green Moon CBD — Mon diagnostic BudTender',
+            text: 'Je viens de faire mon diagnostic CBD avec BudTender IA Chez Green Moon ! Découvrez vos produits idéaux ici :',
+            url: window.location.origin,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                setHasShared(true);
+            } else {
+                await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                setHasShared(true);
+                alert("Lien copié dans le presse-papier ! Partagez-le pour débloquer votre code.");
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    };
+
+    const copyPromoCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        setShowPromoTooltip(true);
+        setTimeout(() => setShowPromoTooltip(false), 2000);
+    };
+
+    const handleSendMessage = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        const text = chatInput.trim();
+        if (!text || isTyping) return;
+
+        setChatInput('');
+        addUserMessage(text);
+        setIsTyping(true);
+
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+            addBotMessage({ text: "Désolé, ma connexion à l'IA n'est pas configurée pour le moment." });
+            return;
+        }
+
+        const catalog = products
+            .slice(0, 8)
+            .map((p) => `- ${p.name} (${p.category?.slug}, ${p.price}€): ${p.description ?? ''}`)
+            .join('\n');
+
+        const prompt = getChatPrompt(text, catalog);
+
+        try {
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { maxOutputTokens: 200, temperature: 0.7 },
+                    }),
+                }
+            );
+
+            if (res.status === 429) {
+                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite API). Pourriez-vous patienter une minute avant de me reposer votre question ? 🙏" });
+                return;
+            }
+
+            const json = await res.json();
+            const responseText = json?.candidates?.[0]?.content?.parts?.[0]?.text || "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?";
+
+            setMessages((prev) => [...prev, {
+                id: Math.random().toString(36).substring(7),
+                sender: 'bot',
+                text: responseText,
+            }]);
+        } catch (err) {
+            console.error('Gemini handleSendMessage error:', err);
+            addBotMessage({ text: "Oups, j'ai eu une petite déconnexion. Pouvez-vous réessayer ?" });
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     // ─── Render helpers ─────────────────────────────────────────────────────
@@ -776,6 +860,62 @@ export default function BudTender() {
                                                             </motion.button>
                                                         </motion.div>
                                                     ))}
+
+                                                    {/* ── Ambassador / Share section ── */}
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.8 }}
+                                                        className="mt-6 bg-gradient-to-br from-green-neon/10 to-transparent border border-green-neon/20 rounded-2xl p-4 sm:p-5 relative overflow-hidden"
+                                                    >
+                                                        <div className="absolute top-0 right-0 p-3 opacity-10">
+                                                            <Gift className="w-12 h-12 text-green-neon" />
+                                                        </div>
+
+                                                        {!hasShared ? (
+                                                            <div className="space-y-3 relative z-10">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Sparkles className="w-4 h-4 text-green-neon" />
+                                                                    <p className="text-xs font-black uppercase tracking-wider text-white">Cadeau Ambassadeur 🏆</p>
+                                                                </div>
+                                                                <p className="text-xs text-zinc-400 leading-relaxed">
+                                                                    Partagez vos résultats ou invitez un ami à faire le test pour débloquer un code promo de <span className="text-green-neon font-bold">-10%</span> sur votre commande !
+                                                                </p>
+                                                                <button
+                                                                    onClick={handleShare}
+                                                                    className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl transition-all text-xs border border-zinc-700"
+                                                                >
+                                                                    <Share2 className="w-3.5 h-3.5" />
+                                                                    Partager & Débloquer
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-4 relative z-10">
+                                                                <div className="flex items-center gap-2 text-green-neon">
+                                                                    <CheckCircle2 className="w-4 h-4" />
+                                                                    <p className="text-xs font-black uppercase tracking-wider">Lien Partagé !</p>
+                                                                </div>
+                                                                <div className="bg-zinc-950/50 border border-green-neon/30 rounded-xl p-3 flex items-center justify-between group">
+                                                                    <div>
+                                                                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Votre code :</p>
+                                                                        <p className="text-lg font-black text-green-neon tracking-tighter">BUDTENDER10</p>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => copyPromoCode('BUDTENDER10')}
+                                                                        className="relative p-2 bg-green-neon/10 hover:bg-green-neon text-green-neon hover:text-black rounded-lg transition-all"
+                                                                    >
+                                                                        <Copy className="w-4 h-4" />
+                                                                        {showPromoTooltip && (
+                                                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] px-2 py-1 rounded font-bold whitespace-nowrap shadow-xl">
+                                                                                Copié !
+                                                                            </span>
+                                                                        )}
+                                                                    </button>
+                                                                </div>
+                                                                <p className="text-[10px] text-zinc-500 text-center italic">Valable sur tout le catalogue Green Moon.</p>
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
                                                 </div>
                                             )}
                                         </div>
@@ -861,9 +1001,35 @@ export default function BudTender() {
                                     )}
                             </div>
 
-                            {/* Footer */}
-                            <div className="px-6 py-4 border-t border-zinc-800/50 bg-zinc-950/40 text-[10px] sm:text-[11px] text-zinc-500 text-center font-medium">
-                                BUDTENDER AI · <span className="text-zinc-600 italic">Expertise Moléculaire Certifiée</span>
+                            {/* ── Chat Input Bar ── */}
+                            <div className="p-4 sm:p-5 border-t border-zinc-800/50 bg-zinc-950/60 backdrop-blur-xl">
+                                <form
+                                    onSubmit={handleSendMessage}
+                                    className="flex items-center gap-2 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-1.5 focus-within:border-green-neon/40 transition-all shadow-inner"
+                                >
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        placeholder="Posez votre question à l'IA..."
+                                        className="flex-1 bg-transparent border-none text-sm text-white px-3 py-2 focus:outline-none placeholder:text-zinc-600"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!chatInput.trim() || isTyping}
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-green-neon text-black disabled:opacity-20 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(57,255,20,0.2)]"
+                                    >
+                                        <SendHorizontal className="w-5 h-5" />
+                                    </button>
+                                </form>
+                                <div className="flex justify-between items-center mt-3 px-1">
+                                    <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.2em] opacity-50">
+                                        BudTender IA Expert
+                                    </p>
+                                    <p className="text-[9px] text-green-neon/40 font-medium">
+                                        Propulsé par Gemini 1.5
+                                    </p>
+                                </div>
                             </div>
                         </motion.div>
                     </>
