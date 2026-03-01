@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, Send, RefreshCw, ShoppingCart, ChevronRight, Sparkles } from 'lucide-react';
+import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
+import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 
 // ─── Quiz steps ──────────────────────────────────────────────────────────────
 
@@ -127,7 +128,7 @@ function generateAdvice(answers: Answers): string {
     return lines.join(' ');
 }
 
-async function callGemini(answers: Answers, products: Product[]): Promise<string | null> {
+async function callGemini(answers: Answers, products: Product[], context?: string): Promise<string | null> {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) return null;
 
@@ -136,18 +137,20 @@ async function callGemini(answers: Answers, products: Product[]): Promise<string
         .map((p) => `- ${p.name} (${p.category?.slug}, CBD ${p.cbd_percentage ?? '?'}%, ${p.price}€): ${p.description ?? ''}`)
         .join('\n');
 
+    const contextBlock = context ? `\nContexte client : ${context}\n` : '';
+
     const prompt = `Tu es BudTender, conseiller CBD expert et bienveillant de la boutique Green Mood CBD.
 Un client a répondu au quiz suivant :
 - Besoin principal : ${answers.goal}
 - Expérience CBD : ${answers.experience}
 - Format préféré : ${answers.format}
 - Budget : ${answers.budget}
-
+${contextBlock}
 Voici le catalogue disponible :
 ${catalog}
 
 Génère en 3-4 phrases maximum :
-1. Un conseil personnalisé (ton chaleureux, professionnel) 
+1. Un conseil personnalisé (ton chaleureux, professionnel)
 2. Mentionne 1-2 produits spécifiques du catalogue par leur nom exact
 Réponds en français, sans mention d'avertissement légal. Rappelle-toi que tu es dans un tchat.`;
 
@@ -172,15 +175,26 @@ Réponds en français, sans mention d'avertissement légal. Rappelle-toi que tu 
 
 // ─── Chat Types ─────────────────────────────────────────────────────────────
 
+type MessageType = 'standard' | 'restock' | 'skip-quiz';
+
 interface Message {
     id: string;
     sender: 'bot' | 'user';
     text?: string;
+    type?: MessageType;
     isResult?: boolean;
     isOptions?: boolean;
     options?: QuizOption[];
     stepId?: string;
     recommended?: Product[];
+    restockProduct?: {
+        product_id: string;
+        product_name: string;
+        slug: string | null;
+        image_url: string | null;
+        price: number;
+        daysSince: number;
+    };
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -189,7 +203,7 @@ export default function BudTender() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
-    const [stepIndex, setStepIndex] = useState(-1); // -1 = welcome, 0+ = quiz steps
+    const [stepIndex, setStepIndex] = useState(-1);
     const [answers, setAnswers] = useState<Answers>({});
     const [products, setProducts] = useState<Product[]>([]);
     const [pulse, setPulse] = useState(false);
@@ -198,7 +212,9 @@ export default function BudTender() {
     const openSidebar = useCartStore((s) => s.openSidebar);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Initial load of products
+    const memory = useBudTenderMemory();
+
+    // Initial product load
     useEffect(() => {
         supabase
             .from('products')
@@ -220,27 +236,84 @@ export default function BudTender() {
         }
     }, [messages, isTyping]);
 
-    const addBotMessage = (msg: Partial<Message>) => {
+    // ── Message helpers ──────────────────────────────────────────────────────
+
+    const addBotMessage = (msg: Partial<Message>, delay?: number) => {
         setIsTyping(true);
+        const ms = delay ?? (800 + Math.random() * 700);
         setTimeout(() => {
-            const newMsg: Message = {
+            setMessages((prev) => [...prev, {
                 id: Math.random().toString(36).substring(7),
                 sender: 'bot',
                 ...msg
-            };
-            setMessages((prev) => [...prev, newMsg]);
+            }]);
             setIsTyping(false);
-        }, 800 + Math.random() * 700);
+        }, ms);
     };
 
     const addUserMessage = (text: string) => {
-        const newMsg: Message = {
+        setMessages((prev) => [...prev, {
             id: Math.random().toString(36).substring(7),
             sender: 'user',
-            text
-        };
-        setMessages((prev) => [...prev, newMsg]);
+            text,
+        }]);
     };
+
+    // ── Welcome flow ─────────────────────────────────────────────────────────
+
+    const buildWelcomeMessages = () => {
+        const { isLoggedIn, userName, pastProducts, restockCandidates, savedPrefs } = memory;
+
+        // 1) Greeting
+        let greeting: string;
+        if (!isLoggedIn) {
+            greeting = "Bonjour ! Je suis BudTender, votre conseiller CBD personnel. J'aimerais vous aider à trouver les produits idéaux. On commence ?";
+        } else if (pastProducts.length > 0) {
+            const last = pastProducts[0];
+            greeting = `Content de te revoir${userName ? `, ${userName}` : ''} ! 👋 La dernière fois tu avais commandé **${last.product_name}** — tu l'as apprécié ? Je suis là pour te trouver quelque chose d'encore mieux.`;
+        } else {
+            greeting = `Bienvenue${userName ? `, ${userName}` : ''} ! 🌿 Je suis BudTender, votre conseiller CBD de confiance chez Green Moon. Prêt à découvrir votre sélection idéale ?`;
+        }
+
+        // Push greeting first
+        addBotMessage({ text: greeting }, 600);
+
+        // 2) Restock reminders (delayed, one per candidate)
+        restockCandidates.forEach((candidate, i) => {
+            setTimeout(() => {
+                setMessages((prev) => [...prev, {
+                    id: Math.random().toString(36).substring(7),
+                    sender: 'bot',
+                    type: 'restock',
+                    text: `Il y a ${candidate.daysSince} jours que tu as commandé ce produit — il est peut-être temps de renouveler ? 🔄`,
+                    restockProduct: candidate,
+                }]);
+            }, 1400 + i * 600);
+        });
+
+        // 3) Skip-quiz option if saved prefs exist
+        if (savedPrefs) {
+            const delay = 1400 + restockCandidates.length * 600 + 400;
+            setTimeout(() => {
+                setMessages((prev) => [...prev, {
+                    id: Math.random().toString(36).substring(7),
+                    sender: 'bot',
+                    type: 'skip-quiz',
+                    text: `Je me souviens de tes préférences ! Veux-tu que je te génère de nouvelles recommandations directement, ou préfères-tu refaire le quiz ?`,
+                }]);
+            }, delay);
+        }
+    };
+
+    const handleOpen = () => {
+        setPulse(false);
+        setIsOpen(true);
+        if (messages.length === 0) {
+            buildWelcomeMessages();
+        }
+    };
+
+    // ── Quiz flow ────────────────────────────────────────────────────────────
 
     const startQuiz = () => {
         setStepIndex(0);
@@ -249,19 +322,22 @@ export default function BudTender() {
             text: firstStep.question,
             isOptions: true,
             options: firstStep.options,
-            stepId: firstStep.id
+            stepId: firstStep.id,
         });
     };
 
-    const handleOpen = () => {
-        setPulse(false);
-        setIsOpen(true);
-        if (messages.length === 0) {
-            // Welcome message
-            addBotMessage({
-                text: "Bonjour ! Je suis BudTender, votre conseiller CBD personnel. J'aimerais vous aider à trouver les produits idéaux. On commence ?",
-            });
-        }
+    const skipQuizAndRecommend = async () => {
+        if (!memory.savedPrefs) return;
+        addUserMessage("Utilise mes préférences enregistrées ✨");
+        const prefs = memory.savedPrefs;
+        const answersFromPrefs: Answers = {
+            goal: prefs.goal,
+            experience: prefs.experience,
+            format: prefs.format,
+            budget: prefs.budget,
+        };
+        setAnswers(answersFromPrefs);
+        await generateRecommendations(answersFromPrefs);
     };
 
     const handleAnswer = async (option: QuizOption, stepId: string) => {
@@ -277,38 +353,65 @@ export default function BudTender() {
                 text: nextStep.question,
                 isOptions: true,
                 options: nextStep.options,
-                stepId: nextStep.id
+                stepId: nextStep.id,
             });
         } else {
-            // Processing results
-            setIsTyping(true);
-
-            // Score locally
-            const scored = [...products]
-                .map((p) => ({ product: p, score: scoreProduct(p, newAnswers) }))
-                .sort((a, b) => b.score - a.score)
-                .filter((x) => x.score > 0)
-                .slice(0, 3)
-                .map((x) => x.product);
-
-            // Gemini call
-            const geminiText = await callGemini(newAnswers, products);
-            const adviceText = geminiText ?? generateAdvice(newAnswers);
-
-            addBotMessage({
-                text: adviceText,
-                isResult: true,
-                recommended: scored
-            });
+            await generateRecommendations(newAnswers);
         }
+    };
+
+    const generateRecommendations = async (finalAnswers: Answers) => {
+        setIsTyping(true);
+
+        // Persist prefs
+        memory.savePrefs(finalAnswers as unknown as SavedPrefs);
+
+        // Score locally
+        const scored = [...products]
+            .map((p) => ({ product: p, score: scoreProduct(p, finalAnswers) }))
+            .sort((a, b) => b.score - a.score)
+            .filter((x) => x.score > 0)
+            .slice(0, 3)
+            .map((x) => x.product);
+
+        // Build context for Gemini (include past purchase info if available)
+        const ctxParts: string[] = [];
+        if (memory.pastProducts.length > 0) {
+            ctxParts.push(`Derniers achats : ${memory.pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}.`);
+        }
+        const geminiContext = ctxParts.join(' ') || undefined;
+
+        const geminiText = await callGemini(finalAnswers, products, geminiContext);
+        const adviceText = geminiText ?? generateAdvice(finalAnswers);
+
+        setMessages((prev) => [...prev, {
+            id: Math.random().toString(36).substring(7),
+            sender: 'bot',
+            text: adviceText,
+            isResult: true,
+            recommended: scored,
+        }]);
+        setIsTyping(false);
     };
 
     const reset = () => {
         setMessages([]);
         setStepIndex(-1);
         setAnswers({});
-        handleOpen();
+        setTimeout(() => buildWelcomeMessages(), 100);
     };
+
+    // ─── Render helpers ─────────────────────────────────────────────────────
+
+    // Determines if the welcome CTA (start quiz button) should be visible
+    const showStartButton = stepIndex === -1 && !isTyping
+        && messages.length > 0
+        && !messages.some(m => m.type === 'skip-quiz' || m.type === 'restock' || m.isOptions);
+
+    const showSkipQuizActions = messages.some(m => m.type === 'skip-quiz')
+        && stepIndex === -1
+        && !isTyping
+        && !messages.some(m => m.isOptions || m.isResult);
 
     return (
         <>
@@ -371,7 +474,11 @@ export default function BudTender() {
                                     </h3>
                                     <div className="flex items-center gap-1.5 mt-0.5">
                                         <span className="w-1.5 h-1.5 bg-green-neon rounded-full animate-pulse" />
-                                        <p className="text-[10px] sm:text-xs text-zinc-400 font-medium">Expert en cannabinnoïdes actif</p>
+                                        <p className="text-[10px] sm:text-xs text-zinc-400 font-medium">
+                                            {memory.isLoggedIn && memory.userName
+                                                ? `Bonjour, ${memory.userName} 👋`
+                                                : 'Expert en cannabinoïdes actif'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -401,20 +508,74 @@ export default function BudTender() {
                                             </div>
                                         )}
                                         <div className="max-w-[85%] space-y-3">
+
+                                            {/* ── Standard text bubble ── */}
                                             {msg.text && (
                                                 <motion.div
                                                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                                     className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'user'
-                                                            ? 'bg-green-neon text-black font-bold'
-                                                            : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
+                                                        ? 'bg-green-neon text-black font-bold'
+                                                        : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
                                                         }`}
                                                 >
                                                     {msg.text}
                                                 </motion.div>
                                             )}
 
-                                            {/* Options Rendering */}
+                                            {/* ── Restock card ── */}
+                                            {msg.type === 'restock' && msg.restockProduct && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    className="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border border-amber-500/30 rounded-2xl p-4 space-y-3"
+                                                >
+                                                    <div className="flex items-center gap-2 text-amber-400">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        <span className="text-[10px] font-black tracking-widest uppercase">Rappel de Stock</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        {msg.restockProduct.image_url && (
+                                                            <img
+                                                                src={msg.restockProduct.image_url}
+                                                                alt={msg.restockProduct.product_name}
+                                                                className="w-14 h-14 rounded-xl object-cover bg-zinc-900 flex-shrink-0"
+                                                            />
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-bold text-white line-clamp-1">{msg.restockProduct.product_name}</p>
+                                                            <p className="text-xs text-zinc-400 mt-0.5">
+                                                                Commandé il y a <span className="text-amber-400 font-bold">{msg.restockProduct.daysSince}j</span>
+                                                            </p>
+                                                            <p className="text-base font-black text-green-neon mt-1">{msg.restockProduct.price.toFixed(2)} €</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => {
+                                                                // Find in loaded products and add to cart
+                                                                const p = products.find(pr => pr.id === msg.restockProduct!.product_id);
+                                                                if (p) { addItem(p); openSidebar(); }
+                                                            }}
+                                                            className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-400 text-black font-black text-xs py-2.5 rounded-xl transition-all"
+                                                        >
+                                                            <ShoppingCart className="w-3.5 h-3.5" />
+                                                            Réapprovisionner
+                                                        </motion.button>
+                                                        {msg.restockProduct.slug && (
+                                                            <Link
+                                                                to={`/catalogue/${msg.restockProduct.slug}`}
+                                                                className="px-3 py-2.5 bg-zinc-700/50 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-all flex items-center"
+                                                            >
+                                                                Voir
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {/* ── Quiz Options ── */}
                                             {msg.isOptions && msg.options && (
                                                 <div className="grid grid-cols-1 gap-2.5 mt-3">
                                                     {msg.options.map((opt) => {
@@ -428,8 +589,8 @@ export default function BudTender() {
                                                                 disabled={stepIndex !== QUIZ_STEPS.findIndex(s => s.id === msg.stepId)}
                                                                 onClick={() => handleAnswer(opt, msg.stepId!)}
                                                                 className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${isSelected || hasAnsweredNext
-                                                                        ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'
-                                                                        : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-600 text-zinc-400 group'
+                                                                    ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'
+                                                                    : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-600 text-zinc-400 group'
                                                                     }`}
                                                             >
                                                                 <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{opt.emoji}</span>
@@ -441,7 +602,7 @@ export default function BudTender() {
                                                 </div>
                                             )}
 
-                                            {/* Results Rendering */}
+                                            {/* ── Results ── */}
                                             {msg.isResult && msg.recommended && (
                                                 <div className="space-y-4 pt-3">
                                                     <p className="text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase px-1">Sélection sur-mesure</p>
@@ -467,7 +628,7 @@ export default function BudTender() {
                                                                 )}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1 flex items-center gap-1.5 translate-y-[-2px]">
+                                                                <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1">
                                                                     {product.name}
                                                                 </Link>
                                                                 <div className="flex items-center gap-2 mt-1">
@@ -492,6 +653,7 @@ export default function BudTender() {
                                     </div>
                                 ))}
 
+                                {/* Typing indicator */}
                                 {isTyping && (
                                     <div className="flex justify-start items-end gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 shadow-sm">
@@ -510,8 +672,8 @@ export default function BudTender() {
                                     </div>
                                 )}
 
-                                {/* Welcome Action */}
-                                {stepIndex === -1 && !isTyping && messages.length === 1 && (
+                                {/* ── Welcome CTA: simple start quiz (no history, no saved prefs) ── */}
+                                {showStartButton && (
                                     <div className="flex justify-start pl-11">
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
@@ -525,6 +687,49 @@ export default function BudTender() {
                                         </motion.button>
                                     </div>
                                 )}
+
+                                {/* ── Skip quiz actions (returning user with saved prefs) ── */}
+                                {showSkipQuizActions && (
+                                    <div className="flex justify-start pl-11 gap-2 flex-wrap">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={skipQuizAndRecommend}
+                                            className="bg-green-neon hover:bg-green-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition-all flex items-center gap-2 shadow-xl hover:shadow-green-neon/20"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            Recommandations rapides
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => { memory.clearPrefs(); startQuiz(); }}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold px-5 py-3 rounded-2xl text-sm transition-all flex items-center gap-2 border border-zinc-700"
+                                        >
+                                            <RotateCcw className="w-4 h-4" />
+                                            Refaire le quiz
+                                        </motion.button>
+                                    </div>
+                                )}
+
+                                {/* ── After restock cards but no saved prefs: show start quiz ── */}
+                                {!isTyping
+                                    && messages.some(m => m.type === 'restock')
+                                    && !memory.savedPrefs
+                                    && !messages.some(m => m.isOptions || m.isResult || m.type === 'skip-quiz')
+                                    && (
+                                        <div className="flex justify-start pl-11">
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={startQuiz}
+                                                className="bg-green-neon hover:bg-green-400 text-black font-black px-6 py-3 rounded-2xl text-sm transition-all flex items-center gap-2 shadow-xl hover:shadow-green-neon/20"
+                                            >
+                                                <Sparkles className="w-4 h-4" />
+                                                Découvrir mes nouvelles sélections
+                                            </motion.button>
+                                        </div>
+                                    )}
                             </div>
 
                             {/* Footer */}
