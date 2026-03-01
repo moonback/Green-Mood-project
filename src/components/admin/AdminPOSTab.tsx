@@ -198,6 +198,8 @@ export default function AdminPOSTab({
     const [customerResults, setCustomerResults] = useState<Profile[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Profile | null>(null);
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+    const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
+    const [pointsToRedeem, setPointsToRedeem] = useState(0);
 
     // ── Result ──
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
@@ -244,7 +246,10 @@ export default function AdminPOSTab({
             : discountType === 'percent'
                 ? Math.min(subtotal, (subtotal * discountNum) / 100)
                 : Math.min(subtotal, discountNum);
-    const total = Math.max(0, subtotal - discount);
+
+    // Loyalty points conversion: 100 points = 1€
+    const loyaltyDiscount = useLoyaltyPoints ? pointsToRedeem / 100 : 0;
+    const total = Math.max(0, subtotal - discount - loyaltyDiscount);
     const cashNum = parseFloat(cashGiven) || 0;
     const change = Math.max(0, cashNum - total);
 
@@ -304,6 +309,8 @@ export default function AdminPOSTab({
         setPaymentMethod('cash');
         setSelectedCustomer(null);
         setCustomerSearch('');
+        setUseLoyaltyPoints(false);
+        setPointsToRedeem(0);
     };
 
     // ── Process sale ──
@@ -321,8 +328,10 @@ export default function AdminPOSTab({
                     subtotal,
                     delivery_fee: 0,
                     total,
-                    promo_discount: discount,
-                    promo_code: discount > 0 ? `POS-REMISE-${discountType === 'percent' ? discountValue + '%' : discountValue + 'EUR'}` : null,
+                    promo_discount: discount + loyaltyDiscount,
+                    promo_code: (discount > 0 || loyaltyDiscount > 0)
+                        ? `POS-REMISE-${discount > 0 ? (discountType === 'percent' ? discountValue + '%' : discountValue + 'EUR') : ''}${loyaltyDiscount > 0 ? `-LOYALTY-${pointsToRedeem}PTS` : ''}`
+                        : null,
                     loyalty_points_earned: Math.floor(total),
                     payment_status: 'paid',
                     status: 'delivered',
@@ -365,21 +374,34 @@ export default function AdminPOSTab({
             // 4. Update customer loyalty points if linked
             if (selectedCustomer) {
                 const earned = Math.floor(total);
-                const newPoints = (selectedCustomer.loyalty_points || 0) + earned;
+                const redeemed = useLoyaltyPoints ? pointsToRedeem : 0;
+                const newPoints = (selectedCustomer.loyalty_points || 0) + earned - redeemed;
+
                 await supabase
                     .from('profiles')
                     .update({ loyalty_points: newPoints })
                     .eq('id', selectedCustomer.id);
 
-                // Track points
-                await supabase.from('loyalty_transactions').insert({
-                    user_id: selectedCustomer.id,
-                    order_id: order.id,
-                    type: 'earned',
-                    points: earned,
-                    balance_after: newPoints,
-                    note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
-                });
+                if (earned > 0) {
+                    await supabase.from('loyalty_transactions').insert({
+                        user_id: selectedCustomer.id,
+                        order_id: order.id,
+                        type: 'earned',
+                        points: earned,
+                        balance_after: (selectedCustomer.loyalty_points || 0) + earned,
+                        note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
+                    });
+                }
+                if (redeemed > 0) {
+                    await supabase.from('loyalty_transactions').insert({
+                        user_id: selectedCustomer.id,
+                        order_id: order.id,
+                        type: 'redeemed',
+                        points: redeemed,
+                        balance_after: newPoints,
+                        note: `[POS] Utilisation points en boutique #${order.id.slice(0, 8).toUpperCase()}`,
+                    });
+                }
             }
 
             const sale: CompletedSale = {
@@ -536,23 +558,80 @@ export default function AdminPOSTab({
                             )}
                         </div>
                     ) : (
-                        <div className="flex items-center gap-3 bg-green-900/10 border border-green-500/30 rounded-xl p-2.5">
-                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                <User className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-white truncate">{selectedCustomer.full_name}</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-zinc-400">{selectedCustomer.phone}</span>
-                                    <span className="text-[10px] text-yellow-500 font-bold">{selectedCustomer.loyalty_points} pts</span>
+                        <div className="space-y-3 bg-green-900/10 border border-green-500/30 rounded-xl p-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                    <User className="w-4 h-4" />
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-white truncate">{selectedCustomer.full_name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-zinc-400">{selectedCustomer.phone}</span>
+                                        <span className="text-[10px] text-yellow-500 font-bold">{selectedCustomer.loyalty_points} pts</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedCustomer(null);
+                                        setUseLoyaltyPoints(false);
+                                        setPointsToRedeem(0);
+                                    }}
+                                    className="text-zinc-500 hover:text-white transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setSelectedCustomer(null)}
-                                className="text-zinc-500 hover:text-white transition-colors"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
+
+                            {/* Loyalty points redemption UI */}
+                            {selectedCustomer.loyalty_points >= 100 && (
+                                <div className="pt-2 border-t border-green-500/20">
+                                    <label className="flex items-center justify-between cursor-pointer mb-2">
+                                        <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Utiliser les points</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={useLoyaltyPoints}
+                                            onChange={(e) => {
+                                                setUseLoyaltyPoints(e.target.checked);
+                                                if (e.target.checked) {
+                                                    const maxRedeemable = Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100));
+                                                    setPointsToRedeem(maxRedeemable >= 100 ? 100 : 0);
+                                                } else {
+                                                    setPointsToRedeem(0);
+                                                }
+                                            }}
+                                            className="w-3.5 h-3.5 accent-green-500"
+                                        />
+                                    </label>
+
+                                    {useLoyaltyPoints && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="range"
+                                                    min="100"
+                                                    max={Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100)))}
+                                                    step="100"
+                                                    value={pointsToRedeem}
+                                                    onChange={(e) => setPointsToRedeem(parseInt(e.target.value))}
+                                                    className="flex-1 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                                />
+                                                <span className="text-[10px] font-bold text-white w-12 text-right">
+                                                    {pointsToRedeem} pts
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="text-zinc-500">Valeur: {(pointsToRedeem / 100).toFixed(2)} €</span>
+                                                <button
+                                                    onClick={() => setPointsToRedeem(Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100))))}
+                                                    className="text-green-400 hover:underline"
+                                                >
+                                                    Max
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -685,6 +764,12 @@ export default function AdminPOSTab({
                             <div className="flex justify-between text-orange-400">
                                 <span>Remise ({discountType === 'percent' ? `${discountValue}%` : `${discountValue}€`})</span>
                                 <span>−{discount.toFixed(2)} €</span>
+                            </div>
+                        )}
+                        {loyaltyDiscount > 0 && (
+                            <div className="flex justify-between text-yellow-500 font-medium">
+                                <span>Points Fidélité ({pointsToRedeem} pts)</span>
+                                <span>−{loyaltyDiscount.toFixed(2)} €</span>
                             </div>
                         )}
                         <div className="flex justify-between text-base font-bold text-white pt-1 border-t border-zinc-700">
