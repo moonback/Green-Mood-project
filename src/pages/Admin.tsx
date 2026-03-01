@@ -125,6 +125,7 @@ const EMPTY_PRODUCT = {
   is_featured: false,
   is_active: true,
   is_bundle: false,
+  is_subscribable: false,
   attributes: {
     benefits: [] as string[],
     aromas: [] as string[],
@@ -328,6 +329,7 @@ export default function Admin() {
         is_featured: product.is_featured,
         is_active: product.is_active,
         is_bundle: product.is_bundle ?? false,
+        is_subscribable: product.is_subscribable ?? false,
         attributes: {
           benefits: [],
           aromas: [],
@@ -737,6 +739,7 @@ export default function Admin() {
                         { key: 'is_featured', label: '⭐ Produit vedette' },
                         { key: 'is_active', label: 'Actif (visible dans le catalogue)' },
                         { key: 'is_bundle', label: '📦 Pack / Bundle' },
+                        { key: 'is_subscribable', label: '🔄 Éligible à l\'abonnement' },
                       ] as { key: keyof typeof productForm; label: string }[]
                     ).map(({ key, label }) => (
                       <label key={key} className="flex items-center gap-2 cursor-pointer">

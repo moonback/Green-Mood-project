@@ -114,7 +114,7 @@ export default function Subscriptions() {
           <div className="text-center py-16 text-zinc-500">
             <RefreshCw className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p className="font-medium">Aucun abonnement actif</p>
-            <p className="text-sm mt-1 mb-6">Abonnez-vous à vos huiles CBD préférées pour des livraisons automatiques.</p>
+            <p className="text-sm mt-1 mb-6">Abonnez-vous à vos produits CBD préférés pour des livraisons automatiques.</p>
             <Link
               to="/catalogue"
               className="inline-flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"

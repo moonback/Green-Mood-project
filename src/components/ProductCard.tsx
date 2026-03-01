@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, Package } from 'lucide-react';
+import { ShoppingCart, Star, Package, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -60,6 +60,13 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-green-neon/90 backdrop-blur-sm px-2.5 py-1 rounded-xl text-xs font-semibold text-black glow-pulse-green">
           <Star className="w-3 h-3" />
           Populaire
+        </div>
+      )}
+
+      {/* Subscription badge */}
+      {product.is_subscribable && (
+        <div className={`absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 bg-zinc-900/80 backdrop-blur-md rounded-xl border border-white/10 text-green-neon`}>
+          <RefreshCw className="w-4 h-4" />
         </div>
       )}
 

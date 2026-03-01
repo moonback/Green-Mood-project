@@ -424,7 +424,7 @@ export default function ProductDetail() {
             )}
 
             {/* Subscription Card */}
-            {settings.subscriptions_enabled && isOil && !subSuccess && (
+            {settings.subscriptions_enabled && product.is_subscribable && !subSuccess && (
               <div className="bg-gradient-to-br from-green-neon/5 to-transparent border border-green-neon/20 rounded-2xl p-6 md:p-8 space-y-8 relative overflow-hidden">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-green-neon/10 flex items-center justify-center text-green-neon">
@@ -473,7 +473,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {settings.subscriptions_enabled && isOil && subSuccess && (
+            {settings.subscriptions_enabled && product.is_subscribable && subSuccess && (
               <div className="bg-green-900/20 border border-green-800 rounded-2xl p-5 flex items-center gap-3">
                 <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
                 <div>
