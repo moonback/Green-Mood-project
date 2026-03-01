@@ -793,13 +793,19 @@ export default function BudTender() {
                                             setVoiceModalOpen(true);
                                             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                                             if (apiKey && !voice.isActive) {
-                                                voice.startVoice(products, apiKey, memory.userName);
+                                                voice.startVoice(products, apiKey, memory.userName, (id) => {
+                                                    const p = products.find(prod => prod.id === id);
+                                                    if (p) {
+                                                        addItem(p);
+                                                        openSidebar();
+                                                    }
+                                                });
                                             }
                                         }}
                                         title="Mode vocal — Gemini 2.5 Flash Native Audio"
                                         className={`p-2 rounded-xl transition-all ${voice.isActive
-                                                ? 'text-green-neon bg-green-neon/10 border border-green-neon/30'
-                                                : 'text-zinc-500 hover:text-green-neon hover:bg-green-neon/5'
+                                            ? 'text-green-neon bg-green-neon/10 border border-green-neon/30'
+                                            : 'text-zinc-500 hover:text-green-neon hover:bg-green-neon/5'
                                             }`}
                                     >
                                         <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -1160,7 +1166,13 @@ export default function BudTender() {
                                             setVoiceModalOpen(true);
                                             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                                             if (apiKey && !voice.isActive) {
-                                                voice.startVoice(products, apiKey, memory.userName);
+                                                voice.startVoice(products, apiKey, memory.userName, (id) => {
+                                                    const p = products.find(prod => prod.id === id);
+                                                    if (p) {
+                                                        addItem(p);
+                                                        openSidebar();
+                                                    }
+                                                });
                                             }
                                         }}
                                         className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest transition-colors ${voice.isActive ? 'text-green-neon' : 'text-zinc-600 hover:text-zinc-400'

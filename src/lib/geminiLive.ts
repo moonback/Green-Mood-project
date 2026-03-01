@@ -6,7 +6,7 @@
  * généré (PCM 24kHz) et le joue via l'AudioContext.
  */
 
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, Type } from '@google/genai';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ export interface GeminiLiveCallbacks {
     onError?: (err: Error) => void;
     onTranscript?: (text: string, role: 'user' | 'model') => void;
     onSpeakingChange?: (isSpeaking: boolean) => void;
+    onToolCall?: (toolCall: any) => void;
 }
 
 // ─── AudioWorklet source (inline, injected as Blob URL) ──────────────────────
@@ -111,6 +112,30 @@ export class GeminiLiveSession {
                 },
                 config: {
                     responseModalities: [Modality.AUDIO],
+                    tools: [
+                        {
+                            functionDeclarations: [
+                                {
+                                    name: 'add_to_cart',
+                                    description: 'Ajoute un produit au panier du client.',
+                                    parameters: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            product_id: {
+                                                type: Type.STRING,
+                                                description: 'L\'ID UUID du produit à ajouter.',
+                                            },
+                                            product_name: {
+                                                type: Type.STRING,
+                                                description: 'Le nom du produit (pour confirmation).',
+                                            },
+                                        },
+                                        required: ['product_id'],
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                     systemInstruction: {
                         parts: [{ text: systemInstruction }],
                     },
@@ -177,6 +202,15 @@ export class GeminiLiveSession {
             if (this.playbackContext) {
                 this.nextPlayTime = this.playbackContext.currentTime;
             }
+        }
+
+        // Tool calls handler
+        const toolCall = message?.toolCall;
+        if (toolCall) {
+            console.log('[GeminiLive] toolCall:', toolCall);
+            this.callbacks.onToolCall?.(toolCall);
+            // Automatically respond to tool call to acknowledge
+            this.sendToolResponse(toolCall);
         }
 
         // Input transcription (user speech → text)
@@ -293,6 +327,17 @@ export class GeminiLiveSession {
         this.session.sendClientContent({
             turns: [{ role: 'user', parts: [{ text }] }],
             turnComplete: true,
+        });
+    }
+
+    sendToolResponse(toolCall: any): void {
+        if (!this.session || !this.isConnected) return;
+        this.session.sendToolResponse({
+            functionResponses: toolCall.functionCalls.map((fc: any) => ({
+                id: fc.id,
+                name: fc.name,
+                response: { success: true },
+            })),
         });
     }
 

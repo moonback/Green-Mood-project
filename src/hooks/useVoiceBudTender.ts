@@ -30,28 +30,27 @@ function buildVoiceSystemPrompt(
         const cbd = p.cbd_percentage ? `CBD ${p.cbd_percentage}%` : '';
         const thc = p.thc_max ? `THC max ${p.thc_max}%` : '';
         const specs = [cbd, thc].filter(Boolean).join(', ');
-        return `- ${p.name} (${cat}, ${specs || '?'}, ${p.price}€, stock:${p.stock_quantity})${p.description ? ' — ' + p.description.slice(0, 80) : ''}${aromas ? ' | Arômes: ' + aromas : ''}${benefits ? ' | Effets: ' + benefits : ''}`;
+        return `- ${p.name} (ID: ${p.id}, ${cat}, ${specs || '?'}, ${p.price}€)${p.description ? ' — ' + p.description.slice(0, 60) : ''}${aromas ? ' | Arômes: ' + aromas : ''}${benefits ? ' | Effets: ' + benefits : ''}`;
     }).join('\n');
 
     const greeting = userName ? `Le client s'appelle ${userName}.` : '';
 
-    return `Tu es BudTender, le conseiller CBD expert et vocal de la boutique Green Moon CBD. ${greeting}
+    return `Tu es BudTender, le conseiller CBD expert de Green Moon. ${greeting}
 
-RÔLE : Conseiller les clients sur les produits CBD par la voix, en français, de façon naturelle et conversationnelle.
+RÔLE : Tu es le BudTender de Green Moon, un expert passionné et bienveillant en CBD et cannabinoïdes. Ton but est de conseiller le client et de l'aider à COMPLÉTER SON PANIER par la voix.
 
-RÈGLES ABSOLUES :
-- Réponds TOUJOURS en français oral, naturel, sans markdown ni listes
-- Réponses courtes : 2 à 3 phrases maximum par tour
-- Tu DOIS recommander uniquement des produits du catalogue ci-dessous
-- Ne mentionne jamais de pourcentages de THC sauf si demandé
-- Adapte ton ton au niveau du client (débutant = rassurant, expert = technique)
-- Tu peux proposer d'ajouter un produit au panier si le client semble intéressé
-- Si hors-sujet : redirige poliment vers ton rôle de conseiller Green Moon
+RÈGLES IMPORTANTES (MODE VOCAL) :
+- **STYLE NATUREL** : Parle comme un humain, sans jamais utiliser de balises de type "**Thinking aloud**", "**Greeting**" ou de listes à puces. Pas de gras ni de headers. 
+- **COURT ET EFFICACE** : Tes réponses doivent être concises (maximum 2-3 phrases) pour rester fluide en audio.
+- **SELECTION CATALOGUE** : Ne propose QUE des produits présents dans la liste ci-dessous.
+- **CONFIRMATION OBLIGATOIRE (STRICTE)** : Avant d'utiliser l'outil 'add_to_cart', tu DOIS demander au client : "Souhaitez-vous que je l'ajoute à votre panier ?". 
+- **COMMANDE D'ACTION** : Tu n'appelles l'outil 'add_to_cart' QUE ET UNIQUEMENT SI l'utilisateur a répondu "Oui", "D'accord", "Vas-y" ou équivalent APRÈS ta question de confirmation.
+- **FEEDBACK RÉUSSI** : Une fois l'ajout fait (seulement après accord), confirme simplement : "C'est fait, j'ai mis [Nom] dans votre panier."
 
-CATALOGUE PRODUITS DISPONIBLES (${products.length} produits actifs) :
+CATALOGUE PRODUITS (${products.length}) :
 ${catalog}
 
-Commence par te présenter chaleureusement et demander comment tu peux aider.`;
+Commence chaleureusement.`;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -70,18 +69,17 @@ export function useVoiceBudTender() {
     const startVoice = useCallback(async (
         products: Product[],
         apiKey: string,
-        userName?: string | null
+        userName?: string | null,
+        onAddToCart?: (productId: string) => void
     ) => {
-        if (sessionRef.current) return; // already active
+        if (sessionRef.current) return;
 
         setStatus('connecting');
         setTranscript([]);
         setErrorMessage(null);
 
         const callbacks: GeminiLiveCallbacks = {
-            onOpen: () => {
-                setStatus('listening');
-            },
+            onOpen: () => setStatus('listening'),
 
             onTranscript: (text, role) => {
                 setTranscript(prev => [...prev, {
@@ -89,19 +87,27 @@ export function useVoiceBudTender() {
                     role,
                     text,
                 }]);
-                // When model speaks, set speaking status briefly
-                if (role === 'model') {
-                    setStatus('speaking');
-                }
+                if (role === 'model') setStatus('speaking');
             },
 
             onSpeakingChange: (isSpeaking) => {
                 setStatus(isSpeaking ? 'speaking' : 'listening');
             },
 
+            onToolCall: (toolCall) => {
+                console.log('[useVoiceBudTender] Tool call received:', toolCall);
+                const calls = toolCall.functionCalls || [];
+                for (const call of calls) {
+                    if (call.name === 'add_to_cart' && call.args?.product_id) {
+                        console.log('[useVoiceBudTender] Adding product to cart:', call.args.product_id);
+                        onAddToCart?.(call.args.product_id);
+                    }
+                }
+            },
+
             onError: (err) => {
                 console.error('[useVoiceBudTender] Error:', err);
-                setErrorMessage(err.message || 'Erreur de connexion vocale');
+                setErrorMessage(err.message || 'Erreur vocale');
                 setStatus('error');
                 sessionRef.current = null;
             },
