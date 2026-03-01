@@ -162,7 +162,6 @@ export default function Admin() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAddingN10, setIsAddingN10] = useState(false);
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
@@ -392,63 +391,7 @@ export default function Admin() {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleAddN10Products = async () => {
-    if (!confirm('Ajouter 10 produits N10 à la base de données ?')) return;
-    setIsAddingN10(true);
 
-    try {
-      // Find a category for N10, try "Fleurs" or first available
-      const flowerCat = categories.find(c =>
-        c.name.toLowerCase().includes('fleur') ||
-        c.name.toLowerCase().includes('cbd')
-      ) || categories[0];
-
-      const categoryId = flowerCat?.id || '';
-
-      const n10Varieties = [
-        'Amnesia', 'White Widow', 'Purple Haze', 'Lemon Grass', 'Skywalker',
-        'Gorilla Glue', 'OG Kush', 'Jack Herer', 'Northern Lights', 'Blue Dream'
-      ];
-
-      const n10Products = n10Varieties.map((variety, i) => {
-        const name = `N10 - ${variety} Premium`;
-        // Check if slugify is available or use a local version
-        const slug = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).substring(2, 5);
-
-        return {
-          category_id: categoryId,
-          name: name,
-          slug: slug,
-          description: "Le N10 est un dérivé du THC, avec une teneur en tétrahydrocannabinol plus faible. Cette molécule est plus puissante et plus intense que le CBNO. Cultivé avec soin pour une expérience optimale.",
-          cbd_percentage: 12 + i,
-          thc_max: 0.1,
-          weight_grams: 1,
-          price: 12.90 + i,
-          image_url: "https://green-mood.netlify.app/images/N10.png", // Generic CBD flower image
-          stock_quantity: 100,
-          is_available: true,
-          is_featured: i < 3,
-          is_active: true,
-          attributes: {
-            benefits: ["Détente Profonde", "Focus & Énergie", "Puissance Intense"],
-            aromas: ["Terreux", "Épicé", "Floral"]
-          }
-        };
-      });
-
-      const { error } = await supabase.from('products').insert(n10Products);
-
-      if (error) throw error;
-
-      await loadProducts();
-      alert('Succès : 10 produits N10 ont été ajoutés !');
-    } catch (err) {
-      console.error('Error adding N10 products:', err);
-      alert('Erreur lors de l\'ajout des produits N10.');
-    } finally {
-      setIsAddingN10(false);
-    }
-  };
 
   // ─── Category CRUD ────────────────────────────────────────────────────────
 
@@ -1357,19 +1300,7 @@ export default function Admin() {
                         Nouveau produit
                       </button>
 
-                      <button
-                        onClick={handleAddN10Products}
-                        disabled={isAddingN10}
-                        className="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
-                        title="Ajouter 10 produits N10 automatiquement"
-                      >
-                        {isAddingN10 ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Plus className="w-4 h-4" />
-                        )}
-                        Ajouter 10x N10
-                      </button>
+
                     </div>
 
                     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
