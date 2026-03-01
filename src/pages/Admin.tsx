@@ -1154,21 +1154,23 @@ export default function Admin() {
           )}
 
           {/* Mobile tab bar */}
-          <div className="lg:hidden flex gap-1 px-3 py-2 bg-zinc-950 border-b border-zinc-800 overflow-x-auto shrink-0">
-            {tabs.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${tab === key
-                  ? 'bg-green-neon text-white'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                  }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
+          {tab !== 'pos' && (
+            <div className="lg:hidden flex gap-1 px-3 py-2 bg-zinc-950 border-b border-zinc-800 overflow-x-auto shrink-0">
+              {tabs.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${tab === key
+                    ? 'bg-green-neon text-white'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Content */}
           <main className="flex-1 p-4 sm:p-6 overflow-auto bg-black/20">

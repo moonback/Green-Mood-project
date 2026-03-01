@@ -376,14 +376,30 @@ function AdminPOSTab({
     const loadTodayStats = useCallback(async () => {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
-        const { data } = await supabase
+        const todayStr = startOfDay.toLocaleDateString('en-CA');
+
+        // 1. Fetch sales
+        const { data: sales } = await supabase
             .from('orders')
             .select('total')
             .eq('delivery_type', 'in_store')
             .gte('created_at', startOfDay.toISOString());
 
-        if (data) {
-            setTodayTotal(data.reduce((acc, o) => acc + o.total, 0));
+        if (sales) {
+            setTodayTotal(sales.reduce((acc, o) => acc + o.total, 0));
+        }
+
+        // 2. Check if already closed
+        const { data: report } = await supabase
+            .from('pos_reports')
+            .select('id')
+            .eq('date', todayStr)
+            .maybeSingle();
+
+        if (report) {
+            setIsSessionClosed(true);
+        } else {
+            setIsSessionClosed(false);
         }
     }, []);
 
@@ -440,6 +456,10 @@ function AdminPOSTab({
     // ── Process sale ──
     const processSale = async () => {
         if (cart.length === 0) return;
+        if (isSessionClosed) {
+            alert("La session de caisse est clôturée pour aujourd'hui. Impossible d'encaisser de nouvelles ventes.");
+            return;
+        }
         setIsProcessing(true);
         try {
             // 1. Create order
@@ -646,6 +666,11 @@ function AdminPOSTab({
 
     const finalizeClose = async () => {
         if (!reportData) return;
+
+        if (!window.confirm('Confirmer la CLÔTURE DÉFINITIVE de la journée ? \n\nCette action enregistrera le rapport Z en base de données et bloquera les ventes jusqu\'à demain.')) {
+            return;
+        }
+
         setIsProcessing(true);
         try {
             // Get current user ID (admin)
@@ -665,7 +690,7 @@ function AdminPOSTab({
                     order_count: reportData.orderCount,
                     closed_at: new Date().toISOString(),
                     closed_by: user?.id
-                });
+                }, { onConflict: 'date' });
 
             if (error) throw error;
 
@@ -854,7 +879,56 @@ function AdminPOSTab({
                 </div>
             </header>
 
-            <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+            {/* ── OVERLAY: Session Closed ── */}
+            {isSessionClosed && !showHistory && (
+                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xl rounded-[3rem] border border-zinc-800 shadow-2xl m-1">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="flex flex-col items-center text-center p-12 bg-zinc-900/50 border border-zinc-800 rounded-[3rem] shadow-2xl max-w-lg"
+                    >
+                        <div className="w-28 h-28 rounded-full bg-red-600/10 flex items-center justify-center mb-8 border border-red-600/20 shadow-[0_0_60px_rgba(220,38,38,0.15)]">
+                            <Lock className="w-12 h-12 text-red-500 animate-pulse" />
+                        </div>
+                        <h2 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase">Caisse Clôturée</h2>
+                        <p className="text-zinc-400 text-lg font-medium leading-[1.6] mb-10">
+                            La journée de vente est terminée. <br />
+                            Le rapport Z a été validé et sécurisé.
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <button
+                                onClick={() => setShowHistory(true)}
+                                className="flex items-center gap-2 px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all border border-zinc-700 hover:border-zinc-500"
+                            >
+                                <HistoryIcon className="w-5 h-5" />
+                                Consulter l'Historique
+                            </button>
+                            <button
+                                onClick={() => handleGenerateReport('view')}
+                                className="flex items-center gap-2 px-8 py-4 bg-white text-black rounded-2xl font-bold transition-all shadow-xl shadow-white/5 hover:scale-105"
+                            >
+                                <FileText className="w-5 h-5" />
+                                Détails du Rapport
+                            </button>
+                            {onExit && (
+                                <button
+                                    onClick={onExit}
+                                    className="flex items-center gap-2 px-8 py-4 bg-zinc-800 text-zinc-400 hover:text-white rounded-2xl font-bold transition-all border border-zinc-700 hover:border-zinc-500 w-full sm:w-auto justify-center"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    Quitter la Caisse
+                                </button>
+                            )}
+                        </div>
+                        <p className="mt-12 text-zinc-600 text-[10px] font-black uppercase tracking-[0.3em]">
+                            Prêt pour la réouverture demain matin
+                        </p>
+                    </motion.div>
+                </div>
+            )}
+
+            <div className="flex-1 flex gap-6 overflow-hidden min-h-0 relative">
+
                 {/* ── LEFT: Category & Search Sidebar ── */}
                 {!showHistory && (
                     <div className="w-48 flex flex-col gap-4 shrink-0">
