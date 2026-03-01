@@ -319,19 +319,20 @@ export default function BudTender() {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
+                        whileHover={{ scale: 1.05, y: -4 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleOpen}
-                        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-zinc-900 border border-green-neon/40 text-white rounded-2xl px-4 py-3 shadow-2xl hover:border-green-neon/80 transition-all group ${pulse ? 'animate-pulse-slow' : ''}`}
-                        style={{ boxShadow: '0 0 20px rgba(57,255,20,0.15), 0 8px 32px rgba(0,0,0,0.5)' }}
+                        className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-zinc-900/80 backdrop-blur-xl border border-green-neon/30 text-white rounded-2xl px-5 py-4 shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon/60 hover:shadow-[0_0_40px_rgba(57,255,20,0.2)] transition-all group ${pulse ? 'animate-pulse-slow' : ''}`}
                     >
                         <div className="relative">
-                            <div className="w-8 h-8 rounded-xl bg-green-neon/20 flex items-center justify-center group-hover:bg-green-neon/30 transition-colors">
-                                <Leaf className="w-4 h-4 text-green-neon" />
+                            <div className="w-10 h-10 rounded-xl bg-green-neon/20 flex items-center justify-center group-hover:bg-green-neon/30 transition-colors">
+                                <Leaf className="w-5 h-5 text-green-neon group-hover:rotate-12 transition-transform duration-300" />
                             </div>
-                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-neon rounded-full border-2 border-zinc-900 animate-pulse" />
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-neon rounded-full border-2 border-zinc-900 animate-pulse" />
                         </div>
-                        <div className="text-left">
-                            <p className="text-xs font-bold text-green-neon leading-none">BudTender</p>
-                            <p className="text-[10px] text-zinc-400 leading-none mt-0.5">Conseiller IA</p>
+                        <div className="text-left hidden sm:block">
+                            <p className="text-sm font-bold text-green-neon leading-none tracking-tight">BudTender IA</p>
+                            <p className="text-[11px] text-zinc-400 leading-none mt-1 group-hover:text-zinc-200 transition-colors">Votre expert CBD</p>
                         </div>
                     </motion.button>
                 )}
@@ -346,58 +347,67 @@ export default function BudTender() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+                            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md"
                         />
 
                         <motion.div
-                            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 40, scale: 0.95 }}
-                            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[420px] h-[min(600px,80vh)] sm:h-[600px] bg-zinc-900 border border-zinc-800 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-                            style={{ boxShadow: '0 0 40px rgba(57,255,20,0.08), 0 24px 64px rgba(0,0,0,0.6)' }}
+                            initial={{ opacity: 0, y: 40, scale: 0.95, rotate: 1 }}
+                            animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, y: 40, scale: 0.95, rotate: -1 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[440px] h-[min(650px,85vh)] bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800/50 rounded-2xl sm:rounded-[2.5rem] shadow-[0_32px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(57,255,20,0.05)] flex flex-col overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="flex items-center gap-3 px-4 py-3 sm:px-5 sm:py-4 border-b border-zinc-800 bg-zinc-950/60">
+                            <div className="flex items-center gap-4 px-5 py-5 sm:px-6 sm:py-6 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950/80 to-zinc-900/80">
                                 <div className="relative">
-                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-green-neon/20 border border-green-neon/30 flex items-center justify-center">
-                                        <Leaf className="w-4 h-4 sm:w-5 sm:h-5 text-green-neon" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center shadow-inner">
+                                        <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-green-neon" />
                                     </div>
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 h-3 bg-green-neon rounded-full border-2 border-zinc-950" />
+                                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 bg-green-neon rounded-full border-[3px] border-zinc-900" />
                                 </div>
-                                <div>
-                                    <p className="text-xs sm:text-sm font-bold text-white">BudTender</p>
-                                    <p className="text-[10px] sm:text-xs text-green-neon/80 flex items-center gap-1">
-                                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-neon rounded-full" />
-                                        Conseiller disponible
-                                    </p>
+                                <div className="flex-1">
+                                    <h3 className="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-2">
+                                        BUDTENDER <span className="text-[10px] bg-green-neon/10 text-green-neon px-2 py-0.5 rounded-full border border-green-neon/20">V2.0</span>
+                                    </h3>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="w-1.5 h-1.5 bg-green-neon rounded-full animate-pulse" />
+                                        <p className="text-[10px] sm:text-xs text-zinc-400 font-medium">Expert en cannabinnoïdes actif</p>
+                                    </div>
                                 </div>
-                                <div className="ml-auto flex gap-1">
-                                    <button onClick={reset} className="p-1.5 text-zinc-500 hover:text-white rounded-xl">
-                                        <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={reset}
+                                        title="Recommencer"
+                                        className="p-2 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-xl transition-all"
+                                    >
+                                        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
-                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-zinc-500 hover:text-white rounded-xl">
-                                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                        className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                                    >
+                                        <X className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
                                 </div>
                             </div>
 
                             {/* Messages area */}
-                            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 sm:space-y-4 custom-scrollbar">
+                            <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 custom-scrollbar bg-gradient-to-b from-transparent via-zinc-900/20 to-green-neon/[0.02]">
                                 {messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                                    <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-3`}>
                                         {msg.sender === 'bot' && (
-                                            <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-sm">
                                                 <Leaf className="w-3.5 h-3.5 text-green-neon" />
                                             </div>
                                         )}
-                                        <div className="max-w-[85%] space-y-2">
+                                        <div className="max-w-[85%] space-y-3">
                                             {msg.text && (
                                                 <motion.div
                                                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.sender === 'user'
-                                                        ? 'bg-green-neon text-black font-medium'
-                                                        : 'bg-zinc-800 text-zinc-200'
+                                                    className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'user'
+                                                            ? 'bg-green-neon text-black font-bold'
+                                                            : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
                                                         }`}
                                                 >
                                                     {msg.text}
@@ -406,24 +416,26 @@ export default function BudTender() {
 
                                             {/* Options Rendering */}
                                             {msg.isOptions && msg.options && (
-                                                <div className="grid grid-cols-1 gap-2 mt-2">
+                                                <div className="grid grid-cols-1 gap-2.5 mt-3">
                                                     {msg.options.map((opt) => {
                                                         const isSelected = answers[msg.stepId!] === opt.value;
                                                         const hasAnsweredNext = messages.some(m => m.sender === 'user' && m.text === opt.label);
 
                                                         return (
-                                                            <button
+                                                            <motion.button
                                                                 key={opt.value}
+                                                                whileHover={{ x: 4, backgroundColor: 'rgba(57,255,20,0.05)' }}
                                                                 disabled={stepIndex !== QUIZ_STEPS.findIndex(s => s.id === msg.stepId)}
                                                                 onClick={() => handleAnswer(opt, msg.stepId!)}
-                                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${isSelected || hasAnsweredNext
-                                                                    ? 'bg-green-neon/10 border-green-neon text-green-neon'
-                                                                    : 'bg-zinc-800/40 border-zinc-700 hover:border-zinc-500 text-zinc-400'
+                                                                className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${isSelected || hasAnsweredNext
+                                                                        ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'
+                                                                        : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-600 text-zinc-400 group'
                                                                     }`}
                                                             >
-                                                                <span className="text-xl">{opt.emoji}</span>
-                                                                <span className="text-sm font-medium">{opt.label}</span>
-                                                            </button>
+                                                                <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{opt.emoji}</span>
+                                                                <span className="text-sm font-bold tracking-tight">{opt.label}</span>
+                                                                <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isSelected || hasAnsweredNext ? 'text-green-neon rotate-90' : 'text-zinc-600'}`} />
+                                                            </motion.button>
                                                         );
                                                     })}
                                                 </div>
@@ -431,32 +443,47 @@ export default function BudTender() {
 
                                             {/* Results Rendering */}
                                             {msg.isResult && msg.recommended && (
-                                                <div className="space-y-3 pt-2">
+                                                <div className="space-y-4 pt-3">
+                                                    <p className="text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase px-1">Sélection sur-mesure</p>
                                                     {msg.recommended.map((product, i) => (
                                                         <motion.div
                                                             key={product.id}
-                                                            initial={{ opacity: 0, x: -10 }}
-                                                            animate={{ opacity: 1, x: 0 }}
-                                                            transition={{ delay: i * 0.1 }}
-                                                            className="flex items-center gap-3 bg-zinc-800/60 border border-zinc-700/60 rounded-2xl p-3"
+                                                            initial={{ opacity: 0, scale: 0.95 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            transition={{ delay: i * 0.15 }}
+                                                            whileHover={{ scale: 1.02 }}
+                                                            className="flex items-center gap-4 bg-zinc-800/40 hover:bg-zinc-800/60 border border-zinc-700/50 hover:border-green-neon/30 p-4 rounded-[1.5rem] transition-all group"
                                                         >
-                                                            <img
-                                                                src={product.image_url || ''}
-                                                                className="w-12 h-12 rounded-lg object-cover bg-zinc-700"
-                                                                alt={product.name}
-                                                            />
+                                                            <div className="relative flex-shrink-0">
+                                                                <img
+                                                                    src={product.image_url || ''}
+                                                                    className="w-16 h-16 rounded-2xl object-cover bg-zinc-900 shadow-md transition-transform group-hover:scale-105"
+                                                                    alt={product.name}
+                                                                />
+                                                                {product.cbd_percentage && (
+                                                                    <span className="absolute -top-1 -left-1 bg-green-neon text-black text-[9px] font-black px-1.5 py-0.5 rounded-lg shadow-sm">
+                                                                        {product.cbd_percentage}%
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <Link to={`/catalogue/${product.slug}`} className="text-xs font-bold text-white hover:text-green-neon line-clamp-1">
+                                                                <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1 flex items-center gap-1.5 translate-y-[-2px]">
                                                                     {product.name}
                                                                 </Link>
-                                                                <p className="text-[10px] text-green-neon">{product.price}€</p>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <p className="text-base font-black text-green-neon">{product.price}€</p>
+                                                                    {product.original_value && (
+                                                                        <p className="text-[10px] text-zinc-500 line-through">{product.original_value}€</p>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                            <button
+                                                            <motion.button
+                                                                whileTap={{ scale: 0.9 }}
                                                                 onClick={() => { addItem(product); openSidebar(); }}
-                                                                className="w-8 h-8 rounded-lg bg-green-neon hover:bg-green-400 text-black flex items-center justify-center transition-colors"
+                                                                className="w-10 h-10 rounded-xl bg-green-neon hover:bg-green-400 text-black flex items-center justify-center transition-all shadow-lg hover:shadow-green-neon/20"
                                                             >
-                                                                <ShoppingCart className="w-3.5 h-3.5" />
-                                                            </button>
+                                                                <ShoppingCart className="w-4 h-4" />
+                                                            </motion.button>
                                                         </motion.div>
                                                     ))}
                                                 </div>
@@ -466,16 +493,16 @@ export default function BudTender() {
                                 ))}
 
                                 {isTyping && (
-                                    <div className="flex justify-start items-end gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1">
+                                    <div className="flex justify-start items-end gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 shadow-sm">
                                             <Leaf className="w-3.5 h-3.5 text-green-neon" />
                                         </div>
-                                        <div className="bg-zinc-800 px-4 py-3 rounded-2xl flex gap-1">
+                                        <div className="bg-zinc-800/80 backdrop-blur-md px-5 py-4 rounded-2xl flex gap-1.5">
                                             {[0, 1, 2].map((i) => (
                                                 <motion.div
                                                     key={i}
-                                                    className="w-1.5 h-1.5 bg-zinc-500 rounded-full"
-                                                    animate={{ opacity: [0.4, 1, 0.4] }}
+                                                    className="w-2 h-2 bg-green-neon/40 rounded-full"
+                                                    animate={{ opacity: [0.4, 1, 0.4], y: [0, -3, 0] }}
                                                     transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
                                                 />
                                             ))}
@@ -485,22 +512,24 @@ export default function BudTender() {
 
                                 {/* Welcome Action */}
                                 {stepIndex === -1 && !isTyping && messages.length === 1 && (
-                                    <div className="flex justify-start pl-10">
-                                        <button
+                                    <div className="flex justify-start pl-11">
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                             onClick={startQuiz}
-                                            className="bg-green-neon hover:bg-green-400 text-black font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 group"
+                                            className="bg-green-neon hover:bg-green-400 text-black font-black px-8 py-3.5 rounded-2xl text-sm transition-all flex items-center gap-3 group shadow-xl hover:shadow-green-neon/20"
                                         >
                                             <Sparkles className="w-4 h-4" />
-                                            Commencer l'analyse
-                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                        </button>
+                                            Lancer le diagnostic
+                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                                        </motion.button>
                                     </div>
                                 )}
                             </div>
 
                             {/* Footer */}
-                            <div className="px-5 py-3 border-t border-zinc-800 bg-zinc-950/40 text-[10px] text-zinc-600 text-center">
-                                BudTender utilise l'IA pour vous conseiller. Produits &lt; 0.3% THC.
+                            <div className="px-6 py-4 border-t border-zinc-800/50 bg-zinc-950/40 text-[10px] sm:text-[11px] text-zinc-500 text-center font-medium">
+                                BUDTENDER AI · <span className="text-zinc-600 italic">Expertise Moléculaire Certifiée</span>
                             </div>
                         </motion.div>
                     </>
