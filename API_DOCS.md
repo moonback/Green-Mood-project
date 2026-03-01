@@ -1,60 +1,79 @@
-# Documentation API
+# 📘 Documentation API & Routes (Green Moon)
 
-Ce projet utilise **Supabase** comme Backend-as-a-Service, ce qui signifie que nous ne maintenons pas d'endpoints RESTful traditionnels (Node/Express). Au lieu de cela, toutes les transactions de données sont exécutées en utilisant le client SDK `@supabase/supabase-js` mappé sur Postgres.
-
-Vous trouverez ci-dessous un aperçu des principaux "endpoints" (opérations) logiques utilisés au sein de l'application.
+Bien que l'application soit principalement construite comme une SPA communiquant directement avec Supabase (**PostgREST**), ce document décrit les routes utilisateur (frontend) et les points d'interaction importants.
 
 ---
 
-## 🔐 1. Authentification (`authStore.ts`)
+## 🛤️ Routes Frontend (React Router)
 
-| Opération | Méthode API Supabase | Niveau d'Accès | Description |
-|-----------|----------------------|----------------|-------------|
-| **Inscription** | `supabase.auth.signUp()` | Public | Inscription d'un nouvel utilisateur. Déclenche la création d'un profil via trigger DB. |
-| **Connexion** | `supabase.auth.signInWithPassword()` | Public | Authentifie un utilisateur via Email & Mot de passe. |
-| **Déconnexion** | `supabase.auth.signOut()` | Authed | Nettoie la session et les tokens en stockage local. |
-| **Obtenir Session**| `supabase.auth.getSession()` | Authed | Récupère la session d'authentification active. |
+### 🏬 Espace Public
+| Route | Composant | Description |
+| :--- | :--- | :--- |
+| `/` | `Home.tsx` | Landing page premium (vidéo, splash screen). |
+| `/catalogue` | `Catalog.tsx` | Galerie de produits avec filtres et recherche. |
+| `/catalogue/:slug` | `ProductDetail.tsx` | Détail produit, avis, cross-selling et packs. |
+| `/boutique` | `Shop.tsx` | Page de présentation de l'expérience boutique. |
+| `/contact` | `Contact.tsx` | Formulaire expert et chat direct. |
+| `/connexion` | `Login.tsx` | Authentification (Email / Mot de passe). |
 
----
+### 🔐 Espace Client (Protégé par `ProtectedRoute`)
+| Route | Composant | Description |
+| :--- | :--- | :--- |
+| `/panier` | `Cart.tsx` | Visualisation complète avant validation. |
+| `/commande` | `Checkout.tsx` | Tunnel de paiement (Promo, Fidélité, Adresses). |
+| `/compte` | `Account.tsx` | Dashboard utilisateur et points Carats. |
+| `/compte/commandes` | `Orders.tsx` | Historique et suivi des sélections. |
+| `/compte/favoris` | `Favorites.tsx` | Accès aux produits enregistrés. |
+| `/compte/profil` | `Profile.tsx` | Mise à jour des informations personnelles. |
+| `/compte/avis` | `MyReviews.tsx` | Gestion des retours clients publiés. |
 
-## 👤 2. Profils (`authStore.ts` & `src/pages/Account.tsx`)
-
-| Opération | Table | Méthodes | Niveau d'Accès | Description |
-|-----------|-------|----------|----------------|-------------|
-| **Obtenir Profil** | `profiles` | `select('*').eq('id', userId).single()` | Propriétaire / Admin | Récupère les détails de l'utilisateur (nom, tel, points). |
-| **Mettre à jour**  | `profiles` | `update({ ... }).eq('id', userId)` | Propriétaire | Modifie les détails personnels de l'utilisateur. |
-
----
-
-## 🛍️ 3. Catalogue (Catégories & Produits)
-
-| Opération | Table | Méthodes | Niveau d'Accès | Description |
-|-----------|-------|----------|----------------|-------------|
-| **Liste Catégories** | `categories` | `select('*').order('sort_order')` | Public | Récupère toutes les catégories de produits actives. |
-| **Liste Produits** | `products` | `select('*, category:categories(*)').eq('is_active', true)` | Public | Obtient les produits joints à leurs données de catégorie. |
-| **Obtenir un Produit** | `products` | `select('...').eq('slug', slug).single()` | Public | Récupère les informations détaillées d'une page produit. |
-| **Sauvegarder** | `products` | `insert()` ou `update()` | **Admin** | Crée ou modifie les détails et les prix d'un produit. |
-
----
-
-## 📦 4. Commandes & Paiement
-
-| Opération | Table | Méthodes | Niveau d'Accès | Description |
-|-----------|-------|----------|----------------|-------------|
-| **Créer Commande** | `orders` & `order_items` | Insertion lot ou RPC | Authed | Initie une commande avec les articles du panier et les infos d'adresse. |
-| **Commandes Utilisateur** | `orders` | `select('*, order_items(...)').eq('user_id', auth.uid())` | Propriétaire | Historique des commandes précédentes pour la page Compte. |
-| **Toutes Commandes** | `orders` | `select('*, profiles(full_name)')` | **Admin** | Liste complète de toutes les commandes à travers la boutique. |
-| **Mettre à jour Statut** | `orders` | `update({ status: 'shipped' })` | **Admin** | Change l'état de traitement d'une commande. |
+### 🛡️ Espace Admin (Protégé par `AdminRoute`)
+| Route | Composant | Description |
+| :--- | :--- | :--- |
+| `/admin` | `Admin.tsx` | Tableau de bord complet de gestion. |
 
 ---
 
-## 🏦 5. Paramètres Dynamiques
+## 🛰️ Interactions Supabase (Services Lib)
 
-| Opération | Table | Méthodes | Niveau d'Accès | Description |
-|-----------|-------|----------|----------------|-------------|
-| **Obtenir Paramètres** | `store_settings` | `select('*')` | Public | Récupère la configuration (bannières, tarifs, éléments UI). |
-| **Mettre à jour** | `store_settings` | `upsert({ key, value })` | **Admin** | Sauvegarde les changements poussés depuis le panneau d'administration. |
+L'application utilise le client Supabase configuré dans `src/lib/supabase.ts`. Voici les principaux points d'accès :
+
+### 👤 Authentification
+- `supabase.auth.signUp(email, password)`
+- `supabase.auth.signInWithPassword(email, password)`
+- `supabase.auth.signOut()`
+
+### 📦 Produits & Catalogue
+- `SELECT * FROM products WHERE is_active = true`
+- `SELECT * FROM categories ORDER BY sort_order ASC`
+- `SELECT * FROM wishlists WHERE user_id = auth.uid()`
+
+### 🛒 Commandes & Checkout
+- `INSERT INTO orders` : Création forcée via RLS (uniquement l'utilisateur courant).
+- `SELECT * FROM promo_codes WHERE code = ?` : Validation de réduction avant application.
 
 ---
 
-**Note** : Toutes les opérations ci-dessus appliquent l'intégrité des données via les politiques Row Level Security (RLS) de PostgreSQL définies dans `supabase/migration.sql`. Même si elles sont appelées de manière inappropriée depuis le client, la base de données bloque les événements non autorisés.
+## 🤖 BudTender IA (Points d'Intégration)
+
+L'IA ne dispose pas d'un endpoint local mais communique avec **OpenRouter**.
+
+- **URL de Base** : `https://openrouter.ai/api/v1/chat/completions`
+- **Méthode** : `POST`
+- **Payload** :
+  ```json
+  {
+    "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+    "messages": [
+      { "role": "system", "content": "...system_prompt..." },
+      { "role": "user", "content": "...message..." }
+    ],
+    "temperature": 0.7
+  }
+  ```
+- **Persistance** : Les interactions sont enregistrées dans la table `budtender_interactions` via `handleSendMessage` dans le composant `BudTender.tsx`.
+
+---
+
+## ⚙️ Paramètres Dynamiques
+Les réglages de la boutique (bannières, frais de port, horaires) sont gérés via le store `settingsStore` qui interroge la table `store_settings`. Ces données sont rafraîchies à chaque chargement de l'application dans `App.tsx`.

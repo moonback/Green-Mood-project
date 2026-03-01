@@ -1,55 +1,65 @@
-# Contribuer à Green Mood CBD Shop
+# 🤝 Guide de Contribution — Green Moon
 
-Tout d'abord, merci de considérer d'apporter votre contribution à Green Mood ! Ce projet est conçu comme une application rapide, moderne et sécurisée. C'est grâce aux contributeurs que ce projet continue de grandir.
+Nous sommes ravis que vous souhaitiez contribuer à **Green Moon** ! L'objectif est de co-créer une boutique CBD premium, sécurisée et fluide. Voici les lignes directrices pour garantir une collaboration harmonieuse.
 
-## 1. Pour Commencer
+---
 
-### Fork et Clone
-1. Forkez ce dépôt sur GitHub.
-2. Clonez votre fork localement :
-   ```bash
-   git clone https://github.com/votre-nom-utilisateur/Green-Moon-project.git
-   ```
-3. Configurez l'environnement de développement en exécutant `npm install` et en copiant les variables de `.env.example` dans un fichier `.env`.
+## 🛠️ Configuration du Développement
 
-## 2. Normes de Code
+1.  **Installation** : Assurez-vous d'avoir Node.js (v18+) et npm.
+2.  **Linting** : Nous utilisons TypeScript en mode strikt. Avant de commit, vérifiez les erreurs :
+    ```bash
+    npm run lint
+    ```
+3.  **Style de Code** : Suivez les conventions de Prettier et ESLint configurées dans le projet.
+    - Utilisez des **Composants Fonctionnels** avec React 19.
+    - Privilégiez les **Utility Classes Tailwind** pour le style.
+    - Les animations doivent passer par `motion/react`.
 
-- **Formatting & Linting** : Assurez-vous qu'il n'y a pas d'erreurs TypeScript avant de pousser du code.
-  ```bash
-  npm run lint
-  ```
-- **Composants React** :
-  - Utilisez des composants fonctionnels (`function Component() {}` ou `const Component = () => {}`).
-  - Gardez la logique centralisée dans des Hooks (`useX`) ou le store Zustand.
-- **Styling** : Utilisez les utilitaires **Tailwind CSS v4** directement dans l'attribut `className`. Pour des classes dynamiques, préférez l'utilisation de `clsx` ou `tailwind-merge`.
-- **Conventions de Nommage** :
-  - Nommez les fichiers en `PascalCase` pour les composants React (ex: `HeroBanner.tsx`).
-  - Utilisez `camelCase` pour les utilitaires, les hooks personnalisés, et les fichiers du store (ex: `authStore.ts`, `useCart.ts`).
+---
 
-## 3. Processus de Pull Request
+## 🚀 Workflow de Branchement (Git Flow)
 
-### Convention de nommage des branches
-Préfixez vos branches avec le type de travail que vous effectuez :
-- `feat/` : Une nouvelle fonctionnalité
-- `fix/` : Une correction de bug
-- `docs/` : Changements liés à la documentation
-- `refactor/` : Remaniement de code n'ajoutant ni fonctionnalité ni correction de bug
+Nous suivons un workflow simple mais efficace :
+1.  **Main** : Branche de production, doit toujours être stable.
+2.  **Develop** : Branche de travail principale (optionnelle selon la taille de l'équipe).
+3.  **Feature** : `feat/nom-de-la-feature` (ex: `feat/stripe-integration`).
+4.  **Fix** : `fix/nom-du-bug` (ex: `fix/mobile-menu-overlap`).
 
-*Exemple : `git checkout -b feat/ajout-points-fidelite`*
+---
 
-### Messages de Commit
-Nous suivons la spécification [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) :
-- `feat: ajoute la bannière promotionnelle sur l'accueil`
-- `fix: corrige une erreur de calcul dans le panier`
-- `style: met à jour les couleurs des boutons`
+## 📝 Bonnes Pratiques de Code
 
-### Ouverture d'une PR
-1. Assurez-vous que votre branche se fusionne proprement avec `main`.
-2. Mettez à jour `README.md` si vous introduisez des changements majeurs.
-3. Détaillez vos changements dans le template de PR.
-4. Votre PR nécessite au moins une approbation avant d'être fusionnée.
+### 📂 Structure des Fichiers
+- Les **Pages** résident dans `src/pages/`.
+- Les **Composants globaux** dans `src/components/`.
+- Les **Services et types** dans `src/lib/`.
+- L'**État global** dans `src/store/`.
 
-## 4. Signaler des Bugs
-- Fournissez un titre clair et descriptif.
-- Décrivez les étapes exactes pour reproduire le problème.
-- Incluez les détails de votre environnement (OS, Navigateur) et des captures d'écran si le souci est visuel.
+### 🛡️ Sécurité (RLS)
+N'oubliez jamais que le frontend n'est qu'une interface. Toute donnée sensible doit être protégée par des **politiques RLS (Row Level Security)** dans Supabase. Ne fiez-vous jamais uniquement à la validation client.
+
+### 🍱 État Global (Zustand)
+- Utilisez Zustand pour les données partagées par plusieurs composants (Auth, Cart).
+- Pour l'état local (un menu ouvert, un champ de saisie), utilisez `useState`.
+
+### 🧪 Tests (Futur)
+Bien que les tests ne soient pas encore obligatoires, toute nouvelle fonctionnalité majeure devrait, dans l'idéal, s'accompagner de tests unitaires (Vitest).
+
+---
+
+## 📥 Soumettre une Pull Request (PR)
+
+1.  Assurez-vous que votre branche est à jour avec `main`.
+2.  Décrivez précisément les changements apportés dans la description de la PR.
+3.  Incluez une capture d'écran ou un GIF pour tout changement visuel UI.
+4.  Un mainteneur passera en revue votre code et pourra demander des modifications.
+
+---
+
+## 💬 Communication
+Pour toute question, ouvrez une **Issue** GitHub ou contactez l'équipe de développement directement.
+
+---
+
+Merci de contribuer à faire de **Green Moon** la référence du CBD premium ! 🌿

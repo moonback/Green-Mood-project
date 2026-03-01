@@ -1,54 +1,73 @@
-# Architecture du Système
+# 🏗️ Green Moon Architecture Guide
 
-## Vue d'ensemble
-L'architecture est basée sur une approche moderne **BaaS (Backend-as-a-Service)** utilisant **Supabase** pour gérer la base de données et l'authentification, combinée à une **Single Page Application (SPA)** écrite en React (via Vite).
+Ce guide documente l'architecture logicielle de la plateforme **Green Moon**, de l'interface utilisateur à la persistance des données.
 
-## Diagramme du Système
+---
+
+## 🏛️ Vue d'Ensemble
+L'application suit une architecture **Single-Page Application (SPA)** décentralisée via un Backend-as-a-Service (**BaaS**) complet.
+
 ```mermaid
 graph TD
-    User([Client / Utilisateur]) --> App[Application React SPA]
-    App -- Client Supabase JS --> Supabase[Plateforme Supabase]
+    Client[React 19 / Vite SPA]
+    Auth[Supabase Auth]
+    DB[PostgreSQL / Supabase]
+    Logic[Supabase Edge Functions / Triggers]
+    AI[OpenRouter / Gemini]
     
-    subgraph Plateforme Supabase
-        Auth[Authentification GoTrue]
-        DB[(Base de données PostgreSQL)]
-        RLS[Row Level Security]
-    end
-    
-    subgraph Architecture Frontend
-        Router[React Router DOM]
-        Store[Stores Zustand]
-        Views[Pages et Composants]
-    end
-
-    App --> Router
-    Router --> Views
-    Views <--> Store
-
-    Store -- Token d'Auth --> Auth
-    Store -- Appels API --> DB
-    DB <--> RLS
+    Client -- "Authentification" --> Auth
+    Client -- "Requêtes SQL (PostgREST)" --> DB
+    Client -- "Chat / Recommandations" --> AI
+    DB -- "Triggers / Sync Stock" --> Logic
 ```
 
-## Architecture Frontend
-- **Framework** : React 19 combiné à Vite 6 pour un rechargement à chaud (HMR) rapide et une configuration de build optimisée.
-- **Routage** : Géré nativement par `react-router-dom` v7. Fonctionne entièrement côté client avec des contextes de routage distincts :
-  - Routes publiques (`/`, `/boutique`, `/produits`, etc.)
-  - Routes protégées nécessitant une authentification via `<ProtectedRoute>` (`/commande`, `/compte`, etc.)
-  - Routes administratives nécessitant un statut administrateur via `<AdminRoute>` (`/admin`).
-- **Gestion de l'État Global** : **Zustand** est choisi à la place des Contextes React pour un paradigme de store léger et performant :
-  - `authStore.ts` : Gère la session et la synchronisation du profil utilisateur.
-  - `cartStore.ts` : Logique pour les opérations du panier, persistance locale (localStorage) et calculs des totaux.
-  - `settingsStore.ts` : Paramètres globaux de l'application gérés depuis la BDD (ex: adresses, frais de livraison, bannières).
-- **Style et UI** : Tailwind CSS v4 fournit un système de design utilitaire évolutif. Les transitions complexes, et les animations de mise en page utilisent `framer-motion`. Les icônes s'appuient principalement sur `lucide-react`.
+---
 
-## Architecture Backend (BaaS)
-En adoptant Supabase, nous nous passons d'endpoints API Node.js classiques, optant plutôt pour une interaction directe avec PostgreSQL de manière sécurisée.
-- **Client Supabase-JS** : Le SDK `@supabase/supabase-js` gère toute la récupération de données (CRUD) et l'authentification de manière transparente via l'interface PostgREST.
-- **Sécurité des Données** : Au lieu de routes API middleware, la couche de données utilise le **Row Level Security (RLS)** de PostgreSQL.
-  - *Exemple* : Les utilisateurs authentifiés ne peuvent faire un `SELECT` que sur les commandes où `user_id = auth.uid()`. Les administrateurs ont un accès plus large, régi par un flag booléen `is_admin` dans leurs `profiles`.
-- **Flux de Triggers BDD** : Nous employons des triggers SQL pour l'automatisation, comme le trigger `on_auth_user_created` qui réplique automatiquement les nouveaux utilisateurs générés dans `auth.users` de Supabase vers notre table publique `profiles` pour joindre des métadonnées spécifiques à l'application (ex: points de fidélité, nom complet).
+## 🎨 Frontend (React 19)
 
-## Structure des Composants et Séparation de la Logique
-- **Conteneurs vs Présentation** : Les pages principales dans `/src/pages/` orchestrent la logique et se connectent à Zustand/Supabase. Les petits composants dans `/src/components/` se concentrent sur la logique de rendu et le style (ex: `Button`, `Modal`, `CartSidebar`).
-- **Services (`/src/lib/`)** : Les routines réutilisables de récupération de données et les définitions de types utilitaires (`types.ts`) sont structurées proprement à l'écart de la présentation. Toutes les interfaces TypeScript correspondent directement à nos tables de base de données associées.
+### 🛤️ Routage
+Le routage est géré par **React Router 7**, avec des routes publiques, protégées par `ProtectedRoute.tsx` (utilisateur connecté requis) et `AdminRoute.tsx` (profil `is_admin = true` requis).
+
+### 💎 Design System
+- **Tailwind CSS 4** : Piloté par des utility classes pour une personnalisation rapide.
+- **Micro-animations** : Utilisant `motion/react` (Framer Motion) pour des transitions fluides (transitions de page, hover effects, feedbacks).
+- **Glassmorphism** : Thème sombre avec des effets de transparence et de flou (backdrop-blur) pour une esthétique premium.
+
+### 🧠 Gestion de l'État (State Management)
+Plusieurs stores **Zustand** découpent la logique pour éviter les re-renders excessifs :
+- `authStore` : Gère la session, l'utilisateur et le profil synchronisé.
+- `cartStore` : Panier persistant avec détection Click & Collect.
+- `wishlistStore` : Favoris (wishlist) synchronisés avec Supabase.
+- `settingsStore` : Paramètres globaux de la boutique (bannières, horaires) modifiables par l'admin.
+- `toastStore` : Système de notification global.
+
+---
+
+## 🛠️ Backend & Persistance (Supabase)
+
+### 📊 Base de Données
+Plutôt qu'un serveur dédié, nous utilisons directement l'intelligence de **PostgreSQL** :
+- **RLS (Row Level Security)** : Chaque table a des politiques strictes pour garantir que les utilisateurs ne voient ou n'éditent que leurs propres données.
+- **Triggers & Functions** : Exécution de logique métier côté serveur (synchronisation du stock des bundles, calcul de points de fidélité).
+
+### 🤖 Intelligence Artificielle (BudTender)
+L'IA est intégrée via le composant `BudTender.tsx` en utilisant l'API **OpenRouter**.
+- **Mémoire Persistante** : Le hook `useBudTenderMemory` synchronise les préférences utilisateur (`user_ai_preferences`) et l'historique des conversations (`budtender_interactions`) directement dans Supabase.
+
+---
+
+## 📦 Services Externes
+1. **Supabase Auth** : Inscription, connexion, gestion des jetons JWT.
+2. **Supabase Storage** : Hébergement des images produits uploadées par l'admin.
+3. **OpenRouter** : Proxy vers différents modèles de langage (LLM) comme Gemini ou Claude.
+4. **Viva Wallet** : Simulation du tunnel de paiement sécurisé.
+
+---
+
+## 🔄 Flux de Données (Exemple : Commande)
+1. L'utilisateur remplit son panier (`cartStore`).
+2. Le checkout valide le code promo (`Supabase Query`).
+3. L'utilisateur confirme la commande.
+4. Une transaction est créée dans `orders`.
+5. Un trigger SQL met à jour le stock dans `products` et génère les points de fidélité dans `profiles`.
+6. L'utilisateur reçoit un feedback immédiat (`toastStore`).

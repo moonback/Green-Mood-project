@@ -1,73 +1,64 @@
-# Schéma de Base de Données (Supabase PostgreSQL)
+# 📊 Schéma Base de Données — Green Moon (Supabase/PostgreSQL)
 
-Description structurée des tables principales utilisées au sein de l'application. L'essentiel des interactions est sécurisé depuis le client web via les **Row Level Security (RLS)** de PostgreSQL.
+La persistance des données de **Green Moon** repose sur les capacités relationnelles de **PostgreSQL**, utilisant **Supabase** pour la gestion de l'authentification et du stockage.
 
-## 🗂️ Aperçu des Tables
+---
 
-### 1. `categories`
-- `id` (uuid, PK) : Identifiant unique de la catégorie.
-- `slug` (text, UNIQUE) : Chaîne URL (ex: 'fleurs', 'huiles').
-- `name` (text) : Nom affiché de la catégorie.
-- `description` (text) : Détails sur la catégorie.
-- `icon_name` (text) : Nom du composant icône Lucide-React.
-- `image_url` (text) : Référence image externe.
-- `sort_order` (int) : Ordre d'affichage croissant pour les menus de navigation.
-- `is_active` (boolean) : Permet de masquer une catégorie.
+## 🏗️ Modèle de Données Global
 
-### 2. `products`
-*Contient le catalogue principal des articles.*
-- `id` (uuid, PK)
-- `category_id` (uuid, FK) : Liée à `categories.id`.
-- `slug` (text, UNIQUE)
-- `name` (text), `description` (text)
-- `cbd_percentage`, `thc_max` (numeric) : Métriques pour les taux.
-- `weight_grams` (numeric) : Poids.
-- `price` (numeric) : Coût.
-- `image_url` (text) : Image de présentation.
-- `stock_quantity` (int) : Suivi des inventaires.
-- `is_available`, `is_featured`, `is_active` (boolean) : Différents flags de configuration.
+### 🏷️ Catalogue Produits
+| Table | Colonnes Clés | Description |
+| :--- | :--- | :--- |
+| `categories` | `id, slug, name, icon_name, sort_order` | Groupes de produits (Fleurs, Huiles, etc.). |
+| `products` | `id, category_id, name, slug, price, stock_quantity, attributes` | Catalogue complet (CBD%, THC%, Arômes). |
+| `product_images` | `id, product_id, image_url, sort_order` | Galerie photos par produit (Migration V2). |
+| `bundle_items` | `id, bundle_id, product_id, quantity` | Composition des packs (Ex: Pack Bien-être). |
 
-### 3. `profiles`
-*La table reprenant les données personnelles des utilisateurs. Alimentée via un trigger Postgres attaché à l'authentification GoTrue : `auth.users` -> `public.profiles`*
-- `id` (uuid, PK, FK) : Épouse directement `auth.users(id)`.
-- `full_name` (text)
-- `phone` (text)
-- `loyalty_points` (int) : Points fidélité à créditer suite aux achats.
-- `is_admin` (boolean) : *Flag Crucial.* Utilisable dans les politiques de validation RLS pour contourner les droits restreints.
+### 👤 Utilisateurs & Profils
+| Table | Colonnes Clés | Description |
+| :--- | :--- | :--- |
+| `profiles` | `id, full_name, loyalty_points, is_admin` | Informations étendues liées à `auth.users`. |
+| `addresses` | `id, user_id, street, city, postal_code, is_default` | Carnet d'adresses client. |
+| `loyalty_transactions` | `id, user_id, order_id, points, type` | Historique des points Carats gagnés/utilisés. |
+| `wishlists` | `id, user_id, product_id` | Liste de souhaits (Favoris) (Migration V2). |
 
-### 4. `addresses`
-*Stockage des contextes d'expédition ou domiciles pour un utilisateur authentifié.*
-- `id` (uuid, PK)
-- `user_id` (uuid, FK) : Lié à `profiles.id`.
-- `label` (text) : Mots-clés (ex: 'Maison', 'Bureau').
-- `street`, `city`, `postal_code`, `country` (text) : Données d'adresse physiques.
-- `is_default` (boolean)
+### 🛒 Commandes & Ventes
+| Table | Colonnes Clés | Description |
+| :--- | :--- | :--- |
+| `orders` | `id, user_id, status, subtotal, total, delivery_type` | En-têtes de facturation et livraison. |
+| `order_items` | `id, order_id, product_id, quantity, unit_price` | Détails des articles achetés. |
+| `promo_codes` | `id, code, type, value, active, expires_at` | Gestion des remises par code. |
+| `subscriptions` | `id, user_id, product_id, frequency, status` | Paniers récurrents (Abonnements). |
 
-### 5. `orders` & `order_items`
-*Les objets transactionnels. La séparation permet de figer le prix des articles (Line Items) historiquement par rapport aux factures.*
-**Commandes (Orders) :**
-- `id` (uuid, PK)
-- `user_id` (uuid, FK) : Nullable (prévu pour d'éventuels achats 'Guest').
-- `status` (text) : Statuts logistiques (`pending`, `processing`, `shipped`, `delivered`).
-- `delivery_type` (text) : Choix client (`click_collect`, `delivery`).
-- `address_id` (uuid, FK) : L'adresse de facturation/livraison ciblée.
-- `subtotal`, `delivery_fee`, `total` (numeric) : Traces comptables.
-- `payment_status` (text) : Contexte d'approbation Viva Wallet.
+### 🤖 BudTender IA & Feedback
+| Table | Colonnes Clés | Description |
+| :--- | :--- | :--- |
+| `user_ai_preferences` | `user_id, goal, experience_level, terpene_preferences` | Mémoire personnalisée pour l'IA (Migration V2). |
+| `budtender_interactions` | `id, user_id, session_id, interaction_type, quiz_answers` | Logs de conversation et clics (Migration V2). |
+| `reviews` | `id, product_id, user_id, rating, comment, is_verified` | Avis clients modérés. |
 
-**Lignes de Commandes (Order Items) :**
-- Lie l'`order_id` aux différents `product_id`.
-- `product_name` (text)
-- `unit_price`, `quantity`, `total_price` : Ces champs scellent les calculs effectués à l'instant de l'achat afin qu'un futur changement de prix d'un produit ne modifie pas le total facturé rétrospectivement.
+### ⚙️ Opérations & Logs
+| Table | Colonnes Clés | Description |
+| :--- | :--- | :--- |
+| `stock_movements` | `id, product_id, quantity_change, type` | Historique pour la traçabilité des stocks. |
+| `store_settings` | `id, key, value, description` | Configuration dynamique (Bannières, Port). |
 
-### 6. `stock_movements`
-*Log des ajustements d'inventaires pour le propriétaire métier.*
-- `id` (uuid, PK)
-- `product_id` (uuid, FK) : Le produit ajusté.
-- `quantity_change` (int) : Représentation d'une augmentation (`> 0`) ou d'une vente (`< 0`).
-- `type` (text) : Motif de l'entrée d'événement.
-- `note` (text) : Explication administrateur (ex: 'Arrivage du Lundi').
+---
 
-### 7. `store_settings`
-*Comportement de type clé-valeur afin d'injecter facilement des bannières commerciales ou horaires variables de manière globale.*
-- `key` (text, PK) : Clé de référence (ex: `banner_enabled`, `delivery_fee`).
-- `value` (jsonb) : Charge Payload JSON. Analysée par `settingsStore.ts`.
+## 🔒 Sécurité (Row Level Security - RLS)
+
+Chaque table est protégée par défaut (`ENABLE ROW LEVEL SECURITY`). Voici les types de politiques appliqués :
+
+1.  **Public Read** : Accessible à tous (ex: `products`, `categories`).
+2.  **Owner Only** : Accessible uniquement à l'utilisateur qui possède la donnée (`orders`, `addresses`, `wishlists`).
+3.  **Admin Overwrite** : Les administrateurs (`profiles.is_admin = true`) peuvent contourner les restrictions pour le support client.
+4.  **Bot Interaction** : Politiques spécifiques pour permettre l'insertion anonyme d'interactions BudTender.
+
+---
+
+## ⚙️ Fonctions & Triggers PostgreSQL
+
+Le projet utilise des scripts côté serveur pour garantir l'intégrité :
+- **sync_bundle_stock** : Recalcule automatiquement le stock d'un "Pack" en fonction du plus petit stock de ses composants.
+- **handle_new_user** : Crée automatiquement un profil dans `profiles` lors d'une inscription via `auth.users`.
+- **update_loyalty_points** : Trigger qui met à jour les points `Carats` lors du passage d'une commande.
