@@ -130,9 +130,19 @@ async function callAI(
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
     if (!apiKey || !settings.ai_enabled) return null;
 
-    const catalog = products
-        .slice(0, 12)
-        .map((p) => `- ${p.name} (${p.category?.slug}, CBD ${p.cbd_percentage ?? '?'}%, ${p.price}€): ${p.description ?? ''}`)
+    // RAG: Select the most relevant products to send to the AI
+    // For the quiz, we send the top scored locally + some featured ones
+    const topScored = [...products]
+        .map(p => ({ p, s: scoreProduct(p, answers) }))
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 15);
+
+    const catalog = topScored
+        .map(({ p }) => {
+            const aromas = (p.attributes?.aromas ?? []).join(', ');
+            const benefits = (p.attributes?.benefits ?? []).join(', ');
+            return `- ${p.name} (${p.category?.slug}, CBD ${p.cbd_percentage ?? '?'}%, ${p.price}€). ${p.description ?? ''} ${aromas ? 'Arômes: ' + aromas : ''} ${benefits ? 'Effets: ' + benefits : ''}`;
+        })
         .join('\n');
 
     const systemPromptMessage = {
@@ -589,9 +599,33 @@ export default function BudTender() {
             return;
         }
 
-        const catalog = products
-            .slice(0, 8)
-            .map((p) => `- ${p.name} (${p.category?.slug}, ${p.price}€): ${p.description ?? ''}`)
+        // Basic RAG for Chat: Keyword matching
+        const keywords = text.toLowerCase().split(' ').filter(k => k.length > 3);
+        const relevantProducts = products
+            .map(p => {
+                let s = 0;
+                const pName = p.name.toLowerCase();
+                const pDesc = (p.description || '').toLowerCase();
+                const pCat = (p.category?.name || '').toLowerCase();
+
+                keywords.forEach(k => {
+                    if (pName.includes(k)) s += 5;
+                    if (pDesc.includes(k)) s += 2;
+                    if (pCat.includes(k)) s += 3;
+                });
+                return { p, s };
+            })
+            .sort((a, b) => b.s - a.s)
+            .filter(x => x.s > 0 || Math.random() > 0.7) // Keep relevant + some random for variety
+            .slice(0, 15)
+            .map(x => x.p);
+
+        const catalog = relevantProducts
+            .map((p) => {
+                const aromas = (p.attributes?.aromas ?? []).join(', ');
+                const benefits = (p.attributes?.benefits ?? []).join(', ');
+                return `- ${p.name} (${p.category?.slug}, ${p.price}€). ${p.description ?? ''} ${aromas ? 'Arômes: ' + aromas : ''} ${benefits ? 'Effets: ' + benefits : ''}`;
+            })
             .join('\n');
 
         const systemPrompt = getChatPrompt(text, catalog);
