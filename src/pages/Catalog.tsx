@@ -140,7 +140,7 @@ export default function Catalog() {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-tight leading-tight uppercase italic"
+              className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tighter leading-none mb-8"
             >
               ARCHIVES <br />
               <span className="not-italic text-green-neon glow-green">MOLECUL'</span>
@@ -407,7 +407,7 @@ export default function Catalog() {
                     className={`w-10 h-10 rounded-xl text-xs font-semibold transition-all ${page === currentPage
                       ? 'bg-green-neon text-black'
                       : 'bg-white/[0.03] border border-white/[0.08] text-zinc-500 hover:text-white hover:border-white/[0.15]'
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
