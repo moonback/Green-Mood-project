@@ -12,12 +12,23 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Referral } from '../../lib/types';
+import { useSettingsStore } from '../../store/settingsStore';
+import { Save, Settings as SettingsIcon } from 'lucide-react';
 
 export default function AdminReferralsTab() {
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'joined' | 'completed'>('all');
+
+    const { settings, fetchSettings } = useSettingsStore();
+    const [localSettings, setLocalSettings] = useState(settings);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+
+    useEffect(() => {
+        setLocalSettings(settings);
+    }, [settings]);
 
     useEffect(() => {
         loadAllReferrals();
@@ -58,6 +69,100 @@ export default function AdminReferralsTab() {
 
     return (
         <div className="space-y-8">
+            {/* Program Settings */}
+            <div className="bg-zinc-900/50 border border-zinc-800 rounded-[2.5rem] p-8 space-y-8">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                            <SettingsIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-white">Réglages du Programme</h3>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-0.5">Configurez les récompenses et l'activation</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        {saveSuccess && (
+                            <span className="text-[10px] font-black uppercase tracking-widest text-green-neon animate-pulse">
+                                Enregistré !
+                            </span>
+                        )}
+                        <button
+                            onClick={async () => {
+                                setIsSaving(true);
+                                try {
+                                    const payload = [
+                                        { key: 'referral_program_enabled', value: localSettings.referral_program_enabled },
+                                        { key: 'referral_reward_points', value: localSettings.referral_reward_points },
+                                        { key: 'referral_welcome_bonus', value: localSettings.referral_welcome_bonus }
+                                    ];
+                                    await supabase.from('store_settings').upsert(payload, { onConflict: 'key' });
+                                    await fetchSettings();
+                                    setSaveSuccess(true);
+                                    setTimeout(() => setSaveSuccess(false), 3000);
+                                } catch (err) {
+                                    console.error(err);
+                                } finally {
+                                    setIsSaving(false);
+                                }
+                            }}
+                            disabled={isSaving}
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-green-neon transition-all disabled:opacity-50"
+                        >
+                            <Save className="w-4 h-4" />
+                            {isSaving ? 'Enregistrement...' : 'Sauvegarder'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Statut du programme</label>
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                            <div className={`w-12 h-6 rounded-full relative transition-all ${localSettings.referral_program_enabled ? 'bg-green-neon' : 'bg-zinc-800'}`}>
+                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-black transition-all ${localSettings.referral_program_enabled ? 'left-7' : 'left-1'}`} />
+                            </div>
+                            <input
+                                type="checkbox"
+                                className="hidden"
+                                checked={localSettings.referral_program_enabled}
+                                onChange={(e) => setLocalSettings({ ...localSettings, referral_program_enabled: e.target.checked })}
+                            />
+                            <span className="text-xs font-bold text-zinc-400 group-hover:text-white transition-colors">
+                                {localSettings.referral_program_enabled ? 'Activé' : 'Désactivé'}
+                            </span>
+                        </label>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Récompense Parrain (Carats)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={localSettings.referral_reward_points}
+                                onChange={(e) => setLocalSettings({ ...localSettings, referral_reward_points: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-purple-500 transition-all"
+                            />
+                            <Award className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-500" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bonus Filleul (Carats)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={localSettings.referral_welcome_bonus}
+                                onChange={(e) => setLocalSettings({ ...localSettings, referral_welcome_bonus: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-green-neon transition-all"
+                            />
+                            <TrendingUp className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-green-neon" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl backdrop-blur-sm">

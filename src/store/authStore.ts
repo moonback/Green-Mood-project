@@ -97,6 +97,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         referee_id: authData.user.id,
         status: 'joined'
       });
+
+      // Handle Welcome Bonus
+      const { data: bonusSetting } = await supabase
+        .from('store_settings')
+        .select('value')
+        .eq('key', 'referral_welcome_bonus')
+        .single();
+
+      const welcomeBonus = bonusSetting ? parseInt(bonusSetting.value as string) : 0;
+
+      if (welcomeBonus > 0) {
+        // Update user's profile with initial points
+        // (Assuming the profile is already created by a trigger or we update it here)
+        await supabase
+          .from('profiles')
+          .update({ loyalty_points: welcomeBonus })
+          .eq('id', authData.user.id);
+
+        // Log transaction
+        await supabase.from('loyalty_transactions').insert({
+          user_id: authData.user.id,
+          type: 'earned',
+          points: welcomeBonus,
+          balance_after: welcomeBonus,
+          note: 'Cadeau de bienvenue (Parrainage)'
+        });
+      }
     }
   },
 

@@ -198,7 +198,7 @@ export default function Checkout() {
       fetchProfile(user.id);
 
       // --- Referral Reward Logic ---
-      if (profile?.referred_by_id) {
+      if (profile?.referred_by_id && settings.referral_program_enabled) {
         // Check if this is the user's first paid order
         const { count } = await supabase
           .from('orders')
@@ -208,7 +208,7 @@ export default function Checkout() {
 
         // If count is 1 (this order), it's the first one
         if (count === 1) {
-          const REWARD_POINTS = 500;
+          const REWARD_POINTS = settings.referral_reward_points || 500;
 
           // 1. Update referral status
           const { data: referral } = await supabase
@@ -297,8 +297,8 @@ export default function Checkout() {
               <div key={item.step} className="flex items-center gap-0 flex-1">
                 <div className="flex flex-col items-center gap-2">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${item.done
-                      ? 'bg-green-neon text-black'
-                      : 'bg-white/[0.06] border border-white/[0.12] text-zinc-500'
+                    ? 'bg-green-neon text-black'
+                    : 'bg-white/[0.06] border border-white/[0.12] text-zinc-500'
                     }`}>
                     {item.done ? <Check className="w-4 h-4" /> : item.step}
                   </div>

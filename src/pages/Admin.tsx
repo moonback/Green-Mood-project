@@ -82,6 +82,9 @@ interface StoreSettings {
   social_facebook: string;
   budtender_enabled: boolean;
   subscriptions_enabled: boolean;
+  referral_reward_points: number;
+  referral_welcome_bonus: number;
+  referral_program_enabled: boolean;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -99,6 +102,9 @@ const DEFAULT_SETTINGS: StoreSettings = {
   social_facebook: 'https://facebook.com/greenMood_cbd',
   budtender_enabled: true,
   subscriptions_enabled: true,
+  referral_reward_points: 500,
+  referral_welcome_bonus: 0,
+  referral_program_enabled: true,
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -1015,6 +1021,7 @@ export default function Admin() {
                 group: 'Clients',
                 items: [
                   { key: 'customers' as Tab, label: 'Clients', icon: Users },
+                  { key: 'referrals' as Tab, label: 'Parrainages', icon: Award },
                   { key: 'reviews' as Tab, label: 'Avis', icon: MessageSquare },
                 ],
               },

@@ -15,11 +15,13 @@ import {
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { Referral } from '../lib/types';
 import SEO from '../components/SEO';
 
 export default function Referrals() {
     const { profile } = useAuthStore();
+    const { settings } = useSettingsStore();
     const [referrals, setReferrals] = useState<Referral[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [copied, setCopied] = useState(false);
@@ -54,6 +56,25 @@ export default function Referrals() {
     const totalRewards = referrals.reduce((acc, curr) => acc + (curr.points_awarded || 0), 0);
     const completedCount = referrals.filter(r => r.status === 'completed').length;
 
+    if (!settings.referral_program_enabled) {
+        return (
+            <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 flex flex-col items-center justify-center px-4">
+                <SEO title="Parrainage — Green Moon Privilège" description="Le programme de parrainage est temporairement désactivé." />
+                <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-[10px] font-black uppercase tracking-widest mb-12">
+                    <ArrowLeft className="w-4 h-4" />
+                    Retour au Compte
+                </Link>
+                <div className="text-center space-y-4 max-w-md">
+                    <Gift className="w-12 h-12 text-zinc-800 mx-auto mb-6" />
+                    <h1 className="text-3xl font-serif font-black uppercase tracking-tighter">Programme Suspendu</h1>
+                    <p className="text-zinc-500 text-sm leading-relaxed">Le programme de parrainage est temporairement désactivé. Revenez plus tard pour découvrir nos nouvelles offres.</p>
+                </div>
+            </div>
+        );
+    }
+
+    const welcomeBonus = settings.referral_welcome_bonus || 0;
+
     return (
         <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
             <SEO title="Parrainage — Green Moon Privilège" description="Parrainez vos amis et gagnez des Carats." />
@@ -75,7 +96,7 @@ export default function Referrals() {
                             Partagez <br /><span className="text-green-neon italic">L'Excellence.</span>
                         </h1>
                         <p className="text-zinc-500 text-sm max-w-lg leading-relaxed">
-                            Invitez vos amis à découvrir Green Moon. Recevez <span className="text-white font-bold">500 Carats</span> (25€) lors de leur première commande payée.
+                            Invitez vos amis à découvrir Green Moon. Recevez <span className="text-white font-bold">{settings.referral_reward_points} Carats</span> lors de leur première commande payée.
                         </p>
                     </div>
 
@@ -197,10 +218,11 @@ export default function Referrals() {
                         <ul className="space-y-3">
                             {[
                                 "Le filleul doit être un nouvel utilisateur Green Moon.",
+                                welcomeBonus > 0 ? `Le filleul reçoit ${welcomeBonus} Carats dès son inscription.` : null,
                                 "La récompense est créditée dès que la commande du filleul est réglée.",
                                 "Pas de limite sur le nombre de parrainages.",
                                 "Les Carats sont valables sur toute la boutique."
-                            ].map((rule, i) => (
+                            ].filter(Boolean).map((rule, i) => (
                                 <li key={i} className="flex gap-3 text-xs text-zinc-500 leading-relaxed">
                                     <ChevronRight className="w-4 h-4 text-green-neon shrink-0" />
                                     {rule}

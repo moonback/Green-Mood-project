@@ -14,6 +14,9 @@ export interface StoreSettings {
     social_facebook: string;
     budtender_enabled: boolean;
     subscriptions_enabled: boolean;
+    referral_reward_points: number;
+    referral_welcome_bonus: number;
+    referral_program_enabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -29,6 +32,9 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     social_facebook: 'https://facebook.com/greenMood_cbd',
     budtender_enabled: true,
     subscriptions_enabled: true,
+    referral_reward_points: 500,
+    referral_welcome_bonus: 0,
+    referral_program_enabled: true,
 };
 
 interface SettingsStore {
