@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, Clock, ChevronDown, ChevronUp, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
+import { useCartStore } from '../store/cartStore';
+import { useToastStore } from '../store/toastStore';
 import SEO from '../components/SEO';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -19,9 +21,50 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 export default function Orders() {
   const { user } = useAuthStore();
+  const addItem = useCartStore((s) => s.addItem);
+  const openSidebar = useCartStore((s) => s.openSidebar);
+  const addToast = useToastStore((s) => s.addToast);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  const handleReorder = async (order: Order) => {
+    const items = order.order_items as OrderItem[] | undefined;
+    if (!items || items.length === 0) return;
+
+    // Fetch current products to ensure they're available
+    const productIds = items.map((i) => i.product_id);
+    const { data: products } = await supabase
+      .from('products')
+      .select('*, category:categories(*)')
+      .in('id', productIds)
+      .eq('is_active', true)
+      .eq('is_available', true);
+
+    if (!products || products.length === 0) {
+      addToast({ message: 'Les produits de cette commande ne sont plus disponibles', type: 'error' });
+      return;
+    }
+
+    let addedCount = 0;
+    for (const product of products) {
+      const originalItem = items.find((i) => i.product_id === product.id);
+      if (originalItem && product.stock_quantity > 0) {
+        addItem(product);
+        if (originalItem.quantity > 1) {
+          useCartStore.getState().updateQuantity(product.id, originalItem.quantity);
+        }
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      addToast({ message: `${addedCount} produit${addedCount > 1 ? 's' : ''} ajouté${addedCount > 1 ? 's' : ''} au panier`, type: 'success' });
+      openSidebar();
+    } else {
+      addToast({ message: 'Aucun produit disponible en stock', type: 'error' });
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -176,6 +219,15 @@ export default function Orders() {
                               <span className="text-3xl font-serif font-black text-white">{order.total.toFixed(2)} €</span>
                             </div>
                           </div>
+
+                          {/* Reorder Button */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleReorder(order); }}
+                            className="w-full flex items-center justify-center gap-3 bg-green-neon text-black font-bold uppercase tracking-widest py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                            RECOMMANDER
+                          </button>
 
                           {order.delivery_type === 'click_collect' && (
                             <div className="bg-zinc-900/50 rounded-[2rem] p-6 border border-white/5 flex items-center gap-6">

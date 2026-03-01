@@ -1,9 +1,11 @@
 import type { MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, Package, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Star, Package, RefreshCw, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
+import { useToastStore } from '../store/toastStore';
+import { useWishlistStore } from '../store/wishlistStore';
 import StockBadge from './StockBadge';
 import StarRating from './StarRating';
 
@@ -14,22 +16,32 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const openSidebar = useCartStore((s) => s.openSidebar);
+  const addToast = useToastStore((s) => s.addToast);
+  const toggleWishlist = useWishlistStore((s) => s.toggleItem);
+  const isWished = useWishlistStore((s) => s.hasItem(product.id));
+
+  const handleToggleWishlist = (e: MouseEvent) => {
+    e.preventDefault();
+    toggleWishlist(product.id);
+    addToast({
+      message: isWished ? `${product.name} retiré des favoris` : `${product.name} ajouté aux favoris`,
+      type: isWished ? 'info' : 'success',
+    });
+  };
 
   const handleAddToCart = (e: MouseEvent) => {
     e.preventDefault();
     addItem(product);
     openSidebar();
+    addToast({ message: `${product.name} ajouté au panier`, type: 'success' });
   };
 
-  // Limit visible tags to 3 to keep card height consistent
+  // Limit to 2 key tags for cleaner card
   const tags: { label: string; variant: 'spec' | 'benefit' | 'aroma' }[] = [];
   if (product.cbd_percentage != null) tags.push({ label: `CBD ${product.cbd_percentage}%`, variant: 'spec' });
-  if (product.weight_grams != null) tags.push({ label: `${product.weight_grams}g`, variant: 'spec' });
-  for (const b of (product.attributes?.benefits || []).slice(0, 2)) {
-    if (tags.length < 3) tags.push({ label: b, variant: 'benefit' });
-  }
-  for (const a of (product.attributes?.aromas || []).slice(0, 1)) {
-    if (tags.length < 3) tags.push({ label: a, variant: 'aroma' });
+  if (product.weight_grams != null && tags.length < 2) tags.push({ label: `${product.weight_grams}g`, variant: 'spec' });
+  for (const b of (product.attributes?.benefits || []).slice(0, 1)) {
+    if (tags.length < 2) tags.push({ label: b, variant: 'benefit' });
   }
 
   const tagStyles = {
@@ -63,12 +75,23 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       )}
 
-      {/* Subscription badge */}
-      {product.is_subscribable && (
-        <div className={`absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 bg-zinc-900/80 backdrop-blur-md rounded-xl border border-white/10 text-green-neon`}>
-          <RefreshCw className="w-4 h-4" />
-        </div>
-      )}
+      {/* Wishlist + Subscription badges */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
+        <button
+          onClick={handleToggleWishlist}
+          className={`flex items-center justify-center w-8 h-8 rounded-xl border backdrop-blur-md transition-all ${isWished
+            ? 'bg-red-500/90 border-red-500/50 text-white'
+            : 'bg-zinc-900/80 border-white/10 text-zinc-400 hover:text-red-400 hover:border-red-400/30'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${isWished ? 'fill-current' : ''}`} />
+        </button>
+        {product.is_subscribable && (
+          <div className="flex items-center justify-center w-8 h-8 bg-zinc-900/80 backdrop-blur-md rounded-xl border border-white/10 text-green-neon">
+            <RefreshCw className="w-4 h-4" />
+          </div>
+        )}
+      </div>
 
       {/* Image — aspect 4:5 coherent with product detail */}
       <Link to={`/catalogue/${product.slug}`} className="block aspect-[4/5] overflow-hidden bg-zinc-800/50">

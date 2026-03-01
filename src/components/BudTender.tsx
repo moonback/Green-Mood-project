@@ -8,6 +8,7 @@ import { getQuizPrompt, getChatPrompt, QuizAnswers } from '../lib/budtenderPromp
 import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTENDER_DEFAULTS, QuizStep, QuizOption } from '../lib/budtenderSettings';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
+import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
 
 // ─── Shared types and logic imported ───
 
@@ -659,26 +660,10 @@ export default function BudTender() {
             {/* ── Floating button ── */}
             <AnimatePresence>
                 {isOpen ? null : settings.enabled && (
-                    <motion.button
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        whileHover={{ scale: 1.05, y: -4 }}
-                        whileTap={{ scale: 0.95 }}
+                    <BudTenderWidget
                         onClick={handleOpen}
-                        className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-zinc-900/80 backdrop-blur-xl border border-green-neon/30 text-white rounded-2xl px-5 py-4 shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon/60 hover:shadow-[0_0_40px_rgba(57,255,20,0.2)] transition-all group ${pulse ? 'animate-pulse-slow' : ''}`}
-                    >
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-xl bg-green-neon/20 flex items-center justify-center group-hover:bg-green-neon/30 transition-colors">
-                                <Leaf className="w-5 h-5 text-green-neon group-hover:rotate-12 transition-transform duration-300" />
-                            </div>
-                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-neon rounded-full border-2 border-zinc-900 animate-pulse" />
-                        </div>
-                        <div className="text-left hidden sm:block">
-                            <p className="text-sm font-bold text-green-neon leading-none tracking-tight">BudTender IA</p>
-                            <p className="text-[11px] text-zinc-400 leading-none mt-1 group-hover:text-zinc-200 transition-colors">Votre expert CBD</p>
-                        </div>
-                    </motion.button>
+                        pulse={pulse}
+                    />
                 )}
             </AnimatePresence>
 
@@ -742,28 +727,13 @@ export default function BudTender() {
                             {/* Messages area */}
                             <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 custom-scrollbar bg-gradient-to-b from-transparent via-zinc-900/20 to-green-neon/[0.02]">
                                 {messages.map((msg) => (
-                                    <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-3`}>
-                                        {msg.sender === 'bot' && (
-                                            <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-sm">
-                                                <Leaf className="w-3.5 h-3.5 text-green-neon" />
-                                            </div>
-                                        )}
-                                        <div className="max-w-[85%] space-y-3">
-
-                                            {/* ── Standard text bubble ── */}
-                                            {msg.text && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${msg.sender === 'user'
-                                                        ? 'bg-green-neon text-black font-bold'
-                                                        : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
-                                                        }`}
-                                                >
-                                                    {msg.text}
-                                                </motion.div>
-                                            )}
-
+                                    <BudTenderMessage
+                                        key={msg.id}
+                                        sender={msg.sender}
+                                        text={msg.text}
+                                        type={msg.type}
+                                        isTyping={isTyping}
+                                    >
                                             {/* ── Restock card ── */}
                                             {msg.type === 'restock' && msg.restockProduct && (
                                                 <motion.div
@@ -934,6 +904,13 @@ export default function BudTender() {
                                                         </motion.div>
                                                     ))}
 
+                                                    {/* ── Feedback on recommendations ── */}
+                                                    <BudTenderFeedback
+                                                        onFeedback={(type) => {
+                                                            console.log(`[BudTender] Recommendation feedback: ${type}`);
+                                                        }}
+                                                    />
+
                                                     {/* ── Ambassador / Share section ── */}
                                                     <motion.div
                                                         initial={{ opacity: 0, y: 10 }}
@@ -991,28 +968,11 @@ export default function BudTender() {
                                                     </motion.div>
                                                 </div>
                                             )}
-                                        </div>
-                                    </div>
+                                    </BudTenderMessage>
                                 ))}
 
                                 {/* Typing indicator */}
-                                {isTyping && (
-                                    <div className="flex justify-start items-end gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 shadow-sm">
-                                            <Leaf className="w-3.5 h-3.5 text-green-neon" />
-                                        </div>
-                                        <div className="bg-zinc-800/80 backdrop-blur-md px-5 py-4 rounded-2xl flex gap-1.5">
-                                            {[0, 1, 2].map((i) => (
-                                                <motion.div
-                                                    key={i}
-                                                    className="w-2 h-2 bg-green-neon/40 rounded-full"
-                                                    animate={{ opacity: [0.4, 1, 0.4], y: [0, -3, 0] }}
-                                                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                {isTyping && <BudTenderTypingIndicator />}
 
                                 {/* ── Welcome CTA: simple start quiz (no history, no saved prefs) ── */}
                                 {showStartButton && (
