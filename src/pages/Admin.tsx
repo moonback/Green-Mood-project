@@ -48,11 +48,12 @@ import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminReviewsTab from '../components/admin/AdminReviewsTab';
 import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
 import AdminRecommendationsTab from '../components/admin/AdminRecommendationsTab';
+import AdminBudTenderTab from '../components/admin/AdminBudTenderTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations' | 'budtender';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -191,6 +192,7 @@ export default function Admin() {
     { key: 'subscriptions', label: 'Abonnements', icon: RefreshCw },
     { key: 'reviews', label: 'Avis', icon: MessageSquare },
     { key: 'analytics', label: 'Analytique', icon: LineChart },
+    { key: 'budtender', label: 'BudTender IA', icon: Leaf },
   ] as { key: Tab; label: string; icon: ElementType }[];
 
   // ─── Data loading ─────────────────────────────────────────────────────────
@@ -212,6 +214,7 @@ export default function Admin() {
       case 'analytics': break; // handled by AdminAnalyticsTab
       case 'promo_codes': break; // handled by AdminPromoCodesTab
       case 'recommendations': break; // handled by AdminRecommendationsTab
+      case 'budtender': break; // handled by AdminBudTenderTab
     }
     setIsLoading(false);
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1070,7 +1073,10 @@ export default function Admin() {
               },
               {
                 group: 'Système',
-                items: [{ key: 'settings' as Tab, label: 'Paramètres', icon: Settings }],
+                items: [
+                  { key: 'settings' as Tab, label: 'Paramètres', icon: Settings },
+                  { key: 'budtender' as Tab, label: 'BudTender IA', icon: Leaf },
+                ],
               },
             ].map(({ group, items }) => (
               <div key={group}>
@@ -2305,6 +2311,11 @@ export default function Admin() {
                 {/* ── Recommendations tab ── */}
                 {tab === 'recommendations' && !isLoading && (
                   <AdminRecommendationsTab />
+                )}
+
+                {/* ── BudTender IA tab ── */}
+                {tab === 'budtender' && !isLoading && (
+                  <AdminBudTenderTab />
                 )}
               </>
             )}

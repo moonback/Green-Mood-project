@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock } from 'lucide-react';
+import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
@@ -62,6 +62,33 @@ const QUIZ_STEPS: QuizStep[] = [
     },
 ];
 
+// ─── Terpene / Aroma step ─────────────────────────────────────────────────────
+
+interface TerpeneChip {
+    label: string;
+    emoji: string;
+    group: 'arome' | 'effet';
+}
+
+const TERPENE_CHIPS: TerpeneChip[] = [
+    // Arômes
+    { label: 'Citronné', emoji: '🍋', group: 'arome' },
+    { label: 'Terreux', emoji: '🌍', group: 'arome' },
+    { label: 'Fruité', emoji: '🍓', group: 'arome' },
+    { label: 'Floral', emoji: '🌸', group: 'arome' },
+    { label: 'Épicé', emoji: '🌶️', group: 'arome' },
+    { label: 'Boisé', emoji: '🪵', group: 'arome' },
+    { label: 'Herbacé', emoji: '🌿', group: 'arome' },
+    { label: 'Sucré', emoji: '🍬', group: 'arome' },
+    // Effets terpéniques
+    { label: 'Focus', emoji: '🎯', group: 'effet' },
+    { label: 'Créativité', emoji: '🎨', group: 'effet' },
+    { label: 'Détente', emoji: '🛁', group: 'effet' },
+    { label: 'Énergie', emoji: '⚡', group: 'effet' },
+    { label: 'Récupération', emoji: '💆', group: 'effet' },
+    { label: 'Anti-stress', emoji: '🧘', group: 'effet' },
+];
+
 // ─── Recommendation logic ───────────────────────────────────────────────────
 
 type Answers = Record<string, string>;
@@ -117,7 +144,21 @@ function scoreProduct(product: Product, answers: Answers): number {
     return score;
 }
 
-function generateAdvice(answers: Answers): string {
+// Bonus score from terpene/aroma multi-selection
+function scoreTerpenes(product: Product, selected: string[]): number {
+    if (selected.length === 0) return 0;
+    const productAromas: string[] = (product.attributes?.aromas ?? []).map((a: string) => a.toLowerCase());
+    const productDesc = (product.description ?? '').toLowerCase();
+    let bonus = 0;
+    for (const chip of selected) {
+        const chipLow = chip.toLowerCase();
+        if (productAromas.some(a => a.includes(chipLow) || chipLow.includes(a))) bonus += 4;
+        if (productDesc.includes(chipLow)) bonus += 2;
+    }
+    return bonus;
+}
+
+function generateAdvice(answers: Answers, terpenes: string[] = []): string {
     const lines: string[] = [];
     if (answers.goal === 'sleep') lines.push('Pour favoriser un sommeil de qualité, je recommande les huiles à fort dosage le soir au coucher.');
     if (answers.goal === 'stress') lines.push("Contre le stress quotidien, les infusions ou une huile à dosage modéré sont d'excellentes alliées.");
@@ -125,6 +166,7 @@ function generateAdvice(answers: Answers): string {
     if (answers.goal === 'wellness') lines.push('Pour un bien-être global, démarrez doucement avec une huile classique ou une infusion.');
     if (answers.experience === 'beginner') lines.push("En tant que débutant, commencez à faible dose et augmentez progressivement selon vos ressentis.");
     if (answers.format === 'bundle') lines.push("Les packs découverte sont idéaux pour tester plusieurs formes de CBD à prix réduit.");
+    if (terpenes.length > 0) lines.push(`Votre profil terpénique (${terpenes.join(', ')}) guidera notre sélection vers des arômes et effets précis.`);
     return lines.join(' ');
 }
 
@@ -175,7 +217,7 @@ Réponds en français, sans mention d'avertissement légal. Rappelle-toi que tu 
 
 // ─── Chat Types ─────────────────────────────────────────────────────────────
 
-type MessageType = 'standard' | 'restock' | 'skip-quiz';
+type MessageType = 'standard' | 'restock' | 'skip-quiz' | 'terpene';
 
 interface Message {
     id: string;
@@ -207,6 +249,9 @@ export default function BudTender() {
     const [answers, setAnswers] = useState<Answers>({});
     const [products, setProducts] = useState<Product[]>([]);
     const [pulse, setPulse] = useState(false);
+    // Terpene multi-select state
+    const [terpeneSelection, setTerpeneSelection] = useState<string[]>([]);
+    const [awaitingTerpene, setAwaitingTerpene] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -346,6 +391,19 @@ export default function BudTender() {
         setAnswers(newAnswers);
 
         const nextIndex = stepIndex + 1;
+
+        // ── Inject terpene step for experts, after experience ──
+        if (stepId === 'experience' && option.value === 'expert') {
+            setStepIndex(nextIndex); // move to next (format) — will resume after terpene
+            setAwaitingTerpene(true);
+            setTerpeneSelection([]);
+            addBotMessage({
+                type: 'terpene',
+                text: '🧪 En tant que connaisseur, affinez votre profil ! Sélectionnez vos arômes et effets préférés (optionnel) :',
+            });
+            return;
+        }
+
         if (nextIndex < QUIZ_STEPS.length) {
             setStepIndex(nextIndex);
             const nextStep = QUIZ_STEPS[nextIndex];
@@ -360,29 +418,53 @@ export default function BudTender() {
         }
     };
 
+    const confirmTerpeneSelection = () => {
+        setAwaitingTerpene(false);
+        if (terpeneSelection.length > 0) {
+            addUserMessage(`Arômes & effets : ${terpeneSelection.join(', ')} ✨`);
+        } else {
+            addUserMessage('Je passe cette étape →');
+        }
+        // Resume quiz from current stepIndex
+        const nextStep = QUIZ_STEPS[stepIndex];
+        if (nextStep) {
+            addBotMessage({
+                text: nextStep.question,
+                isOptions: true,
+                options: nextStep.options,
+                stepId: nextStep.id,
+            });
+        } else {
+            generateRecommendations(answers);
+        }
+    };
+
     const generateRecommendations = async (finalAnswers: Answers) => {
         setIsTyping(true);
 
         // Persist prefs
         memory.savePrefs(finalAnswers as unknown as SavedPrefs);
 
-        // Score locally
+        // Score locally — with terpene bonus
         const scored = [...products]
-            .map((p) => ({ product: p, score: scoreProduct(p, finalAnswers) }))
+            .map((p) => ({ product: p, score: scoreProduct(p, finalAnswers) + scoreTerpenes(p, terpeneSelection) }))
             .sort((a, b) => b.score - a.score)
             .filter((x) => x.score > 0)
             .slice(0, 3)
             .map((x) => x.product);
 
-        // Build context for Gemini (include past purchase info if available)
+        // Build context for Gemini
         const ctxParts: string[] = [];
         if (memory.pastProducts.length > 0) {
             ctxParts.push(`Derniers achats : ${memory.pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}.`);
         }
+        if (terpeneSelection.length > 0) {
+            ctxParts.push(`Arômes & effets préférés : ${terpeneSelection.join(', ')}.`);
+        }
         const geminiContext = ctxParts.join(' ') || undefined;
 
         const geminiText = await callGemini(finalAnswers, products, geminiContext);
-        const adviceText = geminiText ?? generateAdvice(finalAnswers);
+        const adviceText = geminiText ?? generateAdvice(finalAnswers, terpeneSelection);
 
         setMessages((prev) => [...prev, {
             id: Math.random().toString(36).substring(7),
@@ -398,6 +480,8 @@ export default function BudTender() {
         setMessages([]);
         setStepIndex(-1);
         setAnswers({});
+        setTerpeneSelection([]);
+        setAwaitingTerpene(false);
         setTimeout(() => buildWelcomeMessages(), 100);
     };
 
@@ -572,6 +656,51 @@ export default function BudTender() {
                                                             </Link>
                                                         )}
                                                     </div>
+                                                </motion.div>
+                                            )}
+
+                                            {/* ── Terpene Selection UI ── */}
+                                            {msg.type === 'terpene' && awaitingTerpene && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className="space-y-4 pt-2"
+                                                >
+                                                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
+                                                        {TERPENE_CHIPS.map((chip) => {
+                                                            const isSelected = terpeneSelection.includes(chip.label);
+                                                            return (
+                                                                <button
+                                                                    key={chip.label}
+                                                                    onClick={() => {
+                                                                        setTerpeneSelection(prev =>
+                                                                            isSelected ? prev.filter(t => t !== chip.label) : [...prev, chip.label]
+                                                                        );
+                                                                    }}
+                                                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${isSelected
+                                                                        ? 'bg-green-neon border-green-neon text-black'
+                                                                        : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                                                                        }`}
+                                                                >
+                                                                    <span>{chip.emoji}</span>
+                                                                    <span className="truncate">{chip.label}</span>
+                                                                    {isSelected && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.02 }}
+                                                        whileTap={{ scale: 0.98 }}
+                                                        onClick={confirmTerpeneSelection}
+                                                        className="w-full bg-zinc-100 hover:bg-white text-black font-black py-3 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2"
+                                                    >
+                                                        {terpeneSelection.length > 0 ? (
+                                                            <>Confirmer la sélection ({terpeneSelection.length}) <ChevronRight className="w-4 h-4" /></>
+                                                        ) : (
+                                                            <>Passer cette étape <ChevronRight className="w-4 h-4" /></>
+                                                        )}
+                                                    </motion.button>
                                                 </motion.div>
                                             )}
 
