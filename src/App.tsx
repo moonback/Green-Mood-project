@@ -24,6 +24,7 @@ import Subscriptions from "./pages/Subscriptions";
 import LoyaltyHistory from "./pages/LoyaltyHistory";
 import MyReviews from "./pages/MyReviews";
 import Favorites from "./pages/Favorites";
+import Referrals from './pages/Referrals';
 import NotFound from "./pages/NotFound";
 import { useAuthStore } from "./store/authStore";
 import { useSettingsStore } from "./store/settingsStore";
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="compte/fidelite" element={<LoyaltyHistory />} />
             <Route path="compte/avis" element={<MyReviews />} />
             <Route path="compte/favoris" element={<Favorites />} />
+            <Route path="compte/parrainage" element={<Referrals />} />
             <Route path="compte/profil" element={<Profile />} />
           </Route>
 

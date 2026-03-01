@@ -59,8 +59,23 @@ export interface Profile {
   full_name: string | null;
   phone: string | null;
   loyalty_points: number;
+  referral_code: string | null;
+  referred_by_id: string | null;
   is_admin: boolean;
   created_at: string;
+}
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referee_id: string;
+  status: 'joined' | 'completed';
+  reward_issued: boolean;
+  points_awarded: number;
+  created_at: string;
+  // joined
+  referrer?: Pick<Profile, 'full_name'>;
+  referee?: Pick<Profile, 'full_name' | 'created_at'>;
 }
 
 export interface Address {
@@ -153,7 +168,7 @@ export interface VivaOrderResponse {
 
 // ─── Phase 3 Types ────────────────────────────────────────────────────────────
 
-export type LoyaltyTransactionType = 'earned' | 'redeemed' | 'adjusted' | 'expired';
+export type LoyaltyTransactionType = 'earned' | 'redeemed' | 'referral' | 'adjusted' | 'expired';
 
 export interface LoyaltyTransaction {
   id: string;

@@ -44,6 +44,7 @@ import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../
 import { useSettingsStore } from '../store/settingsStore';
 import SEO from '../components/SEO';
 import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab';
+import AdminReferralsTab from '../components/admin/AdminReferralsTab';
 import AdminSubscriptionsTab from '../components/admin/AdminSubscriptionsTab';
 import AdminReviewsTab from '../components/admin/AdminReviewsTab';
 import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
@@ -53,7 +54,7 @@ import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations' | 'budtender';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations' | 'budtender' | 'referrals';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -188,10 +189,13 @@ export default function Admin() {
     { key: 'orders', label: 'Commandes', icon: Package },
     { key: 'stock', label: 'Stock', icon: BarChart3 },
     { key: 'customers', label: 'Clients', icon: Users },
+    { key: 'referrals', label: 'Parrainages', icon: Award },
     { key: 'settings', label: 'Paramètres', icon: Settings },
     { key: 'subscriptions', label: 'Abonnements', icon: RefreshCw },
     { key: 'reviews', label: 'Avis', icon: MessageSquare },
     { key: 'analytics', label: 'Analytique', icon: LineChart },
+    { key: 'promo_codes', label: 'Codes Promo', icon: Coins },
+    { key: 'recommendations', label: 'Recommandations', icon: TrendingUp },
     { key: 'budtender', label: 'BudTender IA', icon: Leaf },
   ] as { key: Tab; label: string; icon: ElementType }[];
 
@@ -2250,6 +2254,11 @@ export default function Admin() {
                 {/* ── BudTender IA tab ── */}
                 {tab === 'budtender' && !isLoading && (
                   <AdminBudTenderTab />
+                )}
+
+                {/* ── Referrals tab ── */}
+                {tab === 'referrals' && !isLoading && (
+                  <AdminReferralsTab />
                 )}
               </>
             )}

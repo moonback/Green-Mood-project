@@ -61,13 +61,43 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (error) throw error;
   },
 
-  signUp: async (email, password, fullName) => {
-    const { error } = await supabase.auth.signUp({
+  signUp: async (email, password, fullName, referralCode?: string) => {
+    let referredById: string | null = null;
+
+    if (referralCode) {
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode.trim().toUpperCase())
+        .single();
+
+      if (referrer) {
+        referredById = referrer.id;
+      }
+    }
+
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          referred_by_id: referredById
+        }
+      },
     });
+
     if (error) throw error;
+
+    // If referral exists, create the initial entry in the referrals table
+    // (Profile creation trigger handles generating the referee's own referral_code)
+    if (authData.user && referredById) {
+      await supabase.from('referrals').insert({
+        referrer_id: referredById,
+        referee_id: authData.user.id,
+        status: 'joined'
+      });
+    }
   },
 
   signOut: async () => {

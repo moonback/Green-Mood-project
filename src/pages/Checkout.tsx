@@ -197,6 +197,61 @@ export default function Checkout() {
 
       fetchProfile(user.id);
 
+      // --- Referral Reward Logic ---
+      if (profile?.referred_by_id) {
+        // Check if this is the user's first paid order
+        const { count } = await supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('payment_status', 'paid');
+
+        // If count is 1 (this order), it's the first one
+        if (count === 1) {
+          const REWARD_POINTS = 500;
+
+          // 1. Update referral status
+          const { data: referral } = await supabase
+            .from('referrals')
+            .update({
+              status: 'completed',
+              reward_issued: true,
+              points_awarded: REWARD_POINTS
+            })
+            .eq('referee_id', user.id)
+            .eq('status', 'joined')
+            .select()
+            .single();
+
+          if (referral) {
+            // 2. Credit the referrer
+            const { data: referrerProfile } = await supabase
+              .from('profiles')
+              .select('loyalty_points')
+              .eq('id', profile.referred_by_id)
+              .single();
+
+            if (referrerProfile) {
+              const newReferrerBalance = (referrerProfile.loyalty_points || 0) + REWARD_POINTS;
+              await supabase
+                .from('profiles')
+                .update({ loyalty_points: newReferrerBalance })
+                .eq('id', profile.referred_by_id);
+
+              // 3. Log transaction for referrer
+              await supabase.from('loyalty_transactions').insert({
+                user_id: profile.referred_by_id,
+                type: 'referral', // This type needs to be handled in LoyaltyHistory
+                points: REWARD_POINTS,
+                balance_after: newReferrerBalance,
+                note: `Récompense de parrainage : ${profile.full_name || 'Un ami'} a passé sa 1ère commande !`
+              });
+            }
+          }
+        }
+      }
+      // --- End Referral Logic ---
+
       // 6. Clear cart and redirect
       clearCart();
       navigate(`/commande/confirmation?id=${order.id}`);
@@ -241,11 +296,10 @@ export default function Checkout() {
             ].map((item, idx) => (
               <div key={item.step} className="flex items-center gap-0 flex-1">
                 <div className="flex flex-col items-center gap-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    item.done
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${item.done
                       ? 'bg-green-neon text-black'
                       : 'bg-white/[0.06] border border-white/[0.12] text-zinc-500'
-                  }`}>
+                    }`}>
                     {item.done ? <Check className="w-4 h-4" /> : item.step}
                   </div>
                   <span className={`text-[10px] font-semibold uppercase tracking-wider ${item.done ? 'text-green-neon' : 'text-zinc-600'}`}>

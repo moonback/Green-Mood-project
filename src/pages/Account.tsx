@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   User,
+  Users,
   Package,
   MapPin,
   Coins,
@@ -69,6 +70,13 @@ export default function Account() {
       description: 'PARTAGER VOTRE EXPÉRIENCE SENSORIELLE',
       to: '/compte/avis',
       accent: 'from-zinc-500/5 to-zinc-500/2',
+    },
+    {
+      icon: Users,
+      label: 'Parrainage & Carats',
+      description: 'GAGNEZ 500 PTS PAR AMI INVITÉ',
+      to: '/compte/parrainage',
+      accent: 'from-purple-500/5 to-purple-500/2',
     },
     {
       icon: Heart,

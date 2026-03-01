@@ -17,10 +17,29 @@ La persistance des données de **Green Moon** repose sur les capacités relation
 ### 👤 Utilisateurs & Profils
 | Table | Colonnes Clés | Description |
 | :--- | :--- | :--- |
-| `profiles` | `id, full_name, loyalty_points, is_admin` | Informations étendues liées à `auth.users`. |
+| `profiles` | `id, full_name, loyalty_points, referral_code, referred_by_id, is_admin` | Informations étendues liées à `auth.users`. |
 | `addresses` | `id, user_id, street, city, postal_code, is_default` | Carnet d'adresses client. |
 | `loyalty_transactions` | `id, user_id, order_id, points, type` | Historique des points Carats gagnés/utilisés. |
 | `wishlists` | `id, user_id, product_id` | Liste de souhaits (Favoris) (Migration V2). |
+
+### `profiles`
+- `id`: UUID, PRIMARY KEY (FK to `auth.users.id`)
+- `full_name`: TEXT
+- `loyalty_points`: INTEGER, default 0
+- `referral_code`: TEXT, UNIQUE, format 'GRN-XXXXXX'
+- `referred_by_id`: UUID, FK to `profiles.id` (identifie le parrain)
+- `is_admin`: BOOLEAN, default false
+- `created_at`: TIMESTAMPTZ
+
+### `referrals`
+Table de suivi des parrainages.
+- `id`: UUID, PRIMARY KEY
+- `referrer_id`: UUID, FK to `profiles.id`
+- `referee_id`: UUID, FK to `profiles.id`
+- `status`: TEXT ('joined' | 'completed')
+- `reward_issued`: BOOLEAN, default false
+- `points_awarded`: INTEGER
+- `created_at`: TIMESTAMPTZ
 
 ### 🛒 Commandes & Ventes
 | Table | Colonnes Clés | Description |

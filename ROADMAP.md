@@ -38,7 +38,7 @@ Ce document trace la trajectoire actuelle et future de l'application **Green Moo
 ## 🔮 Phase 4 : Expansion & International (V2)
 - [ ] **Multi-Boutiques** : Gestion de plusieurs points de vente avec stocks séparés.
 - [ ] **Internationalisation (i18n)** : Support multi-langues (FR/EN/ES) pour la livraison européenne.
-- [ ] **Programme Parrainage** : Système complexe de recommandation entre utilisateurs pour gagner des Carats.
+- [x] **Programme Parrainage** : Système complet de recommandation entre utilisateurs pour gagner des Carats.
 - [ ] **Automatisation de la Logistique** : Exportation de bordereaux d'expédition directs (Colissimo, Mondial Relay).
 
 ---
