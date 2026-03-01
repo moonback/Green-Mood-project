@@ -121,16 +121,16 @@ export class GeminiLiveSession {
                                     parameters: {
                                         type: Type.OBJECT,
                                         properties: {
-                                            product_id: {
+                                            product_slug: {
                                                 type: Type.STRING,
-                                                description: 'L\'ID UUID du produit à ajouter.',
+                                                description: 'Le slug (identifiant URL) du produit à ajouter.',
                                             },
                                             product_name: {
                                                 type: Type.STRING,
                                                 description: 'Le nom du produit (pour confirmation).',
                                             },
                                         },
-                                        required: ['product_id'],
+                                        required: ['product_slug'],
                                     },
                                 },
                             ],
@@ -168,59 +168,67 @@ export class GeminiLiveSession {
     // ── Message handler ────────────────────────────────────────────────────────
 
     private _handleMessage(message: any): void {
-        const serverContent = message?.serverContent;
-        if (!serverContent) return;
+        console.log('[GeminiLive] message received:', JSON.stringify(message).slice(0, 500));
 
-        const modelTurn = serverContent.modelTurn;
-        if (modelTurn?.parts) {
-            let hasAudio = false;
-            for (const part of modelTurn.parts) {
-                if (part.inlineData?.mimeType?.startsWith('audio/pcm') || part.inlineData?.mimeType?.startsWith('audio/l16')) {
-                    hasAudio = true;
-                    try {
-                        const raw = atob(part.inlineData.data);
-                        const buf = new ArrayBuffer(raw.length);
-                        const view = new Uint8Array(buf);
-                        for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
-                        this.enqueueAudio(buf);
-                    } catch (e) {
-                        console.error('[GeminiLive] audio decode error:', e);
+        // 1. Setup Complete
+        if (message?.setupComplete) {
+            console.log('[GeminiLive] Setup complete acknowledgement received.');
+        }
+
+        // 2. Server Content (Audio/Text from model)
+        const serverContent = message?.serverContent;
+        if (serverContent) {
+            const modelTurn = serverContent.modelTurn;
+            if (modelTurn?.parts) {
+                let hasAudio = false;
+                for (const part of modelTurn.parts) {
+                    if (part.inlineData?.mimeType?.startsWith('audio/pcm') || part.inlineData?.mimeType?.startsWith('audio/l16')) {
+                        hasAudio = true;
+                        try {
+                            const raw = atob(part.inlineData.data);
+                            const buf = new ArrayBuffer(raw.length);
+                            const view = new Uint8Array(buf);
+                            for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
+                            this.enqueueAudio(buf);
+                        } catch (e) {
+                            console.error('[GeminiLive] audio decode error:', e);
+                        }
+                    }
+                    if (part.text) {
+                        console.log('[GeminiLive] Model text:', part.text.slice(0, 100));
+                        this.callbacks.onTranscript?.(part.text, 'model');
                     }
                 }
-                if (part.text) {
-                    console.log('[GeminiLive] Model text:', part.text.slice(0, 100));
-                    this.callbacks.onTranscript?.(part.text, 'model');
+                if (hasAudio) this.callbacks.onSpeakingChange?.(true);
+            }
+
+            if (serverContent.turnComplete) {
+                console.log('[GeminiLive] turnComplete');
+                this.callbacks.onSpeakingChange?.(false);
+                // Reset scheduled playback time so next response starts immediately
+                if (this.playbackContext) {
+                    this.nextPlayTime = this.playbackContext.currentTime;
                 }
             }
-            if (hasAudio) this.callbacks.onSpeakingChange?.(true);
         }
 
-        if (serverContent.turnComplete) {
-            console.log('[GeminiLive] turnComplete');
-            this.callbacks.onSpeakingChange?.(false);
-            // Reset scheduled playback time so next response starts immediately
-            if (this.playbackContext) {
-                this.nextPlayTime = this.playbackContext.currentTime;
-            }
-        }
-
-        // Tool calls handler
+        // 3. Tool calls (Function calls from model)
         const toolCall = message?.toolCall;
         if (toolCall) {
-            console.log('[GeminiLive] toolCall:', toolCall);
+            console.log('[GeminiLive] 🛠️ Tool call received:', JSON.stringify(toolCall));
             this.callbacks.onToolCall?.(toolCall);
             // Automatically respond to tool call to acknowledge
             this.sendToolResponse(toolCall);
         }
 
-        // Input transcription (user speech → text)
+        // 4. Input transcription (user speech → text)
         const inputTranscript = message?.inputTranscription;
         if (inputTranscript?.text) {
             console.log('[GeminiLive] User said:', inputTranscript.text.slice(0, 100));
             this.callbacks.onTranscript?.(inputTranscript.text, 'user');
         }
 
-        // Output transcription
+        // 5. Output transcription
         const outputTranscript = message?.outputTranscription;
         if (outputTranscript?.text) {
             this.callbacks.onTranscript?.(outputTranscript.text, 'model');
@@ -332,9 +340,12 @@ export class GeminiLiveSession {
 
     sendToolResponse(toolCall: any): void {
         if (!this.session || !this.isConnected) return;
+        const functionCalls = toolCall.functionCalls || [];
+        if (functionCalls.length === 0) return;
+
         this.session.sendToolResponse({
-            functionResponses: toolCall.functionCalls.map((fc: any) => ({
-                id: fc.id,
+            functionResponses: functionCalls.map((fc: any) => ({
+                id: fc.id || fc.call_id || fc.callId,
                 name: fc.name,
                 response: { success: true },
             })),

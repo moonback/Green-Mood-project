@@ -793,8 +793,8 @@ export default function BudTender() {
                                             setVoiceModalOpen(true);
                                             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                                             if (apiKey && !voice.isActive) {
-                                                voice.startVoice(products, apiKey, memory.userName, (id) => {
-                                                    const p = products.find(prod => prod.id === id);
+                                                voice.startVoice(products, apiKey, memory.userName, (slug) => {
+                                                    const p = products.find(prod => prod.slug === slug);
                                                     if (p) {
                                                         addItem(p);
                                                         openSidebar();
@@ -1166,8 +1166,8 @@ export default function BudTender() {
                                             setVoiceModalOpen(true);
                                             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                                             if (apiKey && !voice.isActive) {
-                                                voice.startVoice(products, apiKey, memory.userName, (id) => {
-                                                    const p = products.find(prod => prod.id === id);
+                                                voice.startVoice(products, apiKey, memory.userName, (slug) => {
+                                                    const p = products.find(prod => prod.slug === slug);
                                                     if (p) {
                                                         addItem(p);
                                                         openSidebar();

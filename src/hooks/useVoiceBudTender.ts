@@ -30,7 +30,7 @@ function buildVoiceSystemPrompt(
         const cbd = p.cbd_percentage ? `CBD ${p.cbd_percentage}%` : '';
         const thc = p.thc_max ? `THC max ${p.thc_max}%` : '';
         const specs = [cbd, thc].filter(Boolean).join(', ');
-        return `- ${p.name} (ID: ${p.id}, ${cat}, ${specs || '?'}, ${p.price}€)${p.description ? ' — ' + p.description.slice(0, 60) : ''}${aromas ? ' | Arômes: ' + aromas : ''}${benefits ? ' | Effets: ' + benefits : ''}`;
+        return `- ${p.name} (Slug: ${p.slug}, ${cat}, ${specs || '?'}, ${p.price}€)${p.description ? ' — ' + p.description.slice(0, 60) : ''}${aromas ? ' | Arômes: ' + aromas : ''}${benefits ? ' | Effets: ' + benefits : ''}`;
     }).join('\n');
 
     const greeting = userName ? `Le client s'appelle ${userName}.` : '';
@@ -47,7 +47,7 @@ CONSIGNES DE DIALOGUE (INDISPENSABLE) :
 GESTION DU PANIER (FLUX DE TRAVAIL) :
 - **ÉTAPE 1 (Suggérer)** : Propose un produit du catalogue ci-dessous selon les besoins du client.
 - **ÉTAPE 2 (Confirmer)** : Si le client semble intéressé, demande TOUJOURS : "Est-ce que je l'ajoute à votre panier ?".
-- **ÉTAPE 3 (Agir)** : Appelle l'outil 'add_to_cart' avec le 'product_id' correspondant UNIQUEMENT si le client dit "Oui" (ou équivalent).
+- **ÉTAPE 3 (Agir)** : Appelle l'outil 'add_to_cart' avec le 'product_slug' correspondant UNIQUEMENT si le client dit "Oui" (ou équivalent).
 - **ÉTAPE 4 (Valider)** : Une fois l'outil appelé, dis : "C'est fait, j'ai ajouté [Nom du produit] à votre panier."
 
 CATALOGUE PRODUITS (${products.length}) :
@@ -73,7 +73,7 @@ export function useVoiceBudTender() {
         products: Product[],
         apiKey: string,
         userName?: string | null,
-        onAddToCart?: (productId: string) => void
+        onAddToCart?: (productSlug: string) => void
     ) => {
         if (sessionRef.current) return;
 
@@ -98,12 +98,14 @@ export function useVoiceBudTender() {
             },
 
             onToolCall: (toolCall) => {
-                console.log('[useVoiceBudTender] Tool call received:', toolCall);
-                const calls = toolCall.functionCalls || [];
+                console.log('[useVoiceBudTender] 🛠️ Tool call data:', JSON.stringify(toolCall));
+                const calls = toolCall.functionCalls || toolCall.function_calls || [];
+
                 for (const call of calls) {
-                    if (call.name === 'add_to_cart' && call.args?.product_id) {
-                        console.log('[useVoiceBudTender] Adding product to cart:', call.args.product_id);
-                        onAddToCart?.(call.args.product_id);
+                    const slug = call.args?.product_slug || call.args?.productSlug;
+                    if (call.name === 'add_to_cart' && slug) {
+                        console.log('[useVoiceBudTender] ✅ Adding product to cart (slug):', slug);
+                        onAddToCart?.(slug);
                     }
                 }
             },
