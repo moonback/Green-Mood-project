@@ -115,7 +115,7 @@ export default function AdminBudTenderTab() {
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'memory' | 'quiz'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'live' | 'memory' | 'quiz'>('general');
 
     // Load from Supabase (and fallback to localStorage) on mount
     useEffect(() => {
@@ -179,6 +179,7 @@ export default function AdminBudTenderTab() {
     const subTabs = [
         { key: 'general', label: 'Général', icon: Leaf },
         { key: 'ai', label: 'IA & OpenRouter', icon: Brain },
+        { key: 'live', label: 'Mode Live (Vocal)', icon: Zap },
         { key: 'memory', label: 'Mémoire', icon: Clock },
         { key: 'quiz', label: 'Quiz & UX', icon: MessageSquare },
     ] as const;
@@ -363,6 +364,75 @@ export default function AdminBudTenderTab() {
                                     onChange={(v) => update({ recommendations_count: v })}
                                     hint="Les N meilleurs scores du catalogue selon les réponses du quiz."
                                 />
+                            </Section>
+                        </>
+                    )}
+
+                    {/* ── MODE LIVE ── */}
+                    {activeTab === 'live' && (
+                        <>
+                            <Section icon={Zap} title="Configuration Vocal Live" description="Paramètres pour l'interaction vocale en temps réel via Gemini Multimodal Live">
+                                <div className="flex items-center justify-between py-2">
+                                    <div>
+                                        <p className="text-sm font-medium text-white">Activer le mode Live</p>
+                                        <p className="text-xs text-zinc-500 mt-0.5">
+                                            Permet aux clients de parler directement au BudTender via leur microphone.
+                                        </p>
+                                    </div>
+                                    <Toggle enabled={settings.live_mode_enabled} onChange={(v) => update({ live_mode_enabled: v })} />
+                                </div>
+
+                                <div className={!settings.live_mode_enabled ? 'opacity-40 pointer-events-none space-y-4' : 'space-y-4'}>
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block">
+                                            Modèle Gemini Live
+                                        </label>
+                                        <select
+                                            value={settings.live_model}
+                                            onChange={(e) => update({ live_model: e.target.value })}
+                                            className={INPUT}
+                                        >
+                                            <option value="gemini-2.5-flash-native-audio-preview-12-2025">Gemini 2.5 Flash (Native Audio - HD)</option>
+                                            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Stable Exp)</option>
+                                            <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash Lite</option>
+                                        </select>
+                                        <p className="text-[10px] text-zinc-600 italic">
+                                            Utilisez Gemini 2.5 Flash pour la meilleure qualité audio et barge-in.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block">
+                                            Voix de l'IA
+                                        </label>
+                                        <select
+                                            value={settings.live_voice}
+                                            onChange={(e) => update({ live_voice: e.target.value })}
+                                            className={INPUT}
+                                        >
+                                            <option value="Aoede">Aoede (Chaleureuse & Naturelle)</option>
+                                            <option value="Charon">Charon (Calme & Posé)</option>
+                                            <option value="Fenrir">Fenrir (Profond & Sûr)</option>
+                                            <option value="Kore">Kore (Douce & Amicale)</option>
+                                            <option value="Puck">Puck (Énergique & Dynamique)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="bg-green-neon/5 border border-green-neon/20 rounded-xl p-4 flex gap-3">
+                                    <Info className="w-4 h-4 text-green-neon flex-shrink-0 mt-0.5" />
+                                    <div className="text-xs text-zinc-400 space-y-2">
+                                        <p>Le mode Live utilise l'API **Multimodal Live** de Google pour une latence ultra-faible.</p>
+                                        <p>Note : Ce mode nécessite que le client autorise l'accès à son microphone.</p>
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <Section icon={Sliders} title="Instructions Système" description="Comportement spécifique pour la conversation vocale">
+                                <p className="text-xs text-zinc-500">
+                                    Les instructions pour le mode Live sont optimisées pour la parole (réponses courtes, ton naturel).
+                                    Elles peuvent être éditées dans le fichier <code className="bg-zinc-800 px-1 rounded text-green-neon">src/lib/budtenderPrompts.ts</code>.
+                                </p>
                             </Section>
                         </>
                     )}

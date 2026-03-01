@@ -247,3 +247,38 @@ export interface CustomerAcquisitionPoint {
   date: string;
   new_customers: number;
 }
+
+// ─── Live BudTender Types ────────────────────────────────────────────────────
+
+export type LiveSessionStatus =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'listening'
+  | 'ai_speaking'
+  | 'disconnected'
+  | 'error';
+
+export interface TranscriptEntry {
+  id: string;
+  sender: 'user' | 'ai' | 'system';
+  text: string;
+  timestamp: number;
+}
+
+export interface LiveRecommendedProduct {
+  product: Product;
+  reason?: string;
+}
+
+export interface LiveCartAction {
+  type: 'add' | 'remove' | 'update';
+  productName: string;
+  timestamp: number;
+}
+
+export interface LiveSubscriptionAction {
+  productName: string;
+  frequency: SubscriptionFrequency;
+  timestamp: number;
+}

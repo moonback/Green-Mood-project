@@ -29,6 +29,10 @@ export interface BudTenderSettings {
     welcome_message: string;
     pulse_delay: number;
     quiz_steps: QuizStep[];
+    // Live mode
+    live_mode_enabled: boolean;
+    live_model: string;
+    live_voice: string;
 }
 
 export const BUDTENDER_DEFAULT_QUIZ: QuizStep[] = [
@@ -87,6 +91,9 @@ export const BUDTENDER_DEFAULTS: BudTenderSettings = {
     welcome_message: "Bienvenue ! 🌿 Je suis BudTender, votre conseiller CBD de confiance. Comment puis-je vous aider aujourd'hui ?",
     pulse_delay: 3,
     quiz_steps: BUDTENDER_DEFAULT_QUIZ,
+    live_mode_enabled: true,
+    live_model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+    live_voice: 'Aoede',
 };
 
 export const BUDTENDER_LS_KEY = 'budtender_admin_settings_v1';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
+import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal, Mic } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
@@ -9,6 +9,8 @@ import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTEN
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
+import LiveBudTender from './LiveBudTender';
+import { useLiveBudtenderStore } from '../store/liveBudtenderStore';
 
 // ─── Shared types and logic imported ───
 
@@ -244,6 +246,8 @@ export default function BudTender() {
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
+    const isLiveMode = useLiveBudtenderStore((s) => s.isLiveMode);
+    const setLiveMode = useLiveBudtenderStore((s) => s.setLiveMode);
     const scrollRef = useRef<HTMLDivElement>(null);
     const hasTriedLoad = useRef(false);
 
@@ -739,9 +743,16 @@ export default function BudTender() {
                 )}
             </AnimatePresence>
 
+            {/* ── Live BudTender overlay ── */}
+            <AnimatePresence>
+                {isOpen && isLiveMode && (
+                    <LiveBudTender onClose={() => setLiveMode(false)} />
+                )}
+            </AnimatePresence>
+
             {/* ── Chat panel ── */}
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && !isLiveMode && (
                     <>
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -780,6 +791,19 @@ export default function BudTender() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {/* Live mode toggle */}
+                                    {settings.live_mode_enabled && (
+                                        <button
+                                            onClick={() => { setLiveMode(true); }}
+                                            title="Mode vocal en direct"
+                                            className="relative p-2 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-xl transition-all group"
+                                        >
+                                            <Mic className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
+                                            <span className="absolute -top-1 -right-1 text-[7px] bg-red-500 text-white px-1 rounded-full font-black leading-tight">
+                                                LIVE
+                                            </span>
+                                        </button>
+                                    )}
                                     <button
                                         onClick={reset}
                                         title="Nouvelle discussion (garder vos préférences)"
