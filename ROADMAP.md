@@ -12,6 +12,7 @@ Ce document trace la trajectoire actuelle et future de l'application **Green Moo
 - [x] Système de points de Fidélité (Loyalty) et Codes Promo.
 - [x] Gestion des Avis Clients (Reviews) modérés.
 - [x] Bundles (Packs) avec synchronisation automatique des stocks.
+- [x] **Stabilité & UX** : Gestion des erreurs (Error Boundaries) et page 404 personnalisée.
 
 ---
 

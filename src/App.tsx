@@ -24,6 +24,7 @@ import Subscriptions from "./pages/Subscriptions";
 import LoyaltyHistory from "./pages/LoyaltyHistory";
 import MyReviews from "./pages/MyReviews";
 import Favorites from "./pages/Favorites";
+import NotFound from "./pages/NotFound";
 import { useAuthStore } from "./store/authStore";
 import { useSettingsStore } from "./store/settingsStore";
 import SplashScreen from "./components/SplashScreen";
@@ -74,6 +75,9 @@ export default function App() {
             <Route path="compte/favoris" element={<Favorites />} />
             <Route path="compte/profil" element={<Profile />} />
           </Route>
+
+          {/* Catch-all 404 */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>
