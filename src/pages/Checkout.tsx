@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, MapPin, Plus, CreditCard, Coins, ArrowLeft, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Package, Truck, MapPin, Plus, CreditCard, Coins, ArrowLeft, ShieldCheck, Sparkles, CheckCircle2, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Address } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -219,7 +219,7 @@ export default function Checkout() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10">
           <div className="space-y-4">
             <Link to="/panier" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-semibold uppercase tracking-wider transition-colors mb-2">
               <ArrowLeft className="w-4 h-4" />
@@ -228,6 +228,35 @@ export default function Checkout() {
             <h1 className="text-3xl md:text-4xl font-serif font-bold tracking-tight leading-none">
               FINALISATION <br /><span className="text-green-neon italic">MASTR.</span>
             </h1>
+          </div>
+        </div>
+
+        {/* Checkout Stepper */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between max-w-lg mx-auto">
+            {[
+              { step: 1, label: 'Livraison', done: true },
+              { step: 2, label: 'Adresse', done: deliveryType === 'click_collect' || !!selectedAddress },
+              { step: 3, label: 'Paiement', done: false },
+            ].map((item, idx) => (
+              <div key={item.step} className="flex items-center gap-0 flex-1">
+                <div className="flex flex-col items-center gap-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    item.done
+                      ? 'bg-green-neon text-black'
+                      : 'bg-white/[0.06] border border-white/[0.12] text-zinc-500'
+                  }`}>
+                    {item.done ? <Check className="w-4 h-4" /> : item.step}
+                  </div>
+                  <span className={`text-[10px] font-semibold uppercase tracking-wider ${item.done ? 'text-green-neon' : 'text-zinc-600'}`}>
+                    {item.label}
+                  </span>
+                </div>
+                {idx < 2 && (
+                  <div className={`flex-1 h-px mx-3 mt-[-20px] ${item.done ? 'bg-green-neon/40' : 'bg-white/[0.08]'}`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 

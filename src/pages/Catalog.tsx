@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, SlidersHorizontal, X, Sparkles, Filter, LayoutGrid, CalendarCheck, Info, ShieldCheck } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, Filter, LayoutGrid, CalendarCheck, Info, ShieldCheck, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Category, Product } from '../lib/types';
 import ProductCard from '../components/ProductCard';
@@ -16,6 +16,9 @@ export default function Catalog() {
   const [selectedAroma, setSelectedAroma] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<'featured' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>('featured');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 12;
 
   useEffect(() => {
     async function load() {
@@ -73,6 +76,27 @@ export default function Catalog() {
       (p.description ?? '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchCat && matchBenefit && matchAroma && matchSearch;
   });
+
+  // Sorting
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case 'price_asc': return a.price - b.price;
+      case 'price_desc': return b.price - a.price;
+      case 'rating': return (b.avg_rating ?? 0) - (a.avg_rating ?? 0);
+      case 'newest': return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      default: return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0);
+    }
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(sorted.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = sorted.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [selectedCategory, selectedBenefit, selectedAroma, searchQuery, sortBy]);
 
   const activeFilterCount = [selectedBenefit, selectedAroma].filter(Boolean).length;
 
@@ -281,9 +305,23 @@ export default function Catalog() {
               ))}
             </div>
 
-            <div className="ml-auto hidden lg:flex items-center gap-3 pr-4">
-              <div className="w-px h-5 bg-white/[0.08]" />
-              <span className="text-xs text-zinc-600">
+            <div className="ml-auto flex items-center gap-3 pr-2 lg:pr-4">
+              <div className="w-px h-5 bg-white/[0.08] hidden lg:block" />
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="appearance-none bg-white/[0.04] border border-white/[0.08] rounded-xl pl-8 pr-4 py-2 text-xs font-semibold text-zinc-400 focus:outline-none focus:border-green-neon/40 cursor-pointer"
+                >
+                  <option value="featured">Populaires</option>
+                  <option value="price_asc">Prix croissant</option>
+                  <option value="price_desc">Prix decroissant</option>
+                  <option value="rating">Mieux notes</option>
+                  <option value="newest">Nouveautes</option>
+                </select>
+                <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+              </div>
+              <span className="text-xs text-zinc-600 hidden lg:inline">
                 <span className="text-green-neon font-semibold">{filtered.length}</span> produit{filtered.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -307,7 +345,7 @@ export default function Catalog() {
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -330,26 +368,60 @@ export default function Catalog() {
             </button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <AnimatePresence mode="popLayout">
-              {filtered.map((product, idx) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{
-                    delay: idx * 0.04,
-                    duration: 0.35,
-                    ease: [0.25, 0.1, 0.25, 1]
-                  }}
-                  layout
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              <AnimatePresence mode="popLayout">
+                {paginatedProducts.map((product, idx) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{
+                      delay: idx * 0.04,
+                      duration: 0.35,
+                      ease: [0.25, 0.1, 0.25, 1]
+                    }}
+                    layout
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-12">
+                <button
+                  onClick={() => { setCurrentPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 400, behavior: 'smooth' }); }}
+                  disabled={currentPage === 1}
+                  className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:text-white hover:border-white/[0.15] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => { setCurrentPage(page); window.scrollTo({ top: 400, behavior: 'smooth' }); }}
+                    className={`w-10 h-10 rounded-xl text-xs font-semibold transition-all ${page === currentPage
+                      ? 'bg-green-neon text-black'
+                      : 'bg-white/[0.03] border border-white/[0.08] text-zinc-500 hover:text-white hover:border-white/[0.15]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 400, behavior: 'smooth' }); }}
+                  disabled={currentPage === totalPages}
+                  className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:text-white hover:border-white/[0.15] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* BudTender CTA */}

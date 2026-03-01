@@ -20,11 +20,13 @@ import { supabase } from '../lib/supabase';
 import { Product, Review, SubscriptionFrequency, BundleItem } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
+import { useToastStore } from '../store/toastStore';
 import StockBadge from '../components/StockBadge';
 import QuantitySelector from '../components/QuantitySelector';
 import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
 import RelatedProducts from '../components/RelatedProducts';
+import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import { useSettingsStore } from '../store/settingsStore';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
@@ -40,6 +42,8 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -66,6 +70,7 @@ export default function ProductDetail() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const openSidebar = useCartStore((s) => s.openSidebar);
   const settings = useSettingsStore((s) => s.settings);
+  const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
     if (!slug) return;
@@ -85,6 +90,22 @@ export default function ProductDetail() {
         setIsLoading(false);
         loadReviews(p.id);
         if (user) checkCanReview(p.id, user.id);
+
+        // Build images array (main + extra from product_images table)
+        const mainImage = p.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800';
+        supabase
+          .from('product_images')
+          .select('image_url, sort_order')
+          .eq('product_id', p.id)
+          .order('sort_order')
+          .then(({ data: extraImages, error: imgError }) => {
+            if (imgError || !extraImages) {
+              setProductImages([mainImage]);
+              return;
+            }
+            const urls = extraImages.map((img: { image_url: string }) => img.image_url);
+            setProductImages([mainImage, ...urls]);
+          });
         // Load bundle items if applicable
         if (p.is_bundle) {
           supabase
@@ -203,6 +224,7 @@ export default function ProductDetail() {
     addItem(product);
     if (quantity > 1) updateQuantity(product.id, quantity);
     openSidebar();
+    addToast({ message: `${product.name} ajouté au panier`, type: 'success' });
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   };
@@ -270,13 +292,39 @@ export default function ProductDetail() {
             </div>
 
             <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-white/[0.03] border border-white/[0.06] relative">
-              <img
-                src={product.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
-                alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
-              />
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={activeImageIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  src={productImages[activeImageIndex] || product.image_url || 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
+                  alt={`${product.name} - Image ${activeImageIndex + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
+                />
+              </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
             </div>
+
+            {/* Image Thumbnails */}
+            {productImages.length > 1 && (
+              <div className="flex gap-2 mt-4 justify-center">
+                {productImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                      idx === activeImageIndex
+                        ? 'border-green-neon shadow-[0_0_12px_rgba(57,255,20,0.3)]'
+                        : 'border-white/[0.08] opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Specifications Overlay (Desktop Only) */}
             <div className="hidden md:flex absolute -bottom-6 -right-6 gap-3 z-30">
@@ -496,6 +544,17 @@ export default function ProductDetail() {
           </motion.div>
         </div>
 
+        {/* Frequently Bought Together */}
+        {!product.is_bundle && (
+          <div className="mt-20">
+            <FrequentlyBoughtTogether
+              productId={product.id}
+              categoryId={product.category_id}
+              currentPrice={product.price}
+            />
+          </div>
+        )}
+
         {/* Reviews Section */}
         <div className="mt-32 space-y-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/[0.06] pb-8">
@@ -680,6 +739,29 @@ export default function ProductDetail() {
           </p>
         </div>
       </div>
+
+      {/* Sticky Mobile Add to Cart Bar */}
+      {product.is_available && product.stock_quantity > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-40 lg:hidden">
+          <div className="bg-zinc-950/95 backdrop-blur-xl border-t border-white/[0.08] px-4 py-3 flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <p className="text-lg font-serif font-bold text-white leading-none">
+                {product.price.toFixed(2)}<span className="text-xs text-zinc-500 ml-1">€</span>
+              </p>
+              {product.stock_quantity <= 5 && (
+                <p className="text-[10px] text-orange-400 font-medium mt-0.5">Plus que {product.stock_quantity} en stock</p>
+              )}
+            </div>
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-green-neon text-black font-semibold uppercase tracking-wider py-3.5 rounded-xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              {addedFeedback ? 'AJOUTÉ' : 'AJOUTER AU PANIER'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
