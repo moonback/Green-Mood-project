@@ -130,6 +130,7 @@ export interface OrderItem {
   unit_price: number;
   quantity: number;
   total_price: number;
+  subscription_frequency?: SubscriptionFrequency;
   // joined
   product?: Product;
 }
@@ -150,6 +151,7 @@ export interface StockMovement {
 export interface CartItem {
   product: Product;
   quantity: number;
+  subscriptionFrequency?: SubscriptionFrequency;
 }
 
 // ─── Payment Types ────────────────────────────────────────────────────────────

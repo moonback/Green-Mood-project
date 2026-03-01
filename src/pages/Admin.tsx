@@ -1627,6 +1627,11 @@ export default function Admin() {
                                 <span className={`text-xs px-2 py-0.5 rounded-full border ${st?.color ?? ''}`}>
                                   {st?.label ?? order.status}
                                 </span>
+                                {(order.order_items as OrderItem[] | undefined)?.some(i => i.subscription_frequency) && (
+                                  <div className="w-6 h-6 rounded-full bg-green-neon/10 flex items-center justify-center" title="Contient un abonnement">
+                                    <RefreshCw className="w-3 h-3 text-green-neon" />
+                                  </div>
+                                )}
                                 <span className="font-bold text-white">{order.total.toFixed(2)} €</span>
                                 {isExpanded ? (
                                   <ChevronUp className="w-4 h-4 text-zinc-500" />
@@ -1640,12 +1645,24 @@ export default function Admin() {
                               <div className="border-t border-zinc-800 p-5 space-y-4">
                                 {/* Order lines */}
                                 <div className="space-y-1.5">
+                                  {(!items || items.length === 0) && (
+                                    <p className="text-zinc-500 text-xs italic">Aucun détail disponible pour cette commande.</p>
+                                  )}
                                   {(items ?? []).map((item) => (
-                                    <div key={item.id} className="flex justify-between text-sm">
-                                      <span className="text-zinc-400">
-                                        {item.product_name} ×{item.quantity}
-                                      </span>
-                                      <span className="text-white">{item.total_price.toFixed(2)} €</span>
+                                    <div key={item.id} className="flex justify-between text-sm items-center">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-zinc-400">
+                                          {item.product_name} ×{item.quantity}
+                                        </span>
+                                        {item.subscription_frequency && (
+                                          <span className="flex items-center gap-1 text-[9px] text-green-neon font-bold uppercase tracking-widest bg-green-neon/10 border border-green-neon/20 px-1.5 py-0.5 rounded-full">
+                                            <RefreshCw className="w-2.5 h-2.5" />
+                                            {item.subscription_frequency === 'weekly' ? ' Hebdomadaire' :
+                                              item.subscription_frequency === 'biweekly' ? ' Bimensuel' : ' Mensuel'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-white font-medium">{item.total_price.toFixed(2)} €</span>
                                     </div>
                                   ))}
                                   <div className="border-t border-zinc-700 pt-2 space-y-1">
@@ -1678,14 +1695,23 @@ export default function Admin() {
                                     <span>
                                       Paiement :{' '}
                                       <span className={order.payment_status === 'paid' ? 'text-green-400' : 'text-orange-400'}>
-                                        {order.payment_status}
+                                        {order.payment_status === 'paid' ? 'PAYÉ' : 'EN ATTENTE'}
                                       </span>
                                     </span>
-                                    {order.viva_order_code && <span>Réf : {order.viva_order_code}</span>}
+                                    {order.viva_order_code && (
+                                      <span>Réf Paiement : <span className="text-zinc-300 font-mono">{order.viva_order_code}</span></span>
+                                    )}
+                                    <span>ID Client : <span className="text-zinc-300 font-mono">{order.user_id.slice(0, 8)}</span></span>
                                     {order.loyalty_points_earned > 0 && (
-                                      <span className="text-yellow-400">+{order.loyalty_points_earned} pts fidélité</span>
+                                      <span className="text-yellow-400 font-bold">+{order.loyalty_points_earned} pts fidélité</span>
                                     )}
                                   </div>
+                                  {order.notes && (
+                                    <div className="p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 mt-4">
+                                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Notes Client / Système</p>
+                                      <p className="text-xs text-zinc-300 italic">"{order.notes}"</p>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -2272,7 +2298,7 @@ export default function Admin() {
             )}
           </main>
         </div>
-      </div>
+      </div >
     </>
   );
 }

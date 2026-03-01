@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, DeliveryType, Product } from '../lib/types';
+import { CartItem, DeliveryType, Product, SubscriptionFrequency } from '../lib/types';
 
 import { useSettingsStore } from './settingsStore';
 
@@ -9,9 +9,9 @@ interface CartStore {
   isOpen: boolean;
   deliveryType: DeliveryType;
   // actions
-  addItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: Product, frequency?: SubscriptionFrequency) => void;
+  removeItem: (productId: string, frequency?: SubscriptionFrequency) => void;
+  updateQuantity: (productId: string, quantity: number, frequency?: SubscriptionFrequency) => void;
   clearCart: () => void;
   toggleSidebar: () => void;
   openSidebar: () => void;
@@ -31,36 +31,41 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
       deliveryType: 'click_collect',
 
-      addItem: (product) => {
+      addItem: (product, frequency) => {
         set((state) => {
-          const existing = state.items.find((i) => i.product.id === product.id);
+          const existing = state.items.find(
+            (i) => i.product.id === product.id && i.subscriptionFrequency === frequency
+          );
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.product.id === product.id
+                (i.product.id === product.id && i.subscriptionFrequency === frequency)
                   ? { ...i, quantity: i.quantity + 1 }
                   : i
               ),
             };
           }
-          return { items: [...state.items, { product, quantity: 1 }] };
+          return { items: [...state.items, { product, quantity: 1, subscriptionFrequency: frequency }] };
         });
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId, frequency) => {
         set((state) => ({
-          items: state.items.filter((i) => i.product.id !== productId),
+          items: state.items.filter(
+            (i) => !(i.product.id === productId && i.subscriptionFrequency === frequency)
+          ),
         }));
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, frequency) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(productId, frequency);
           return;
         }
         set((state) => ({
           items: state.items.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
+            (i.product.id === productId && i.subscriptionFrequency === frequency)
+              ? { ...i, quantity } : i
           ),
         }));
       },

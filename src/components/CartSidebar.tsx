@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck } from 'lucide-react';
+import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, RefreshCw } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCartStore } from '../store/cartStore';
 import FreeShippingGauge from './FreeShippingGauge';
@@ -116,9 +116,9 @@ export default function CartSidebar() {
 
                   <div className="flex-1 overflow-y-auto px-6 py-2 space-y-3 scrollbar-thin">
                     <AnimatePresence initial={false} mode="popLayout">
-                      {items.map(({ product, quantity }) => (
+                      {items.map(({ product, quantity, subscriptionFrequency }) => (
                         <motion.div
-                          key={product.id}
+                          key={`${product.id}-${subscriptionFrequency || 'once'}`}
                           layout
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -131,21 +131,30 @@ export default function CartSidebar() {
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                             <div className="flex justify-between items-start gap-2">
-                              <h4 className="flex-1 font-serif text-sm font-bold text-white truncate group-hover:text-green-neon transition-colors">
-                                {product.name}
-                              </h4>
-                              <button onClick={() => removeItem(product.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
+                              <div className="min-w-0">
+                                <h4 className="font-serif text-sm font-bold text-white truncate group-hover:text-green-neon transition-colors">
+                                  {product.name}
+                                </h4>
+                                {subscriptionFrequency && (
+                                  <p className="flex items-center gap-1 text-[10px] text-green-neon font-semibold uppercase tracking-wider mt-0.5">
+                                    <RefreshCw className="w-2.5 h-2.5" />
+                                    {subscriptionFrequency === 'weekly' ? 'Hebdomadaire' :
+                                      subscriptionFrequency === 'biweekly' ? 'Bimensuel' : 'Mensuel'}
+                                  </p>
+                                )}
+                              </div>
+                              <button onClick={() => removeItem(product.id, subscriptionFrequency)} className="text-zinc-600 hover:text-red-400 transition-colors">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
 
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center gap-1.5 bg-white/5 rounded-lg p-0.5">
-                                <button onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity <= 1} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
+                                <button onClick={() => updateQuantity(product.id, quantity - 1, subscriptionFrequency)} disabled={quantity <= 1} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
                                   <Minus className="w-2.5 h-2.5 text-white" />
                                 </button>
                                 <span className="w-5 text-center text-xs font-semibold text-white">{quantity}</span>
-                                <button onClick={() => updateQuantity(product.id, quantity + 1)} disabled={quantity >= product.stock_quantity} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
+                                <button onClick={() => updateQuantity(product.id, quantity + 1, subscriptionFrequency)} disabled={quantity >= product.stock_quantity} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
                                   <Plus className="w-2.5 h-2.5 text-white" />
                                 </button>
                               </div>

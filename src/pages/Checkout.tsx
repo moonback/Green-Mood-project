@@ -122,6 +122,7 @@ export default function Checkout() {
         unit_price: item.product.price,
         quantity: item.quantity,
         total_price: item.product.price * item.quantity,
+        subscription_frequency: item.subscriptionFrequency ?? null,
       }));
 
       await supabase.from('order_items').insert(orderItems);
@@ -195,6 +196,25 @@ export default function Checkout() {
         await supabase.rpc('increment_promo_uses', { code_text: appliedPromo.code });
       }
 
+      // 5c. Create subscriptions for subscribable items
+      for (const item of items) {
+        if (item.subscriptionFrequency) {
+          const next = new Date();
+          if (item.subscriptionFrequency === 'weekly') next.setDate(next.getDate() + 7);
+          else if (item.subscriptionFrequency === 'biweekly') next.setDate(next.getDate() + 14);
+          else next.setMonth(next.getMonth() + 1);
+
+          await supabase.from('subscriptions').insert({
+            user_id: user.id,
+            product_id: item.product.id,
+            quantity: item.quantity,
+            frequency: item.subscriptionFrequency,
+            next_delivery_date: next.toISOString().split('T')[0],
+            status: 'active',
+          });
+        }
+      }
+
       fetchProfile(user.id);
 
       // --- Referral Reward Logic ---
@@ -262,8 +282,13 @@ export default function Checkout() {
     }
   };
 
+  useEffect(() => {
+    if (items.length === 0 && !isSubmitting) {
+      navigate('/panier');
+    }
+  }, [items, navigate, isSubmitting]);
+
   if (items.length === 0) {
-    navigate('/panier');
     return null;
   }
 

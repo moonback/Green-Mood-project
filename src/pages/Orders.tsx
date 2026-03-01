@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
@@ -173,9 +173,16 @@ export default function Orders() {
 
                     <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-6 md:pt-0">
                       <div className="space-y-2 text-right">
-                        <span className={`inline-block text-[9px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full border transition-all ${status.color}`}>
-                          {status.label}
-                        </span>
+                        <div className="flex items-center justify-end gap-2">
+                          {((order.order_items as OrderItem[]) ?? []).some(i => i.subscription_frequency) && (
+                            <span className="flex items-center gap-1.5 text-[8px] bg-green-neon/5 text-green-neon border border-green-neon/20 px-2 py-1 rounded-full font-black uppercase tracking-widest">
+                              <RefreshCw className="w-2.5 h-2.5" /> ABONNEMENT
+                            </span>
+                          )}
+                          <span className={`inline-block text-[9px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full border transition-all ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </div>
                         <p className="text-2xl font-serif font-black text-white">
                           {order.total.toFixed(2)}<span className="text-green-neon text-sm ml-1 font-sans">€</span>
                         </p>
@@ -199,11 +206,23 @@ export default function Orders() {
                             <p className="text-[10px] font-mono tracking-[0.4em] text-zinc-600 uppercase">DÉTAILS DE LA PIÈCE</p>
                             <div className="space-y-3">
                               {items.map((item) => (
-                                <div key={item.id} className="flex justify-between items-center group/item">
-                                  <span className="text-sm font-medium text-white/70 group-hover/item:text-white transition-colors">
-                                    {item.product_name} <span className="text-[10px] font-mono text-zinc-600 ml-2">×{item.quantity}</span>
-                                  </span>
-                                  <span className="text-sm font-serif font-black text-white">{item.total_price.toFixed(2)} €</span>
+                                <div key={item.id} className="flex justify-between items-center group/item gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium text-white/70 group-hover/item:text-white transition-colors truncate">
+                                        {item.product_name}
+                                      </span>
+                                      {item.subscription_frequency && (
+                                        <span className="flex items-center gap-1 text-[9px] text-green-neon font-bold uppercase tracking-widest bg-green-neon/5 border border-green-neon/20 px-1.5 py-0.5 rounded-full shrink-0">
+                                          <RefreshCw className="w-2.5 h-2.5" />
+                                          {item.subscription_frequency === 'weekly' ? ' Hebdomadaire' :
+                                            item.subscription_frequency === 'biweekly' ? ' Bimensuel' : ' Mensuel'}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[10px] font-mono text-zinc-600 block mt-0.5 uppercase tracking-wider">Quantité: {item.quantity}</span>
+                                  </div>
+                                  <span className="text-sm font-serif font-black text-white shrink-0">{item.total_price.toFixed(2)} €</span>
                                 </div>
                               ))}
                             </div>

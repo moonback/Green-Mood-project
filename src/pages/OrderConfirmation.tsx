@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { CheckCircle, Package, Truck, Clock, ArrowRight, Coins } from 'lucide-react';
+import { CheckCircle, Package, Truck, Clock, ArrowRight, Coins, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order } from '../lib/types';
 import SEO from '../components/SEO';
@@ -74,7 +74,7 @@ export default function OrderConfirmation() {
               <span className="font-bold">{order.total.toFixed(2)} €</span>
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <span className="text-zinc-400 text-sm">Mode de réception</span>
               <span className="flex items-center gap-1.5 text-sm">
                 {order.delivery_type === 'click_collect' ? (
@@ -90,6 +90,16 @@ export default function OrderConfirmation() {
                 )}
               </span>
             </div>
+
+            {(order.order_items as any[])?.some(i => i.subscription_frequency) && (
+              <div className="flex items-center gap-3 bg-green-neon/5 border border-green-neon/20 rounded-xl px-4 py-3 my-4">
+                <RefreshCw className="w-5 h-5 text-green-neon" />
+                <div className="text-left">
+                  <p className="text-green-neon text-[10px] font-black uppercase tracking-[0.2em]">Abonnement Actif</p>
+                  <p className="text-[11px] text-zinc-500 font-medium">Vos futures livraisons seront générées automatiquement.</p>
+                </div>
+              </div>
+            )}
 
             {order.loyalty_points_earned > 0 && (
               <div className="flex justify-between items-center bg-yellow-900/20 border border-yellow-800 rounded-xl px-4 py-2">

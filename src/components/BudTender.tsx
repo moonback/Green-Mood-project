@@ -793,10 +793,10 @@ export default function BudTender() {
                                             setVoiceModalOpen(true);
                                             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                                             if (apiKey && !voice.isActive) {
-                                                voice.startVoice(products, apiKey, memory.userName, (slug) => {
+                                                voice.startVoice(products, apiKey, memory.userName, (slug, freq) => {
                                                     const p = products.find(prod => prod.slug === slug);
                                                     if (p) {
-                                                        addItem(p);
+                                                        addItem(p, freq);
                                                         openSidebar();
                                                     }
                                                 });

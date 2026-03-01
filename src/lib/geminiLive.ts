@@ -129,6 +129,11 @@ export class GeminiLiveSession {
                                                 type: Type.STRING,
                                                 description: 'Le nom affiché du produit (ex: Amnesia Haze).',
                                             },
+                                            frequency: {
+                                                type: Type.STRING,
+                                                description: 'Optionnel. Fréquence de livraison pour un abonnement : "weekly", "biweekly", "monthly". Si absent, c\'est un achat unique.',
+                                                enum: ['weekly', 'biweekly', 'monthly'],
+                                            },
                                         },
                                         required: ['product_slug'],
                                     },
