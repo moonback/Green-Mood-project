@@ -1026,9 +1026,7 @@ export default function BudTender() {
                                     <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.2em] opacity-50">
                                         BudTender IA Expert
                                     </p>
-                                    <p className="text-[9px] text-green-neon/40 font-medium">
-                                        Propulsé par Gemini 1.5
-                                    </p>
+
                                 </div>
                             </div>
                         </motion.div>
