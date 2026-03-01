@@ -31,7 +31,7 @@ Ce document trace la trajectoire actuelle et future de l'application **Green Moo
 - [ ] **Optimisation SEO Avancée** : Mise en place de méta-données dynamiques par produit et blog.
 - [ ] **Notification Push / Email** : Alertes de restock, confirmations de commande et relances panier abandonné (via Supabase Edge Functions).
 - [ ] **Analytique Avancée** : Graphiques de revenus et comportement client intégrés au dashboard admin.
-- [ ] **PWA (Progressive Web App)** : Installation sur mobile pour une expérience fluide en magasin.
+- [x] **PWA (Progressive Web App)** : Installation sur mobile pour une expérience fluide en magasin.
 
 ---
 

@@ -1,0 +1,49 @@
+{
+    "name": "Green Moon CBD",
+    "short_name": "Green Moon",
+    "description": "Boutique CBD Premium & Innovation N10 — Click & Collect et Livraison.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#39FF14",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ],
+    "categories": [
+        "shopping",
+        "health"
+    ],
+    "shortcuts": [
+        {
+            "name": "Catalogue",
+            "url": "/catalogue",
+            "icons": [
+                {
+                    "src": "/logo.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Mon Compte",
+            "url": "/compte",
+            "icons": [
+                {
+                    "src": "/logo.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ]
+}
