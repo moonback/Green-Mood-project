@@ -143,7 +143,7 @@ export default function Catalog() {
               className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tighter leading-none mb-8"
             >
               ARCHIVES <br />
-              <span className="not-italic text-green-neon glow-green">MOLECUL'</span>
+              <span className="not-italic text-green-neon glow-green">MOLECULE</span>
             </motion.h1>
 
             <motion.p
