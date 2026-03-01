@@ -247,6 +247,17 @@ function AdminPOSTab({
     const [showHistory, setShowHistory] = useState(false);
     const [historyDays, setHistoryDays] = useState<{ date: string; total: number; count: number }[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [isUnlockedManually, setIsUnlockedManually] = useState(false);
+
+    // Business Date helper (working day starts at 6:00 AM)
+    const getBusinessDate = useCallback(() => {
+        const now = new Date();
+        const businessDate = new Date(now);
+        if (now.getHours() < 6) {
+            businessDate.setDate(now.getDate() - 1);
+        }
+        return businessDate.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    }, []);
 
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
 
@@ -374,34 +385,34 @@ function AdminPOSTab({
     }, []);
 
     const loadTodayStats = useCallback(async () => {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        const todayStr = startOfDay.toLocaleDateString('en-CA');
+        const todayStr = getBusinessDate();
 
-        // 1. Fetch sales
+        // Logical working day: todayStr 06:00 to dayAfter 05:59
+        const bStart = new Date(todayStr + "T06:00:00");
+        const bEnd = new Date(bStart);
+        bEnd.setDate(bEnd.getDate() + 1);
+
+        // 1. Fetch sales for this business day
         const { data: sales } = await supabase
             .from('orders')
             .select('total')
             .eq('delivery_type', 'in_store')
-            .gte('created_at', startOfDay.toISOString());
+            .gte('created_at', bStart.toISOString())
+            .lt('created_at', bEnd.toISOString());
 
         if (sales) {
             setTodayTotal(sales.reduce((acc, o) => acc + o.total, 0));
         }
 
-        // 2. Check if already closed
+        // 2. Check if already closed for this business date
         const { data: report } = await supabase
             .from('pos_reports')
             .select('id')
             .eq('date', todayStr)
             .maybeSingle();
 
-        if (report) {
-            setIsSessionClosed(true);
-        } else {
-            setIsSessionClosed(false);
-        }
-    }, []);
+        setIsSessionClosed(!!report);
+    }, [getBusinessDate]);
 
     useEffect(() => {
         loadProducts();
@@ -456,8 +467,8 @@ function AdminPOSTab({
     // ── Process sale ──
     const processSale = async () => {
         if (cart.length === 0) return;
-        if (isSessionClosed) {
-            alert("La session de caisse est clôturée pour aujourd'hui. Impossible d'encaisser de nouvelles ventes.");
+        if (isSessionClosed && !isUnlockedManually) {
+            alert("La session de caisse est clôturée. Déverrouillez manuellement ou attendez 06:00.");
             return;
         }
         setIsProcessing(true);
@@ -618,8 +629,10 @@ function AdminPOSTab({
     const handleGenerateReport = async (mode: 'view' | 'close' = 'view') => {
         setIsGeneratingReport(true);
         setReportMode(mode);
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+        const todayStr = getBusinessDate();
+        const bStart = new Date(todayStr + "T06:00:00");
+        const bEnd = new Date(bStart);
+        bEnd.setDate(bEnd.getDate() + 1);
 
         try {
             const { data: orders, error } = await supabase
@@ -629,7 +642,8 @@ function AdminPOSTab({
                     order_items (quantity)
                 `)
                 .eq('delivery_type', 'in_store')
-                .gte('created_at', startOfDay.toISOString());
+                .gte('created_at', bStart.toISOString())
+                .lt('created_at', bEnd.toISOString());
 
             if (error) throw error;
 
@@ -676,7 +690,7 @@ function AdminPOSTab({
             // Get current user ID (admin)
             const { data: { user } } = await supabase.auth.getUser();
 
-            const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+            const todayStr = getBusinessDate();
 
             const { error } = await supabase
                 .from('pos_reports')
@@ -880,7 +894,7 @@ function AdminPOSTab({
             </header>
 
             {/* ── OVERLAY: Session Closed ── */}
-            {isSessionClosed && !showHistory && (
+            {isSessionClosed && !isUnlockedManually && !showHistory && (
                 <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xl rounded-[3rem] border border-zinc-800 shadow-2xl m-1">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -902,6 +916,21 @@ function AdminPOSTab({
                             >
                                 <HistoryIcon className="w-5 h-5" />
                                 Consulter l'Historique
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const code = prompt("Entrez le code de déverrouillage prioritaire :");
+                                    if (code === "0606") {
+                                        setIsUnlockedManually(true);
+                                        alert("Caisse déverrouillée.");
+                                    } else if (code) {
+                                        alert("Code incorrect.");
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-8 py-4 bg-red-600/10 text-red-500 rounded-2xl font-bold transition-all border border-red-500/20 hover:bg-red-600 hover:text-white"
+                            >
+                                <Lock className="w-5 h-5" />
+                                Forcer Ouverture
                             </button>
                             <button
                                 onClick={() => handleGenerateReport('view')}
