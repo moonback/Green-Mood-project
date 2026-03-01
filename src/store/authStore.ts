@@ -81,48 +81,55 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       password,
       options: {
         data: {
-          full_name: fullName,
-          referred_by_id: referredById
+          full_name: fullName
         }
       },
     });
 
     if (error) throw error;
 
-    // If referral exists, create the initial entry in the referrals table
-    // (Profile creation trigger handles generating the referee's own referral_code)
     if (authData.user && referredById) {
-      await supabase.from('referrals').insert({
-        referrer_id: referredById,
-        referee_id: authData.user.id,
-        status: 'joined'
-      });
-
-      // Handle Welcome Bonus
-      const { data: bonusSetting } = await supabase
-        .from('store_settings')
-        .select('value')
-        .eq('key', 'referral_welcome_bonus')
-        .single();
-
-      const welcomeBonus = bonusSetting ? parseInt(bonusSetting.value as string) : 0;
-
-      if (welcomeBonus > 0) {
-        // Update user's profile with initial points
-        // (Assuming the profile is already created by a trigger or we update it here)
+      try {
+        // 1. Update referred_by_id in profile manually (safer than metadata if col missing)
         await supabase
           .from('profiles')
-          .update({ loyalty_points: welcomeBonus })
+          .update({ referred_by_id: referredById })
           .eq('id', authData.user.id);
 
-        // Log transaction
-        await supabase.from('loyalty_transactions').insert({
-          user_id: authData.user.id,
-          type: 'earned',
-          points: welcomeBonus,
-          balance_after: welcomeBonus,
-          note: 'Cadeau de bienvenue (Parrainage)'
+        // 2. Create the initial entry in the referrals table
+        await supabase.from('referrals').insert({
+          referrer_id: referredById,
+          referee_id: authData.user.id,
+          status: 'joined'
         });
+
+        // 3. Handle Welcome Bonus
+        const { data: bonusSetting } = await supabase
+          .from('store_settings')
+          .select('value')
+          .eq('key', 'referral_welcome_bonus')
+          .maybeSingle();
+
+        const welcomeBonus = bonusSetting ? parseInt(bonusSetting.value as string) : 0;
+
+        if (welcomeBonus > 0) {
+          // Update user's profile with initial points
+          await supabase
+            .from('profiles')
+            .update({ loyalty_points: welcomeBonus })
+            .eq('id', authData.user.id);
+
+          // Log transaction
+          await supabase.from('loyalty_transactions').insert({
+            user_id: authData.user.id,
+            type: 'earned',
+            points: welcomeBonus,
+            balance_after: welcomeBonus,
+            note: 'Cadeau de bienvenue (Parrainage)'
+          });
+        }
+      } catch (err) {
+        console.error('Referral logic failed, but user was created:', err);
       }
     }
   },
