@@ -133,21 +133,21 @@ export default function Catalog() {
           </div>
 
           {/* Search & Filter Bar */}
-          <div className="mt-12 relative max-w-3xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl transition-all hover:border-white/[0.12]">
+          <div className="mt-12 relative max-w-2xl mx-auto px-4 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-zinc-900/40 backdrop-blur-2xl border border-white/[0.08] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all hover:border-white/[0.15]">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher un produit..."
-                  className="w-full bg-transparent border-none rounded-xl pl-12 pr-10 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none"
+                  placeholder="Rechercher une molécule..."
+                  className="w-full bg-transparent border-none rounded-2xl pl-12 pr-10 py-4 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-0"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors p-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors p-1"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -156,15 +156,15 @@ export default function Catalog() {
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl transition-all text-sm font-semibold ${showFilters || activeFilterCount > 0
-                  ? 'bg-green-neon text-black'
-                  : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08]'
+                className={`flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] transition-all text-xs font-black uppercase tracking-widest ${showFilters || activeFilterCount > 0
+                  ? 'bg-green-neon text-black shadow-[0_0_20px_rgba(57,255,20,0.3)]'
+                  : 'bg-white/[0.06] text-zinc-400 hover:bg-white/[0.1] hover:text-white'
                   }`}
               >
                 <SlidersHorizontal className="w-4 h-4" />
-                Filtres
+                <span>Paramètres</span>
                 {activeFilterCount > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-black/20 text-xs flex items-center justify-center font-bold">
+                  <span className="w-5 h-5 rounded-full bg-black/20 text-[10px] flex items-center justify-center font-black">
                     {activeFilterCount}
                   </span>
                 )}

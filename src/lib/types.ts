@@ -35,6 +35,7 @@ export interface Product {
     aromas?: string[];
     [key: string]: any;
   };
+  gallery_urls?: string[];
   created_at: string;
   // joined
   category?: Category;
@@ -135,6 +136,8 @@ export interface StockMovement {
 export interface CartItem {
   product: Product;
   quantity: number;
+  is_subscription?: boolean;
+  interval?: string;
 }
 
 // ─── Payment Types ────────────────────────────────────────────────────────────
@@ -198,9 +201,11 @@ export interface Review {
   id: string;
   product_id: string;
   user_id: string;
-  order_id: string;
+  user_name?: string;
+  order_id?: string;
   rating: number;
   comment: string | null;
+  is_verified_purchase?: boolean;
   is_verified: boolean;
   is_published: boolean;
   created_at: string;

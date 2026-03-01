@@ -9,6 +9,7 @@ import {
   Instagram,
   Facebook,
   ShoppingCart,
+  Search,
   User,
   LogOut,
   ShieldCheck,
@@ -21,6 +22,7 @@ import BudTender from "./BudTender";
 import { useCartStore } from "../store/cartStore";
 import { useAuthStore } from "../store/authStore";
 import { useSettingsStore } from "../store/settingsStore";
+import AuraCursor from "./AuraCursor";
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,8 +44,7 @@ export default function Layout() {
 
   const baseNavLinks = [
     { name: "Accueil", path: "/" },
-    { name: "La Boutique", path: "/boutique" },
-    { name: "Catalogue", path: "/catalogue" },
+    { name: "Collections", path: "/catalogue" },
     { name: "Nos Produits", path: "/produits" },
     { name: "Qualité & Légalité", path: "/qualite" },
     { name: "Contact", path: "/contact" },
@@ -53,6 +54,9 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans">
+      {/* Aura Embellishment */}
+      <AuraCursor />
+
       {/* Age Verification Popup */}
       <AgeGate />
 
@@ -153,6 +157,15 @@ export default function Layout() {
                   </span>
                 )}
               </button>
+
+              {/* Search button (Global Trigger) */}
+              <Link
+                to="/catalogue"
+                className="p-2.5 text-zinc-400 hover:text-green-neon transition-all duration-300 hover:bg-white/[0.04] rounded-xl border border-transparent hover:border-white/[0.08]"
+                aria-label="Rechercher un produit"
+              >
+                <Search className="h-5 w-5" />
+              </Link>
 
               {/* Account */}
               {user ? (

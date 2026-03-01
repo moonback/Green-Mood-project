@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck } from 'lucide-react';
+import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, Zap, Gift } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCartStore } from '../store/cartStore';
 import FreeShippingGauge from './FreeShippingGauge';
@@ -116,9 +116,9 @@ export default function CartSidebar() {
 
                   <div className="flex-1 overflow-y-auto px-6 py-2 space-y-3 scrollbar-thin">
                     <AnimatePresence initial={false} mode="popLayout">
-                      {items.map(({ product, quantity }) => (
+                      {items.map(({ product, quantity, is_subscription, interval }) => (
                         <motion.div
-                          key={product.id}
+                          key={`${product.id}-${is_subscription ? interval : 'once'}`}
                           layout
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -131,21 +131,28 @@ export default function CartSidebar() {
 
                           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                             <div className="flex justify-between items-start gap-2">
-                              <h4 className="flex-1 font-serif text-sm font-bold text-white truncate group-hover:text-green-neon transition-colors">
-                                {product.name}
-                              </h4>
-                              <button onClick={() => removeItem(product.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-serif text-sm font-bold text-white truncate group-hover:text-green-neon transition-colors">
+                                  {product.name}
+                                </h4>
+                                {is_subscription && (
+                                  <span className="inline-block mt-1 px-1.5 py-0.5 bg-green-neon/10 border border-green-neon/20 text-green-neon text-[8px] font-black uppercase tracking-widest rounded">
+                                    Abonnement {interval === 'biweekly' ? '2 sem.' : interval === 'monthly' ? 'Mensuel' : 'Trim.'}
+                                  </span>
+                                )}
+                              </div>
+                              <button onClick={() => removeItem(product.id, is_subscription, interval)} className="text-zinc-600 hover:text-red-400 transition-colors">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
 
                             <div className="flex items-center justify-between mt-2">
                               <div className="flex items-center gap-1.5 bg-white/5 rounded-lg p-0.5">
-                                <button onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity <= 1} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
+                                <button onClick={() => updateQuantity(product.id, quantity - 1, is_subscription, interval)} disabled={quantity <= 1} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
                                   <Minus className="w-2.5 h-2.5 text-white" />
                                 </button>
                                 <span className="w-5 text-center text-xs font-semibold text-white">{quantity}</span>
-                                <button onClick={() => updateQuantity(product.id, quantity + 1)} disabled={quantity >= product.stock_quantity} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
+                                <button onClick={() => updateQuantity(product.id, quantity + 1, is_subscription, interval)} disabled={quantity >= product.stock_quantity} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 disabled:opacity-20 flex items-center justify-center transition-all">
                                   <Plus className="w-2.5 h-2.5 text-white" />
                                 </button>
                               </div>
@@ -157,6 +164,26 @@ export default function CartSidebar() {
                         </motion.div>
                       ))}
                     </AnimatePresence>
+                  </div>
+
+                  {/* Molecular Upsell */}
+                  <div className="px-6 py-4 bg-green-neon/[0.03] border-y border-white/[0.05] space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-green-neon animate-pulse" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Optimisation Moléculaire</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-white/10 overflow-hidden flex-shrink-0">
+                          <img src="https://images.unsplash.com/photo-1611075303328-912b704c718e?auto=format&fit=crop&q=80&w=100" className="w-full h-full object-cover opacity-70" alt="" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-white">Huile Sommeil Profond</span>
+                          <span className="text-[10px] font-bold text-green-neon">19.90€ <span className="text-zinc-500 line-through ml-1">29.90€</span></span>
+                        </div>
+                      </div>
+                      <button className="px-3 py-1.5 bg-white/[0.05] border border-white/10 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-green-neon hover:text-black transition-all">+ Ajouter</button>
+                    </div>
                   </div>
 
                   {/* Footer */}

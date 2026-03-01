@@ -9,9 +9,9 @@ interface CartStore {
   isOpen: boolean;
   deliveryType: DeliveryType;
   // actions
-  addItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: Product, quantity?: number, isSubscription?: boolean, interval?: string) => void;
+  removeItem: (productId: string, isSubscription?: boolean, interval?: string) => void;
+  updateQuantity: (productId: string, quantity: number, isSubscription?: boolean, interval?: string) => void;
   clearCart: () => void;
   toggleSidebar: () => void;
   openSidebar: () => void;
@@ -31,38 +31,56 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
       deliveryType: 'click_collect',
 
-      addItem: (product) => {
+      addItem: (product, quantity = 1, isSubscription = false, interval) => {
         set((state) => {
-          const existing = state.items.find((i) => i.product.id === product.id);
-          if (existing) {
-            return {
-              items: state.items.map((i) =>
-                i.product.id === product.id
-                  ? { ...i, quantity: i.quantity + 1 }
-                  : i
-              ),
+          const itemKey = `${product.id}-${isSubscription ? interval : 'once'}`;
+          const existingIndex = state.items.findIndex((i) =>
+            `${i.product.id}-${i.is_subscription ? i.interval : 'once'}` === itemKey
+          );
+
+          if (existingIndex > -1) {
+            const newItems = [...state.items];
+            newItems[existingIndex] = {
+              ...newItems[existingIndex],
+              quantity: newItems[existingIndex].quantity + quantity,
             };
+            return { items: newItems };
           }
-          return { items: [...state.items, { product, quantity: 1 }] };
+          return {
+            items: [
+              ...state.items,
+              { product, quantity, is_subscription: isSubscription, interval },
+            ],
+          };
         });
       },
 
-      removeItem: (productId) => {
-        set((state) => ({
-          items: state.items.filter((i) => i.product.id !== productId),
-        }));
+      removeItem: (productId, isSubscription = false, interval) => {
+        set((state) => {
+          const itemKey = `${productId}-${isSubscription ? interval : 'once'}`;
+          return {
+            items: state.items.filter((i) =>
+              `${i.product.id}-${i.is_subscription ? i.interval : 'once'}` !== itemKey
+            ),
+          };
+        });
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, isSubscription = false, interval) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(productId, isSubscription, interval);
           return;
         }
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
-          ),
-        }));
+        set((state) => {
+          const itemKey = `${productId}-${isSubscription ? interval : 'once'}`;
+          return {
+            items: state.items.map((i) =>
+              `${i.product.id}-${i.is_subscription ? i.interval : 'once'}` === itemKey
+                ? { ...i, quantity }
+                : i
+            ),
+          };
+        });
       },
 
       clearCart: () => set({ items: [] }),

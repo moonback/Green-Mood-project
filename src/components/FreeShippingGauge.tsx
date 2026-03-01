@@ -80,20 +80,32 @@ export default function FreeShippingGauge({ variant = 'compact' }: FreeShippingG
             </div>
 
             {/* Progress bar */}
-            <div className="relative h-2 rounded-full bg-zinc-800 overflow-hidden mb-1">
+            <div className="relative h-2.5 rounded-full bg-zinc-950/50 border border-white/[0.03] overflow-hidden mb-1.5 p-0.5">
                 <motion.div
-                    className={`absolute inset-y-0 left-0 rounded-full ${isUnlocked ? 'bg-green-neon' : 'bg-gradient-to-r from-green-neon/60 to-green-neon'
+                    className={`absolute inset-y-0.5 left-0.5 rounded-full ${isUnlocked
+                        ? 'bg-green-neon shadow-[0_0_12px_rgba(57,255,20,0.4)]'
+                        : 'bg-gradient-to-r from-green-neon/40 via-green-neon to-green-neon/80'
                         }`}
                     initial={{ width: 0 }}
-                    animate={{ width: `${percent}%` }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    animate={{ width: `calc(${percent}% - 4px)` }}
+                    transition={{ duration: 1, ease: [0.34, 1.56, 0.64, 1] }}
                 />
+
+                {/* Micro-sparkle on unlocked */}
+                {isUnlocked && (
+                    <motion.div
+                        className="absolute inset-0 bg-white/20 blur-md pointer-events-none"
+                        animate={{ opacity: [0, 0.4, 0], x: ['0%', '100%'] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                )}
+
                 {/* Shimmer on incomplete */}
                 {!isUnlocked && (
                     <motion.div
-                        className="absolute inset-y-0 w-12 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        animate={{ left: ['-15%', '110%'] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5, ease: 'easeInOut' }}
+                        className="absolute inset-y-0 w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[30deg]"
+                        animate={{ left: ['-50%', '150%'] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
                     />
                 )}
             </div>
