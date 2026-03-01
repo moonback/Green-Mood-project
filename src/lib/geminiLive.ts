@@ -198,6 +198,12 @@ export class GeminiLiveSession {
                         console.log('[GeminiLive] Model text:', part.text.slice(0, 100));
                         this.callbacks.onTranscript?.(part.text, 'model');
                     }
+                    if (part.functionCall) {
+                        console.log('[GeminiLive] 🛠️ Nested functionCall detected in part:', part.functionCall.name);
+                        const toolCall = { functionCalls: [part.functionCall] };
+                        this.callbacks.onToolCall?.(toolCall);
+                        this.sendToolResponse(toolCall);
+                    }
                 }
                 if (hasAudio) this.callbacks.onSpeakingChange?.(true);
             }
@@ -212,10 +218,14 @@ export class GeminiLiveSession {
             }
         }
 
-        // 3. Tool calls (Function calls from model)
+        // 3. Tool calls (Function calls from model - top level)
         const toolCall = message?.toolCall;
         if (toolCall) {
-            console.log('[GeminiLive] 🛠️ Tool call received:', JSON.stringify(toolCall));
+            console.log('[GeminiLive] 🛠️ Top-level toolCall received:', JSON.stringify(toolCall));
+            // Robustness: Ensure functionCalls is always an array if it's missing but function_calls is present
+            if (!toolCall.functionCalls && toolCall.function_calls) {
+                toolCall.functionCalls = toolCall.function_calls;
+            }
             this.callbacks.onToolCall?.(toolCall);
             // Automatically respond to tool call to acknowledge
             this.sendToolResponse(toolCall);
@@ -340,8 +350,12 @@ export class GeminiLiveSession {
 
     sendToolResponse(toolCall: any): void {
         if (!this.session || !this.isConnected) return;
-        const functionCalls = toolCall.functionCalls || [];
+
+        // Support both functionCalls and function_calls
+        const functionCalls = toolCall.functionCalls || toolCall.function_calls || [];
         if (functionCalls.length === 0) return;
+
+        console.log('[GeminiLive] Sending tool response for IDs:', functionCalls.map((fc: any) => fc.id || fc.call_id || fc.callId));
 
         this.session.sendToolResponse({
             functionResponses: functionCalls.map((fc: any) => ({

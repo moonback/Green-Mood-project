@@ -98,14 +98,28 @@ export function useVoiceBudTender() {
             },
 
             onToolCall: (toolCall) => {
-                console.log('[useVoiceBudTender] 🛠️ Tool call data:', JSON.stringify(toolCall));
+                console.log('[useVoiceBudTender] 🛠️ Tool call data received:', JSON.stringify(toolCall));
+
+                // Robustness: handle both top-level and nested tool calls via GemineLiveSession
+                // Support both functionCalls (plural) and function_calls (snake_case)
                 const calls = toolCall.functionCalls || toolCall.function_calls || [];
 
+                if (calls.length === 0) {
+                    console.warn('[useVoiceBudTender] Tool call received but no function calls found inside.');
+                    return;
+                }
+
                 for (const call of calls) {
+                    console.log(`[useVoiceBudTender] Processing call: ${call.name}`, call.args);
+
+                    // Robustness: handle both product_slug (snake_case) and productSlug (camelCase)
                     const slug = call.args?.product_slug || call.args?.productSlug;
+
                     if (call.name === 'add_to_cart' && slug) {
                         console.log('[useVoiceBudTender] ✅ Adding product to cart (slug):', slug);
                         onAddToCart?.(slug);
+                    } else if (call.name === 'add_to_cart') {
+                        console.error('[useVoiceBudTender] ❌ add_to_cart called but product_slug is missing!', call.args);
                     }
                 }
             },
