@@ -117,17 +117,17 @@ export class GeminiLiveSession {
                             functionDeclarations: [
                                 {
                                     name: 'add_to_cart',
-                                    description: 'Ajoute un produit au panier du client.',
+                                    description: 'Ajoute un produit spécifique au panier. Utilise cette fonction dès que le client confirme son intention d\'achat.',
                                     parameters: {
                                         type: Type.OBJECT,
                                         properties: {
                                             product_slug: {
                                                 type: Type.STRING,
-                                                description: 'Le slug (identifiant URL) du produit à ajouter.',
+                                                description: 'Le slug (identifiant technique) du produit tel qu\'il apparaît dans le catalogue. Obligatoire.',
                                             },
                                             product_name: {
                                                 type: Type.STRING,
-                                                description: 'Le nom du produit (pour confirmation).',
+                                                description: 'Le nom affiché du produit (ex: Amnesia Haze).',
                                             },
                                         },
                                         required: ['product_slug'],
