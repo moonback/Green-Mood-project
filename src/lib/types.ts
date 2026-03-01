@@ -99,7 +99,7 @@ export type OrderStatus =
   | 'delivered'
   | 'cancelled';
 
-export type DeliveryType = 'click_collect' | 'delivery';
+export type DeliveryType = 'click_collect' | 'delivery' | 'in_store';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 

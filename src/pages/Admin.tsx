@@ -1628,11 +1628,15 @@ export default function Admin() {
                                 <span
                                   className={`text-xs px-2 py-0.5 rounded-full border hidden sm:inline-flex ${order.delivery_type === 'click_collect'
                                     ? 'text-purple-400 bg-purple-900/20 border-purple-800'
-                                    : 'text-sky-400 bg-sky-900/20 border-sky-800'
+                                    : order.delivery_type === 'in_store'
+                                      ? 'text-orange-400 bg-orange-900/20 border-orange-800'
+                                      : 'text-sky-400 bg-sky-900/20 border-sky-800'
                                     }`}
                                 >
                                   {order.delivery_type === 'click_collect' ? (
                                     <span className="flex items-center gap-1"><Store className="w-3 h-3" />Click & Collect</span>
+                                  ) : order.delivery_type === 'in_store' ? (
+                                    <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" />Vente Boutique</span>
                                   ) : (
                                     <span className="flex items-center gap-1"><Truck className="w-3 h-3" />Livraison</span>
                                   )}
@@ -1679,6 +1683,18 @@ export default function Admin() {
                                   </h3>
                                   {(() => {
                                     const addr = order.address || (order.profile as any)?.addresses?.[0];
+
+                                    if (order.delivery_type === 'in_store') {
+                                      return (
+                                        <div className="flex items-start gap-3">
+                                          <ShoppingBag className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+                                          <div>
+                                            <p className="text-sm font-semibold text-white">Vente Boutique — Direct</p>
+                                            <p className="text-xs text-zinc-400">{localSettings.store_name} — {localSettings.store_address}</p>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
 
                                     if (order.delivery_type === 'click_collect') {
                                       return (

@@ -316,7 +316,7 @@ export default function AdminPOSTab({
                 .from('orders')
                 .insert({
                     user_id: selectedCustomer?.id || null,
-                    delivery_type: 'click_collect',
+                    delivery_type: 'in_store',
                     address_id: null,
                     subtotal,
                     delivery_fee: 0,
