@@ -38,6 +38,7 @@ import {
   MessageSquare,
   LineChart,
   ArrowLeft,
+  Award,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
