@@ -34,7 +34,7 @@ export default function AgeGate() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-zinc-950/90 backdrop-blur-md"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -42,7 +42,7 @@ export default function AgeGate() {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl shadow-green-primary/10 text-center"
+            className="relative w-full max-w-md bg-zinc-900 border border-white/[0.08] rounded-3xl p-8 shadow-2xl text-center"
           >
             <div className="mx-auto w-16 h-16 bg-green-neon/20 rounded-full flex items-center justify-center mb-6">
               <ShieldAlert className="h-8 w-8 text-green-neon" />
@@ -62,7 +62,7 @@ export default function AgeGate() {
             <div className="space-y-3">
               <button
                 onClick={handleConfirm}
-                className="w-full py-4 px-6 bg-green-neon hover:bg-green-600 text-white rounded-xl font-medium transition-all transform hover:scale-[1.02]"
+                className="w-full py-4 px-6 bg-green-neon text-black rounded-xl font-semibold transition-all hover:shadow-[0_0_16px_rgba(57,255,20,0.3)] active:scale-[0.98]"
               >
                 Oui, j'ai plus de 18 ans
               </button>

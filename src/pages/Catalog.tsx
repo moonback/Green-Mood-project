@@ -74,117 +74,99 @@ export default function Catalog() {
     return matchCat && matchBenefit && matchAroma && matchSearch;
   });
 
+  const activeFilterCount = [selectedBenefit, selectedAroma].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-32">
+    <div className="min-h-screen bg-zinc-950 text-white pb-24">
       <SEO
         title="Archives N10 & CBD — L'Excellence Green Mood"
         description="Explorez l'univers moléculaire du N10 et des meilleurs extraits de CBD. Livraison discrète et Click & Collect."
       />
 
-      {/* Hero Header - Immersive N10 Branding */}
-      <section className="relative min-h-[70vh] flex items-center pt-40 pb-24 px-4 overflow-hidden">
-        {/* Background Visual Layers */}
+      {/* ────────── Hero Header ────────── */}
+      <section className="relative min-h-[55vh] md:min-h-[60vh] flex items-center pt-32 pb-16 px-5 overflow-hidden">
+        {/* Background */}
         <div className="absolute inset-0 z-0">
           <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              rotate: [0, 2, 0]
-            }}
+            animate={{ scale: [1, 1.05, 1], rotate: [0, 1, 0] }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
             className="w-full h-full"
           >
             <img
               src="/images/products-flower.png"
               alt="Molécule N10 d'exception"
-              className="w-full h-full object-cover opacity-20 blur-[3px]"
+              className="w-full h-full object-cover opacity-15 blur-[2px]"
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/80 to-zinc-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,163,0.05)_0%,transparent_70%)]" />
-
-          {/* Dynamic Molecular Glows */}
-          <motion.div
-            animate={{
-              x: [-100, 100, -100],
-              y: [-50, 50, -50],
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-green-neon/10 rounded-full blur-[150px] -z-10"
-          />
-          <motion.div
-            animate={{
-              x: [100, -100, 100],
-              y: [50, -50, 50],
-            }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-green-neon/5 rounded-full blur-[120px] -z-10"
-          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(57,255,20,0.04)_0%,transparent_70%)]" />
         </div>
 
         <div className="max-w-7xl mx-auto w-full relative z-10 text-center">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-3 px-8 py-3 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-3xl mb-12"
+            className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl mb-8"
           >
-            <Sparkles className="w-4 h-4 text-green-neon animate-pulse" />
-            <span className="text-zinc-400 text-[10px] font-black uppercase tracking-[0.5em]">L'Innovation N10 est ici</span>
+            <Sparkles className="w-3.5 h-3.5 text-green-neon animate-pulse" />
+            <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">L'Innovation N10 est ici</span>
           </motion.div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-serif font-black tracking-tighter leading-[0.85] uppercase italic"
+              className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-tight leading-tight uppercase italic"
             >
               ARCHIVES <br />
-              <span className="not-italic text-green-neon glow-green-strong">MOLECUL'</span>
+              <span className="not-italic text-green-neon glow-green">MOLECUL'</span>
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg md:text-2xl text-zinc-400 max-w-2xl mx-auto font-serif italic leading-relaxed pt-6 opacity-80"
+              transition={{ delay: 0.15 }}
+              className="text-base md:text-lg text-zinc-400 max-w-xl mx-auto font-serif italic leading-relaxed"
             >
               Explorez une curatoriale sans compromis des extractions les plus pures et des molécules de synthèse maîtrisée.
             </motion.p>
           </div>
 
-          {/* Search & Filter Bar - Ultra Premium */}
-          <div className="mt-20 relative max-w-4xl mx-auto group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-green-neon/20 via-white/5 to-green-neon/20 rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-            <div className="relative flex flex-col md:flex-row gap-4 p-4 bg-white/[0.02] backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl transition-all hover:border-white/20">
+          {/* Search & Filter Bar */}
+          <div className="mt-12 relative max-w-3xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl transition-all hover:border-white/[0.12]">
               <div className="relative flex-1">
-                <Search className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-700 group-focus-within:text-green-neon transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="QUELLE EXPÉRIENCE RECHERCHEZ-VOUS ?"
-                  className="w-full bg-transparent border-none rounded-3xl pl-20 pr-12 py-6 text-lg font-serif italic text-white placeholder:text-zinc-800 focus:outline-none focus:ring-0"
+                  placeholder="Rechercher un produit..."
+                  className="w-full bg-transparent border-none rounded-xl pl-12 pr-10 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors p-1"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center justify-center gap-4 px-12 py-6 rounded-2xl transition-all font-black text-[10px] uppercase tracking-[0.4em] ${showFilters || selectedBenefit || selectedAroma
-                  ? 'bg-green-neon text-black shadow-[0_0_30px_rgba(0,255,163,0.3)]'
-                  : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+                className={`flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl transition-all text-sm font-semibold ${showFilters || activeFilterCount > 0
+                  ? 'bg-green-neon text-black'
+                  : 'bg-white/[0.05] text-zinc-400 hover:bg-white/[0.08]'
                   }`}
               >
-                <SlidersHorizontal className="w-5 h-5" />
+                <SlidersHorizontal className="w-4 h-4" />
                 Filtres
-                {(selectedBenefit || selectedAroma) && (
-                  <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                {activeFilterCount > 0 && (
+                  <span className="w-5 h-5 rounded-full bg-black/20 text-xs flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
                 )}
               </button>
             </div>
@@ -192,33 +174,34 @@ export default function Catalog() {
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <section className="max-w-12xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
-        {/* Advanced Filters Drawer */}
+      {/* ────────── Main Content ────────── */}
+      <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 relative z-20">
+        {/* Filters Drawer */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mb-12"
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden mb-8"
             >
-              <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-12 space-y-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                  {/* Needs & Benefits */}
-                  <div className="space-y-8">
-                    <h3 className="text-zinc-600 font-black text-[10px] uppercase tracking-[0.5em] flex items-center gap-4">
-                      <Filter className="w-4 h-4 text-green-neon" />
-                      SPECTRE DE BÉNÉFICES
+              <div className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 md:p-8 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Benefits */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                      <Filter className="w-3.5 h-3.5 text-green-neon" />
+                      Bénéfices
                     </h3>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                       {allBenefits.map((benefit) => (
                         <button
                           key={benefit}
                           onClick={() => setSelectedBenefit(selectedBenefit === benefit ? null : benefit)}
-                          className={`px-6 py-4 rounded-2xl text-sm font- serif italic transition-all border ${selectedBenefit === benefit
-                            ? 'bg-green-neon border-transparent text-black font-black not-italic'
-                            : 'bg-white/5 border-white/5 text-zinc-500 hover:border-white/20'
+                          className={`px-4 py-2 rounded-xl text-sm transition-all border ${selectedBenefit === benefit
+                            ? 'bg-green-neon border-transparent text-black font-semibold'
+                            : 'bg-white/[0.04] border-white/[0.06] text-zinc-400 hover:border-white/[0.12]'
                             }`}
                         >
                           {benefit}
@@ -227,20 +210,20 @@ export default function Catalog() {
                     </div>
                   </div>
 
-                  {/* Aromatics */}
-                  <div className="space-y-8">
-                    <h3 className="text-zinc-600 font-black text-[10px] uppercase tracking-[0.5em] flex items-center gap-4">
-                      <Sparkles className="w-4 h-4 text-green-neon" />
-                      SIGNATURES OLFACTIVES
+                  {/* Aromas */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-green-neon" />
+                      Signatures Olfactives
                     </h3>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                       {allAromas.map((aroma) => (
                         <button
                           key={aroma}
                           onClick={() => setSelectedAroma(selectedAroma === aroma ? null : aroma)}
-                          className={`px-6 py-4 rounded-2xl text-sm font-serif italic transition-all border ${selectedAroma === aroma
-                            ? 'bg-white border-transparent text-black font-black not-italic'
-                            : 'bg-white/5 border-white/5 text-zinc-500 hover:border-white/20'
+                          className={`px-4 py-2 rounded-xl text-sm transition-all border ${selectedAroma === aroma
+                            ? 'bg-white border-transparent text-black font-semibold'
+                            : 'bg-white/[0.04] border-white/[0.06] text-zinc-400 hover:border-white/[0.12]'
                             }`}
                         >
                           {aroma}
@@ -250,16 +233,16 @@ export default function Catalog() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-10 border-t border-white/5">
-                  <p className="text-[10px] font-mono text-zinc-700 uppercase tracking-widest">
-                    ALGORITHME DE SÉLECTION MASTER ACTIF.
+                <div className="flex items-center justify-between pt-6 border-t border-white/[0.06]">
+                  <p className="text-xs text-zinc-600">
+                    {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
                   </p>
                   <button
                     onClick={() => { setSelectedBenefit(null); setSelectedAroma(null); setSelectedCategory(null); setSearchQuery(''); }}
-                    className="text-[10px] text-zinc-500 hover:text-red-400 font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+                    className="text-xs text-zinc-500 hover:text-red-400 font-medium transition-colors flex items-center gap-1.5"
                   >
-                    <X className="w-4 h-4" />
-                    Reset Universe
+                    <X className="w-3.5 h-3.5" />
+                    Réinitialiser
                   </button>
                 </div>
               </div>
@@ -267,30 +250,30 @@ export default function Catalog() {
           )}
         </AnimatePresence>
 
-        {/* Sticky Global Navigation */}
-        <div className="sticky top-28 z-30 mb-20">
-          <div className="bg-zinc-950/40 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-2 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+        {/* Category Navigation */}
+        <div className="sticky top-20 z-30 mb-10">
+          <div className="bg-zinc-950/70 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-1.5 flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`whitespace-nowrap flex items-center gap-3 px-8 py-4 rounded-2xl text-xs font-black transition-all uppercase tracking-widest ${!selectedCategory
+              className={`whitespace-nowrap flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold transition-all ${!selectedCategory
                 ? 'bg-white text-black'
-                : 'text-zinc-600 hover:text-white'
+                : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                 }`}
             >
-              <LayoutGrid className="w-4 h-4" />
-              Omnia
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Tout
             </button>
 
-            <div className="w-px h-6 bg-white/10 mx-2" />
+            <div className="w-px h-5 bg-white/[0.08] mx-1" />
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-                  className={`whitespace-nowrap px-8 py-4 rounded-2xl text-xs font-black transition-all uppercase tracking-widest ${selectedCategory === cat.id
-                    ? 'bg-green-neon text-black shadow-[0_0_20px_rgba(0,255,163,0.2)]'
-                    : 'text-zinc-600 hover:text-white'
+                  className={`whitespace-nowrap px-5 py-2.5 rounded-xl text-xs font-semibold transition-all ${selectedCategory === cat.id
+                    ? 'bg-green-neon text-black'
+                    : 'text-zinc-500 hover:text-white hover:bg-white/[0.04]'
                     }`}
                 >
                   {cat.name}
@@ -298,25 +281,28 @@ export default function Catalog() {
               ))}
             </div>
 
-            <div className="ml-auto hidden lg:flex items-center gap-4 pr-6">
-              <div className="w-px h-6 bg-white/10" />
-              <div className="text-[10px] font-mono text-zinc-800">
-                MATCHES: <span className="text-green-neon">{filtered.length}</span>
-              </div>
+            <div className="ml-auto hidden lg:flex items-center gap-3 pr-4">
+              <div className="w-px h-5 bg-white/[0.08]" />
+              <span className="text-xs text-zinc-600">
+                <span className="text-green-neon font-semibold">{filtered.length}</span> produit{filtered.length !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Product Showcase */}
+        {/* Product Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-24">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="space-y-8 animate-pulse">
-                <div className="aspect-[4/5] bg-white/5 rounded-[3rem]" />
-                <div className="space-y-4 px-6">
-                  <div className="h-8 bg-white/5 rounded-xl w-3/4" />
-                  <div className="h-4 bg-white/5 rounded-lg w-full" />
-                  <div className="h-12 bg-white/5 rounded-2xl w-1/2" />
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[4/5] bg-white/[0.04] rounded-2xl" />
+                <div className="p-4 space-y-3">
+                  <div className="flex gap-1.5">
+                    <div className="h-5 bg-white/[0.04] rounded-lg w-12" />
+                    <div className="h-5 bg-white/[0.04] rounded-lg w-8" />
+                  </div>
+                  <div className="h-5 bg-white/[0.04] rounded-lg w-3/4" />
+                  <div className="h-8 bg-white/[0.04] rounded-xl w-1/2" />
                 </div>
               </div>
             ))}
@@ -325,39 +311,37 @@ export default function Catalog() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-40 space-y-12"
+            className="text-center py-24 space-y-8"
           >
-            <div className="w-32 h-32 bg-white/[0.02] border border-white/5 rounded-full flex items-center justify-center mx-auto relative">
-              <Search className="w-12 h-12 text-zinc-800" />
-              <div className="absolute inset-0 border border-green-neon/20 rounded-full animate-ping" />
+            <div className="w-24 h-24 bg-white/[0.03] border border-white/[0.06] rounded-2xl flex items-center justify-center mx-auto">
+              <Search className="w-10 h-10 text-zinc-700" />
             </div>
-            <div className="space-y-6">
-              <h2 className="text-4xl font-serif font-black text-white italic">Silence Moléculaire.</h2>
-              <p className="text-zinc-600 max-w-sm mx-auto font-medium">
-                Aucune de nos créations ne correspond à ce spectre de recherche.
-                Redéfinissez vos paramètres d'exploration.
+            <div className="space-y-3">
+              <h2 className="text-2xl font-serif font-bold text-white">Aucun résultat</h2>
+              <p className="text-zinc-500 max-w-sm mx-auto text-sm">
+                Aucun produit ne correspond à vos critères de recherche. Essayez de modifier vos filtres.
               </p>
             </div>
             <button
               onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedBenefit(null); setSelectedAroma(null); }}
-              className="px-12 py-5 bg-white text-black font-black rounded-2xl hover:bg-green-neon transition-all uppercase tracking-widest text-xs"
+              className="px-6 py-3 bg-green-neon text-black font-semibold rounded-xl hover:shadow-[0_0_16px_rgba(57,255,20,0.3)] transition-all text-sm"
             >
-              Réinitialiser l'Espace
+              Réinitialiser les filtres
             </button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-24">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             <AnimatePresence mode="popLayout">
               {filtered.map((product, idx) => (
                 <motion.div
                   key={product.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
                   transition={{
-                    delay: idx * 0.05,
-                    duration: 0.5,
-                    ease: [0.23, 1, 0.32, 1]
+                    delay: idx * 0.04,
+                    duration: 0.35,
+                    ease: [0.25, 0.1, 0.25, 1]
                   }}
                   layout
                 >
@@ -368,40 +352,38 @@ export default function Catalog() {
           </div>
         )}
 
-        {/* Exclusive Membership / Diagnostic CTA */}
-        <div className="mt-48">
+        {/* BudTender CTA */}
+        <div className="mt-24">
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative rounded-[5rem] overflow-hidden group"
+            className="relative rounded-3xl overflow-hidden"
           >
-            {/* Background Layer */}
-            <div className="absolute inset-0 bg-white/[0.01] backdrop-blur-3xl border border-white/5" />
-            <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-green-neon/5 rounded-full blur-[150px] group-hover:bg-green-neon/10 transition-colors duration-1000" />
-            <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-white/5 rounded-full blur-[150px]" />
+            <div className="absolute inset-0 bg-white/[0.02] backdrop-blur-xl border border-white/[0.06]" />
+            <div className="absolute -top-32 -right-32 w-[400px] h-[400px] bg-green-neon/5 rounded-full blur-[120px]" />
+            <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] bg-white/[0.03] rounded-full blur-[120px]" />
 
-            <div className="relative z-10 px-16 py-24 flex flex-col lg:flex-row items-center justify-between gap-16">
-              <div className="max-w-xl space-y-8 text-center lg:text-left">
-                <div className="inline-block px-6 py-2 rounded-full bg-green-neon/10 border border-green-neon/20 text-green-neon text-[10px] font-black uppercase tracking-[0.4em]">
+            <div className="relative z-10 px-8 md:px-14 py-14 flex flex-col lg:flex-row items-center justify-between gap-10">
+              <div className="max-w-lg space-y-5 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-neon/10 border border-green-neon/15 text-green-neon text-xs font-semibold uppercase tracking-wider">
                   BudTender IA Connecté
                 </div>
-                <h3 className="text-5xl md:text-7xl font-serif font-black leading-[0.9] uppercase italic">
-                  TROUVEZ VOTRE <br /> <span className="text-green-neon not-italic">FREQUENCE.</span>
+                <h3 className="text-3xl md:text-4xl font-serif font-bold leading-tight uppercase">
+                  TROUVEZ VOTRE <br /> <span className="text-green-neon">FRÉQUENCE.</span>
                 </h3>
-                <p className="text-zinc-500 text-lg font-serif italic max-w-sm mx-auto lg:mx-0">
-                  Laissez notre technologie d'analyse moléculaire vous guider vers le produit parfaitement calibré pour votre physiologie.
+                <p className="text-zinc-500 text-sm md:text-base max-w-sm mx-auto lg:mx-0">
+                  Laissez notre technologie d'analyse vous guider vers le produit parfaitement calibré pour vos besoins.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-6 w-full lg:w-auto">
-                <button className="flex-1 lg:flex-none px-16 py-8 bg-white text-black font-black uppercase tracking-[0.3em] rounded-[2.5rem] hover:bg-green-neon transition-all shadow-2xl relative overflow-hidden group/btn text-xs">
-                  <span className="relative z-10">Lancer le Diagnostic</span>
-                  <div className="absolute inset-0 bg-green-neon scale-x-0 group-hover/btn:scale-x-100 transition-transform origin-left duration-500" />
+              <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                <button className="flex-1 lg:flex-none px-8 py-4 bg-green-neon text-black font-semibold rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all text-sm">
+                  Lancer le Diagnostic
                 </button>
                 <Link
                   to="/contact"
-                  className="flex-1 lg:flex-none px-16 py-8 bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.3em] rounded-[2.5rem] hover:bg-white/10 transition-all text-xs text-center"
+                  className="flex-1 lg:flex-none px-8 py-4 bg-white/[0.05] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-white/[0.08] transition-all text-sm text-center"
                 >
                   Expert Live Chat
                 </Link>
@@ -410,31 +392,31 @@ export default function Catalog() {
           </motion.div>
         </div>
 
-        {/* Global Compliance System Footer */}
-        <div className="mt-32 pt-16 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-16">
+        {/* Compliance Footer */}
+        <div className="mt-20 pt-12 border-t border-white/[0.06] grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
             {
-              icon: <ShieldCheck className="w-5 h-5" />,
-              title: "CONFORMITÉ NORMATIVE",
-              text: "TOUS NOS PRODUITS SONT ANALYSÉS EN LABORATOIRES INDÉPENDANTS ET GARANTISSENT UN TAUX DE THC < 0.3% CONFORMÉMENT À LA RÉGLEMENTATION EUROPÉENNE."
+              icon: <ShieldCheck className="w-4 h-4" />,
+              title: "Conformité Normative",
+              text: "Tous nos produits sont analysés en laboratoires indépendants et garantissent un taux de THC < 0.3% conformément à la réglementation européenne."
             },
             {
-              icon: <CalendarCheck className="w-5 h-5" />,
-              title: "VERIFICATION D'IDENTITÉ",
-              text: "L'ACCÈS À NOS ARCHIVES EST STRICTEMENT RÉSERVÉ AUX PERSONNES MAJEURES. UN JUSTIFICATIF D'IDENTITÉ PEUT ÊTRE REQUIS LORS DU RETRAIT OU DE LA LIVRAISON."
+              icon: <CalendarCheck className="w-4 h-4" />,
+              title: "Vérification d'Identité",
+              text: "L'accès à nos produits est strictement réservé aux personnes majeures. Un justificatif d'identité peut être requis lors du retrait ou de la livraison."
             },
             {
-              icon: <Info className="w-5 h-5" />,
-              title: "GUIDE D'UTILISATION",
-              text: "NOS PRODUITS SONT DESTINÉS À UN USAGE SENSORIEL ET COLLECTIONNEUR. NE PAS FUMER. CONSULTER UN PROFESSIONNEL DE SANTÉ EN CAS DE DOUTE."
+              icon: <Info className="w-4 h-4" />,
+              title: "Guide d'Utilisation",
+              text: "Nos produits sont destinés à un usage sensoriel et collectionneur. Ne pas fumer. Consulter un professionnel de santé en cas de doute."
             }
           ].map((item, idx) => (
-            <div key={idx} className="space-y-6 group">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-600 flex items-center gap-3 transition-colors group-hover:text-green-neon">
-                {item.icon}
+            <div key={idx} className="space-y-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                <span className="text-green-neon">{item.icon}</span>
                 {item.title}
               </h4>
-              <p className="text-[10px] text-zinc-700 leading-relaxed font-mono uppercase tracking-widest opacity-60">
+              <p className="text-xs text-zinc-600 leading-relaxed">
                 {item.text}
               </p>
             </div>

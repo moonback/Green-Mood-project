@@ -42,7 +42,7 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-24 bg-zinc-950 border-t border-white/5">
+    <section className="py-16 md:py-24 bg-zinc-950 border-t border-white/[0.06]">
       <script type="application/ld+json">
         {JSON.stringify(faqSchema)}
       </script>
@@ -75,7 +75,7 @@ export default function FAQ() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="border border-white/10 rounded-2xl overflow-hidden bg-zinc-900/30 hover:border-green-primary/30 transition-colors"
+              className="border border-white/[0.08] rounded-2xl overflow-hidden bg-zinc-900/30 hover:border-green-neon/20 transition-colors"
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
