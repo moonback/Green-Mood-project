@@ -39,6 +39,7 @@ import {
   LineChart,
   ArrowLeft,
   Award,
+  ShoppingCart,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
@@ -51,11 +52,12 @@ import AdminReviewsTab from '../components/admin/AdminReviewsTab';
 import AdminPromoCodesTab from '../components/admin/AdminPromoCodesTab';
 import AdminRecommendationsTab from '../components/admin/AdminRecommendationsTab';
 import AdminBudTenderTab from '../components/admin/AdminBudTenderTab';
+import AdminPOSTab from '../components/admin/AdminPOSTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations' | 'budtender' | 'referrals';
+type Tab = 'dashboard' | 'products' | 'categories' | 'orders' | 'stock' | 'customers' | 'settings' | 'subscriptions' | 'reviews' | 'analytics' | 'promo_codes' | 'recommendations' | 'budtender' | 'referrals' | 'pos';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -204,6 +206,7 @@ export default function Admin() {
     { key: 'promo_codes', label: 'Codes Promo', icon: Coins },
     { key: 'recommendations', label: 'Recommandations', icon: TrendingUp },
     { key: 'budtender', label: 'BudTender IA', icon: Leaf },
+    { key: 'pos', label: 'Caisse (POS)', icon: ShoppingCart },
   ] as { key: Tab; label: string; icon: ElementType }[];
 
   // ─── Data loading ─────────────────────────────────────────────────────────
@@ -999,6 +1002,12 @@ export default function Admin() {
               {
                 group: 'Aperçu',
                 items: [{ key: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard }],
+              },
+              {
+                group: 'Boutique',
+                items: [
+                  { key: 'pos' as Tab, label: 'Caisse (POS)', icon: ShoppingBag },
+                ],
               },
               {
                 group: 'Catalogue',
@@ -2333,6 +2342,15 @@ export default function Admin() {
                 {/* ── Referrals tab ── */}
                 {tab === 'referrals' && !isLoading && (
                   <AdminReferralsTab />
+                )}
+
+                {/* ── POS tab ── */}
+                {tab === 'pos' && !isLoading && (
+                  <AdminPOSTab
+                    storeName={localSettings.store_name}
+                    storeAddress={localSettings.store_address}
+                    storePhone={localSettings.store_phone}
+                  />
                 )}
               </>
             )}
