@@ -52,6 +52,8 @@ interface CompletedSale {
     cashGiven?: number;
     change?: number;
     timestamp: Date;
+    loyaltyGained?: number;
+    loyaltyRedeemed?: number;
 }
 
 interface DailyReport {
@@ -151,8 +153,19 @@ function ReceiptModal({
                         </>
                     )}
                     <div className="divider" />
-                    <div className="center">Merci pour votre visite !</div>
-                    <div className="center">♻ Green Moon CBD</div>
+                    <div className="center italic">♻ Green Moon CBD</div>
+                    {sale.loyaltyGained !== undefined && sale.loyaltyGained > 0 && (
+                        <>
+                            <div className="divider" />
+                            <div className="center bold italic">Points gagnés: +{sale.loyaltyGained} pts</div>
+                        </>
+                    )}
+                    {sale.loyaltyRedeemed !== undefined && sale.loyaltyRedeemed > 0 && (
+                        <>
+                            <div className="divider" />
+                            <div className="center bold italic text-red-600">Points utilisés: -{sale.loyaltyRedeemed} pts</div>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex gap-3">
@@ -184,7 +197,7 @@ interface AdminPOSTabProps {
     storePhone?: string;
 }
 
-export default function AdminPOSTab({
+function AdminPOSTab({
     storeName = 'Green Moon CBD',
     storeAddress = '123 Rue de la Nature, 75000 Paris',
     storePhone = '01 23 45 67 89',
@@ -229,8 +242,10 @@ export default function AdminPOSTab({
     const [historyDays, setHistoryDays] = useState<{ date: string; total: number; count: number }[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-    // ── Result ──
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
+
+    // ── Real-time Stats ──
+    const [todayTotal, setTodayTotal] = useState(0);
 
     // ── Load data ──
     const loadProducts = useCallback(async () => {
@@ -244,7 +259,24 @@ export default function AdminPOSTab({
         setIsLoadingProducts(false);
     }, []);
 
-    useEffect(() => { loadProducts(); }, [loadProducts]);
+    const loadTodayStats = useCallback(async () => {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const { data } = await supabase
+            .from('orders')
+            .select('total')
+            .eq('delivery_type', 'in_store')
+            .gte('created_at', startOfDay.toISOString());
+
+        if (data) {
+            setTodayTotal(data.reduce((acc, o) => acc + o.total, 0));
+        }
+    }, []);
+
+    useEffect(() => {
+        loadProducts();
+        loadTodayStats();
+    }, [loadProducts, loadTodayStats]);
 
     // ── Customer search ──
     useEffect(() => {
@@ -294,7 +326,10 @@ export default function AdminPOSTab({
         setCart((prev) => {
             const existing = prev.find((l) => l.product.id === product.id);
             if (existing) {
-                if (existing.quantity >= product.stock_quantity) return prev;
+                if (existing.quantity >= product.stock_quantity) {
+                    alert(`Stock insuffisant pour ${product.name} (Max: ${product.stock_quantity})`);
+                    return prev;
+                }
                 return prev.map((l) =>
                     l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l
                 );
@@ -443,11 +478,14 @@ export default function AdminPOSTab({
                 cashGiven: paymentMethod === 'cash' ? cashNum : undefined,
                 change: paymentMethod === 'cash' ? change : undefined,
                 timestamp: new Date(),
+                loyaltyGained: selectedCustomer ? Math.floor(total) : 0,
+                loyaltyRedeemed: useLoyaltyPoints ? pointsToRedeem : 0,
             };
 
             clearCart();
             setShowPaymentModal(false);
             setCompletedSale(sale);
+            loadTodayStats();
             // Reload products to get updated stock
             loadProducts();
         } catch (err) {
@@ -607,461 +645,511 @@ export default function AdminPOSTab({
     ];
 
     return (
-        <div className="h-[calc(100vh-180px)] flex gap-4 overflow-hidden">
-            {/* ── LEFT: Product Grid or History ── */}
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                {showHistory ? (
-                    <div className="flex-1 overflow-y-auto pr-1">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="text-xl font-bold text-white">Historique des Ventes</h3>
-                                <p className="text-sm text-zinc-500">Les 30 derniers jours de vente en boutique</p>
-                            </div>
-                            <button
-                                onClick={() => setShowHistory(false)}
-                                className="text-sm text-green-400 hover:underline"
-                            >
-                                Retour à la caisse
-                            </button>
-                        </div>
-
-                        {isLoadingHistory ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-20 bg-zinc-800/50 rounded-2xl animate-pulse" />
-                                ))}
-                            </div>
-                        ) : historyDays.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64 text-zinc-600">
-                                <HistoryIcon className="w-12 h-12 mb-4 opacity-20" />
-                                <p>Aucun historique de vente trouvé pour ce mois.</p>
-                            </div>
-                        ) : (
-                            <div className="grid gap-3">
-                                {historyDays.map((day) => (
-                                    <button
-                                        key={day.date}
-                                        onClick={() => handleViewPastReport(day.date)}
-                                        className="bg-zinc-800/40 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 flex items-center justify-between group transition-all"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center">
-                                                <Calendar className="w-3 h-3 text-zinc-500 mb-0.5" />
-                                                <span className="text-xs font-bold text-white">
-                                                    {new Date(day.date).toLocaleDateString('fr-FR', { day: '2-digit' })}
-                                                </span>
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-sm font-bold text-white">
-                                                    {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', month: 'long', year: 'numeric' })}
-                                                </p>
-                                                <p className="text-xs text-zinc-500">{day.count} ventes réalisées</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-6">
-                                            <div className="text-right">
-                                                <p className="text-lg font-black text-green-400">{day.total.toFixed(2)} €</p>
-                                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Total encaissé</p>
-                                            </div>
-                                            <ChevronRight className="w-5 h-5 text-zinc-700 group-hover:text-green-500 transition-colors" />
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+        <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-hidden">
+            {/* ── TOP: Mini Stats Bar ── */}
+            <div className="flex items-center gap-6 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
+                        <Banknote className="w-6 h-6" />
                     </div>
-                ) : (
-                    <>
-                        {/* Filters */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            <div className="relative flex-1 min-w-[180px]">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-                                <input
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Rechercher un produit…"
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors"
-                                />
-                            </div>
+                    <div>
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Ventes du jour</p>
+                        <p className="text-xl font-black text-white">{todayTotal.toFixed(2)} €</p>
+                    </div>
+                </div>
 
-                            <select
-                                value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-colors"
-                            >
-                                <option value="all">Toutes les catégories</option>
-                                {categories.map((c) => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
+                <div className="h-8 w-px bg-zinc-800" />
 
-                            <button
-                                onClick={loadProducts}
-                                className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-400 hover:border-green-500 transition-all text-sm"
-                            >
-                                ↻ Sync
-                            </button>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-500">
+                        <ShoppingCart className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Session en cours</p>
+                        <p className="text-xl font-black text-white">{cart.length} articles</p>
+                    </div>
+                </div>
 
-                            <button
-                                onClick={() => {
-                                    if (!showHistory) loadHistory();
-                                    setShowHistory(!showHistory);
-                                }}
-                                className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${showHistory
-                                    ? 'bg-green-500 border-green-400 text-black font-bold'
-                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
-                                    }`}
-                            >
-                                <HistoryIcon className="w-4 h-4" />
-                                Historique
-                            </button>
+                <div className="flex-1" />
 
-                            <div className="w-px h-6 bg-zinc-800 mx-2" />
-
-                            <button
-                                onClick={() => handleGenerateReport('view')}
-                                disabled={isGeneratingReport}
-                                className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-yellow-400 hover:border-yellow-500 transition-all text-sm flex items-center gap-2"
-                            >
-                                <FileText className="w-4 h-4" />
-                                Rapport (X)
-                            </button>
-
-                            <button
-                                onClick={() => handleGenerateReport('close')}
-                                disabled={isGeneratingReport || isSessionClosed}
-                                className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${isSessionClosed
-                                    ? 'bg-zinc-800 border-zinc-700 text-zinc-600 cursor-not-allowed'
-                                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-500'
-                                    }`}
-                            >
-                                <Lock className="w-4 h-4" />
-                                {isSessionClosed ? 'Session Clôturée' : 'Clôturer (Z)'}
-                            </button>
-                        </div>
-
-                        {/* Product grid */}
-                        <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 content-start pr-1">
-                            {isLoadingProducts ? (
-                                Array.from({ length: 8 }).map((_, i) => (
-                                    <div key={i} className="bg-zinc-800/50 rounded-2xl h-36 animate-pulse" />
-                                ))
-                            ) : filteredProducts.length === 0 ? (
-                                <div className="col-span-full flex flex-col items-center justify-center py-16 text-zinc-600">
-                                    <Package className="w-12 h-12 mb-3 opacity-30" />
-                                    <p className="text-sm">Aucun produit disponible</p>
-                                </div>
-                            ) : (
-                                filteredProducts.map((product) => {
-                                    const inCart = cart.find((l) => l.product.id === product.id);
-                                    return (
-                                        <button
-                                            key={product.id}
-                                            onClick={() => addToCart(product)}
-                                            className={`relative group flex flex-col p-3 rounded-2xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${inCart
-                                                ? 'border-green-500/60 bg-green-900/10'
-                                                : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
-                                                }`}
-                                        >
-                                            {/* Product image */}
-                                            {product.image_url ? (
-                                                <div
-                                                    className="w-full h-20 rounded-xl bg-cover bg-center mb-2 shrink-0"
-                                                    style={{ backgroundImage: `url(${product.image_url})` }}
-                                                />
-                                            ) : (
-                                                <div className="w-full h-20 rounded-xl bg-zinc-700 mb-2 flex items-center justify-center shrink-0">
-                                                    <Package className="w-8 h-8 text-zinc-500" />
-                                                </div>
-                                            )}
-                                            <p className="text-xs font-semibold text-white truncate leading-tight">{product.name}</p>
-                                            <p className="text-xs text-zinc-400 mt-0.5">Stock: {product.stock_quantity}</p>
-                                            <p className="text-sm font-bold text-green-400 mt-1">{product.price.toFixed(2)} €</p>
-
-                                            {inCart && (
-                                                <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[10px] font-bold text-black">
-                                                    {inCart.quantity}
-                                                </div>
-                                            )}
-                                        </button>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </>
-                )}
+                <button
+                    onClick={loadProducts}
+                    className="p-2 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-500 transition-colors"
+                    title="Actualiser les produits"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                </button>
             </div>
 
-            {/* ── RIGHT: Cart Panel ── */}
-            {!showHistory && (
-                <div className="w-80 shrink-0 flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-                    {/* Customer Section */}
-                    <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-800/30">
-                        {!selectedCustomer ? (
-                            <div className="space-y-2">
-                                <div className="relative">
-                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+            <div className="flex-1 flex gap-4 overflow-hidden min-h-0">
+                {/* ── LEFT: Product Grid or History ── */}
+                <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+                    {showHistory ? (
+                        <div className="flex-1 overflow-y-auto pr-1">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Historique des Ventes</h3>
+                                    <p className="text-sm text-zinc-500">Les 30 derniers jours de vente en boutique</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowHistory(false)}
+                                    className="text-sm text-green-400 hover:underline"
+                                >
+                                    Retour à la caisse
+                                </button>
+                            </div>
+
+                            {isLoadingHistory ? (
+                                <div className="space-y-4">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="h-20 bg-zinc-800/50 rounded-2xl animate-pulse" />
+                                    ))}
+                                </div>
+                            ) : historyDays.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-64 text-zinc-600">
+                                    <HistoryIcon className="w-12 h-12 mb-4 opacity-20" />
+                                    <p>Aucun historique de vente trouvé pour ce mois.</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {historyDays.map((day) => (
+                                        <button
+                                            key={day.date}
+                                            onClick={() => handleViewPastReport(day.date)}
+                                            className="bg-zinc-800/40 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 flex items-center justify-between group transition-all"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center">
+                                                    <Calendar className="w-3 h-3 text-zinc-500 mb-0.5" />
+                                                    <span className="text-xs font-bold text-white">
+                                                        {new Date(day.date).toLocaleDateString('fr-FR', { day: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-sm font-bold text-white">
+                                                        {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', month: 'long', year: 'numeric' })}
+                                                    </p>
+                                                    <p className="text-xs text-zinc-500">{day.count} ventes réalisées</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-6">
+                                                <div className="text-right">
+                                                    <p className="text-lg font-black text-green-400">{day.total.toFixed(2)} €</p>
+                                                    <p className="text-[10px] text-zinc-600 uppercase font-bold">Total encaissé</p>
+                                                </div>
+                                                <ChevronRight className="w-5 h-5 text-zinc-700 group-hover:text-green-500 transition-colors" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            {/* Filters */}
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                <div className="relative flex-1 min-w-[180px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                                     <input
-                                        value={customerSearch}
-                                        onChange={(e) => setCustomerSearch(e.target.value)}
-                                        placeholder="Chercher client (Nom/Tél)…"
-                                        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Rechercher un produit…"
+                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors"
                                     />
                                 </div>
 
-                                {customerResults.length > 0 && (
-                                    <div className="bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl">
-                                        {customerResults.map((c) => (
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-colors"
+                                >
+                                    <option value="all">Toutes les catégories</option>
+                                    {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+
+                                <button
+                                    onClick={loadProducts}
+                                    className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-400 hover:border-green-500 transition-all text-sm"
+                                >
+                                    ↻ Sync
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        if (!showHistory) loadHistory();
+                                        setShowHistory(!showHistory);
+                                    }}
+                                    className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${showHistory
+                                        ? 'bg-green-500 border-green-400 text-black font-bold'
+                                        : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+                                        }`}
+                                >
+                                    <HistoryIcon className="w-4 h-4" />
+                                    Historique
+                                </button>
+
+                                <div className="w-px h-6 bg-zinc-800 mx-2" />
+
+                                <button
+                                    onClick={() => handleGenerateReport('view')}
+                                    disabled={isGeneratingReport}
+                                    className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-yellow-400 hover:border-yellow-500 transition-all text-sm flex items-center gap-2"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Rapport (X)
+                                </button>
+
+                                <button
+                                    onClick={() => handleGenerateReport('close')}
+                                    disabled={isGeneratingReport || isSessionClosed}
+                                    className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${isSessionClosed
+                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-600 cursor-not-allowed'
+                                        : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-500'
+                                        }`}
+                                >
+                                    <Lock className="w-4 h-4" />
+                                    {isSessionClosed ? 'Session Clôturée' : 'Clôturer (Z)'}
+                                </button>
+                            </div>
+
+                            {/* Product grid */}
+                            <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 content-start pr-1">
+                                {isLoadingProducts ? (
+                                    Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="bg-zinc-800/50 rounded-2xl h-36 animate-pulse" />
+                                    ))
+                                ) : filteredProducts.length === 0 ? (
+                                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-zinc-600">
+                                        <Package className="w-12 h-12 mb-3 opacity-30" />
+                                        <p className="text-sm">Aucun produit disponible</p>
+                                    </div>
+                                ) : (
+                                    filteredProducts.map((product) => {
+                                        const inCart = cart.find((l) => l.product.id === product.id);
+                                        return (
                                             <button
-                                                key={c.id}
-                                                onClick={() => {
-                                                    setSelectedCustomer(c);
-                                                    setCustomerSearch('');
-                                                    setCustomerResults([]);
-                                                }}
-                                                className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 border-b border-zinc-800 last:border-0 transition-colors"
+                                                key={product.id}
+                                                onClick={() => addToCart(product)}
+                                                className={`relative group flex flex-col p-3 rounded-2xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${inCart
+                                                    ? 'border-green-500/60 bg-green-900/10'
+                                                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
+                                                    }`}
                                             >
-                                                <p className="font-bold text-white">{c.full_name}</p>
-                                                <p className="text-zinc-500">{c.phone || 'Pas de numéro'}</p>
-                                                <p className="text-yellow-500/80 text-[10px]">{c.loyalty_points} pts</p>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-3 bg-green-900/10 border border-green-500/30 rounded-xl p-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                        <User className="w-4 h-4" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-white truncate">{selectedCustomer.full_name}</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-zinc-400">{selectedCustomer.phone}</span>
-                                            <span className="text-[10px] text-yellow-500 font-bold">{selectedCustomer.loyalty_points} pts</span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedCustomer(null);
-                                            setUseLoyaltyPoints(false);
-                                            setPointsToRedeem(0);
-                                        }}
-                                        className="text-zinc-500 hover:text-white transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-
-                                {/* Loyalty points redemption UI */}
-                                {selectedCustomer.loyalty_points >= 100 && (
-                                    <div className="pt-2 border-t border-green-500/20">
-                                        <label className="flex items-center justify-between cursor-pointer mb-2">
-                                            <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Utiliser les points</span>
-                                            <input
-                                                type="checkbox"
-                                                checked={useLoyaltyPoints}
-                                                onChange={(e) => {
-                                                    setUseLoyaltyPoints(e.target.checked);
-                                                    if (e.target.checked) {
-                                                        const maxRedeemable = Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100));
-                                                        setPointsToRedeem(maxRedeemable >= 100 ? 100 : 0);
-                                                    } else {
-                                                        setPointsToRedeem(0);
-                                                    }
-                                                }}
-                                                className="w-3.5 h-3.5 accent-green-500"
-                                            />
-                                        </label>
-
-                                        {useLoyaltyPoints && (
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="range"
-                                                        min="100"
-                                                        max={Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100)))}
-                                                        step="100"
-                                                        value={pointsToRedeem}
-                                                        onChange={(e) => setPointsToRedeem(parseInt(e.target.value))}
-                                                        className="flex-1 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                                {/* Product image */}
+                                                {product.image_url ? (
+                                                    <div
+                                                        className="w-full h-20 rounded-xl bg-cover bg-center mb-2 shrink-0"
+                                                        style={{ backgroundImage: `url(${product.image_url})` }}
                                                     />
-                                                    <span className="text-[10px] font-bold text-white w-12 text-right">
-                                                        {pointsToRedeem} pts
-                                                    </span>
+                                                ) : (
+                                                    <div className="w-full h-20 rounded-xl bg-zinc-700 mb-2 flex items-center justify-center shrink-0">
+                                                        <Package className="w-8 h-8 text-zinc-500" />
+                                                    </div>
+                                                )}
+                                                <p className="text-xs font-semibold text-white truncate leading-tight">{product.name}</p>
+                                                <div className="flex items-center justify-between mt-0.5">
+                                                    <p className={`text-[10px] font-bold ${product.stock_quantity < 5 ? 'text-red-400' : 'text-zinc-500'}`}>
+                                                        Stock: {product.stock_quantity}
+                                                    </p>
+                                                    {product.stock_quantity < 5 && (
+                                                        <span className="text-[9px] bg-red-500/10 text-red-500 px-1 rounded border border-red-500/20">BAS</span>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center text-[10px]">
-                                                    <span className="text-zinc-500">Valeur: {(pointsToRedeem / 100).toFixed(2)} €</span>
-                                                    <button
-                                                        onClick={() => setPointsToRedeem(Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100))))}
-                                                        className="text-green-400 hover:underline"
-                                                    >
-                                                        Max
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                                <p className="text-sm font-bold text-green-400 mt-1">{product.price.toFixed(2)} €</p>
+
+                                                {inCart && (
+                                                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[10px] font-bold text-black">
+                                                        {inCart.quantity}
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })
                                 )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    )}
+                </div>
 
-                    {/* Cart header */}
-                    <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <ShoppingCart className="w-4 h-4 text-green-400" />
-                            <span className="text-sm font-bold text-white">Vente en cours</span>
-                            {cart.length > 0 && (
-                                <span className="text-[10px] bg-green-500 text-black font-bold rounded-full px-1.5 py-0.5">
-                                    {cart.reduce((s, l) => s + l.quantity, 0)}
-                                </span>
-                            )}
-                        </div>
-                        {cart.length > 0 && (
-                            <button
-                                onClick={clearCart}
-                                className="text-zinc-600 hover:text-red-400 transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
+                {/* ── RIGHT: Cart Panel ── */}
+                {!showHistory && (
+                    <div className="w-80 shrink-0 flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                        {/* Customer Section */}
+                        <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-800/30">
+                            {!selectedCustomer ? (
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                                        <input
+                                            value={customerSearch}
+                                            onChange={(e) => setCustomerSearch(e.target.value)}
+                                            placeholder="Chercher client (Nom/Tél)…"
+                                            className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                        />
+                                    </div>
 
-                    {/* Cart items */}
-                    <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
-                        <AnimatePresence>
-                            {cart.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-32 text-zinc-600">
-                                    <ShoppingCart className="w-8 h-8 mb-2 opacity-30" />
-                                    <p className="text-xs">Panier vide</p>
-                                    <p className="text-[10px] text-zinc-700 mt-1">Cliquez sur un produit pour ajouter</p>
+                                    {customerResults.length > 0 && (
+                                        <div className="bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl">
+                                            {customerResults.map((c) => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => {
+                                                        setSelectedCustomer(c);
+                                                        setCustomerSearch('');
+                                                        setCustomerResults([]);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 border-b border-zinc-800 last:border-0 transition-colors"
+                                                >
+                                                    <p className="font-bold text-white">{c.full_name}</p>
+                                                    <p className="text-zinc-500">{c.phone || 'Pas de numéro'}</p>
+                                                    <p className="text-yellow-500/80 text-[10px]">{c.loyalty_points} pts</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
-                                cart.map((line) => (
-                                    <motion.div
-                                        key={line.product.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        className="bg-zinc-800 rounded-xl p-2.5"
-                                    >
-                                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                                            <p className="text-xs font-semibold text-white leading-tight flex-1 truncate">
-                                                {line.product.name}
-                                            </p>
-                                            <button
-                                                onClick={() => removeLine(line.product.id)}
-                                                className="text-zinc-600 hover:text-red-400 transition-colors shrink-0"
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </button>
+                                <div className="space-y-3 bg-green-900/10 border border-green-500/30 rounded-xl p-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                            <User className="w-4 h-4" />
                                         </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {/* Qty controls */}
-                                            <div className="flex items-center gap-1">
-                                                <button
-                                                    onClick={() => updateQty(line.product.id, -1)}
-                                                    className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center transition-colors"
-                                                >
-                                                    <Minus className="w-3 h-3 text-zinc-300" />
-                                                </button>
-                                                <span className="text-xs text-white font-bold w-5 text-center">{line.quantity}</span>
-                                                <button
-                                                    onClick={() => updateQty(line.product.id, 1)}
-                                                    disabled={line.quantity >= line.product.stock_quantity}
-                                                    className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 flex items-center justify-center transition-colors"
-                                                >
-                                                    <Plus className="w-3 h-3 text-zinc-300" />
-                                                </button>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-white truncate">{selectedCustomer.full_name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-zinc-400">{selectedCustomer.phone}</span>
+                                                <span className="text-[10px] text-yellow-500 font-bold">{selectedCustomer.loyalty_points} pts</span>
                                             </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedCustomer(null);
+                                                setUseLoyaltyPoints(false);
+                                                setPointsToRedeem(0);
+                                            }}
+                                            className="text-zinc-500 hover:text-white transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
 
-                                            {/* Price override */}
-                                            <div className="flex-1 relative">
-                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                                    {/* Loyalty points redemption UI */}
+                                    {selectedCustomer.loyalty_points >= 100 && (
+                                        <div className="pt-2 border-t border-green-500/20">
+                                            <label className="flex items-center justify-between cursor-pointer mb-2">
+                                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Utiliser les points</span>
                                                 <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={line.unitPrice}
-                                                    onChange={(e) => updatePrice(line.product.id, e.target.value)}
-                                                    className="w-full bg-zinc-700 border border-zinc-600 rounded-lg pl-5 pr-2 py-1 text-xs text-white focus:outline-none focus:border-green-500 transition-colors"
+                                                    type="checkbox"
+                                                    checked={useLoyaltyPoints}
+                                                    onChange={(e) => {
+                                                        setUseLoyaltyPoints(e.target.checked);
+                                                        if (e.target.checked) {
+                                                            const maxRedeemable = Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100));
+                                                            setPointsToRedeem(maxRedeemable >= 100 ? 100 : 0);
+                                                        } else {
+                                                            setPointsToRedeem(0);
+                                                        }
+                                                    }}
+                                                    className="w-3.5 h-3.5 accent-green-500"
                                                 />
+                                            </label>
+
+                                            {useLoyaltyPoints && (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="range"
+                                                            min="100"
+                                                            max={Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100)))}
+                                                            step="100"
+                                                            value={pointsToRedeem}
+                                                            onChange={(e) => setPointsToRedeem(parseInt(e.target.value))}
+                                                            className="flex-1 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                                        />
+                                                        <span className="text-[10px] font-bold text-white w-12 text-right">
+                                                            {pointsToRedeem} pts
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px]">
+                                                        <span className="text-zinc-500">Valeur: {(pointsToRedeem / 100).toFixed(2)} €</span>
+                                                        <button
+                                                            onClick={() => setPointsToRedeem(Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100))))}
+                                                            className="text-green-400 hover:underline"
+                                                        >
+                                                            Max
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Cart header */}
+                        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <ShoppingCart className="w-4 h-4 text-green-400" />
+                                <span className="text-sm font-bold text-white">Vente en cours</span>
+                                {cart.length > 0 && (
+                                    <span className="text-[10px] bg-green-500 text-black font-bold rounded-full px-1.5 py-0.5">
+                                        {cart.reduce((s, l) => s + l.quantity, 0)}
+                                    </span>
+                                )}
+                            </div>
+                            {cart.length > 0 && (
+                                <button
+                                    onClick={clearCart}
+                                    className="text-zinc-600 hover:text-red-400 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Cart items */}
+                        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+                            <AnimatePresence>
+                                {cart.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-32 text-zinc-600">
+                                        <ShoppingCart className="w-8 h-8 mb-2 opacity-30" />
+                                        <p className="text-xs">Panier vide</p>
+                                        <p className="text-[10px] text-zinc-700 mt-1">Cliquez sur un produit pour ajouter</p>
+                                    </div>
+                                ) : (
+                                    cart.map((line) => (
+                                        <motion.div
+                                            key={line.product.id}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="bg-zinc-800 rounded-xl p-2.5"
+                                        >
+                                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                                                <p className="text-xs font-semibold text-white leading-tight flex-1 truncate">
+                                                    {line.product.name}
+                                                </p>
+                                                <button
+                                                    onClick={() => removeLine(line.product.id)}
+                                                    className="text-zinc-600 hover:text-red-400 transition-colors shrink-0"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
                                             </div>
 
-                                            <span className="text-xs font-bold text-green-400 shrink-0">
-                                                {(line.quantity * line.unitPrice).toFixed(2)} €
-                                            </span>
-                                        </div>
-                                    </motion.div>
-                                ))
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                            <div className="flex items-center gap-2">
+                                                {/* Qty controls */}
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => updateQty(line.product.id, -1)}
+                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Minus className="w-3 h-3 text-zinc-300" />
+                                                    </button>
+                                                    <span className="text-xs text-white font-bold w-5 text-center">{line.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQty(line.product.id, 1)}
+                                                        disabled={line.quantity >= line.product.stock_quantity}
+                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <Plus className="w-3 h-3 text-zinc-300" />
+                                                    </button>
+                                                </div>
 
-                    {/* Discount + Totals */}
-                    <div className="border-t border-zinc-800 px-3 py-3 space-y-2">
-                        {/* Discount row */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setDiscountType((t) => (t === 'percent' ? 'fixed' : 'percent'))}
-                                className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center hover:border-green-500 transition-colors"
-                            >
-                                {discountType === 'percent' ? (
-                                    <Percent className="w-3.5 h-3.5 text-zinc-400" />
-                                ) : (
-                                    <Hash className="w-3.5 h-3.5 text-zinc-400" />
+                                                {/* Price override */}
+                                                <div className="flex-1 relative">
+                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        value={line.unitPrice}
+                                                        onChange={(e) => updatePrice(line.product.id, e.target.value)}
+                                                        className="w-full bg-zinc-700 border border-zinc-600 rounded-lg pl-5 pr-2 py-1 text-xs text-white focus:outline-none focus:border-green-500 transition-colors"
+                                                    />
+                                                </div>
+
+                                                <span className="text-xs font-bold text-green-400 shrink-0">
+                                                    {(line.quantity * line.unitPrice).toFixed(2)} €
+                                                </span>
+                                            </div>
+                                        </motion.div>
+                                    ))
                                 )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Discount + Totals */}
+                        <div className="border-t border-zinc-800 px-3 py-3 space-y-2">
+                            {/* Discount row */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setDiscountType((t) => (t === 'percent' ? 'fixed' : 'percent'))}
+                                    className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center hover:border-green-500 transition-colors"
+                                >
+                                    {discountType === 'percent' ? (
+                                        <Percent className="w-3.5 h-3.5 text-zinc-400" />
+                                    ) : (
+                                        <Hash className="w-3.5 h-3.5 text-zinc-400" />
+                                    )}
+                                </button>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder={discountType === 'percent' ? 'Remise en %' : 'Remise en €'}
+                                    value={discountValue}
+                                    onChange={(e) => setDiscountValue(e.target.value)}
+                                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                />
+                            </div>
+
+                            {/* Totals */}
+                            <div className="space-y-1 text-xs text-zinc-400">
+                                <div className="flex justify-between">
+                                    <span>Sous-total</span>
+                                    <span>{subtotal.toFixed(2)} €</span>
+                                </div>
+                                {discount > 0 && (
+                                    <div className="flex justify-between text-orange-400">
+                                        <span>Remise ({discountType === 'percent' ? `${discountValue}%` : `${discountValue}€`})</span>
+                                        <span>−{discount.toFixed(2)} €</span>
+                                    </div>
+                                )}
+                                {loyaltyDiscount > 0 && (
+                                    <div className="flex justify-between text-yellow-500 font-medium">
+                                        <span>Points Fidélité ({pointsToRedeem} pts)</span>
+                                        <span>−{loyaltyDiscount.toFixed(2)} €</span>
+                                    </div>
+                                )}
+                                {selectedCustomer && cart.length > 0 && (
+                                    <div className="flex justify-between text-blue-400 italic font-medium">
+                                        <span>Points à gagner</span>
+                                        <span>+{Math.floor(total)} pts</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-base font-bold text-white pt-1 border-t border-zinc-700">
+                                    <span>TOTAL</span>
+                                    <span className="text-green-400">{total.toFixed(2)} €</span>
+                                </div>
+                            </div>
+
+                            {/* Pay button */}
+                            <button
+                                onClick={() => setShowPaymentModal(true)}
+                                disabled={cart.length === 0}
+                                className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black font-bold py-3 rounded-xl transition-all text-sm"
+                            >
+                                <CreditCard className="w-4 h-4" />
+                                Encaisser {cart.length > 0 ? `${total.toFixed(2)} €` : ''}
                             </button>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder={discountType === 'percent' ? 'Remise en %' : 'Remise en €'}
-                                value={discountValue}
-                                onChange={(e) => setDiscountValue(e.target.value)}
-                                className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
-                            />
                         </div>
-
-                        {/* Totals */}
-                        <div className="space-y-1 text-xs text-zinc-400">
-                            <div className="flex justify-between">
-                                <span>Sous-total</span>
-                                <span>{subtotal.toFixed(2)} €</span>
-                            </div>
-                            {discount > 0 && (
-                                <div className="flex justify-between text-orange-400">
-                                    <span>Remise ({discountType === 'percent' ? `${discountValue}%` : `${discountValue}€`})</span>
-                                    <span>−{discount.toFixed(2)} €</span>
-                                </div>
-                            )}
-                            {loyaltyDiscount > 0 && (
-                                <div className="flex justify-between text-yellow-500 font-medium">
-                                    <span>Points Fidélité ({pointsToRedeem} pts)</span>
-                                    <span>−{loyaltyDiscount.toFixed(2)} €</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between text-base font-bold text-white pt-1 border-t border-zinc-700">
-                                <span>TOTAL</span>
-                                <span className="text-green-400">{total.toFixed(2)} €</span>
-                            </div>
-                        </div>
-
-                        {/* Pay button */}
-                        <button
-                            onClick={() => setShowPaymentModal(true)}
-                            disabled={cart.length === 0}
-                            className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black font-bold py-3 rounded-xl transition-all text-sm"
-                        >
-                            <CreditCard className="w-4 h-4" />
-                            Encaisser {cart.length > 0 ? `${total.toFixed(2)} €` : ''}
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* ── Payment Modal ── */}
             <AnimatePresence>
@@ -1313,4 +1401,6 @@ export default function AdminPOSTab({
             )}
         </div>
     );
-}
+};
+
+export default AdminPOSTab;
