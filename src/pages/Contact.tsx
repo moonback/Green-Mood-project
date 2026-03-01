@@ -36,10 +36,21 @@ export default function Contact() {
 
       {/* Hero Header */}
       <section className="relative pt-40 pb-24 px-4 overflow-hidden">
-        {/* Decorative Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-green-neon/5 rounded-full blur-[120px] -z-10" />
+        {/* Background Layer with Lifestyle Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/lifestyle-relax.png"
+            alt="Wellness & Care"
+            className="w-full h-full object-cover opacity-20 filter grayscale blur-[1px]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950 opacity-40" />
+        </div>
 
-        <div className="max-w-7xl mx-auto text-center space-y-8">
+        {/* Decorative Gradients Blur */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-green-neon/5 rounded-full blur-[120px] z-10 pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto text-center space-y-8 relative z-20">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
