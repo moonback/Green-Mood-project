@@ -16,7 +16,9 @@ import {
     SendHorizontal,
     Plus,
     ArrowRight,
-    MessageSquare
+    MessageSquare,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -189,6 +191,7 @@ interface Message {
 
 export default function BudTender() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [stepIndex, setStepIndex] = useState(-1);
@@ -320,7 +323,7 @@ export default function BudTender() {
                     <motion.button
                         initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
                         onClick={handleOpen}
-                        className={`fixed bottom-6 right-6 z-50 glass-premium flex items-center gap-3 p-4 rounded-3xl shadow-glow-sm hover:scale-105 active:scale-95 transition-all group ${pulse ? 'animate-pulse' : ''}`}
+                        className={`fixed bottom-6 right-6 z-[100] glass-premium flex items-center gap-3 p-4 rounded-3xl shadow-glow-sm hover:scale-105 active:scale-95 transition-all group ${pulse ? 'animate-pulse' : ''}`}
                     >
                         <div className="bg-green-neon/20 p-2.5 rounded-2xl group-hover:bg-green-neon/30 transition-colors">
                             <Leaf className="w-5 h-5 text-green-neon" />
@@ -339,7 +342,7 @@ export default function BudTender() {
                         initial={{ opacity: 0, y: 100, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="fixed bottom-6 right-6 z-50 w-[min(420px,92vw)] h-[min(640px,85vh)] glass-premium bg-zinc-950 flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden"
+                        className={`fixed bottom-6 right-6 z-[100] glass-premium bg-zinc-950 flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'w-[min(800px,94vw)] h-[min(850px,92vh)]' : 'w-[min(420px,92vw)] h-[min(640px,85vh)]'}`}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-white/[0.05] bg-zinc-950/20">
@@ -347,12 +350,29 @@ export default function BudTender() {
                                 <div className="w-10 h-10 rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
                                     <Sparkles className="w-5 h-5 text-green-neon" />
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-tighter italic">BUDTENDER IA</h3>
-                                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Connecté • Expert</p>
+                                <div className="flex items-center gap-3">
+                                    <div>
+                                        <h3 className="text-sm font-black text-white uppercase tracking-tighter">BudTender IA</h3>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-neon animate-pulse" />
+                                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Expert en ligne</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsExpanded(!isExpanded)}
+                                        className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-400 hover:text-white transition-all flex items-center justify-center"
+                                        title={isExpanded ? "Réduire" : "Agrandir"}
+                                    >
+                                        {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                                    </button>
                                 </div>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/5 rounded-xl transition-all"><X className="w-5 h-5 text-zinc-500" /></button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-500 hover:text-white flex items-center justify-center transition-all group"
+                            >
+                                <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
                         </div>
 
                         {/* Messages Area */}
@@ -409,7 +429,7 @@ export default function BudTender() {
                                         )}
 
                                         {msg.isResult && msg.recommended && (
-                                            <div className="space-y-3 pt-4">
+                                            <div className={`pt-4 ${isExpanded ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'space-y-3'}`}>
                                                 {msg.recommended.map(prod => (
                                                     <div key={prod.id} className="p-3 bg-zinc-950/40 border border-white/[0.05] rounded-[1.5rem] flex items-center gap-4">
                                                         <img src={prod.image_url} className="w-16 h-16 rounded-xl object-cover" />
