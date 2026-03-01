@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
+import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal, Mic } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
@@ -9,6 +9,8 @@ import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTEN
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
+import BudTenderVoiceModal from './budtender-ui/BudTenderVoiceModal';
+import { useVoiceBudTender } from '../hooks/useVoiceBudTender';
 
 // ─── Shared types and logic imported ───
 
@@ -241,6 +243,8 @@ export default function BudTender() {
     // Free chat input
     const [chatInput, setChatInput] = useState('');
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
+    // Voice mode
+    const [voiceModalOpen, setVoiceModalOpen] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -248,6 +252,9 @@ export default function BudTender() {
     const hasTriedLoad = useRef(false);
 
     const memory = useBudTenderMemory();
+
+    // Voice BudTender hook
+    const voice = useVoiceBudTender();
 
     // Load admin settings from DB when opening
     useEffect(() => {
@@ -780,6 +787,23 @@ export default function BudTender() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {/* Voice mode button */}
+                                    <button
+                                        onClick={() => {
+                                            setVoiceModalOpen(true);
+                                            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+                                            if (apiKey && !voice.isActive) {
+                                                voice.startVoice(products, apiKey, memory.userName);
+                                            }
+                                        }}
+                                        title="Mode vocal — Gemini 2.5 Flash Native Audio"
+                                        className={`p-2 rounded-xl transition-all ${voice.isActive
+                                                ? 'text-green-neon bg-green-neon/10 border border-green-neon/30'
+                                                : 'text-zinc-500 hover:text-green-neon hover:bg-green-neon/5'
+                                            }`}
+                                    >
+                                        <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </button>
                                     <button
                                         onClick={reset}
                                         title="Nouvelle discussion (garder vos préférences)"
@@ -1131,13 +1155,41 @@ export default function BudTender() {
                                     <p className="text-[9px] text-zinc-600 font-black uppercase tracking-[0.2em] opacity-50">
                                         BudTender IA Expert
                                     </p>
-
+                                    <button
+                                        onClick={() => {
+                                            setVoiceModalOpen(true);
+                                            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+                                            if (apiKey && !voice.isActive) {
+                                                voice.startVoice(products, apiKey, memory.userName);
+                                            }
+                                        }}
+                                        className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest transition-colors ${voice.isActive ? 'text-green-neon' : 'text-zinc-600 hover:text-zinc-400'
+                                            }`}
+                                    >
+                                        <Mic className="w-2.5 h-2.5" />
+                                        {voice.isActive ? 'Vocal actif' : 'Mode vocal'}
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
+
+            {/* ── Voice Modal — Gemini 2.5 Flash Native Audio ── */}
+            {voiceModalOpen && (
+                <BudTenderVoiceModal
+                    status={voice.status}
+                    isMuted={voice.isMuted}
+                    transcript={voice.transcript}
+                    errorMessage={voice.errorMessage}
+                    onClose={async () => {
+                        setVoiceModalOpen(false);
+                        await voice.stopVoice();
+                    }}
+                    onToggleMute={voice.toggleMute}
+                />
+            )}
         </>
     );
 }

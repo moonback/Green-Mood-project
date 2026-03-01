@@ -191,16 +191,15 @@ export function useBudTenderMemory() {
 
             // Supabase sync (Record interaction session)
             if (user && history.length > 0) {
-                // We use a simple session_id based on the first message id or date
                 const sessionId = history[0].id || new Date().toISOString();
-
-                await supabase.from('budtender_interactions').upsert({
+                // Use insert — budtender_interactions may not have a unique constraint for upsert
+                await supabase.from('budtender_interactions').insert({
                     user_id: user.id,
                     session_id: sessionId,
                     interaction_type: 'chat_session',
                     quiz_answers: { messages: history },
                     created_at: new Date().toISOString()
-                }, { onConflict: 'user_id, session_id' });
+                });
             }
         } catch (err) {
             console.error('[BudTenderMemory] Error saving history:', err);
