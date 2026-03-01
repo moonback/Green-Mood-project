@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import {
   LineChart,
   Line,
@@ -77,6 +78,15 @@ export default function AdminAnalyticsTab() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [statusDist, setStatusDist] = useState<OrderStatusDistribution[]>([]);
   const [acqData, setAcqData] = useState<CustomerAcquisitionPoint[]>([]);
+  const [aovData, setAovData] = useState<{ date: string; aov: number }[]>([]);
+  const [categoryPerf, setCategoryPerf] = useState<{ name: string; value: number }[]>([]);
+  const [budtenderStats, setBudtenderStats] = useState<{ type: string; count: number }[]>([]);
+  const [kpis, setKpis] = useState({
+    totalRevenue: 0,
+    aov: 0,
+    conversionRate: 0, // interaction success rate
+    totalOrders: 0
+  });
 
   useEffect(() => {
     loadAnalytics();
@@ -93,6 +103,7 @@ export default function AdminAnalyticsTab() {
       { data: paidOrders },
       { data: allOrders },
       { data: newProfiles },
+      { data: interactions },
     ] = await Promise.all([
       supabase
         .from('orders')
@@ -108,35 +119,50 @@ export default function AdminAnalyticsTab() {
         .from('profiles')
         .select('created_at')
         .gte('created_at', sinceISO),
+      supabase
+        .from('budtender_interactions')
+        .select('interaction_type, clicked_product, feedback')
+        .gte('created_at', sinceISO),
     ]);
 
-    // Revenue by day
+    // Revenue & AOV by day
     const revenueByDay = new Map<string, number>();
+    const ordersByDay = new Map<string, number>();
+    let totalRev = 0;
     (paidOrders ?? []).forEach((o: { created_at: string; total: number }) => {
       const day = o.created_at.slice(0, 10);
       revenueByDay.set(day, (revenueByDay.get(day) ?? 0) + Number(o.total));
+      ordersByDay.set(day, (ordersByDay.get(day) ?? 0) + 1);
+      totalRev += Number(o.total);
     });
+
     const revData: RevenueDataPoint[] = [];
+    const aovs: { date: string; aov: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      revData.push({ date: key, revenue: revenueByDay.get(key) ?? 0 });
+      const dayRev = revenueByDay.get(key) ?? 0;
+      const dayOrders = ordersByDay.get(key) ?? 0;
+      revData.push({ date: key, revenue: dayRev });
+      aovs.push({ date: key, aov: dayOrders > 0 ? dayRev / dayOrders : 0 });
     }
     setRevenueData(revData);
+    setAovData(aovs);
 
-    // Top products from order_items
+    // Top products & Category performance
     const { data: orderItems } = await supabase
       .from('order_items')
-      .select('product_id, product_name, quantity, total_price, order_id')
+      .select('product_id, product_name, quantity, total_price, order_id, product:products(category:categories(name))')
       .in(
         'order_id',
         (paidOrders ?? []).map((o: { id: string }) => o.id)
       );
 
     const productMap = new Map<string, TopProduct>();
+    const catMap = new Map<string, number>();
     (orderItems ?? []).forEach(
-      (item: { product_id: string; product_name: string; quantity: number; total_price: number }) => {
+      (item: any) => {
         const existing = productMap.get(item.product_id) ?? {
           product_id: item.product_id,
           product_name: item.product_name,
@@ -146,14 +172,42 @@ export default function AdminAnalyticsTab() {
         existing.total_quantity += item.quantity;
         existing.total_revenue += Number(item.total_price);
         productMap.set(item.product_id, existing);
+
+        const catName = item.product?.category?.name || 'Inconnu';
+        catMap.set(catName, (catMap.get(catName) ?? 0) + Number(item.total_price));
       }
     );
     setTopProducts(
       Array.from(productMap.values())
         .sort((a, b) => b.total_revenue - a.total_revenue)
-        .slice(0, 10)
+        .slice(0, 5) // top 5 is enough for the overview
+    );
+    setCategoryPerf(
+      Array.from(catMap.entries()).map(([name, value]) => ({ name, value }))
     );
 
+    // BudTender Stats
+    const interactionCounts = new Map<string, number>();
+    interactions?.forEach(i => {
+      interactionCounts.set(i.interaction_type, (interactionCounts.get(i.interaction_type) ?? 0) + 1);
+    });
+    setBudtenderStats(
+      Array.from(interactionCounts.entries()).map(([type, count]) => ({ type, count }))
+    );
+
+    // KPIs
+    const totalOrders = paidOrders?.length ?? 0;
+    const clickedInteractions = interactions?.filter(i => i.clicked_product).length ?? 0;
+    const totalInteractions = interactions?.length ?? 0;
+
+    setKpis({
+      totalRevenue: totalRev,
+      totalOrders,
+      aov: totalOrders > 0 ? totalRev / totalOrders : 0,
+      conversionRate: totalInteractions > 0 ? (clickedInteractions / totalInteractions) * 100 : 0
+    });
+
+    // ... (keep acqData and statusDist logic)
     // Status distribution
     const statusMap = new Map<string, number>();
     (allOrders ?? []).forEach((o: { status: string }) => {
@@ -185,172 +239,214 @@ export default function AdminAnalyticsTab() {
     new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 
   return (
-    <div className="space-y-6">
-      {/* Range selector */}
-      <div className="flex gap-2">
-        {(Object.keys(RANGE_LABELS) as AnalyticsRange[]).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${range === r
-                ? 'bg-green-neon text-white'
-                : 'bg-zinc-800 text-zinc-400 hover:text-white'
-              }`}
-          >
-            {RANGE_LABELS[r]}
-          </button>
-        ))}
+    <div className="space-y-8">
+      {/* Header & Range Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight">Analytique</h1>
+          <p className="text-sm text-zinc-500">Performances de vente et comportement client.</p>
+        </div>
+        <div className="flex gap-2 bg-zinc-900 p-1 rounded-2xl border border-zinc-800 self-start">
+          {(Object.keys(RANGE_LABELS) as AnalyticsRange[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${range === r
+                ? 'bg-green-neon text-black shadow-lg shadow-green-neon/10'
+                : 'text-zinc-500 hover:text-white'
+                }`}
+            >
+              {RANGE_LABELS[r]}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 animate-pulse h-64" />
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 animate-pulse h-32" />
           ))}
+          <div className="col-span-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 animate-pulse h-96" />
         </div>
       ) : (
         <>
-          {/* Revenue chart */}
-          <ChartCard title="Chiffre d'affaires">
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis
-                  dataKey="date"
-                  stroke="#71717a"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={formatDate}
-                  interval={range === '7d' ? 0 : range === '30d' ? 4 : 10}
-                />
-                <YAxis
-                  stroke="#71717a"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(v: number) => `${v}€`}
-                />
-                <Tooltip
-                  {...tooltipStyle}
-                  labelFormatter={formatDate}
-                  formatter={(v: number) => [`${v.toFixed(2)} €`, 'Revenus']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#22c55e' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
+          {/* KPI Mini-Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl backdrop-blur-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Chiffre d'Affaires</p>
+              <h3 className="text-2xl font-black text-white">{kpis.totalRevenue.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€</h3>
+              <p className="text-xs text-green-neon mt-1 font-bold">+ {range === '7d' ? 'semaine' : range === '30d' ? 'mois' : 'trimestre'}</p>
+            </div>
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl backdrop-blur-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Panier Moyen (AOV)</p>
+              <h3 className="text-2xl font-black text-white">{kpis.aov.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€</h3>
+              <p className="text-xs text-zinc-500 mt-1">Sur {kpis.totalOrders} commandes</p>
+            </div>
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl backdrop-blur-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Succès BudTender</p>
+              <h3 className="text-2xl font-black text-white">{kpis.conversionRate.toFixed(1)}%</h3>
+              <p className="text-xs text-zinc-500 mt-1">Taux de clic sur reco</p>
+            </div>
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-3xl backdrop-blur-sm">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Nouveaux Clients</p>
+              <h3 className="text-2xl font-black text-white">{acqData.reduce((s, d) => s + d.new_customers, 0)}</h3>
+              <p className="text-xs text-purple-500 mt-1">Inscriptions</p>
+            </div>
+          </div>
 
-          {/* Top products */}
-          {topProducts.length > 0 && (
-            <ChartCard title="Top produits (par revenus)">
-              <ResponsiveContainer width="100%" height={Math.max(200, topProducts.length * 36)}>
-                <BarChart data={topProducts} layout="vertical" margin={{ left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
-                  <XAxis
-                    type="number"
-                    stroke="#71717a"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={(v: number) => `${v}€`}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="product_name"
-                    stroke="#71717a"
-                    tick={{ fontSize: 11 }}
-                    width={160}
-                  />
-                  <Tooltip
-                    {...tooltipStyle}
-                    formatter={(v: number) => [`${v.toFixed(2)} €`, 'Revenus']}
-                  />
-                  <Bar dataKey="total_revenue" fill="#22c55e" radius={[0, 6, 6, 0]} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Revenue Chart */}
+            <div className="lg:col-span-2">
+              <ChartCard title="Progression des revenus">
+                <ResponsiveContainer width="100%" height={320}>
+                  <LineChart data={revenueData}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      stroke="#71717a"
+                      tick={{ fontSize: 10, fontWeight: 700 }}
+                      tickFormatter={formatDate}
+                      interval={range === '7d' ? 0 : range === '30d' ? 4 : 10}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#71717a"
+                      tick={{ fontSize: 10, fontWeight: 700 }}
+                      tickFormatter={(v: number) => `${v}€`}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      {...tooltipStyle}
+                      labelFormatter={formatDate}
+                      formatter={(v: number) => [`${v.toFixed(2)} €`, 'Revenus']}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#22c55e"
+                      strokeWidth={3}
+                      dot={{ r: 0 }}
+                      activeDot={{ r: 6, fill: '#22c55e', stroke: '#000', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+
+            {/* Category Performance */}
+            <ChartCard title="Revenus par Catégorie">
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={categoryPerf}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                  >
+                    {categoryPerf.map((_, index) => (
+                      <Cell key={index} fill={PIE_FALLBACK_COLORS[index % PIE_FALLBACK_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip {...tooltipStyle} formatter={(v: number) => [`${v.toFixed(2)} €`, 'CA']} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
+                {categoryPerf.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length] }} />
+                    <span className="text-[10px] font-black uppercase text-zinc-500">{entry.name}</span>
+                  </div>
+                ))}
+              </div>
+            </ChartCard>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* AOV Chart */}
+            <ChartCard title="Panier Moyen (AOV) — Tendance">
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={aovData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                  <XAxis dataKey="date" hide />
+                  <YAxis stroke="#71717a" tick={{ fontSize: 10 }} axisLine={false} />
+                  <Tooltip {...tooltipStyle} labelFormatter={formatDate} formatter={(v: number) => [`${v.toFixed(2)}€`, 'Panier Moyen']} />
+                  <Bar dataKey="aov" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
-          )}
 
-          {/* Two-column: status + acquisition */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Status distribution */}
-            <ChartCard title="Répartition des statuts">
-              {statusDist.length === 0 ? (
-                <p className="text-zinc-500 text-sm text-center py-8">Aucune commande sur cette période.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={statusDist}
-                      dataKey="count"
-                      nameKey="status"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      labelLine={false}
-                    >
-                      {statusDist.map((entry, index) => (
-                        <Cell
-                          key={index}
-                          fill={STATUS_COLORS[entry.status] ?? PIE_FALLBACK_COLORS[index % PIE_FALLBACK_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(v: number, name: string) => [v, STATUS_LABELS[name] ?? name]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-              {/* Legend */}
-              <div className="flex flex-wrap gap-2 mt-2">
-                {statusDist.map((entry, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-zinc-400">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ background: STATUS_COLORS[entry.status] ?? PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length] }}
-                    />
-                    {STATUS_LABELS[entry.status] ?? entry.status} ({entry.count})
+            {/* BudTender Types */}
+            <ChartCard title="Usage BudTender IA">
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={budtenderStats} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="type" stroke="#71717a" tick={{ fontSize: 10, fontWeight: 700 }} width={100} axisLine={false} />
+                  <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="count" fill="#a855f7" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+            {/* Top Products Table-like Bar Chart */}
+            <ChartCard title="Top Produits">
+              <div className="space-y-4">
+                {topProducts.map((p, i) => (
+                  <div key={p.product_id} className="space-y-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-white">{p.product_name}</span>
+                      <span className="text-green-neon">{p.total_revenue.toLocaleString('fr-FR')}€</span>
+                    </div>
+                    <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(p.total_revenue / topProducts[0].total_revenue) * 100}%` }}
+                        className="h-full bg-green-neon/50"
+                      />
+                    </div>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase">{p.total_quantity} vendus</p>
                   </div>
                 ))}
               </div>
             </ChartCard>
 
-            {/* Customer acquisition */}
-            <ChartCard title="Nouveaux clients">
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={acqData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#71717a"
-                    tick={{ fontSize: 11 }}
-                    tickFormatter={formatDate}
-                    interval={range === '7d' ? 0 : range === '30d' ? 4 : 10}
-                  />
-                  <YAxis
-                    stroke="#71717a"
-                    tick={{ fontSize: 11 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    {...tooltipStyle}
-                    labelFormatter={formatDate}
-                    formatter={(v: number) => [v, 'Nouveaux clients']}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="new_customers"
-                    stroke="#a855f7"
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4, fill: '#a855f7' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            {/* Status Dist Again but compact */}
+            <ChartCard title="Statuts des Commandes">
+              <div className="flex items-center justify-between h-full min-h-[160px]">
+                <ResponsiveContainer width="50%" height={160}>
+                  <PieChart>
+                    <Pie data={statusDist} dataKey="count" nameKey="status" innerRadius={40} outerRadius={60}>
+                      {statusDist.map((entry, index) => (
+                        <Cell key={index} fill={STATUS_COLORS[entry.status] || PIE_FALLBACK_COLORS[index % PIE_FALLBACK_COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="w-[45%] space-y-2">
+                  {statusDist.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full" style={{ background: STATUS_COLORS[s.status] || PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length] }} />
+                        <span className="text-zinc-400 font-bold uppercase">{STATUS_LABELS[s.status] || s.status}</span>
+                      </div>
+                      <span className="text-white font-black">{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </ChartCard>
           </div>
         </>

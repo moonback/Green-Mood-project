@@ -30,7 +30,7 @@ Ce document trace la trajectoire actuelle et future de l'application **Green Moo
 - [ ] **Intégration Viva Wallet Production** : Passage du tunnel de paiement simulé au paiement réel.
 - [ ] **Optimisation SEO Avancée** : Mise en place de méta-données dynamiques par produit et blog.
 - [ ] **Notification Push / Email** : Alertes de restock, confirmations de commande et relances panier abandonné (via Supabase Edge Functions).
-- [ ] **Analytique Avancée** : Graphiques de revenus et comportement client intégrés au dashboard admin.
+- [x] **Analytique Avancée** : Graphiques de revenus et comportement client intégrés au dashboard admin.
 - [x] **PWA (Progressive Web App)** : Installation sur mobile pour une expérience fluide en magasin.
 
 ---
