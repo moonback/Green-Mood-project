@@ -30,6 +30,7 @@ import {
     Maximize,
     Minimize,
     LayoutGrid,
+    LogOut,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -198,12 +199,14 @@ interface AdminPOSTabProps {
     storeName?: string;
     storeAddress?: string;
     storePhone?: string;
+    onExit?: () => void;
 }
 
 function AdminPOSTab({
     storeName = 'Green Moon CBD',
     storeAddress = '123 Rue de la Nature, 75000 Paris',
     storePhone = '01 23 45 67 89',
+    onExit,
 }: AdminPOSTabProps) {
     // ── Product catalogue ──
     const [products, setProducts] = useState<Product[]>([]);
@@ -801,6 +804,15 @@ function AdminPOSTab({
                 <div className="flex-1" />
 
                 <div className="flex items-center gap-3">
+                    {onExit && (
+                        <button
+                            onClick={onExit}
+                            className="flex items-center gap-2 px-5 py-3 bg-zinc-800 text-zinc-400 border border-zinc-700 hover:text-white hover:border-zinc-500 rounded-2xl font-bold text-sm transition-all group"
+                        >
+                            <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            Quitter
+                        </button>
+                    )}
                     <button
                         onClick={toggleFullScreen}
                         className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-2xl text-zinc-400 hover:text-white hover:border-zinc-500 transition-all group"

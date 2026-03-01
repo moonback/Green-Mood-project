@@ -995,159 +995,163 @@ export default function Admin() {
       {/* ── Sidebar + Page Layout ─────────────────────────────────────────── */}
       <div className="flex min-h-screen">
         {/* Sidebar — desktop only */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800">
-          {/* Brand */}
-          <div className="px-4 py-4 border-b border-zinc-800/60">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.jpeg"
-                alt="Green Mood"
-                className="h-10 w-auto object-contain"
-                style={{ filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.5))' }}
-              />
-              <div>
-                <p className="font-semibold text-sm text-white leading-tight">Green Mood</p>
-                <p className="text-[10px] text-green-neon/70 font-medium tracking-widest uppercase">Administration</p>
+        {tab !== 'pos' && (
+          <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800">
+            {/* Brand */}
+            <div className="px-4 py-4 border-b border-zinc-800/60">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo.jpeg"
+                  alt="Green Mood"
+                  className="h-10 w-auto object-contain"
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(57,255,20,0.5))' }}
+                />
+                <div>
+                  <p className="font-semibold text-sm text-white leading-tight">Green Mood</p>
+                  <p className="text-[10px] text-green-neon/70 font-medium tracking-widest uppercase">Administration</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Nav */}
-          <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
-            {[
-              {
-                group: 'Aperçu',
-                items: [{ key: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard }],
-              },
-              {
-                group: 'Boutique',
-                items: [
-                  { key: 'pos' as Tab, label: 'Caisse (POS)', icon: ShoppingBag },
-                ],
-              },
-              {
-                group: 'Catalogue',
-                items: [
-                  { key: 'products' as Tab, label: 'Produits', icon: ShoppingBag },
-                  { key: 'categories' as Tab, label: 'Catégories', icon: Tag },
-                ],
-              },
-              {
-                group: 'Commerce',
-                items: [
-                  { key: 'orders' as Tab, label: 'Commandes', icon: Package },
-                  { key: 'stock' as Tab, label: 'Stock', icon: BarChart3 },
-                  { key: 'subscriptions' as Tab, label: 'Abonnements', icon: RefreshCw },
-                  { key: 'promo_codes' as Tab, label: 'Codes Promo', icon: Tag },
-                  { key: 'recommendations' as Tab, label: 'Cross-Selling', icon: Star },
-                ],
-              },
-              {
-                group: 'Clients',
-                items: [
-                  { key: 'customers' as Tab, label: 'Clients', icon: Users },
-                  { key: 'referrals' as Tab, label: 'Parrainages', icon: Award },
-                  { key: 'reviews' as Tab, label: 'Avis', icon: MessageSquare },
-                ],
-              },
-              {
-                group: 'Analytique',
-                items: [{ key: 'analytics' as Tab, label: 'Analytique', icon: LineChart }],
-              },
-              {
-                group: 'Système',
-                items: [
-                  { key: 'settings' as Tab, label: 'Paramètres', icon: Settings },
-                  { key: 'budtender' as Tab, label: 'BudTender IA', icon: Leaf },
-                ],
-              },
-            ].map(({ group, items }) => (
-              <div key={group}>
-                <p className="px-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-1.5">
-                  {group}
-                </p>
-                {items.map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setTab(key)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${tab === key
-                      ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
-                      }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {label}
-                    {key === 'orders' && stats && stats.ordersPending > 0 && (
-                      <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                        {stats.ordersPending}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </nav>
+            {/* Nav */}
+            <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto">
+              {[
+                {
+                  group: 'Aperçu',
+                  items: [{ key: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard }],
+                },
+                {
+                  group: 'Boutique',
+                  items: [
+                    { key: 'pos' as Tab, label: 'Caisse (POS)', icon: ShoppingBag },
+                  ],
+                },
+                {
+                  group: 'Catalogue',
+                  items: [
+                    { key: 'products' as Tab, label: 'Produits', icon: ShoppingBag },
+                    { key: 'categories' as Tab, label: 'Catégories', icon: Tag },
+                  ],
+                },
+                {
+                  group: 'Commerce',
+                  items: [
+                    { key: 'orders' as Tab, label: 'Commandes', icon: Package },
+                    { key: 'stock' as Tab, label: 'Stock', icon: BarChart3 },
+                    { key: 'subscriptions' as Tab, label: 'Abonnements', icon: RefreshCw },
+                    { key: 'promo_codes' as Tab, label: 'Codes Promo', icon: Tag },
+                    { key: 'recommendations' as Tab, label: 'Cross-Selling', icon: Star },
+                  ],
+                },
+                {
+                  group: 'Clients',
+                  items: [
+                    { key: 'customers' as Tab, label: 'Clients', icon: Users },
+                    { key: 'referrals' as Tab, label: 'Parrainages', icon: Award },
+                    { key: 'reviews' as Tab, label: 'Avis', icon: MessageSquare },
+                  ],
+                },
+                {
+                  group: 'Analytique',
+                  items: [{ key: 'analytics' as Tab, label: 'Analytique', icon: LineChart }],
+                },
+                {
+                  group: 'Système',
+                  items: [
+                    { key: 'settings' as Tab, label: 'Paramètres', icon: Settings },
+                    { key: 'budtender' as Tab, label: 'BudTender IA', icon: Leaf },
+                  ],
+                },
+              ].map(({ group, items }) => (
+                <div key={group}>
+                  <p className="px-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-1.5">
+                    {group}
+                  </p>
+                  {items.map(({ key, label, icon: Icon }) => (
+                    <button
+                      key={key}
+                      onClick={() => setTab(key)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-0.5 ${tab === key
+                        ? 'bg-green-neon/10 text-green-neon border border-green-neon/20 [text-shadow:0_0_8px_rgba(57,255,20,0.5)]'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
+                        }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {label}
+                      {key === 'orders' && stats && stats.ordersPending > 0 && (
+                        <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                          {stats.ordersPending}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </nav>
 
-          {/* Sidebar footer */}
-          <div className="px-3 py-4 border-t border-zinc-800 space-y-2">
-            <Link
-              to="/"
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-green-neon hover:bg-green-neon/10 transition-all border border-green-neon/20"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour au site
-            </Link>
-            <button
-              onClick={loadData}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Actualiser les données
-            </button>
-          </div>
-        </aside>
-
-        {/* Main column */}
-        <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-          {/* Top header bar */}
-          <div className="bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 py-4 flex items-center gap-4 shrink-0">
-            <div className="lg:hidden w-9 h-9 bg-green-neon/10 border border-green-neon/25 rounded-xl flex items-center justify-center" style={{ boxShadow: '0 0 8px rgba(57,255,20,0.2)' }}>
-              <Store className="w-4 h-4 text-green-neon" />
-            </div>
-            <div>
-              <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-semibold hidden lg:block">
-                Administration
-              </p>
-              <h1 className="font-serif text-lg font-bold text-white leading-tight">
-                {tabs.find((t) => t.key === tab)?.label ?? 'Dashboard'}
-              </h1>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
+            {/* Sidebar footer */}
+            <div className="px-3 py-4 border-t border-zinc-800 space-y-2">
               <Link
                 to="/"
-                className="flex items-center gap-2 text-sm text-zinc-400 hover:text-green-neon bg-zinc-900 border border-zinc-800 hover:border-green-neon/30 px-3 py-2 rounded-xl transition-all"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-green-neon hover:bg-green-neon/10 transition-all border border-green-neon/20"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-xs">Quitter l'admin</span>
+                <ArrowLeft className="w-4 h-4" />
+                Retour au site
               </Link>
-              {stats && stats.ordersPending > 0 && (
-                <button
-                  onClick={() => setTab('orders')}
-                  className="hidden sm:flex items-center gap-2 bg-orange-900/30 border border-orange-800 text-orange-400 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  {stats.ordersPending} en attente
-                </button>
-              )}
               <button
                 onClick={loadData}
-                className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-3 py-2 rounded-xl transition-all"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-xs">Actualiser</span>
+                <RefreshCw className="w-4 h-4" />
+                Actualiser les données
               </button>
             </div>
-          </div>
+          </aside>
+        )}
+
+        {/* Main column */}
+        <div className={`flex-1 flex flex-col min-w-0 ${tab === 'pos' ? 'h-screen' : 'min-h-screen'}`}>
+          {/* Top header bar */}
+          {tab !== 'pos' && (
+            <div className="bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 py-4 flex items-center gap-4 shrink-0">
+              <div className="lg:hidden w-9 h-9 bg-green-neon/10 border border-green-neon/25 rounded-xl flex items-center justify-center" style={{ boxShadow: '0 0 8px rgba(57,255,20,0.2)' }}>
+                <Store className="w-4 h-4 text-green-neon" />
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-semibold hidden lg:block">
+                  Administration
+                </p>
+                <h1 className="font-serif text-lg font-bold text-white leading-tight">
+                  {tabs.find((t) => t.key === tab)?.label ?? 'Dashboard'}
+                </h1>
+              </div>
+              <div className="ml-auto flex items-center gap-2">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2 text-sm text-zinc-400 hover:text-green-neon bg-zinc-900 border border-zinc-800 hover:border-green-neon/30 px-3 py-2 rounded-xl transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs">Quitter l'admin</span>
+                </Link>
+                {stats && stats.ordersPending > 0 && (
+                  <button
+                    onClick={() => setTab('orders')}
+                    className="hidden sm:flex items-center gap-2 bg-orange-900/30 border border-orange-800 text-orange-400 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {stats.ordersPending} en attente
+                  </button>
+                )}
+                <button
+                  onClick={loadData}
+                  className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-3 py-2 rounded-xl transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-xs">Actualiser</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Mobile tab bar */}
           <div className="lg:hidden flex gap-1 px-3 py-2 bg-zinc-950 border-b border-zinc-800 overflow-x-auto shrink-0">
@@ -2378,17 +2382,20 @@ export default function Admin() {
 
                 {/* ── POS tab ── */}
                 {tab === 'pos' && !isLoading && (
-                  <AdminPOSTab
-                    storeName={localSettings.store_name}
-                    storeAddress={localSettings.store_address}
-                    storePhone={localSettings.store_phone}
-                  />
+                  <div className="flex-1 p-0 overflow-hidden">
+                    <AdminPOSTab
+                      storeName={localSettings.store_name}
+                      storeAddress={localSettings.store_address}
+                      storePhone={localSettings.store_phone}
+                      onExit={() => setTab('dashboard')}
+                    />
+                  </div>
                 )}
               </>
             )}
           </main>
         </div>
-      </div>
+      </div >
     </>
   );
 }
