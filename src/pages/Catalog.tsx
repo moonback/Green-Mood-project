@@ -450,7 +450,13 @@ export default function Catalog() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-                <button className="flex-1 lg:flex-none px-8 py-4 bg-green-neon text-black font-semibold rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all text-sm">
+                <button
+                  onClick={() => {
+                    const btn = document.querySelector('[aria-label="Toggle BudTender"]') as HTMLButtonElement;
+                    if (btn) btn.click();
+                  }}
+                  className="flex-1 lg:flex-none px-8 py-4 bg-green-neon text-black font-semibold rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all text-sm"
+                >
                   Lancer le Diagnostic
                 </button>
                 <Link
