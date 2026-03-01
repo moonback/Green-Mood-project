@@ -56,10 +56,9 @@ export class GeminiLiveSession {
     private workletNode: AudioWorkletNode | null = null;
     private sourceNode: MediaStreamAudioSourceNode | null = null;
 
-    // Audio playback
+    // Audio playback — scheduled to avoid gaps between chunks
     private playbackContext: AudioContext | null = null;
-    private playbackQueue: ArrayBuffer[] = [];
-    private isPlayingBack = false;
+    private nextPlayTime = 0; // when the next chunk should start
 
     // State
     private isConnected = false;
@@ -174,6 +173,10 @@ export class GeminiLiveSession {
         if (serverContent.turnComplete) {
             console.log('[GeminiLive] turnComplete');
             this.callbacks.onSpeakingChange?.(false);
+            // Reset scheduled playback time so next response starts immediately
+            if (this.playbackContext) {
+                this.nextPlayTime = this.playbackContext.currentTime;
+            }
         }
 
         // Input transcription (user speech → text)
@@ -242,53 +245,37 @@ export class GeminiLiveSession {
         // Do NOT connect workletNode to audio destination (no mic echo)
     }
 
-    // ── Audio playback queue ────────────────────────────────────────────────────
+    // ── Audio playback — gapless scheduled ──────────────────────────────────────
 
     private enqueueAudio(buffer: ArrayBuffer): void {
-        this.playbackQueue.push(buffer);
-        if (!this.isPlayingBack) {
-            this._drainPlaybackQueue();
-        }
-    }
-
-    private async _drainPlaybackQueue(): Promise<void> {
-        if (this.isPlayingBack) return;
-        this.isPlayingBack = true;
-
         if (!this.playbackContext || this.playbackContext.state === 'closed') {
             this.playbackContext = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
+            this.nextPlayTime = this.playbackContext.currentTime;
         }
 
-        while (this.playbackQueue.length > 0) {
-            const buf = this.playbackQueue.shift()!;
-            await this._playPCM(buf);
+        // Resume if suspended (browser autoplay policy)
+        if (this.playbackContext.state === 'suspended') {
+            this.playbackContext.resume();
         }
 
-        this.isPlayingBack = false;
-    }
+        const ctx = this.playbackContext;
+        const int16 = new Int16Array(buffer);
+        const float32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) {
+            float32[i] = int16[i] / 32768.0;
+        }
 
-    private _playPCM(buffer: ArrayBuffer): Promise<void> {
-        return new Promise((resolve) => {
-            if (!this.playbackContext || this.playbackContext.state === 'closed') {
-                resolve();
-                return;
-            }
+        const audioBuffer = ctx.createBuffer(1, float32.length, OUTPUT_SAMPLE_RATE);
+        audioBuffer.copyToChannel(float32, 0);
 
-            const int16 = new Int16Array(buffer);
-            const float32 = new Float32Array(int16.length);
-            for (let i = 0; i < int16.length; i++) {
-                float32[i] = int16[i] / 32768.0;
-            }
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
 
-            const audioBuffer = this.playbackContext.createBuffer(1, float32.length, OUTPUT_SAMPLE_RATE);
-            audioBuffer.copyToChannel(float32, 0);
-
-            const source = this.playbackContext.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(this.playbackContext.destination);
-            source.onended = () => resolve();
-            source.start();
-        });
+        // Schedule this chunk to start right after the previous one
+        const startAt = Math.max(this.nextPlayTime, ctx.currentTime);
+        source.start(startAt);
+        this.nextPlayTime = startAt + audioBuffer.duration;
     }
 
     // ── Controls ───────────────────────────────────────────────────────────────
@@ -329,12 +316,10 @@ export class GeminiLiveSession {
         }
         this.audioContext = null;
 
-        this.playbackQueue = [];
         if (this.playbackContext && this.playbackContext.state !== 'closed') {
             await this.playbackContext.close().catch(() => { });
         }
         this.playbackContext = null;
-        this.isPlayingBack = false;
 
         if (this.session) {
             try { this.session.close(); } catch { }
