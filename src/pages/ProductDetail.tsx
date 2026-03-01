@@ -314,11 +314,10 @@ export default function ProductDetail() {
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
-                      idx === activeImageIndex
-                        ? 'border-green-neon shadow-[0_0_12px_rgba(57,255,20,0.3)]'
-                        : 'border-white/[0.08] opacity-60 hover:opacity-100'
-                    }`}
+                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${idx === activeImageIndex
+                      ? 'border-green-neon shadow-[0_0_12px_rgba(57,255,20,0.3)]'
+                      : 'border-white/[0.08] opacity-60 hover:opacity-100'
+                      }`}
                   >
                     <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
@@ -391,9 +390,12 @@ export default function ProductDetail() {
 
               <div className="flex items-end justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs text-zinc-500 font-medium uppercase">VALEUR UNITAIRE</p>
+                  <p className="text-xs text-zinc-500 font-medium uppercase">Total Sélectionné</p>
                   <p className="text-4xl font-serif font-bold text-white leading-none">
-                    {product.price.toFixed(2)}<span className="text-lg ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
+                    {(product.price * quantity).toFixed(2)}<span className="text-lg ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
+                  </p>
+                  <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider mt-1 italic">
+                    Soit {product.price.toFixed(2)} € / g
                   </p>
                 </div>
                 <StockBadge stock={product.stock_quantity} />
@@ -401,21 +403,46 @@ export default function ProductDetail() {
 
               {product.is_available && product.stock_quantity > 0 ? (
                 <div className="space-y-6">
-                  <div className="flex flex-col md:flex-row items-center gap-4">
-                    <div className="bg-white/5 border border-white/[0.06] rounded-2xl p-2 flex items-center">
-                      <QuantitySelector
-                        quantity={quantity}
-                        onChange={setQuantity}
-                        max={product.stock_quantity}
-                      />
+                  <div className="flex-1 space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 5, 10, 30, 50, 100].map((weight) => (
+                        <button
+                          key={weight}
+                          onClick={() => setQuantity(Math.min(weight, product.stock_quantity))}
+                          className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${quantity === weight
+                            ? 'bg-green-neon border-green-neon text-black shadow-[0_0_15px_rgba(57,255,20,0.3)]'
+                            : 'bg-white/5 border-white/10 text-zinc-500 hover:text-white hover:border-white/20'
+                            }`}
+                        >
+                          {weight}g
+                        </button>
+                      ))}
                     </div>
-                    <button
-                      onClick={handleAddToCart}
-                      className="flex-1 w-full bg-green-neon text-black font-semibold uppercase tracking-wider py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all shadow-2xl group flex items-center justify-center gap-4"
-                    >
-                      <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      {addedFeedback ? 'DÉPOSÉ AU PANIER' : 'ACQUÉRIR MAINTENANT'}
-                    </button>
+
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      <div className="bg-white/5 border border-white/[0.06] rounded-2xl p-2 flex items-center">
+                        <div className="flex items-center gap-1.5 px-3">
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Poids:</span>
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            max={product.stock_quantity}
+                            value={quantity}
+                            onChange={(e) => setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)))}
+                            className="w-12 bg-transparent text-sm font-black text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <span className="text-[10px] text-zinc-500 font-bold">g</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleAddToCart}
+                        className="flex-1 w-full bg-green-neon text-black font-semibold uppercase tracking-wider py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all shadow-2xl group flex items-center justify-center gap-4"
+                      >
+                        <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        {addedFeedback ? 'DÉPOSÉ AU PANIER' : 'ACQUÉRIR MAINTENANT'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium uppercase justify-center">

@@ -1384,13 +1384,32 @@ function AdminPOSTab({
                                             exit={{ opacity: 0, x: 20 }}
                                             className="bg-zinc-800 rounded-xl p-2.5"
                                         >
-                                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                <p className="text-xs font-semibold text-white leading-tight flex-1 truncate">
-                                                    {line.product.name}
-                                                </p>
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                <div>
+                                                    <p className="text-xs font-bold text-white leading-tight">
+                                                        {line.product.name}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                                        {[1, 5, 10, 30, 50, 100].map(weight => (
+                                                            <button
+                                                                key={weight}
+                                                                onClick={() => {
+                                                                    const val = Math.min(weight, line.product.stock_quantity);
+                                                                    setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: val } : l));
+                                                                }}
+                                                                className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border transition-all ${line.quantity === weight
+                                                                    ? 'bg-green-500 border-green-400 text-black'
+                                                                    : 'bg-zinc-700/50 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500'
+                                                                    }`}
+                                                            >
+                                                                {weight}g
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                                 <button
                                                     onClick={() => removeLine(line.product.id)}
-                                                    className="text-zinc-600 hover:text-red-400 transition-colors shrink-0"
+                                                    className="text-zinc-600 hover:text-red-400 transition-colors shrink-0 mt-0.5"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -1401,18 +1420,29 @@ function AdminPOSTab({
                                                 <div className="flex items-center gap-1">
                                                     <button
                                                         onClick={() => updateQty(line.product.id, -1)}
-                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center transition-colors"
+                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center transition-colors shadow-sm"
                                                     >
                                                         <Minus className="w-3 h-3 text-zinc-300" />
                                                     </button>
-                                                    <span className="text-xs text-white font-bold w-5 text-center">{line.quantity}</span>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            value={line.quantity}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value) || 0;
+                                                                setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: Math.min(val, l.product.stock_quantity) } : l));
+                                                            }}
+                                                            className="w-10 bg-zinc-700 border border-zinc-600 rounded-lg text-xs font-black text-white text-center py-1 focus:outline-none focus:border-green-500 shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                        />
+                                                    </div>
                                                     <button
                                                         onClick={() => updateQty(line.product.id, 1)}
                                                         disabled={line.quantity >= line.product.stock_quantity}
-                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 flex items-center justify-center transition-colors"
+                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
                                                     >
                                                         <Plus className="w-3 h-3 text-zinc-300" />
                                                     </button>
+                                                    <span className="text-[10px] text-zinc-500 font-bold ml-1">g</span>
                                                 </div>
 
                                                 {/* Price override */}
