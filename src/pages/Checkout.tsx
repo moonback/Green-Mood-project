@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, MapPin, Plus, CreditCard, Coins, ArrowLeft, ShieldCheck, Sparkles, CheckCircle2, Check } from 'lucide-react';
+import { Package, Truck, MapPin, Plus, CreditCard, Coins, ArrowLeft, ShieldCheck, Sparkles, CheckCircle2, Check, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Address } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
@@ -551,11 +551,20 @@ export default function Checkout() {
               <div className="space-y-4">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">RESUMÉ SÉLECTION</h3>
                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                  {items.map(({ product, quantity }) => (
-                    <div key={product.id} className="flex justify-between items-center gap-4">
+                  {items.map(({ product, quantity, subscriptionFrequency }) => (
+                    <div key={`${product.id}-${subscriptionFrequency || 'once'}`} className="flex justify-between items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-wider text-white truncate">{product.name}</p>
-                        <p className="text-xs font-mono text-zinc-500">PIÈCES: {quantity}</p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <p className="text-[10px] font-mono text-zinc-500 uppercase">PIÈCES: {quantity}</p>
+                          {subscriptionFrequency && (
+                            <p className="text-[9px] font-bold text-green-neon uppercase tracking-widest flex items-center gap-1">
+                              <RefreshCw className="w-2.5 h-2.5" />
+                              {subscriptionFrequency === 'weekly' ? ' Hebdo' :
+                                subscriptionFrequency === 'biweekly' ? ' Bimens' : ' Mensuel'}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <span className="text-sm font-serif font-bold flex-shrink-0">
                         {(product.price * quantity).toFixed(2)}€

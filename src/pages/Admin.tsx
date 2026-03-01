@@ -1280,6 +1280,11 @@ export default function Admin() {
                                   <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${st?.color ?? ''}`}>
                                     {st?.label ?? order.status}
                                   </span>
+                                  {(order.order_items as OrderItem[] | undefined)?.some(i => i.subscription_frequency) && (
+                                    <div className="w-5 h-5 rounded-full bg-green-neon/10 flex items-center justify-center shrink-0" title="Contient un abonnement">
+                                      <RefreshCw className="w-2.5 h-2.5 text-green-neon" />
+                                    </div>
+                                  )}
                                   <span className="font-bold text-white text-sm min-w-[60px] text-right">{order.total.toFixed(2)} €</span>
                                 </div>
                               </div>
@@ -1340,7 +1345,12 @@ export default function Admin() {
                                       className="w-10 h-10 object-cover rounded-lg flex-shrink-0 bg-zinc-800"
                                     />
                                     <div>
-                                      <p className="font-medium text-white text-sm">{product.name}</p>
+                                      <div className="flex items-center gap-2">
+                                        <p className="font-medium text-white text-sm">{product.name}</p>
+                                        {product.is_subscribable && (
+                                          <RefreshCw className="w-3 h-3 text-green-neon" title="Éligible à l'abonnement" />
+                                        )}
+                                      </div>
                                       {product.is_featured && (
                                         <span className="text-xs text-yellow-400 flex items-center gap-1">
                                           <Star className="w-3 h-3" />Vedette

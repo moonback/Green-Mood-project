@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, ArrowLeft, Trash2, Package, Truck, ShoppingBag, ShieldCheck, Sparkles } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Trash2, Package, Truck, ShoppingBag, ShieldCheck, Sparkles, RefreshCw } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useSettingsStore } from '../store/settingsStore';
 import QuantitySelector from '../components/QuantitySelector';
@@ -85,9 +85,9 @@ export default function Cart() {
           {/* Items List */}
           <div className="lg:col-span-7 space-y-6">
             <AnimatePresence mode="popLayout">
-              {items.map(({ product, quantity }) => (
+              {items.map(({ product, quantity, subscriptionFrequency }) => (
                 <motion.div
-                  key={product.id}
+                  key={`${product.id}-${subscriptionFrequency || 'once'}`}
                   layout
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -113,6 +113,13 @@ export default function Cart() {
                         >
                           {product.name}
                         </Link>
+                        {subscriptionFrequency && (
+                          <p className="flex items-center gap-1.5 text-[10px] text-green-neon font-bold uppercase tracking-[0.2em] mt-1 bg-green-neon/10 border border-green-neon/20 px-2 py-1 rounded-full w-fit">
+                            <RefreshCw className="w-3 h-3" />
+                            {subscriptionFrequency === 'weekly' ? ' Hebdomadaire' :
+                              subscriptionFrequency === 'biweekly' ? ' Bimensuel' : ' Mensuel'}
+                          </p>
+                        )}
                         <div className="flex flex-wrap gap-3 pt-1">
                           {product.cbd_percentage && (
                             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 bg-white/5 px-3 py-1 rounded-full border border-white/[0.06]">
@@ -125,7 +132,7 @@ export default function Cart() {
                         </div>
                       </div>
                       <button
-                        onClick={() => removeItem(product.id)}
+                        onClick={() => removeItem(product.id, subscriptionFrequency)}
                         className="p-3 text-zinc-600 hover:text-red-400 hover:bg-red-400/10 rounded-2xl transition-all"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -138,7 +145,7 @@ export default function Cart() {
                           <span className="text-xs font-semibold uppercase tracking-wider text-zinc-600 block">Quantité</span>
                           <QuantitySelector
                             quantity={quantity}
-                            onChange={(q) => updateQuantity(product.id, q)}
+                            onChange={(q) => updateQuantity(product.id, q, subscriptionFrequency)}
                             max={product.stock_quantity}
                           />
                         </div>
