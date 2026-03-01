@@ -49,9 +49,7 @@ export default function Layout() {
     { name: "Contact", path: "/contact" },
   ];
 
-  const navLinks = profile?.is_admin
-    ? [...baseNavLinks, { name: "Administration", path: "/admin" }]
-    : baseNavLinks;
+  const navLinks = baseNavLinks;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans">
@@ -204,7 +202,7 @@ export default function Layout() {
                             className="flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
                           >
                             <ShieldCheck className="h-4 w-4" />
-                            Admin Space
+                            Administration
                           </Link>
                         )}
                         <div className="h-px bg-white/[0.06] my-1.5 mx-3" />
@@ -292,10 +290,15 @@ export default function Layout() {
               {/* Mobile footer actions */}
               <div className="px-5 pb-8 pt-4 border-t border-white/[0.06] space-y-4">
                 {user ? (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={`${profile?.is_admin ? "grid-cols-1" : "grid-cols-2"} grid gap-3`}>
                     <Link to="/compte" className="flex items-center justify-center gap-2.5 p-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm font-semibold">
                       <User className="h-4 w-4 text-green-neon" /> Mon compte
                     </Link>
+                    {profile?.is_admin && (
+                      <Link to="/admin" className="flex items-center justify-center gap-2.5 p-3.5 bg-green-neon/10 border border-green-neon/20 rounded-xl text-sm font-semibold text-green-neon">
+                        <ShieldCheck className="h-4 w-4" /> Administration
+                      </Link>
+                    )}
                     <button onClick={signOut} className="flex items-center justify-center gap-2.5 p-3.5 bg-red-400/10 border border-red-400/20 rounded-xl text-sm font-semibold text-red-400">
                       <LogOut className="h-4 w-4" /> Déconnexion
                     </button>

@@ -40,6 +40,11 @@ export default function App() {
     <BrowserRouter>
       <SplashScreen />
       <Routes>
+        {/* Routes admin - Outside of Layout to not have frontend header/footer */}
+        <Route element={<AdminRoute />}>
+          <Route path="admin" element={<Admin />} />
+        </Route>
+
         <Route path="/" element={<Layout />}>
           {/* Pages publiques */}
           <Route index element={<Home />} />
@@ -66,11 +71,6 @@ export default function App() {
             <Route path="compte/fidelite" element={<LoyaltyHistory />} />
             <Route path="compte/avis" element={<MyReviews />} />
             <Route path="compte/profil" element={<Profile />} />
-          </Route>
-
-          {/* Routes admin */}
-          <Route element={<AdminRoute />}>
-            <Route path="admin" element={<Admin />} />
           </Route>
         </Route>
       </Routes>
