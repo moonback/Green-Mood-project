@@ -32,6 +32,7 @@ import {
     LayoutGrid,
     LogOut,
     Settings,
+    Calculator,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -70,6 +71,8 @@ interface DailyReport {
     orderCount: number;
     date: Date;
     productBreakdown: { [name: string]: { qty: number, total: number } };
+    cashCounted?: number;
+    cashDifference?: number;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -243,6 +246,7 @@ function AdminPOSTab({
     const [reportData, setReportData] = useState<DailyReport | null>(null);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [reportMode, setReportMode] = useState<'view' | 'close'>('view');
+    const [cashCounted, setCashCounted] = useState<string>('');
     const [isSessionClosed, setIsSessionClosed] = useState(false);
 
     // ── History ──
@@ -721,6 +725,9 @@ function AdminPOSTab({
                     mobile_total: reportData.mobileTotal,
                     items_sold: reportData.itemsSold,
                     order_count: reportData.orderCount,
+                    product_breakdown: reportData.productBreakdown,
+                    cash_counted: parseFloat(cashCounted) || 0,
+                    cash_difference: (parseFloat(cashCounted) || 0) - reportData.cashTotal,
                     closed_at: new Date().toISOString(),
                     closed_by: user?.id
                 }, { onConflict: 'date' });
@@ -1834,6 +1841,55 @@ function AdminPOSTab({
                                     </div>
                                     <Package className="w-8 h-8 text-zinc-700" />
                                 </div>
+
+                                {reportMode === 'close' && (
+                                    <div className="bg-zinc-800/50 rounded-2xl p-5 border-2 border-green-500/20 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
+                                                <Calculator className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-white">Fond de caisse réel</h3>
+                                                <p className="text-[10px] text-zinc-500 uppercase">Vérification des espèces</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] text-zinc-500 uppercase font-bold">Théorique (Système)</label>
+                                                <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-700 text-white font-black text-sm">
+                                                    {reportData.cashTotal.toFixed(2)} €
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] text-green-400 uppercase font-bold">Réel (Compté)</label>
+                                                <div className="relative">
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        placeholder="0.00"
+                                                        value={cashCounted}
+                                                        onChange={(e) => setCashCounted(e.target.value)}
+                                                        className="w-full p-3 bg-zinc-950 rounded-xl border-2 border-green-500/30 focus:border-green-500 text-white font-black text-sm outline-none transition-all placeholder:text-zinc-800"
+                                                    />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs">€</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {cashCounted && (
+                                            <div className={`p-3 rounded-xl flex justify-between items-center ${(parseFloat(cashCounted) - reportData.cashTotal) === 0
+                                                ? 'bg-green-500/10 text-green-400'
+                                                : 'bg-red-500/10 text-red-400'
+                                                }`}>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">Écart de caisse :</span>
+                                                <span className="text-sm font-black italic">
+                                                    {(parseFloat(cashCounted) - reportData.cashTotal).toFixed(2)} €
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Product Breakdown */}
                                 <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2">
