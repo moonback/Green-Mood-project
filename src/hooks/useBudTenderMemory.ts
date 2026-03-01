@@ -176,6 +176,11 @@ export function useBudTenderMemory() {
         } catch { /* ignore */ }
     };
 
+    const clearChatHistory = () => {
+        localStorage.removeItem('budtender_chat_history_v1');
+        setChatHistory([]);
+    };
+
     const clearPrefs = () => {
         localStorage.removeItem(LS_KEY);
         localStorage.removeItem('budtender_chat_history_v1');
@@ -192,6 +197,7 @@ export function useBudTenderMemory() {
         chatHistory,
         savePrefs,
         saveChatHistory,
+        clearChatHistory,
         clearPrefs,
         isLoading,
     };

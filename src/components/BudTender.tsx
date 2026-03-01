@@ -234,6 +234,7 @@ export default function BudTender() {
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const hasTriedLoad = useRef(false);
 
     const memory = useBudTenderMemory();
 
@@ -276,8 +277,11 @@ export default function BudTender() {
 
     // Load persisted chat history on mount (only once)
     useEffect(() => {
-        if (memory.chatHistory.length > 0 && messages.length === 0) {
+        if (!hasTriedLoad.current && memory.chatHistory.length > 0 && messages.length === 0) {
             setMessages(memory.chatHistory as any);
+            hasTriedLoad.current = true;
+        } else if (memory.chatHistory.length === 0) {
+            hasTriedLoad.current = true;
         }
     }, [memory.chatHistory, messages.length]);
 
@@ -493,6 +497,7 @@ export default function BudTender() {
     };
 
     const reset = () => {
+        memory.clearChatHistory();
         setMessages([]);
         setStepIndex(-1);
         setAnswers({});
@@ -720,7 +725,7 @@ export default function BudTender() {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={reset}
-                                        title="Recommencer"
+                                        title="Nouvelle discussion (garder vos préférences)"
                                         className="p-2 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-xl transition-all"
                                     >
                                         <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
