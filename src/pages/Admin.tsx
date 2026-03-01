@@ -261,7 +261,7 @@ export default function Admin() {
       supabase.from('products').select('id').gt('stock_quantity', 0).lte('stock_quantity', 5),
       supabase.from('products').select('id').eq('stock_quantity', 0),
       supabase.from('profiles').select('id'),
-      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(8),
+      supabase.from('orders').select('*, order_items(*), profile:profiles(*, addresses(*)), address:addresses(*)').order('created_at', { ascending: false }).limit(8),
       supabase.from('orders').select('total').eq('payment_status', 'paid').gte('created_at', startOfMonth),
     ]);
     setStats({
@@ -290,7 +290,7 @@ export default function Admin() {
   const loadOrders = async () => {
     const { data } = await supabase
       .from('orders')
-      .select('*, order_items(*)')
+      .select('*, order_items(*), profile:profiles(*, addresses(*)), address:addresses(*)')
       .order('created_at', { ascending: false })
       .limit(200);
     setOrders((data as Order[]) ?? []);
@@ -1269,6 +1269,9 @@ export default function Admin() {
                                     <p className="text-sm font-semibold text-white font-mono">
                                       #{order.id.slice(0, 8).toUpperCase()}
                                     </p>
+                                    <p className="text-[10px] text-green-neon font-bold uppercase tracking-tight">
+                                      {order.profile?.full_name ?? 'Client inconnu'}
+                                    </p>
                                     <p className="text-xs text-zinc-500 mt-0.5">
                                       {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                                       {' · '}
@@ -1600,6 +1603,9 @@ export default function Admin() {
                                   <p className="font-semibold text-white text-sm">
                                     #{order.id.slice(0, 8).toUpperCase()}
                                   </p>
+                                  <p className="text-sm font-medium text-green-neon mt-0.5">
+                                    {order.profile?.full_name ?? 'Client ID: ' + (order.user_id?.slice(0, 8) ?? 'Inconnu')}
+                                  </p>
                                   <p className="text-xs text-zinc-500 mt-0.5">
                                     {new Date(order.created_at).toLocaleDateString('fr-FR', {
                                       day: 'numeric',
@@ -1637,7 +1643,67 @@ export default function Admin() {
                             </button>
 
                             {isExpanded && (
-                              <div className="border-t border-zinc-800 p-5 space-y-4">
+                              <div className="border-t border-zinc-800 p-5 space-y-6">
+                                {/* Informations Client */}
+                                <div className="bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/50">
+                                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <Users className="w-3 h-3 text-green-neon" />
+                                    Informations Client
+                                  </h3>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <p className="text-[10px] text-zinc-500 uppercase">Nom Complet</p>
+                                      <p className="text-sm font-semibold text-white">{order.profile?.full_name ?? 'Non renseigné'}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] text-zinc-500 uppercase">Téléphone / Contact</p>
+                                      <p className="text-sm font-semibold text-white">{order.profile?.phone ?? 'Aucun numéro'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Adresse de Livraison */}
+                                <div className="bg-zinc-800/40 rounded-xl p-4 border border-zinc-700/50">
+                                  <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <MapPin className="w-3 h-3 text-green-neon" />
+                                    {order.delivery_type === 'click_collect' ? 'Point de retrait' : 'Adresse de Livraison'}
+                                  </h3>
+                                  {(() => {
+                                    const addr = order.address || (order.profile as any)?.addresses?.[0];
+
+                                    if (order.delivery_type === 'click_collect') {
+                                      return (
+                                        <div className="flex items-start gap-3">
+                                          <Store className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                                          <div>
+                                            <p className="text-sm font-semibold text-white">Click & Collect — Boutique Green Moon</p>
+                                            <p className="text-xs text-zinc-400">{localSettings.store_address || '123 Rue de la Nature, 75000 Paris'}</p>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    if (addr) {
+                                      return (
+                                        <div className="grid grid-cols-1 gap-1">
+                                          <p className="text-sm font-semibold text-white">{addr.street}</p>
+                                          <p className="text-sm text-zinc-300">
+                                            {addr.postal_code} {addr.city}
+                                          </p>
+                                          <p className="text-xs text-zinc-500 uppercase tracking-tight">{addr.country || 'France'}</p>
+                                          {!order.address && (
+                                            <p className="text-[10px] text-orange-400 font-medium mt-1 italic">
+                                              Affichage de l'adresse par défaut du profil utilisateur.
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+
+                                    return <p className="text-sm text-zinc-500 italic">Aucune adresse renseignée</p>;
+                                  })()}
+                                </div>
+
                                 {/* Order lines */}
                                 <div className="space-y-1.5">
                                   {(items ?? []).map((item) => (

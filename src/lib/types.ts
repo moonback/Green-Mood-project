@@ -120,6 +120,7 @@ export interface Order {
   // joined
   address?: Address;
   order_items?: OrderItem[];
+  profile?: Profile;
 }
 
 export interface OrderItem {
