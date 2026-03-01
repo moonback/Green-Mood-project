@@ -4,8 +4,8 @@ import { supabase } from '../../lib/supabase';
 import type { Review } from '../../lib/types';
 import StarRating from '../StarRating';
 
-interface ReviewWithRelations extends Review {
-  product?: { id: string; name: string };
+interface ReviewWithRelations extends Omit<Review, 'product'> {
+  product?: { id: string; name: string; slug: string; image_url: string | null };
   profile?: { id: string; full_name: string | null };
 }
 
@@ -65,8 +65,8 @@ export default function AdminReviewsTab() {
               key={key}
               onClick={() => setFilter(key as typeof filter)}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${filter === key
-                  ? 'bg-green-neon text-white'
-                  : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                ? 'bg-green-neon text-white'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white'
                 }`}
             >
               {label}
@@ -119,8 +119,8 @@ export default function AdminReviewsTab() {
                       </span>
                     )}
                     <span className={`ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${review.is_published
-                        ? 'text-green-400 bg-green-900/20'
-                        : 'text-yellow-400 bg-yellow-900/20'
+                      ? 'text-green-400 bg-green-900/20'
+                      : 'text-yellow-400 bg-yellow-900/20'
                       }`}>
                       {review.is_published ? (
                         <><CheckCircle className="w-3 h-3" /> Publié</>
@@ -150,8 +150,8 @@ export default function AdminReviewsTab() {
                   <button
                     onClick={() => handleTogglePublish(review)}
                     className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${review.is_published
-                        ? 'text-yellow-400 bg-yellow-900/20 hover:bg-yellow-900/30'
-                        : 'text-green-400 bg-green-900/20 hover:bg-green-900/30'
+                      ? 'text-yellow-400 bg-yellow-900/20 hover:bg-yellow-900/30'
+                      : 'text-green-400 bg-green-900/20 hover:bg-green-900/30'
                       }`}
                     title={review.is_published ? 'Dépublier' : 'Publier'}
                   >

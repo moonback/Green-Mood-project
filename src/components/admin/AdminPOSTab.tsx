@@ -27,6 +27,9 @@ import {
     Calendar,
     History as HistoryIcon,
     ChevronRight,
+    Maximize,
+    Minimize,
+    LayoutGrid,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -545,39 +548,60 @@ function AdminPOSTab({
         }
     };
 
-    const finalizeClose = () => {
-        setIsSessionClosed(true);
-        setShowReportModal(false);
-        alert('Session clôturée avec succès. Les totaux ont été validés.');
+    const finalizeClose = async () => {
+        if (!reportData) return;
+        setIsProcessing(true);
+        try {
+            // Get current user ID (admin)
+            const { data: { user } } = await supabase.auth.getUser();
+
+            const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+            const { error } = await supabase
+                .from('pos_reports')
+                .upsert({
+                    date: todayStr,
+                    total_sales: reportData.totalSales,
+                    cash_total: reportData.cashTotal,
+                    card_total: reportData.cardTotal,
+                    mobile_total: reportData.mobileTotal,
+                    items_sold: reportData.itemsSold,
+                    order_count: reportData.orderCount,
+                    closed_at: new Date().toISOString(),
+                    closed_by: user?.id
+                });
+
+            if (error) throw error;
+
+            setIsSessionClosed(true);
+            setShowReportModal(false);
+            alert('Session clôturée avec succès et enregistrée en base de données.');
+            loadHistory(); // Refresh history
+        } catch (err) {
+            console.error(err);
+            alert('Erreur lors de la clôture en base de données');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const loadHistory = async () => {
         setIsLoadingHistory(true);
         try {
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-            const { data: orders, error } = await supabase
-                .from('orders')
-                .select('total, created_at')
-                .eq('delivery_type', 'in_store')
-                .gte('created_at', thirtyDaysAgo.toISOString())
-                .order('created_at', { ascending: false });
+            const { data: reports, error } = await supabase
+                .from('pos_reports')
+                .select('*')
+                .order('date', { ascending: false })
+                .limit(30);
 
             if (error) throw error;
 
-            // Group by date
-            const groups: { [key: string]: { total: number; count: number } } = {};
-            orders?.forEach(o => {
-                const dateKey = new Date(o.created_at).toLocaleDateString('en-CA'); // YYYY-MM-DD
-                if (!groups[dateKey]) groups[dateKey] = { total: 0, count: 0 };
-                groups[dateKey].total += o.total;
-                groups[dateKey].count += 1;
-            });
-
-            setHistoryDays(Object.entries(groups).map(([date, stats]) => ({
-                date,
-                ...stats
+            setHistoryDays(reports.map(r => ({
+                date: r.date,
+                total: r.total_sales,
+                count: r.order_count,
+                // store whole record if needed later
+                ...r
             })));
         } catch (err) {
             console.error(err);
@@ -644,100 +668,195 @@ function AdminPOSTab({
         { key: 'mobile', label: 'Mobile', icon: Smartphone, color: 'border-purple-500 bg-purple-900/20 text-purple-400' },
     ];
 
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    };
+
     return (
-        <div className="h-[calc(100vh-180px)] flex flex-col gap-4 overflow-hidden">
-            {/* ── TOP: Mini Stats Bar ── */}
-            <div className="flex items-center gap-6 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-2xl shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
-                        <Banknote className="w-6 h-6" />
+        <div className="h-full flex flex-col gap-4 overflow-hidden relative">
+            {/* ── TOP: Professional Header ── */}
+            <header className="flex items-center gap-6 px-6 py-4 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shrink-0 shadow-2xl">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-black shadow-[0_0_20px_rgba(57,255,20,0.3)]">
+                        <ShoppingCart className="w-7 h-7" />
                     </div>
                     <div>
-                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Ventes du jour</p>
-                        <p className="text-xl font-black text-white">{todayTotal.toFixed(2)} €</p>
+                        <h1 className="text-xl font-black text-white tracking-tight uppercase">Green Moon POS</h1>
+                        <p className="text-[10px] text-green-400 font-bold uppercase tracking-[0.2em]">Système de Vente Directe</p>
                     </div>
                 </div>
 
-                <div className="h-8 w-px bg-zinc-800" />
+                <div className="h-10 w-px bg-zinc-800 mx-2" />
 
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-500">
-                        <ShoppingCart className="w-6 h-6" />
+                <div className="flex items-center gap-8">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-0.5">Ventes du jour</span>
+                        <span className="text-2xl font-black text-white leading-none">{todayTotal.toFixed(2)} €</span>
                     </div>
-                    <div>
-                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Session en cours</p>
-                        <p className="text-xl font-black text-white">{cart.length} articles</p>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-0.5">Session</span>
+                        <span className="text-2xl font-black text-white leading-none">{cart.length} <span className="text-xs text-zinc-600">art.</span></span>
                     </div>
                 </div>
 
                 <div className="flex-1" />
 
-                <button
-                    onClick={loadProducts}
-                    className="p-2 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-500 transition-colors"
-                    title="Actualiser les produits"
-                >
-                    <RotateCcw className="w-4 h-4" />
-                </button>
-            </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={toggleFullScreen}
+                        className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-2xl text-zinc-400 hover:text-white hover:border-zinc-500 transition-all group"
+                        title="Plein écran"
+                    >
+                        <Maximize className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </button>
+                    <button
+                        onClick={loadProducts}
+                        className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-2xl text-zinc-400 hover:text-green-500 hover:border-green-500/50 transition-all group"
+                        title="Actualiser"
+                    >
+                        <RotateCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
+                    </button>
+                    <button
+                        onClick={() => setShowHistory(!showHistory)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${showHistory
+                            ? 'bg-green-500 text-black'
+                            : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-500'
+                            }`}
+                    >
+                        <HistoryIcon className="w-4 h-4" />
+                        {showHistory ? 'Retour' : 'Historique'}
+                    </button>
+                    <button
+                        onClick={() => handleGenerateReport('view')}
+                        className="flex items-center gap-2 px-5 py-3 bg-zinc-200 hover:bg-white text-black rounded-2xl font-bold text-sm transition-all shadow-lg shadow-white/5"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Lecture X
+                    </button>
+                    <button
+                        onClick={() => handleGenerateReport('close')}
+                        className="flex items-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-red-600/20"
+                    >
+                        <Lock className="w-4 h-4" />
+                        Clôture Z
+                    </button>
+                </div>
+            </header>
 
-            <div className="flex-1 flex gap-4 overflow-hidden min-h-0">
-                {/* ── LEFT: Product Grid or History ── */}
-                <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+            <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+                {/* ── LEFT: Category & Search Sidebar ── */}
+                {!showHistory && (
+                    <div className="w-48 flex flex-col gap-4 shrink-0">
+                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-3">
+                            <h3 className="text-[10px] text-zinc-500 font-black uppercase tracking-widest px-3 mb-3">Catégories</h3>
+                            <div className="space-y-1">
+                                <button
+                                    onClick={() => setSelectedCategory('all')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${selectedCategory === 'all'
+                                        ? 'bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]'
+                                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                        }`}
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                    Tous
+                                </button>
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all text-left ${selectedCategory === cat.id
+                                            ? 'bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]'
+                                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                            }`}
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                                        <span className="truncate">{cat.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-auto p-4 bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-3xl">
+                            <div className="flex items-center gap-2 text-zinc-500 mb-2">
+                                <AlertTriangle className="w-4 h-4" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Alertes Stock</span>
+                            </div>
+                            <p className="text-[10px] text-zinc-600 leading-relaxed">
+                                {products.filter(p => p.stock_quantity <= 5).length} produits à réapprovisionner.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── CENTER: Main Content ── */}
+                <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-900/30 border border-zinc-800 rounded-[2.5rem] p-6">
                     {showHistory ? (
-                        <div className="flex-1 overflow-y-auto pr-1">
-                            <div className="flex items-center justify-between mb-6">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                            <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-xl font-bold text-white">Historique des Ventes</h3>
-                                    <p className="text-sm text-zinc-500">Les 30 derniers jours de vente en boutique</p>
+                                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Historique</h3>
+                                    <p className="text-sm text-zinc-500 font-medium">Les 30 derniers jours d'activité boutique</p>
                                 </div>
                                 <button
                                     onClick={() => setShowHistory(false)}
-                                    className="text-sm text-green-400 hover:underline"
+                                    className="px-4 py-2 bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs font-bold transition-all"
                                 >
-                                    Retour à la caisse
+                                    Fermer
                                 </button>
                             </div>
 
                             {isLoadingHistory ? (
                                 <div className="space-y-4">
-                                    {[1, 2, 3].map(i => (
-                                        <div key={i} className="h-20 bg-zinc-800/50 rounded-2xl animate-pulse" />
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="h-24 bg-zinc-800/20 rounded-[2rem] animate-pulse" />
                                     ))}
                                 </div>
                             ) : historyDays.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-64 text-zinc-600">
-                                    <HistoryIcon className="w-12 h-12 mb-4 opacity-20" />
-                                    <p>Aucun historique de vente trouvé pour ce mois.</p>
+                                <div className="flex flex-col items-center justify-center h-80 text-zinc-700">
+                                    <div className="w-20 h-20 rounded-full bg-zinc-800/30 flex items-center justify-center mb-6">
+                                        <HistoryIcon className="w-10 h-10 opacity-20" />
+                                    </div>
+                                    <p className="font-bold uppercase tracking-widest text-xs">Aucun historique disponible</p>
                                 </div>
                             ) : (
-                                <div className="grid gap-3">
+                                <div className="grid gap-4">
                                     {historyDays.map((day) => (
                                         <button
                                             key={day.date}
                                             onClick={() => handleViewPastReport(day.date)}
-                                            className="bg-zinc-800/40 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 flex items-center justify-between group transition-all"
+                                            className="bg-zinc-800/20 hover:bg-zinc-800/50 border border-zinc-800/50 hover:border-green-500/30 rounded-[2rem] p-6 flex items-center justify-between group transition-all"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-700 flex flex-col items-center justify-center">
-                                                    <Calendar className="w-3 h-3 text-zinc-500 mb-0.5" />
-                                                    <span className="text-xs font-bold text-white">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center shadow-inner">
+                                                    <Calendar className="w-4 h-4 text-zinc-600 mb-1" />
+                                                    <span className="text-xl font-black text-white leading-none">
                                                         {new Date(day.date).toLocaleDateString('fr-FR', { day: '2-digit' })}
                                                     </span>
                                                 </div>
                                                 <div className="text-left">
-                                                    <p className="text-sm font-bold text-white">
-                                                        {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', month: 'long', year: 'numeric' })}
+                                                    <p className="text-lg font-black text-white group-hover:text-green-400 transition-colors">
+                                                        {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', month: 'long' })}
                                                     </p>
-                                                    <p className="text-xs text-zinc-500">{day.count} ventes réalisées</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <Package className="w-3 h-3 text-zinc-500" />
+                                                        <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">{day.count} ventes</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-6">
+                                            <div className="flex items-center gap-8">
                                                 <div className="text-right">
-                                                    <p className="text-lg font-black text-green-400">{day.total.toFixed(2)} €</p>
-                                                    <p className="text-[10px] text-zinc-600 uppercase font-bold">Total encaissé</p>
+                                                    <p className="text-2xl font-black text-green-400 leading-none">{day.total.toFixed(2)} €</p>
+                                                    <p className="text-[10px] text-zinc-600 uppercase font-black tracking-widest mt-1">Total Journalier</p>
                                                 </div>
-                                                <ChevronRight className="w-5 h-5 text-zinc-700 group-hover:text-green-500 transition-colors" />
+                                                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-green-500 group-hover:text-black transition-all">
+                                                    <ChevronRight className="w-5 h-5" />
+                                                </div>
                                             </div>
                                         </button>
                                     ))}
@@ -745,131 +864,103 @@ function AdminPOSTab({
                             )}
                         </div>
                     ) : (
-                        <>
-                            {/* Filters */}
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                <div className="relative flex-1 min-w-[180px]">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <div className="flex flex-col h-full gap-6">
+                            {/* Search Header */}
+                            <div className="flex items-center gap-4 shrink-0">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
                                     <input
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Rechercher un produit…"
-                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-500 transition-colors"
+                                        placeholder="Rechercher un produit, une variété..."
+                                        className="w-full bg-black/40 border border-zinc-800 rounded-3xl pl-14 pr-6 py-4 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-green-500/50 focus:bg-black/60 transition-all shadow-inner"
                                     />
                                 </div>
-
-                                <select
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-colors"
-                                >
-                                    <option value="all">Toutes les catégories</option>
-                                    {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-
-                                <button
-                                    onClick={loadProducts}
-                                    className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-400 hover:border-green-500 transition-all text-sm"
-                                >
-                                    ↻ Sync
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        if (!showHistory) loadHistory();
-                                        setShowHistory(!showHistory);
-                                    }}
-                                    className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${showHistory
-                                        ? 'bg-green-500 border-green-400 text-black font-bold'
-                                        : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
-                                        }`}
-                                >
-                                    <HistoryIcon className="w-4 h-4" />
-                                    Historique
-                                </button>
-
-                                <div className="w-px h-6 bg-zinc-800 mx-2" />
-
-                                <button
-                                    onClick={() => handleGenerateReport('view')}
-                                    disabled={isGeneratingReport}
-                                    className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-yellow-400 hover:border-yellow-500 transition-all text-sm flex items-center gap-2"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Rapport (X)
-                                </button>
-
-                                <button
-                                    onClick={() => handleGenerateReport('close')}
-                                    disabled={isGeneratingReport || isSessionClosed}
-                                    className={`px-4 py-2.5 border rounded-xl transition-all text-sm flex items-center gap-2 ${isSessionClosed
-                                        ? 'bg-zinc-800 border-zinc-700 text-zinc-600 cursor-not-allowed'
-                                        : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-red-400 hover:border-red-500'
-                                        }`}
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    {isSessionClosed ? 'Session Clôturée' : 'Clôturer (Z)'}
-                                </button>
+                                <div className="px-4 py-2 bg-zinc-800/30 rounded-2xl border border-zinc-800 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                                    {filteredProducts.length} Produits
+                                </div>
                             </div>
 
-                            {/* Product grid */}
-                            <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 content-start pr-1">
+                            {/* Grid wrapper with scroll */}
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
                                 {isLoadingProducts ? (
-                                    Array.from({ length: 8 }).map((_, i) => (
-                                        <div key={i} className="bg-zinc-800/50 rounded-2xl h-36 animate-pulse" />
-                                    ))
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        {Array.from({ length: 15 }).map((_, i) => (
+                                            <div key={i} className="bg-zinc-800/20 rounded-[2rem] h-56 animate-pulse" />
+                                        ))}
+                                    </div>
                                 ) : filteredProducts.length === 0 ? (
-                                    <div className="col-span-full flex flex-col items-center justify-center py-16 text-zinc-600">
-                                        <Package className="w-12 h-12 mb-3 opacity-30" />
-                                        <p className="text-sm">Aucun produit disponible</p>
+                                    <div className="flex flex-col items-center justify-center py-20 text-zinc-700">
+                                        <div className="w-24 h-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6">
+                                            <Package className="w-10 h-10 opacity-10" />
+                                        </div>
+                                        <p className="font-black uppercase tracking-[0.2em] text-xs">Aucun résultat trouvé</p>
                                     </div>
                                 ) : (
-                                    filteredProducts.map((product) => {
-                                        const inCart = cart.find((l) => l.product.id === product.id);
-                                        return (
-                                            <button
-                                                key={product.id}
-                                                onClick={() => addToCart(product)}
-                                                className={`relative group flex flex-col p-3 rounded-2xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${inCart
-                                                    ? 'border-green-500/60 bg-green-900/10'
-                                                    : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
-                                                    }`}
-                                            >
-                                                {/* Product image */}
-                                                {product.image_url ? (
-                                                    <div
-                                                        className="w-full h-20 rounded-xl bg-cover bg-center mb-2 shrink-0"
-                                                        style={{ backgroundImage: `url(${product.image_url})` }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-20 rounded-xl bg-zinc-700 mb-2 flex items-center justify-center shrink-0">
-                                                        <Package className="w-8 h-8 text-zinc-500" />
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 content-start">
+                                        {filteredProducts.map((product) => {
+                                            const inCart = cart.find((l) => l.product.id === product.id);
+                                            return (
+                                                <motion.button
+                                                    key={product.id}
+                                                    whileHover={{ y: -5 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => addToCart(product)}
+                                                    className={`group relative flex flex-col items-center text-center rounded-[2.5rem] border transition-all overflow-hidden p-2 ${inCart
+                                                            ? 'bg-green-500/10 border-green-500/40 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
+                                                            : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900/60 shadow-xl'
+                                                        }`}
+                                                >
+                                                    {/* Badge stock */}
+                                                    <div className="absolute top-4 left-4 z-10">
+                                                        {product.stock_quantity <= 5 && (
+                                                            <div className="flex items-center gap-1.5 bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-red-900/50">
+                                                                Low
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                                <p className="text-xs font-semibold text-white truncate leading-tight">{product.name}</p>
-                                                <div className="flex items-center justify-between mt-0.5">
-                                                    <p className={`text-[10px] font-bold ${product.stock_quantity < 5 ? 'text-red-400' : 'text-zinc-500'}`}>
-                                                        Stock: {product.stock_quantity}
-                                                    </p>
-                                                    {product.stock_quantity < 5 && (
-                                                        <span className="text-[9px] bg-red-500/10 text-red-500 px-1 rounded border border-red-500/20">BAS</span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm font-bold text-green-400 mt-1">{product.price.toFixed(2)} €</p>
 
-                                                {inCart && (
-                                                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-[10px] font-bold text-black">
-                                                        {inCart.quantity}
+                                                    {/* Img Container */}
+                                                    <div className="w-full aspect-square rounded-[2rem] bg-zinc-800 overflow-hidden mb-4 relative shadow-2xl">
+                                                        {product.image_url ? (
+                                                            <img
+                                                                src={product.image_url}
+                                                                alt={product.name}
+                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <Package className="w-10 h-10 text-zinc-700" />
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                                                            <div className="bg-white text-black p-3 rounded-full shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-300">
+                                                                <Plus className="w-6 h-6" />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                )}
-                                            </button>
-                                        );
-                                    })
+
+                                                    <div className="px-2 pb-4 w-full">
+                                                        <h4 className="text-sm font-black text-white truncate px-1">{product.name}</h4>
+                                                        <div className="flex items-center justify-center gap-2 mt-1.5">
+                                                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{product.stock_quantity} g</span>
+                                                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                                            <span className="text-lg font-black text-green-400">{product.price.toFixed(2)}€</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {inCart && (
+                                                        <div className="absolute top-4 right-4 w-7 h-7 bg-green-500 text-black font-black text-xs rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 animate-in zoom-in duration-300">
+                                                            {inCart.quantity}
+                                                        </div>
+                                                    )}
+                                                </motion.button>
+                                            );
+                                        })}
+                                    </div>
                                 )}
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
 

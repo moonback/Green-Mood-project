@@ -25,6 +25,7 @@ import LoyaltyHistory from "./pages/LoyaltyHistory";
 import MyReviews from "./pages/MyReviews";
 import Favorites from "./pages/Favorites";
 import Referrals from './pages/Referrals';
+import POSPage from './pages/POSPage';
 import NotFound from "./pages/NotFound";
 import { useAuthStore } from "./store/authStore";
 import { useSettingsStore } from "./store/settingsStore";
@@ -46,6 +47,7 @@ export default function App() {
         {/* Routes admin - Outside of Layout to not have frontend header/footer */}
         <Route element={<AdminRoute />}>
           <Route path="admin" element={<Admin />} />
+          <Route path="pos" element={<POSPage />} />
         </Route>
 
         <Route path="/" element={<Layout />}>

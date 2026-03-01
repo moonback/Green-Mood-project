@@ -28,12 +28,13 @@ Green Mood Project se distingue par une suite de fonctionnalités robustes et in
     *   **Tunnel de Commande Optimisé** : Processus d'achat fluide et sécurisé, gestion des adresses, codes promotionnels.
     *   **PWA (Progressive Web App)** : Offre une expérience utilisateur rapide, fiable et engageante, avec installation sur l'écran d'accueil et fonctionnement hors ligne partiel.
 
-3.  **🛒 Système de Caisse POS (Point of Sale)**
-    *   **Vente en Boutique** : Interface dédiée pour les ventes physiques, permettant une gestion fluide des clients en magasin.
-    *   **Gestion Client & Fidélité** : Recherche rapide de profils clients pour l'attribution automatique de points de fidélité lors des achats en boutique.
+3.  **🛒 Système de Caisse POS (Point of Sale) Immersif**
+    *   **Interface Futuriste** : Design ultra-moderne avec effets de flou (Glassmorphism), mode plein écran dédié et navigation tactile fluide.
+    *   **Historique Persistent & Rapports** : Gestion native des rapports de lecture (X) et de clôture (Z) enregistrés directement en base de données pour une comptabilité parfaite.
+    *   **Gestion Client & Fidélité Avancée** : Recherche rapide, attribution automatique des points et utilisation des réductions fidélité en direct à la caisse.
     *   **Encaissement Multi-modes** : Support des espèces (avec calcul du rendu), cartes bancaires et paiements mobiles.
-    *   **Synchronisation en Temps Réel** : Mise à jour automatique des stocks globaux et génération de reçus formatés après chaque vente.
-    *   **Valeur Ajoutée** : Unifie la gestion des ventes en ligne et physiques dans un seul outil, simplifiant la comptabilité et le suivi des stocks.
+    *   **Synchronisation en Temps Réel** : Mise à jour instantanée des stocks globaux et génération de reçus professionnels.
+    *   **Valeur Ajoutée** : Unifie la gestion des ventes omnicanales, offrant une expérience premium tant pour l'opérateur que pour le client.
 
 4.  **📊 Panneau d'Administration Complet**
     *   Un back-office intuitif pour gérer tous les aspects de la boutique : produits, catégories, commandes, clients, stocks, codes promotionnels, avis, et paramètres de l'IA BudTender.
