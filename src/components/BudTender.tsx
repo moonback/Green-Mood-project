@@ -192,7 +192,7 @@ async function callGemini(answers: Answers, products: Product[], context?: strin
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
+                    generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
                 }),
             }
         );
@@ -543,7 +543,7 @@ export default function BudTender() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { maxOutputTokens: 200, temperature: 0.7 },
+                        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
                     }),
                 }
             );
@@ -682,7 +682,7 @@ export default function BudTender() {
                                                 <motion.div
                                                     initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.sender === 'user'
+                                                    className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${msg.sender === 'user'
                                                         ? 'bg-green-neon text-black font-bold'
                                                         : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
                                                         }`}
