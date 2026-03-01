@@ -16,11 +16,12 @@ export interface QuizStep {
 
 export interface BudTenderSettings {
     enabled: boolean;
-    gemini_enabled: boolean;
-    gemini_temperature: number;
-    gemini_max_tokens: number;
+    ai_enabled: boolean;
+    ai_model: string;
+    ai_temperature: number;
+    ai_max_tokens: number;
     recommendations_count: number;
-    typing_speed: 'slow' | 'normal' | 'fast';
+    typing_speed: 'normal' | 'fast' | 'slow';
     memory_enabled: boolean;
     restock_threshold_oils: number;
     restock_threshold_flowers: number;
@@ -73,22 +74,47 @@ export const BUDTENDER_DEFAULT_QUIZ: QuizStep[] = [
 
 export const BUDTENDER_DEFAULTS: BudTenderSettings = {
     enabled: true,
-    gemini_enabled: true,
-    gemini_temperature: 0.7,
-    gemini_max_tokens: 1500,
+    ai_enabled: true,
+    ai_model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+    ai_temperature: 0.7,
+    ai_max_tokens: 1500,
     recommendations_count: 3,
     typing_speed: 'normal',
     memory_enabled: true,
     restock_threshold_oils: 30,
     restock_threshold_flowers: 14,
     restock_threshold_other: 21,
-    welcome_message:
-        "Bonjour ! Je suis BudTender, votre conseiller CBD personnel. J'aimerais vous aider à trouver les produits idéaux. On commence ?",
-    pulse_delay: 8,
+    welcome_message: "Bienvenue ! 🌿 Je suis BudTender, votre conseiller CBD de confiance. Comment puis-je vous aider aujourd'hui ?",
+    pulse_delay: 3,
     quiz_steps: BUDTENDER_DEFAULT_QUIZ,
 };
 
 export const BUDTENDER_LS_KEY = 'budtender_admin_settings_v1';
+
+/**
+ * Helper to migrate old settings keys (gemini_*) to new generic AI keys
+ */
+function migrateSettings(raw: any): BudTenderSettings {
+    const migrated = { ...BUDTENDER_DEFAULTS, ...raw };
+
+    // Migrate old keys if present and new ones aren't specifically set in the raw data
+    if (raw.gemini_enabled !== undefined && raw.ai_enabled === undefined) {
+        migrated.ai_enabled = raw.gemini_enabled;
+    }
+    if (raw.gemini_temperature !== undefined && raw.ai_temperature === undefined) {
+        migrated.ai_temperature = raw.gemini_temperature;
+    }
+    if (raw.gemini_max_tokens !== undefined && raw.ai_max_tokens === undefined) {
+        migrated.ai_max_tokens = raw.gemini_max_tokens;
+    }
+
+    // Ensure ai_model is set to a valid OpenRouter default if missing
+    if (!migrated.ai_model) {
+        migrated.ai_model = BUDTENDER_DEFAULTS.ai_model;
+    }
+
+    return migrated;
+}
 
 /**
  * Global helper to load BudTender settings from localStorage (Sync)
@@ -96,7 +122,7 @@ export const BUDTENDER_LS_KEY = 'budtender_admin_settings_v1';
 export function getBudTenderSettings(): BudTenderSettings {
     try {
         const raw = localStorage.getItem(BUDTENDER_LS_KEY);
-        if (raw) return { ...BUDTENDER_DEFAULTS, ...JSON.parse(raw) };
+        if (raw) return migrateSettings(JSON.parse(raw));
     } catch (err) {
         console.error('[budtenderSettings] Error loading settings:', err);
     }
@@ -115,7 +141,7 @@ export async function fetchBudTenderSettings(): Promise<BudTenderSettings> {
             .maybeSingle(); // maybeSingle allows 0 rows without erroring
 
         if (error) throw error;
-        if (data?.value) return { ...BUDTENDER_DEFAULTS, ...data.value };
+        if (data?.value) return migrateSettings(data.value);
     } catch (err) {
         // Quietly fallback if it's just a missing row or initial setup
         console.warn('[budtenderSettings] No config found in DB, using defaults');

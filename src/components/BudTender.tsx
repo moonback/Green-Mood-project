@@ -119,54 +119,70 @@ function generateAdvice(answers: Answers, terpenes: string[] = []): string {
     return lines.join(' ');
 }
 
-async function callGemini(
+async function callAI(
     answers: Answers,
     products: Product[],
     settings: BudTenderSettings,
-    history: { role: string; parts: { text: string }[] }[] = [],
+    history: { role: string; content: string }[] = [],
     context?: string
 ): Promise<string | null> {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey || !settings.gemini_enabled) return null;
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    if (!apiKey || !settings.ai_enabled) return null;
 
     const catalog = products
         .slice(0, 12)
         .map((p) => `- ${p.name} (${p.category?.slug}, CBD ${p.cbd_percentage ?? '?'}%, ${p.price}€): ${p.description ?? ''}`)
         .join('\n');
 
-    const systemPrompt = getQuizPrompt(answers, settings.quiz_steps, catalog, context);
+    const systemPromptMessage = {
+        role: 'system',
+        content: getQuizPrompt(answers, settings.quiz_steps, catalog, context)
+    };
 
-    // Combine system prompt with history
-    const contents = [
-        ...history,
-        { role: 'user', parts: [{ text: `Basé sur mes réponses et notre échange, donne-moi tes conseils finaux. Système : ${systemPrompt}` }] }
+    const messages = [
+        systemPromptMessage,
+        ...history
     ];
+
+    // Ensure the last message is from the user if we're asking for final advice
+    if (messages[messages.length - 1].role !== 'user') {
+        messages.push({ role: 'user', content: "Basé sur mes réponses et notre échange, donne-moi tes conseils finaux." });
+    }
+
+    const modelToUse = settings.ai_model || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+
+    console.log('[BudTender callAI] Model:', modelToUse);
 
     try {
         const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            'https://openrouter.ai/api/v1/chat/completions',
             {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'X-Title': 'Green Moon BudTender',
+                    'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
+                },
                 body: JSON.stringify({
-                    contents,
-                    generationConfig: {
-                        maxOutputTokens: settings.gemini_max_tokens,
-                        temperature: settings.gemini_temperature
-                    },
+                    model: modelToUse,
+                    messages,
+                    temperature: settings.ai_temperature,
+                    max_tokens: settings.ai_max_tokens,
                 }),
             }
         );
 
-        if (res.status === 429) {
-            console.error('Gemini API 429: Too Many Requests');
+        const json = await res.json();
+
+        if (!res.ok) {
+            console.error('[BudTender callAI] API Error:', json);
             return null;
         }
 
-        const json = await res.json();
-        return json?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+        return json?.choices?.[0]?.message?.content ?? null;
     } catch (err) {
-        console.error('Gemini callGemini error:', err);
+        console.error('[BudTender callAI] Fetch Error:', err);
         return null;
     }
 }
@@ -459,12 +475,12 @@ export default function BudTender() {
         const history = messages
             .filter(m => m.text && !m.isResult)
             .map(m => ({
-                role: m.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text || '' }]
+                role: m.sender === 'user' ? 'user' : 'assistant' as any,
+                content: m.text || ''
             }));
 
-        const geminiText = await callGemini(finalAnswers, products, settings, history, geminiContext);
-        const adviceText = geminiText ?? generateAdvice(finalAnswers, terpeneSelection);
+        const aiText = await callAI(finalAnswers, products, settings, history, geminiContext);
+        const adviceText = aiText ?? generateAdvice(finalAnswers, terpeneSelection);
 
         setMessages((prev) => [...prev, {
             id: Math.random().toString(36).substring(7),
@@ -522,9 +538,10 @@ export default function BudTender() {
         addUserMessage(text);
         setIsTyping(true);
 
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
+        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+        if (!apiKey || !settings.ai_enabled) {
             addBotMessage({ text: "Désolé, ma connexion à l'IA n'est pas configurée pour le moment." });
+            setIsTyping(false);
             return;
         }
 
@@ -535,59 +552,75 @@ export default function BudTender() {
 
         const systemPrompt = getChatPrompt(text, catalog);
 
-        // Build history for Gemini (including context of current session)
-        const history = messages
-            .filter(m => m.text)
-            .map(m => ({
-                role: m.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: m.text || '' }]
-            }));
+        // Build history for OpenRouter (OpenAI format)
+        // IMPORTANT: Roles must alternate and not be empty
+        const history: { role: 'user' | 'assistant'; content: string }[] = [];
+        messages
+            .filter(m => m.text && !m.isResult)
+            .forEach(m => {
+                const role = m.sender === 'user' ? 'user' : 'assistant';
+                // Avoid consecutive roles if possible (not strictly required but safer)
+                if (history.length > 0 && history[history.length - 1].role === role) {
+                    history[history.length - 1].content += "\n" + m.text;
+                } else {
+                    history.push({ role, content: m.text || '' });
+                }
+            });
 
-        // System prompt context
-        const contents = [
-            { role: 'user', parts: [{ text: `Instructions Système: ${systemPrompt}` }] },
-            { role: 'model', parts: [{ text: "Compris. Je suis BudTender, expert Green Moon. Je me souviens de nos échanges précédents." }] },
+        const messagesForAI = [
+            { role: 'system', content: systemPrompt },
             ...history
         ];
 
+        // Ensure the last developer-injected message is the current user text if not already there
+        if (messagesForAI[messagesForAI.length - 1].role !== 'user') {
+            messagesForAI.push({ role: 'user', content: text });
+        }
+
+        const modelToUse = settings.ai_model || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+
+        console.log('[BudTender Chat] Sending messages to:', modelToUse);
+
         try {
             const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+                'https://openrouter.ai/api/v1/chat/completions',
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'X-Title': 'Green Moon BudTender',
+                        // OpenRouter suggests including the referrer
+                        'HTTP-Referer': window.location.origin,
+                    },
                     body: JSON.stringify({
-                        contents,
-                        generationConfig: {
-                            maxOutputTokens: settings.gemini_max_tokens,
-                            temperature: settings.gemini_temperature
-                        },
+                        model: modelToUse,
+                        messages: messagesForAI,
+                        temperature: settings.ai_temperature,
+                        max_tokens: settings.ai_max_tokens,
                     }),
                 }
             );
 
             if (res.status === 429) {
-                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite API). Pourriez-vous patienter une minute avant de me reposer votre question ? 🙏" });
+                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite OpenRouter). Pourriez-vous patienter une minute ? 🙏" });
                 return;
             }
 
             const json = await res.json();
 
             if (!res.ok) {
-                console.error('Gemini API Error:', json);
-                addBotMessage({ text: `Erreur API Google : ${json.error?.message || 'Inconnue'}` });
+                const errDetail = json.error?.message || json.error?.code || 'Inconnue';
+                console.error('OpenRouter Detailed Error:', json);
+                addBotMessage({ text: `Erreur OpenRouter (${res.status}) : ${errDetail}` });
                 return;
             }
 
-            const responseText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const responseText = json?.choices?.[0]?.message?.content;
 
             if (!responseText) {
-                console.error("Gemini empty response:", json);
-                setMessages((prev) => [...prev, {
-                    id: Math.random().toString(36).substring(7),
-                    sender: 'bot',
-                    text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?",
-                }]);
+                console.error("OpenRouter empty response:", json);
+                addBotMessage({ text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?" });
                 return;
             }
 
@@ -597,7 +630,7 @@ export default function BudTender() {
                 text: responseText,
             }]);
         } catch (err) {
-            console.error('Gemini handleSendMessage error:', err);
+            console.error('OpenRouter handleSendMessage error:', err);
             addBotMessage({ text: "Oups, j'ai eu une petite déconnexion. Pouvez-vous réessayer ?" });
         } finally {
             setIsTyping(false);

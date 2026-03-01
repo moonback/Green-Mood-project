@@ -178,7 +178,7 @@ export default function AdminBudTenderTab() {
 
     const subTabs = [
         { key: 'general', label: 'Général', icon: Leaf },
-        { key: 'ai', label: 'IA & Gemini', icon: Brain },
+        { key: 'ai', label: 'IA & OpenRouter', icon: Brain },
         { key: 'memory', label: 'Mémoire', icon: Clock },
         { key: 'quiz', label: 'Quiz & UX', icon: MessageSquare },
     ] as const;
@@ -290,42 +290,56 @@ export default function AdminBudTenderTab() {
                         </>
                     )}
 
-                    {/* ── IA & GEMINI ── */}
+                    {/* ── IA & OPENROUTER ── */}
                     {activeTab === 'ai' && (
                         <>
-                            <Section icon={Brain} title="Moteur IA (Gemini)" description="Paramètres du modèle de génération de conseils">
+                            <Section icon={Brain} title="Moteur IA (OpenRouter)" description="Paramètres du modèle de génération de conseils">
                                 <div className="flex items-center justify-between py-2">
                                     <div>
-                                        <p className="text-sm font-medium text-white">Activer Gemini IA</p>
+                                        <p className="text-sm font-medium text-white">Activer OpenRouter IA</p>
                                         <p className="text-xs text-zinc-500 mt-0.5">
                                             Si désactivé, les conseils utilisent le moteur de règles local (sans API).
                                         </p>
                                     </div>
-                                    <Toggle enabled={settings.gemini_enabled} onChange={(v) => update({ gemini_enabled: v })} />
+                                    <Toggle enabled={settings.ai_enabled} onChange={(v) => update({ ai_enabled: v })} />
                                 </div>
 
-                                <div className={!settings.gemini_enabled ? 'opacity-40 pointer-events-none' : ''}>
+                                <div className={!settings.ai_enabled ? 'opacity-40 pointer-events-none space-y-4' : 'space-y-4'}>
+                                    <div className="space-y-2">
+                                        <label className="text-xs text-zinc-400 font-medium uppercase tracking-wider block">
+                                            Modèle OpenRouter
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={settings.ai_model}
+                                            onChange={(e) => update({ ai_model: e.target.value })}
+                                            className={INPUT}
+                                            placeholder="Ex: google/gemini-2.0-flash-lite-preview-02-05:free"
+                                        />
+                                        <p className="text-[10px] text-zinc-600 italic">
+                                            Identifiant du modèle (ex: google/gemini-2.5-flash:free, anthropic/claude-3.5-sonnet, etc.)
+                                        </p>
+                                    </div>
+
                                     <SliderField
                                         label="Créativité (Temperature)"
-                                        value={settings.gemini_temperature}
+                                        value={settings.ai_temperature}
                                         min={0}
                                         max={1}
                                         step={0.05}
                                         unit=""
-                                        onChange={(v) => update({ gemini_temperature: v })}
+                                        onChange={(v) => update({ ai_temperature: v })}
                                         hint="0 = réponses très factuelles et stables. 1 = réponses créatives et variées."
                                     />
-                                </div>
 
-                                <div className={!settings.gemini_enabled ? 'opacity-40 pointer-events-none' : ''}>
                                     <SliderField
                                         label="Longueur maximale de la réponse"
-                                        value={settings.gemini_max_tokens}
+                                        value={settings.ai_max_tokens}
                                         min={100}
-                                        max={800}
+                                        max={2000}
                                         step={50}
                                         unit="tokens"
-                                        onChange={(v) => update({ gemini_max_tokens: v })}
+                                        onChange={(v) => update({ ai_max_tokens: v })}
                                         hint="~300 tokens ≈ 2-3 phrases. Augmenter pour des conseils plus détaillés."
                                     />
                                 </div>
@@ -333,8 +347,7 @@ export default function AdminBudTenderTab() {
                                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex gap-3">
                                     <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                                     <div className="text-xs text-zinc-400 space-y-1">
-                                        <p>La clé API Gemini est configurée via la variable d'environnement <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">VITE_GEMINI_API_KEY</code> dans le fichier <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">.env</code>.</p>
-                                        <p>Elle ne peut pas être modifiée ici pour des raisons de sécurité.</p>
+                                        <p>La clé API OpenRouter est configurée via la variable <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">VITE_OPENROUTER_API_KEY</code> dans le fichier <code className="text-amber-400 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">.env</code>.</p>
                                     </div>
                                 </div>
                             </Section>
@@ -548,7 +561,7 @@ export default function AdminBudTenderTab() {
                                 </div>
                                 <p className="text-[10px] text-zinc-600 italic flex items-center gap-1.5 mt-4">
                                     <Info className="w-3 h-3" />
-                                    Toutes les réponses (même les nouvelles questions) seront transmises à l'IA Gemini pour une analyse ultra-précise.
+                                    Toutes les réponses (même les nouvelles questions) seront transmises à l'IA OpenRouter pour une analyse ultra-précise.
                                 </p>
                             </Section>
                         </>
