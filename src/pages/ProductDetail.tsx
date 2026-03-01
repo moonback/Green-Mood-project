@@ -388,15 +388,21 @@ export default function ProductDetail() {
             <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 md:p-8 space-y-10 relative overflow-hidden group/panel">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-neon/20 to-transparent" />
 
-              <div className="flex items-end justify-between">
-                <div className="space-y-1">
-                  <p className="text-xs text-zinc-500 font-medium uppercase">Total Sélectionné</p>
-                  <p className="text-4xl font-serif font-bold text-white leading-none">
-                    {(product.price * quantity).toFixed(2)}<span className="text-lg ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
-                  </p>
-                  <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider mt-1 italic">
-                    Soit {product.price.toFixed(2)} € / g
-                  </p>
+              <div className="flex items-start justify-between">
+                <div className="flex flex-wrap gap-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Prix au gramme</p>
+                    <p className="text-2xl font-serif font-bold text-green-neon leading-none">
+                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€/g</span>
+                    </p>
+                  </div>
+                  <div className="w-px h-10 bg-white/10 hidden sm:block" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-green-neon/60 font-black uppercase tracking-widest">Total Sélectionné ({quantity}g)</p>
+                    <p className="text-4xl font-serif font-bold text-white leading-none">
+                      {(product.price * quantity).toFixed(2)}<span className="text-xl ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
+                    </p>
+                  </div>
                 </div>
                 <StockBadge stock={product.stock_quantity} />
               </div>
