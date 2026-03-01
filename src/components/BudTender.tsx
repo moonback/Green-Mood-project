@@ -339,7 +339,7 @@ export default function BudTender() {
                         initial={{ opacity: 0, y: 100, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.9 }}
-                        className="fixed bottom-6 right-6 z-50 w-[min(420px,92vw)] h-[min(640px,85vh)] glass-premium flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden"
+                        className="fixed bottom-6 right-6 z-50 w-[min(420px,92vw)] h-[min(640px,85vh)] glass-premium bg-zinc-950 flex flex-col rounded-[2.5rem] shadow-2xl overflow-hidden"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-6 border-b border-white/[0.05] bg-zinc-950/20">
@@ -356,7 +356,7 @@ export default function BudTender() {
                         </div>
 
                         {/* Messages Area */}
-                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-zinc-950">
                             {messages.map(msg => (
                                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className="max-w-[85%] space-y-3">
@@ -364,7 +364,7 @@ export default function BudTender() {
                                             <motion.div
                                                 initial={{ opacity: 0, x: msg.sender === 'user' ? 20 : -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
-                                                className={`p-4 rounded-2xl text-[13px] leading-relaxed ${msg.sender === 'user' ? 'bg-green-neon text-black font-bold' : 'bg-white/[0.03] border border-white/[0.05] text-white'}`}
+                                                className={`p-4 rounded-2xl text-[13px] leading-relaxed ${msg.sender === 'user' ? 'bg-green-neon text-black font-bold' : 'bg-white/[0.05] border border-white/[0.1] text-white shadow-xl'}`}
                                             >
                                                 {msg.text}
                                             </motion.div>
