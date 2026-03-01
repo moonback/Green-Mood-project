@@ -4,64 +4,12 @@ import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Cl
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
-import { getQuizPrompt, getChatPrompt } from '../lib/budtenderPrompts';
+import { getQuizPrompt, getChatPrompt, QuizAnswers } from '../lib/budtenderPrompts';
+import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTENDER_DEFAULTS, QuizStep, QuizOption } from '../lib/budtenderSettings';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 
-// ─── Quiz steps ──────────────────────────────────────────────────────────────
-
-interface QuizOption {
-    label: string;
-    value: string;
-    emoji: string;
-}
-
-interface QuizStep {
-    id: string;
-    question: string;
-    options: QuizOption[];
-}
-
-const QUIZ_STEPS: QuizStep[] = [
-    {
-        id: 'goal',
-        question: 'Quel est votre principal besoin ?',
-        options: [
-            { label: 'Sommeil & Relaxation', value: 'sleep', emoji: '🌙' },
-            { label: 'Stress & Anxiété', value: 'stress', emoji: '🧘' },
-            { label: 'Douleurs & Récupération', value: 'pain', emoji: '💪' },
-            { label: 'Bien-être général', value: 'wellness', emoji: '🌿' },
-        ],
-    },
-    {
-        id: 'experience',
-        question: 'Quelle est votre expérience avec le CBD ?',
-        options: [
-            { label: "Débutant — c'est ma première fois", value: 'beginner', emoji: '👋' },
-            { label: "Intermédiaire — j'ai déjà essayé", value: 'intermediate', emoji: '🙂' },
-            { label: "Expert — je connais bien", value: 'expert', emoji: '🌟' },
-        ],
-    },
-    {
-        id: 'format',
-        question: 'Quel format vous attire le plus ?',
-        options: [
-            { label: 'Huile sublinguale (rapide & précis)', value: 'oil', emoji: '💧' },
-            { label: 'Fleur ou résine (tradition)', value: 'flower', emoji: '🌸' },
-            { label: 'Infusion (doux & relaxant)', value: 'infusion', emoji: '☕' },
-            { label: 'Pack découverte (tout essayer)', value: 'bundle', emoji: '📦' },
-        ],
-    },
-    {
-        id: 'budget',
-        question: 'Quel est votre budget approximatif ?',
-        options: [
-            { label: 'Moins de 20 €', value: 'low', emoji: '💶' },
-            { label: '20 € – 50 €', value: 'mid', emoji: '💶💶' },
-            { label: 'Plus de 50 €', value: 'high', emoji: '💎' },
-        ],
-    },
-];
+// ─── Shared types and logic imported ───
 
 // ─── Terpene / Aroma step ─────────────────────────────────────────────────────
 
@@ -171,18 +119,28 @@ function generateAdvice(answers: Answers, terpenes: string[] = []): string {
     return lines.join(' ');
 }
 
-async function callGemini(answers: Answers, products: Product[], context?: string): Promise<string | null> {
+async function callGemini(
+    answers: Answers,
+    products: Product[],
+    settings: BudTenderSettings,
+    history: { role: string; parts: { text: string }[] }[] = [],
+    context?: string
+): Promise<string | null> {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) return null;
+    if (!apiKey || !settings.gemini_enabled) return null;
 
     const catalog = products
         .slice(0, 12)
         .map((p) => `- ${p.name} (${p.category?.slug}, CBD ${p.cbd_percentage ?? '?'}%, ${p.price}€): ${p.description ?? ''}`)
         .join('\n');
 
-    const contextBlock = context ? `\nContexte client : ${context}\n` : '';
+    const systemPrompt = getQuizPrompt(answers, settings.quiz_steps, catalog, context);
 
-    const prompt = getQuizPrompt(answers, catalog, context);
+    // Combine system prompt with history
+    const contents = [
+        ...history,
+        { role: 'user', parts: [{ text: `Basé sur mes réponses et notre échange, donne-moi tes conseils finaux. Système : ${systemPrompt}` }] }
+    ];
 
     try {
         const res = await fetch(
@@ -191,8 +149,11 @@ async function callGemini(answers: Answers, products: Product[], context?: strin
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
+                    contents,
+                    generationConfig: {
+                        maxOutputTokens: settings.gemini_max_tokens,
+                        temperature: settings.gemini_temperature
+                    },
                 }),
             }
         );
@@ -252,12 +213,20 @@ export default function BudTender() {
     const [showPromoTooltip, setShowPromoTooltip] = useState(false);
     // Free chat input
     const [chatInput, setChatInput] = useState('');
+    const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const memory = useBudTenderMemory();
+
+    // Load admin settings from DB when opening
+    useEffect(() => {
+        if (isOpen) {
+            fetchBudTenderSettings().then(setSettings);
+        }
+    }, [isOpen]);
 
     // Initial product load
     useEffect(() => {
@@ -270,22 +239,43 @@ export default function BudTender() {
                 if (data) setProducts(data as Product[]);
             });
 
-        const t = setTimeout(() => setPulse(true), 8000);
-        return () => clearTimeout(t);
+        // Use delay from settings
+        const currentSettings = getBudTenderSettings();
+        if (currentSettings.pulse_delay > 0) {
+            const t = setTimeout(() => setPulse(true), currentSettings.pulse_delay * 1000);
+            return () => clearTimeout(t);
+        }
     }, []);
 
-    // Auto-scroll to bottom
+    // Auto-scroll AND Save chat history to local memory
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
+        // Save current messages to persistent storage
+        if (messages.length > 0) {
+            memory.saveChatHistory(messages as any);
+        }
     }, [messages, isTyping]);
+
+    // Load persisted chat history on mount (only once)
+    useEffect(() => {
+        if (memory.chatHistory.length > 0 && messages.length === 0) {
+            setMessages(memory.chatHistory as any);
+        }
+    }, [memory.chatHistory, messages.length]);
 
     // ── Message helpers ──────────────────────────────────────────────────────
 
     const addBotMessage = (msg: Partial<Message>, delay?: number) => {
         setIsTyping(true);
-        const ms = delay ?? (800 + Math.random() * 700);
+
+        // Use speed from settings
+        let baseDelay = 1000;
+        if (settings.typing_speed === 'fast') baseDelay = 400;
+        if (settings.typing_speed === 'slow') baseDelay = 2000;
+
+        const ms = delay ?? (baseDelay + Math.random() * (baseDelay / 2));
         setTimeout(() => {
             setMessages((prev) => [...prev, {
                 id: Math.random().toString(36).substring(7),
@@ -312,7 +302,7 @@ export default function BudTender() {
         // 1) Greeting
         let greeting: string;
         if (!isLoggedIn) {
-            greeting = "Bonjour ! Je suis BudTender, votre conseiller CBD personnel. J'aimerais vous aider à trouver les produits idéaux. On commence ?";
+            greeting = settings.welcome_message;
         } else if (pastProducts.length > 0) {
             const last = pastProducts[0];
             greeting = `Content de te revoir${userName ? `, ${userName}` : ''} ! 👋 La dernière fois tu avais commandé **${last.product_name}** — tu l'as apprécié ? Je suis là pour te trouver quelque chose d'encore mieux.`;
@@ -362,13 +352,15 @@ export default function BudTender() {
 
     const startQuiz = () => {
         setStepIndex(0);
-        const firstStep = QUIZ_STEPS[0];
-        addBotMessage({
-            text: firstStep.question,
-            isOptions: true,
-            options: firstStep.options,
-            stepId: firstStep.id,
-        });
+        const firstStep = settings.quiz_steps[0];
+        if (firstStep) {
+            addBotMessage({
+                text: firstStep.question,
+                isOptions: true,
+                options: firstStep.options,
+                stepId: firstStep.id,
+            });
+        }
     };
 
     const skipQuizAndRecommend = async () => {
@@ -404,9 +396,9 @@ export default function BudTender() {
             return;
         }
 
-        if (nextIndex < QUIZ_STEPS.length) {
+        if (nextIndex < settings.quiz_steps.length) {
             setStepIndex(nextIndex);
-            const nextStep = QUIZ_STEPS[nextIndex];
+            const nextStep = settings.quiz_steps[nextIndex];
             addBotMessage({
                 text: nextStep.question,
                 isOptions: true,
@@ -426,7 +418,7 @@ export default function BudTender() {
             addUserMessage('Je passe cette étape →');
         }
         // Resume quiz from current stepIndex
-        const nextStep = QUIZ_STEPS[stepIndex];
+        const nextStep = settings.quiz_steps[stepIndex];
         if (nextStep) {
             addBotMessage({
                 text: nextStep.question,
@@ -450,7 +442,7 @@ export default function BudTender() {
             .map((p) => ({ product: p, score: scoreProduct(p, finalAnswers) + scoreTerpenes(p, terpeneSelection) }))
             .sort((a, b) => b.score - a.score)
             .filter((x) => x.score > 0)
-            .slice(0, 3)
+            .slice(0, settings.recommendations_count)
             .map((x) => x.product);
 
         // Build context for Gemini
@@ -463,7 +455,15 @@ export default function BudTender() {
         }
         const geminiContext = ctxParts.join(' ') || undefined;
 
-        const geminiText = await callGemini(finalAnswers, products, geminiContext);
+        // Current session history
+        const history = messages
+            .filter(m => m.text && !m.isResult)
+            .map(m => ({
+                role: m.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text || '' }]
+            }));
+
+        const geminiText = await callGemini(finalAnswers, products, settings, history, geminiContext);
         const adviceText = geminiText ?? generateAdvice(finalAnswers, terpeneSelection);
 
         setMessages((prev) => [...prev, {
@@ -533,7 +533,22 @@ export default function BudTender() {
             .map((p) => `- ${p.name} (${p.category?.slug}, ${p.price}€): ${p.description ?? ''}`)
             .join('\n');
 
-        const prompt = getChatPrompt(text, catalog);
+        const systemPrompt = getChatPrompt(text, catalog);
+
+        // Build history for Gemini (including context of current session)
+        const history = messages
+            .filter(m => m.text)
+            .map(m => ({
+                role: m.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: m.text || '' }]
+            }));
+
+        // System prompt context
+        const contents = [
+            { role: 'user', parts: [{ text: `Instructions Système: ${systemPrompt}` }] },
+            { role: 'model', parts: [{ text: "Compris. Je suis BudTender, expert Green Moon. Je me souviens de nos échanges précédents." }] },
+            ...history
+        ];
 
         try {
             const res = await fetch(
@@ -542,8 +557,11 @@ export default function BudTender() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
+                        contents,
+                        generationConfig: {
+                            maxOutputTokens: settings.gemini_max_tokens,
+                            temperature: settings.gemini_temperature
+                        },
                     }),
                 }
             );
@@ -554,7 +572,24 @@ export default function BudTender() {
             }
 
             const json = await res.json();
-            const responseText = json?.candidates?.[0]?.content?.parts?.[0]?.text || "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?";
+
+            if (!res.ok) {
+                console.error('Gemini API Error:', json);
+                addBotMessage({ text: `Erreur API Google : ${json.error?.message || 'Inconnue'}` });
+                return;
+            }
+
+            const responseText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!responseText) {
+                console.error("Gemini empty response:", json);
+                setMessages((prev) => [...prev, {
+                    id: Math.random().toString(36).substring(7),
+                    sender: 'bot',
+                    text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?",
+                }]);
+                return;
+            }
 
             setMessages((prev) => [...prev, {
                 id: Math.random().toString(36).substring(7),
@@ -574,7 +609,7 @@ export default function BudTender() {
     // Determines if the welcome CTA (start quiz button) should be visible
     const showStartButton = stepIndex === -1 && !isTyping
         && messages.length > 0
-        && !messages.some(m => m.type === 'skip-quiz' || m.type === 'restock' || m.isOptions);
+        && !messages.some(m => m.type === 'skip-quiz' || m.type === 'restock' || m.isOptions || settings.quiz_steps.some(s => s.question === m.text));
 
     const showSkipQuizActions = messages.some(m => m.type === 'skip-quiz')
         && stepIndex === -1
@@ -585,7 +620,7 @@ export default function BudTender() {
         <>
             {/* ── Floating button ── */}
             <AnimatePresence>
-                {!isOpen && (
+                {isOpen ? null : settings.enabled && (
                     <motion.button
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
@@ -799,7 +834,7 @@ export default function BudTender() {
                                                             <motion.button
                                                                 key={opt.value}
                                                                 whileHover={{ x: 4, backgroundColor: 'rgba(57,255,20,0.05)' }}
-                                                                disabled={stepIndex !== QUIZ_STEPS.findIndex(s => s.id === msg.stepId)}
+                                                                disabled={stepIndex !== settings.quiz_steps.findIndex(s => s.id === msg.stepId)}
                                                                 onClick={() => handleAnswer(opt, msg.stepId!)}
                                                                 className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${isSelected || hasAnsweredNext
                                                                     ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'

@@ -1,23 +1,31 @@
 import { Product } from './types';
+import { QuizStep } from './budtenderSettings';
 
-export interface QuizAnswers {
-    goal?: string;
-    experience?: string;
-    format?: string;
-    budget?: string;
-}
+export type QuizAnswers = Record<string, string>;
 
 /**
  * Prompt for generating advice after the guided quiz
  */
 export const getQuizPrompt = (
     answers: QuizAnswers,
+    quizSteps: QuizStep[],
     catalog: string,
     context?: string
 ) => {
     const contextBlock = context
         ? `\nContexte client supplémentaire (prioritaire) :\n${context}\n`
         : '';
+
+    // Convert answers to a readable list for the AI using real question text
+    const profileLines = quizSteps
+        .map(step => {
+            const answerValue = answers[step.id];
+            if (!answerValue) return null;
+            const option = step.options.find(o => o.value === answerValue);
+            return `- ${step.question} : ${option?.label || answerValue}`;
+        })
+        .filter(Boolean)
+        .join('\n');
 
     return `
 Tu es **BudTender**, conseiller CBD expert et premium de la boutique Green Moon CBD.
@@ -26,10 +34,7 @@ Tu es **BudTender**, conseiller CBD expert et premium de la boutique Green Moon 
 Recommander le ou les produits les PLUS pertinents selon le PROFIL CLIENT, avec un discours adapté à son niveau de connaissance.
 
 🧠 PROFIL CLIENT (issu du quiz) :
-- Objectif principal : ${answers.goal || 'Non spécifié'}
-- Niveau d’expérience CBD : ${answers.experience || 'Non spécifié'}
-- Format préféré : ${answers.format || 'Non spécifié'}
-- Budget : ${answers.budget || 'Non spécifié'}
+${profileLines || '- Aucune réponse fournie'}
 ${contextBlock}
 
 🧩 ADAPTATION DU DISCOURS SELON LE NIVEAU :

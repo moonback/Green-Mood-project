@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
+import { getBudTenderSettings } from '../lib/budtenderSettings';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,18 @@ export interface SavedPrefs {
     experience: string;
     format: string;
     budget: string;
+}
+
+export interface ChatMessage {
+    id: string;
+    sender: 'bot' | 'user';
+    text?: string;
+    type?: string;
+    isResult?: boolean;
+    isOptions?: boolean;
+    options?: any[];
+    stepId?: string;
+    recommended?: any[];
 }
 
 export interface PastProduct {
@@ -27,14 +40,14 @@ export interface RestockCandidate extends PastProduct {
     threshold: number;
 }
 
-// Days before a category is likely running out
-const RESTOCK_THRESHOLDS: Record<string, number> = {
+// Fallback defaults if settings fail
+const FALLBACK_THRESHOLDS: Record<string, number> = {
     huiles: 30,
     fleurs: 14,
     resines: 14,
     infusions: 21,
 };
-const DEFAULT_THRESHOLD = 21;
+const FALLBACK_DEFAULT = 21;
 
 const LS_KEY = 'budtender_prefs_v1';
 
@@ -46,6 +59,7 @@ export function useBudTenderMemory() {
     const [pastProducts, setPastProducts] = useState<PastProduct[]>([]);
     const [restockCandidates, setRestockCandidates] = useState<RestockCandidate[]>([]);
     const [savedPrefs, setSavedPrefs] = useState<SavedPrefs | null>(null);
+    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const isLoggedIn = !!user;
@@ -53,11 +67,14 @@ export function useBudTenderMemory() {
         ? profile.full_name.split(' ')[0]
         : null;
 
-    // ── Load saved prefs from localStorage ──────────────────────────────────
+    // ── Load saved prefs and chat history from localStorage ──────────────────
     useEffect(() => {
         try {
-            const raw = localStorage.getItem(LS_KEY);
-            if (raw) setSavedPrefs(JSON.parse(raw) as SavedPrefs);
+            const rawPrefs = localStorage.getItem(LS_KEY);
+            if (rawPrefs) setSavedPrefs(JSON.parse(rawPrefs) as SavedPrefs);
+
+            const rawChat = localStorage.getItem('budtender_chat_history_v1');
+            if (rawChat) setChatHistory(JSON.parse(rawChat));
         } catch {
             // ignore corrupt data
         }
@@ -82,6 +99,12 @@ export function useBudTenderMemory() {
                     .limit(10);
 
                 if (!orders) return;
+
+                const settings = getBudTenderSettings();
+                if (!settings.memory_enabled) {
+                    setIsLoading(false);
+                    return;
+                }
 
                 const now = Date.now();
                 const seen = new Set<string>();
@@ -113,7 +136,11 @@ export function useBudTenderMemory() {
                         }
 
                         // Restock check
-                        const threshold = catSlug ? (RESTOCK_THRESHOLDS[catSlug] ?? DEFAULT_THRESHOLD) : DEFAULT_THRESHOLD;
+                        let threshold = settings.restock_threshold_other;
+                        if (catSlug === 'huiles') threshold = settings.restock_threshold_oils;
+                        if (catSlug === 'fleurs' || catSlug === 'resines') threshold = settings.restock_threshold_flowers;
+                        if (catSlug === 'infusions') threshold = settings.restock_threshold_other; // or add infusions specifically if needed
+
                         if (daysSince >= threshold && !restock.find(r => r.product_id === item.product_id)) {
                             restock.push({ ...candidate, daysSince: Math.round(daysSince), threshold });
                         }
@@ -142,9 +169,18 @@ export function useBudTenderMemory() {
         }
     };
 
+    const saveChatHistory = (history: ChatMessage[]) => {
+        try {
+            localStorage.setItem('budtender_chat_history_v1', JSON.stringify(history));
+            setChatHistory(history);
+        } catch { /* ignore */ }
+    };
+
     const clearPrefs = () => {
         localStorage.removeItem(LS_KEY);
+        localStorage.removeItem('budtender_chat_history_v1');
         setSavedPrefs(null);
+        setChatHistory([]);
     };
 
     return {
@@ -153,7 +189,9 @@ export function useBudTenderMemory() {
         pastProducts,
         restockCandidates,
         savedPrefs,
+        chatHistory,
         savePrefs,
+        saveChatHistory,
         clearPrefs,
         isLoading,
     };

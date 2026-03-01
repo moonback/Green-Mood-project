@@ -2,44 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Leaf, Save, CheckCircle, ToggleLeft, ToggleRight, Sliders,
-    Clock, Brain, MessageSquare, Zap, Info
+    Clock, Brain, MessageSquare, Zap, Info, Plus, Trash2, X
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface BudTenderSettings {
-    enabled: boolean;
-    gemini_enabled: boolean;
-    gemini_temperature: number;
-    gemini_max_tokens: number;
-    recommendations_count: number;
-    typing_speed: 'slow' | 'normal' | 'fast';
-    memory_enabled: boolean;
-    restock_threshold_oils: number;
-    restock_threshold_flowers: number;
-    restock_threshold_other: number;
-    welcome_message: string;
-    pulse_delay: number;
-}
-
-const DEFAULTS: BudTenderSettings = {
-    enabled: true,
-    gemini_enabled: true,
-    gemini_temperature: 0.7,
-    gemini_max_tokens: 300,
-    recommendations_count: 3,
-    typing_speed: 'normal',
-    memory_enabled: true,
-    restock_threshold_oils: 30,
-    restock_threshold_flowers: 14,
-    restock_threshold_other: 21,
-    welcome_message:
-        "Bonjour ! Je suis BudTender, votre conseiller CBD personnel. J'aimerais vous aider à trouver les produits idéaux. On commence ?",
-    pulse_delay: 8,
-};
-
-const LS_KEY = 'budtender_admin_settings_v1';
+import { BudTenderSettings, BUDTENDER_DEFAULTS, BUDTENDER_LS_KEY } from '../../lib/budtenderSettings';
 
 const INPUT =
     'w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-neon/50 transition-colors';
@@ -145,19 +112,35 @@ function SliderField({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function AdminBudTenderTab() {
-    const [settings, setSettings] = useState<BudTenderSettings>(DEFAULTS);
+    const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'memory' | 'quiz'>('general');
 
-    // Load from localStorage on mount
+    // Load from Supabase (and fallback to localStorage) on mount
     useEffect(() => {
-        try {
-            const raw = localStorage.getItem(LS_KEY);
-            if (raw) setSettings({ ...DEFAULTS, ...JSON.parse(raw) });
-        } catch {
-            // ignore
-        }
+        const load = async () => {
+            try {
+                // 1. Try Supabase
+                const { data } = await supabase
+                    .from('store_settings')
+                    .select('value')
+                    .eq('key', 'budtender_config')
+                    .maybeSingle();
+
+                if (data?.value) {
+                    setSettings({ ...BUDTENDER_DEFAULTS, ...data.value });
+                    return;
+                }
+
+                // 2. Fallback to localStorage
+                const raw = localStorage.getItem(BUDTENDER_LS_KEY);
+                if (raw) setSettings({ ...BUDTENDER_DEFAULTS, ...JSON.parse(raw) });
+            } catch (err) {
+                console.error('[AdminBudTenderTab] load error:', err);
+            }
+        };
+        load();
     }, []);
 
     const update = (patch: Partial<BudTenderSettings>) => {
@@ -167,18 +150,27 @@ export default function AdminBudTenderTab() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            localStorage.setItem(LS_KEY, JSON.stringify(settings));
+            // Keep localStorage as local cache
+            localStorage.setItem(BUDTENDER_LS_KEY, JSON.stringify(settings));
 
-            // Also sync the `budtender_enabled` flag to store_settings in Supabase
-            await supabase.from('store_settings').upsert(
-                [{ key: 'budtender_enabled', value: settings.enabled, updated_at: new Date().toISOString() }],
-                { onConflict: 'key' }
-            );
+            // Sync the entire configuration to Supabase
+            // We use two keys: one for quick check (enabled) and one for full config
+            await Promise.all([
+                supabase.from('store_settings').upsert(
+                    [{ key: 'budtender_enabled', value: settings.enabled, updated_at: new Date().toISOString() }],
+                    { onConflict: 'key' }
+                ),
+                supabase.from('store_settings').upsert(
+                    [{ key: 'budtender_config', value: settings, updated_at: new Date().toISOString() }],
+                    { onConflict: 'key' }
+                )
+            ]);
 
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (err) {
             console.error('[AdminBudTenderTab] save error:', err);
+            alert("Erreur lors de la sauvegarde en base de données.");
         } finally {
             setIsSaving(false);
         }
@@ -442,27 +434,121 @@ export default function AdminBudTenderTab() {
                                 </div>
                             </Section>
 
-                            <Section icon={Sliders} title="Aperçu des étapes du Quiz" description="Les 4 étapes du diagnostic affichées au client">
-                                {[
-                                    { step: 1, label: 'Besoin principal', desc: 'Sommeil, Stress, Douleurs, Bien-être' },
-                                    { step: 2, label: 'Expérience CBD', desc: 'Débutant, Intermédiaire, Expert' },
-                                    { step: 3, label: 'Format préféré', desc: 'Huile, Fleur, Infusion, Pack' },
-                                    { step: 4, label: 'Budget', desc: '< 20€, 20–50€, > 50€' },
-                                ].map(({ step, label, desc }) => (
-                                    <div key={step} className="flex items-center gap-4 py-2 border-b border-zinc-800 last:border-0">
-                                        <span className="w-7 h-7 rounded-full bg-green-neon/10 text-green-neon text-xs font-black flex items-center justify-center flex-shrink-0">
-                                            {step}
-                                        </span>
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-white">{label}</p>
-                                            <p className="text-xs text-zinc-500">{desc}</p>
+                            <Section icon={Sliders} title="Configuration du Quiz" description="Modifiez les questions et options du diagnostic">
+                                <div className="space-y-6">
+                                    {settings.quiz_steps.map((step, sIdx) => (
+                                        <div key={step.id} className="bg-zinc-800/30 border border-zinc-700/50 rounded-xl p-5 space-y-4 relative group">
+                                            {/* Action Delete Question */}
+                                            <button
+                                                onClick={() => {
+                                                    const newSteps = settings.quiz_steps.filter((_, i) => i !== sIdx);
+                                                    update({ quiz_steps: newSteps });
+                                                }}
+                                                className="absolute top-4 right-4 p-2 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-500/10"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+
+                                            <div className="flex items-center gap-3 pr-8">
+                                                <span className="w-6 h-6 rounded-full bg-green-neon/20 text-green-neon text-[10px] font-black flex items-center justify-center">
+                                                    {sIdx + 1}
+                                                </span>
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="text"
+                                                        value={step.question}
+                                                        onChange={(e) => {
+                                                            const newSteps = [...settings.quiz_steps];
+                                                            newSteps[sIdx].question = e.target.value;
+                                                            update({ quiz_steps: newSteps });
+                                                        }}
+                                                        className="w-full bg-transparent border-none text-white font-bold text-sm p-0 focus:ring-0 placeholder-zinc-600 focus:placeholder-zinc-500"
+                                                        placeholder="Saisissez votre question ici..."
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                {step.options.map((opt, oIdx) => (
+                                                    <div key={oIdx} className="flex gap-2 items-center bg-zinc-900/50 rounded-lg p-2 border border-zinc-800 group/opt">
+                                                        <input
+                                                            type="text"
+                                                            value={opt.emoji}
+                                                            onChange={(e) => {
+                                                                const newSteps = [...settings.quiz_steps];
+                                                                newSteps[sIdx].options[oIdx].emoji = e.target.value;
+                                                                update({ quiz_steps: newSteps });
+                                                            }}
+                                                            className="w-9 bg-zinc-800 border-zinc-700 rounded text-center text-sm p-1 placeholder-zinc-600"
+                                                            placeholder="💬"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={opt.label}
+                                                            onChange={(e) => {
+                                                                const newSteps = [...settings.quiz_steps];
+                                                                newSteps[sIdx].options[oIdx].label = e.target.value;
+                                                                update({ quiz_steps: newSteps });
+                                                            }}
+                                                            className="flex-1 bg-transparent border-none text-[11px] text-zinc-300 p-0 focus:ring-0 placeholder-zinc-600"
+                                                            placeholder="Libellé de l'option..."
+                                                        />
+                                                        {/* Delete Option */}
+                                                        {step.options.length > 2 && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    const newSteps = [...settings.quiz_steps];
+                                                                    newSteps[sIdx].options = newSteps[sIdx].options.filter((_, i) => i !== oIdx);
+                                                                    update({ quiz_steps: newSteps });
+                                                                }}
+                                                                className="p-1.5 text-zinc-700 hover:text-red-500 opacity-0 group-hover/opt:opacity-100 transition-all"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {/* Add Option */}
+                                                <button
+                                                    onClick={() => {
+                                                        const newSteps = [...settings.quiz_steps];
+                                                        newSteps[sIdx].options.push({ label: '', value: `opt_${Date.now()}`, emoji: '❓' });
+                                                        update({ quiz_steps: newSteps });
+                                                    }}
+                                                    className="flex items-center justify-center gap-2 border border-dashed border-zinc-800 rounded-lg p-2 text-zinc-600 hover:text-green-neon hover:border-green-neon/30 transition-all text-xs font-bold"
+                                                >
+                                                    <Plus className="w-3 h-3" />
+                                                    Ajouter une option
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span className="text-[10px] text-zinc-600 font-mono">READ-ONLY</span>
-                                    </div>
-                                ))}
-                                <p className="text-[10px] text-zinc-600 italic flex items-center gap-1.5">
+                                    ))}
+
+                                    {/* Add Question Button */}
+                                    <button
+                                        onClick={() => {
+                                            const newSteps = [...settings.quiz_steps];
+                                            const newId = `q_${Date.now()}`;
+                                            newSteps.push({
+                                                id: newId,
+                                                question: 'Nouvelle question ?',
+                                                options: [
+                                                    { label: 'Option 1', value: 'opt1', emoji: '✨' },
+                                                    { label: 'Option 2', value: 'opt2', emoji: '🌟' }
+                                                ]
+                                            });
+                                            update({ quiz_steps: newSteps });
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-zinc-800 hover:border-green-neon/30 hover:bg-green-neon/5 rounded-2xl p-6 text-zinc-500 hover:text-green-neon transition-all font-black uppercase tracking-widest text-xs"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Ajouter une question
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-zinc-600 italic flex items-center gap-1.5 mt-4">
                                     <Info className="w-3 h-3" />
-                                    Pour modifier les questions du quiz, éditez directement le fichier <code className="bg-zinc-800 px-1 rounded">BudTender.tsx</code>.
+                                    Toutes les réponses (même les nouvelles questions) seront transmises à l'IA Gemini pour une analyse ultra-précise.
                                 </p>
                             </Section>
                         </>
