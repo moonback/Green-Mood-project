@@ -19,9 +19,11 @@ import {
     Hash,
     AlertTriangle,
     ChevronDown,
+    User,
+    UserPlus,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { Product, Category } from '../../lib/types';
+import { Product, Category, Profile } from '../../lib/types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -191,6 +193,12 @@ export default function AdminPOSTab({
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // ── Customer ──
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [customerResults, setCustomerResults] = useState<Profile[]>([]);
+    const [selectedCustomer, setSelectedCustomer] = useState<Profile | null>(null);
+    const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+
     // ── Result ──
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
 
@@ -207,6 +215,25 @@ export default function AdminPOSTab({
     }, []);
 
     useEffect(() => { loadProducts(); }, [loadProducts]);
+
+    // ── Customer search ──
+    useEffect(() => {
+        const handler = setTimeout(async () => {
+            if (customerSearch.length < 2) {
+                setCustomerResults([]);
+                return;
+            }
+            setIsSearchingCustomer(true);
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .or(`full_name.ilike.%${customerSearch}%,phone.ilike.%${customerSearch}%`)
+                .limit(5);
+            setCustomerResults((data as Profile[]) ?? []);
+            setIsSearchingCustomer(false);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [customerSearch]);
 
     // ── Computed ──
     const subtotal = cart.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
@@ -275,6 +302,8 @@ export default function AdminPOSTab({
         setDiscountValue('');
         setCashGiven('');
         setPaymentMethod('cash');
+        setSelectedCustomer(null);
+        setCustomerSearch('');
     };
 
     // ── Process sale ──
@@ -286,7 +315,7 @@ export default function AdminPOSTab({
             const { data: order, error: orderErr } = await supabase
                 .from('orders')
                 .insert({
-                    user_id: null, // anonymous in-store sale
+                    user_id: selectedCustomer?.id || null,
                     delivery_type: 'click_collect',
                     address_id: null,
                     subtotal,
@@ -297,7 +326,7 @@ export default function AdminPOSTab({
                     loyalty_points_earned: Math.floor(total),
                     payment_status: 'paid',
                     status: 'delivered',
-                    notes: `[POS] Vente en boutique — Paiement: ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'
+                    notes: `[POS] Vente en boutique${selectedCustomer ? ` (Client: ${selectedCustomer.full_name})` : ''} — Paiement: ${paymentMethod === 'cash' ? 'Espèces' : paymentMethod === 'card' ? 'Carte' : 'Mobile'
                         }`,
                 })
                 .select()
@@ -329,6 +358,26 @@ export default function AdminPOSTab({
                     product_id: line.product.id,
                     quantity_change: -line.quantity,
                     type: 'sale',
+                    note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
+                });
+            }
+
+            // 4. Update customer loyalty points if linked
+            if (selectedCustomer) {
+                const earned = Math.floor(total);
+                const newPoints = (selectedCustomer.loyalty_points || 0) + earned;
+                await supabase
+                    .from('profiles')
+                    .update({ loyalty_points: newPoints })
+                    .eq('id', selectedCustomer.id);
+
+                // Track points
+                await supabase.from('loyalty_transactions').insert({
+                    user_id: selectedCustomer.id,
+                    order_id: order.id,
+                    type: 'earned',
+                    points: earned,
+                    balance_after: newPoints,
                     note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
                 });
             }
@@ -419,8 +468,8 @@ export default function AdminPOSTab({
                                     key={product.id}
                                     onClick={() => addToCart(product)}
                                     className={`relative group flex flex-col p-3 rounded-2xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98] ${inCart
-                                            ? 'border-green-500/60 bg-green-900/10'
-                                            : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
+                                        ? 'border-green-500/60 bg-green-900/10'
+                                        : 'border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800'
                                         }`}
                                 >
                                     {/* Product image */}
@@ -452,6 +501,62 @@ export default function AdminPOSTab({
 
             {/* ── RIGHT: Cart Panel ── */}
             <div className="w-80 shrink-0 flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                {/* Customer Section */}
+                <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-800/30">
+                    {!selectedCustomer ? (
+                        <div className="space-y-2">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                                <input
+                                    value={customerSearch}
+                                    onChange={(e) => setCustomerSearch(e.target.value)}
+                                    placeholder="Chercher client (Nom/Tél)…"
+                                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                />
+                            </div>
+
+                            {customerResults.length > 0 && (
+                                <div className="bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl">
+                                    {customerResults.map((c) => (
+                                        <button
+                                            key={c.id}
+                                            onClick={() => {
+                                                setSelectedCustomer(c);
+                                                setCustomerSearch('');
+                                                setCustomerResults([]);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 border-b border-zinc-800 last:border-0 transition-colors"
+                                        >
+                                            <p className="font-bold text-white">{c.full_name}</p>
+                                            <p className="text-zinc-500">{c.phone || 'Pas de numéro'}</p>
+                                            <p className="text-yellow-500/80 text-[10px]">{c.loyalty_points} pts</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 bg-green-900/10 border border-green-500/30 rounded-xl p-2.5">
+                            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                <User className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-white truncate">{selectedCustomer.full_name}</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-zinc-400">{selectedCustomer.phone}</span>
+                                    <span className="text-[10px] text-yellow-500 font-bold">{selectedCustomer.loyalty_points} pts</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedCustomer(null)}
+                                className="text-zinc-500 hover:text-white transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 {/* Cart header */}
                 <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -633,8 +738,8 @@ export default function AdminPOSTab({
                                         key={pm.key}
                                         onClick={() => setPaymentMethod(pm.key)}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${paymentMethod === pm.key
-                                                ? pm.color
-                                                : 'border-zinc-700 bg-zinc-800 text-zinc-500 hover:border-zinc-600'
+                                            ? pm.color
+                                            : 'border-zinc-700 bg-zinc-800 text-zinc-500 hover:border-zinc-600'
                                             }`}
                                     >
                                         <pm.icon className="w-6 h-6" />
