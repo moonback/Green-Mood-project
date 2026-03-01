@@ -230,7 +230,7 @@ export function useBudTenderMemory() {
                     .from('user_ai_preferences')
                     .select('*')
                     .eq('user_id', user.id)
-                    .single();
+                    .maybeSingle();
 
                 if (prefsData) {
                     const syncedPrefs: SavedPrefs = {
@@ -251,7 +251,7 @@ export function useBudTenderMemory() {
                     .eq('interaction_type', 'chat_session')
                     .order('created_at', { ascending: false })
                     .limit(1)
-                    .single();
+                    .maybeSingle();
 
                 if (interactionData && interactionData.quiz_answers?.messages) {
                     const history = interactionData.quiz_answers.messages as ChatMessage[];
