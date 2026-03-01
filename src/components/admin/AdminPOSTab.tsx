@@ -31,6 +31,7 @@ import {
     Minimize,
     LayoutGrid,
     LogOut,
+    Settings,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -251,6 +252,7 @@ function AdminPOSTab({
     const [showUnlockModal, setShowUnlockModal] = useState(false);
     const [unlockPin, setUnlockPin] = useState('');
     const [unlockError, setUnlockError] = useState(false);
+    const [showAdminMenu, setShowAdminMenu] = useState(false);
 
     // Business Date helper (working day starts at 6:00 AM)
     const getBusinessDate = useCallback(() => {
@@ -819,7 +821,7 @@ function AdminPOSTab({
     return (
         <div className="h-full flex flex-col gap-4 overflow-hidden relative">
             {/* ── TOP: Professional Header ── */}
-            <header className="flex items-center gap-6 px-6 py-4 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shrink-0 shadow-2xl">
+            <header className="relative z-50 flex items-center gap-6 px-6 py-4 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shrink-0 shadow-2xl">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-black shadow-[0_0_20px_rgba(57,255,20,0.3)]">
                         <ShoppingCart className="w-7 h-7" />
@@ -869,30 +871,65 @@ function AdminPOSTab({
                     >
                         <RotateCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
                     </button>
-                    <button
-                        onClick={() => setShowHistory(!showHistory)}
-                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${showHistory
-                            ? 'bg-green-500 text-black'
-                            : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-zinc-500'
-                            }`}
-                    >
-                        <HistoryIcon className="w-4 h-4" />
-                        {showHistory ? 'Retour' : 'Historique'}
-                    </button>
-                    <button
-                        onClick={() => handleGenerateReport('view')}
-                        className="flex items-center gap-2 px-5 py-3 bg-zinc-200 hover:bg-white text-black rounded-2xl font-bold text-sm transition-all shadow-lg shadow-white/5"
-                    >
-                        <FileText className="w-4 h-4" />
-                        Lecture X
-                    </button>
-                    <button
-                        onClick={() => handleGenerateReport('close')}
-                        className="flex items-center gap-2 px-5 py-3 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-red-600/20"
-                    >
-                        <Lock className="w-4 h-4" />
-                        Clôture Z
-                    </button>
+                    {/* ── Admin Menu (Discreet) ── */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowAdminMenu(!showAdminMenu)}
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${showAdminMenu
+                                ? 'bg-zinc-700 text-white'
+                                : 'bg-zinc-800/50 text-zinc-500 border border-zinc-700 hover:text-zinc-300'
+                                }`}
+                        >
+                            <Settings className="w-4 h-4" />
+                            Gestion
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdminMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {showAdminMenu && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-[110]"
+                                >
+                                    <div className="p-2 space-y-1">
+                                        <button
+                                            onClick={() => {
+                                                setShowHistory(!showHistory);
+                                                setShowAdminMenu(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
+                                        >
+                                            <HistoryIcon className="w-4 h-4" />
+                                            {showHistory ? 'Retour Catalogue' : 'Historique Ventes'}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                handleGenerateReport('view');
+                                                setShowAdminMenu(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            Lecture X (Provisoire)
+                                        </button>
+                                        <div className="h-px bg-zinc-800 my-1" />
+                                        <button
+                                            onClick={() => {
+                                                handleGenerateReport('close');
+                                                setShowAdminMenu(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-500/10 transition-all"
+                                        >
+                                            <Lock className="w-4 h-4" />
+                                            Clôture Z (Définitive)
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </header>
 
@@ -1606,10 +1643,10 @@ function AdminPOSTab({
                                         <div
                                             key={i}
                                             className={`w-12 h-16 rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all ${unlockError
-                                                    ? 'border-red-500 bg-red-500/10 text-red-500'
-                                                    : unlockPin.length > i
-                                                        ? 'border-green-500 bg-green-500/10 text-green-400'
-                                                        : 'border-zinc-800 bg-zinc-950 text-zinc-700'
+                                                ? 'border-red-500 bg-red-500/10 text-red-500'
+                                                : unlockPin.length > i
+                                                    ? 'border-green-500 bg-green-500/10 text-green-400'
+                                                    : 'border-zinc-800 bg-zinc-950 text-zinc-700'
                                                 }`}
                                         >
                                             {unlockPin.length > i ? '•' : ''}
@@ -1641,10 +1678,10 @@ function AdminPOSTab({
                                                 }
                                             }}
                                             className={`h-14 rounded-xl font-black text-lg transition-all ${btn === 'OK'
-                                                    ? 'bg-green-500 text-black hover:bg-green-400 col-span-1'
-                                                    : btn === 'C'
-                                                        ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                                        : 'bg-zinc-950 text-white hover:bg-zinc-800 border border-zinc-900'
+                                                ? 'bg-green-500 text-black hover:bg-green-400 col-span-1'
+                                                : btn === 'C'
+                                                    ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                                    : 'bg-zinc-950 text-white hover:bg-zinc-800 border border-zinc-900'
                                                 }`}
                                         >
                                             {btn}
