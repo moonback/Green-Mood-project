@@ -319,6 +319,8 @@ export default function BudTender() {
 
     const buildWelcomeMessages = () => {
         const { isLoggedIn, userName, pastProducts, restockCandidates, savedPrefs } = memory;
+        const cartItems = useCartStore.getState().items;
+        const currentPath = window.location.pathname;
 
         // 1) Greeting
         let greeting: string;
@@ -334,7 +336,26 @@ export default function BudTender() {
         // Push greeting first
         addBotMessage({ text: greeting }, 600);
 
-        // 2) Restock reminders (delayed, one per candidate)
+        // 2) Proactive Recommendations (Task 15)
+        setTimeout(() => {
+            if (cartItems.length === 0 && currentPath.includes('/catalogue')) {
+                addBotMessage({
+                    text: "Je vois que votre panier est encore vide ! 🛒 Souhaitez-vous que je vous guide vers nos best-sellers du moment ?",
+                    isOptions: true,
+                    stepId: 'proactive',
+                    options: [{ label: "Oui, conseiller moi ✨", value: "start_quiz", emoji: "✨" }, { label: "Plus tard", value: "later", emoji: "⏳" }]
+                }, 400);
+            } else if (currentPath.includes('/catalogue/') && cartItems.length > 0) {
+                addBotMessage({
+                    text: "Excellent choix ! 🌿 Saviez-vous que ce produit se marie parfaitement avec l'une de nos huiles sublinguales pour un effet renforcé ?",
+                    isOptions: true,
+                    stepId: 'proactive',
+                    options: [{ label: "En savoir plus", value: "upsell_info", emoji: "💡" }, { label: "Non merci", value: "later", emoji: "✖️" }]
+                }, 400);
+            }
+        }, 1200);
+
+        // 3) Restock reminders (delayed, one per candidate)
         restockCandidates.forEach((candidate, i) => {
             setTimeout(() => {
                 setMessages((prev) => [...prev, {
@@ -344,12 +365,12 @@ export default function BudTender() {
                     text: `Il y a ${candidate.daysSince} jours que tu as commandé ce produit — il est peut-être temps de renouveler ? 🔄`,
                     restockProduct: candidate,
                 }]);
-            }, 1400 + i * 600);
+            }, 2000 + i * 600);
         });
 
-        // 3) Skip-quiz option if saved prefs exist
+        // 4) Skip-quiz option if saved prefs exist
         if (savedPrefs) {
-            const delay = 1400 + restockCandidates.length * 600 + 400;
+            const delay = 2000 + restockCandidates.length * 600 + 400;
             setTimeout(() => {
                 setMessages((prev) => [...prev, {
                     id: Math.random().toString(36).substring(7),
@@ -400,6 +421,23 @@ export default function BudTender() {
 
     const handleAnswer = async (option: QuizOption, stepId: string) => {
         addUserMessage(option.label);
+
+        // ── Proactive Actions (Task 15) ──
+        if (option.value === 'start_quiz') {
+            startQuiz();
+            return;
+        }
+        if (option.value === 'upsell_info') {
+            // Context-aware recommendation
+            addBotMessage({ text: "Excellent réflexe ! Mixer fleurs et huiles permet de bénéficier de l'effet d'entourage complet. Voici mes meilleures recommandations d'huiles pour compléter votre panier :" }, 400);
+            await generateRecommendations({ ...answers, format: 'oil' });
+            return;
+        }
+        if (option.value === 'later') {
+            addBotMessage({ text: "Pas de souci ! N'hésitez pas à me solliciter si vous avez besoin d'un conseil plus tard. 😊" }, 400);
+            return;
+        }
+
         const newAnswers = { ...answers, [stepId]: option.value };
         setAnswers(newAnswers);
 
@@ -734,240 +772,240 @@ export default function BudTender() {
                                         type={msg.type}
                                         isTyping={isTyping}
                                     >
-                                            {/* ── Restock card ── */}
-                                            {msg.type === 'restock' && msg.restockProduct && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                                    className="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border border-amber-500/30 rounded-2xl p-4 space-y-3"
-                                                >
-                                                    <div className="flex items-center gap-2 text-amber-400">
-                                                        <Clock className="w-3.5 h-3.5" />
-                                                        <span className="text-[10px] font-black tracking-widest uppercase">Rappel de Stock</span>
+                                        {/* ── Restock card ── */}
+                                        {msg.type === 'restock' && msg.restockProduct && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                className="bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border border-amber-500/30 rounded-2xl p-4 space-y-3"
+                                            >
+                                                <div className="flex items-center gap-2 text-amber-400">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    <span className="text-[10px] font-black tracking-widest uppercase">Rappel de Stock</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    {msg.restockProduct.image_url && (
+                                                        <img
+                                                            src={msg.restockProduct.image_url}
+                                                            alt={msg.restockProduct.product_name}
+                                                            className="w-14 h-14 rounded-xl object-cover bg-zinc-900 flex-shrink-0"
+                                                        />
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold text-white line-clamp-1">{msg.restockProduct.product_name}</p>
+                                                        <p className="text-xs text-zinc-400 mt-0.5">
+                                                            Commandé il y a <span className="text-amber-400 font-bold">{msg.restockProduct.daysSince}j</span>
+                                                        </p>
+                                                        <p className="text-base font-black text-green-neon mt-1">{msg.restockProduct.price.toFixed(2)} €</p>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                        {msg.restockProduct.image_url && (
-                                                            <img
-                                                                src={msg.restockProduct.image_url}
-                                                                alt={msg.restockProduct.product_name}
-                                                                className="w-14 h-14 rounded-xl object-cover bg-zinc-900 flex-shrink-0"
-                                                            />
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-white line-clamp-1">{msg.restockProduct.product_name}</p>
-                                                            <p className="text-xs text-zinc-400 mt-0.5">
-                                                                Commandé il y a <span className="text-amber-400 font-bold">{msg.restockProduct.daysSince}j</span>
-                                                            </p>
-                                                            <p className="text-base font-black text-green-neon mt-1">{msg.restockProduct.price.toFixed(2)} €</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <motion.button
-                                                            whileTap={{ scale: 0.95 }}
-                                                            onClick={() => {
-                                                                // Find in loaded products and add to cart
-                                                                const p = products.find(pr => pr.id === msg.restockProduct!.product_id);
-                                                                if (p) { addItem(p); openSidebar(); }
-                                                            }}
-                                                            className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-400 text-black font-black text-xs py-2.5 rounded-xl transition-all"
-                                                        >
-                                                            <ShoppingCart className="w-3.5 h-3.5" />
-                                                            Réapprovisionner
-                                                        </motion.button>
-                                                        {msg.restockProduct.slug && (
-                                                            <Link
-                                                                to={`/catalogue/${msg.restockProduct.slug}`}
-                                                                className="px-3 py-2.5 bg-zinc-700/50 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-all flex items-center"
-                                                            >
-                                                                Voir
-                                                            </Link>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-
-                                            {/* ── Terpene Selection UI ── */}
-                                            {msg.type === 'terpene' && awaitingTerpene && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    className="space-y-4 pt-2"
-                                                >
-                                                    <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
-                                                        {TERPENE_CHIPS.map((chip) => {
-                                                            const isSelected = terpeneSelection.includes(chip.label);
-                                                            return (
-                                                                <button
-                                                                    key={chip.label}
-                                                                    onClick={() => {
-                                                                        setTerpeneSelection(prev =>
-                                                                            isSelected ? prev.filter(t => t !== chip.label) : [...prev, chip.label]
-                                                                        );
-                                                                    }}
-                                                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${isSelected
-                                                                        ? 'bg-green-neon border-green-neon text-black'
-                                                                        : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                                                                        }`}
-                                                                >
-                                                                    <span>{chip.emoji}</span>
-                                                                    <span className="truncate">{chip.label}</span>
-                                                                    {isSelected && <CheckCircle2 className="w-3 h-3 ml-auto" />}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
                                                     <motion.button
-                                                        whileHover={{ scale: 1.02 }}
-                                                        whileTap={{ scale: 0.98 }}
-                                                        onClick={confirmTerpeneSelection}
-                                                        className="w-full bg-zinc-100 hover:bg-white text-black font-black py-3 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2"
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => {
+                                                            // Find in loaded products and add to cart
+                                                            const p = products.find(pr => pr.id === msg.restockProduct!.product_id);
+                                                            if (p) { addItem(p); openSidebar(); }
+                                                        }}
+                                                        className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-400 text-black font-black text-xs py-2.5 rounded-xl transition-all"
                                                     >
-                                                        {terpeneSelection.length > 0 ? (
-                                                            <>Confirmer la sélection ({terpeneSelection.length}) <ChevronRight className="w-4 h-4" /></>
-                                                        ) : (
-                                                            <>Passer cette étape <ChevronRight className="w-4 h-4" /></>
-                                                        )}
+                                                        <ShoppingCart className="w-3.5 h-3.5" />
+                                                        Réapprovisionner
                                                     </motion.button>
-                                                </motion.div>
-                                            )}
+                                                    {msg.restockProduct.slug && (
+                                                        <Link
+                                                            to={`/catalogue/${msg.restockProduct.slug}`}
+                                                            className="px-3 py-2.5 bg-zinc-700/50 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-all flex items-center"
+                                                        >
+                                                            Voir
+                                                        </Link>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
 
-                                            {/* ── Quiz Options ── */}
-                                            {msg.isOptions && msg.options && (
-                                                <div className="grid grid-cols-1 gap-2.5 mt-3">
-                                                    {msg.options.map((opt) => {
-                                                        const isSelected = answers[msg.stepId!] === opt.value;
-                                                        const hasAnsweredNext = messages.some(m => m.sender === 'user' && m.text === opt.label);
-
+                                        {/* ── Terpene Selection UI ── */}
+                                        {msg.type === 'terpene' && awaitingTerpene && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="space-y-4 pt-2"
+                                            >
+                                                <div className="grid grid-cols-2 xs:grid-cols-3 gap-2">
+                                                    {TERPENE_CHIPS.map((chip) => {
+                                                        const isSelected = terpeneSelection.includes(chip.label);
                                                         return (
-                                                            <motion.button
-                                                                key={opt.value}
-                                                                whileHover={{ x: 4, backgroundColor: 'rgba(57,255,20,0.05)' }}
-                                                                disabled={stepIndex !== settings.quiz_steps.findIndex(s => s.id === msg.stepId)}
-                                                                onClick={() => handleAnswer(opt, msg.stepId!)}
-                                                                className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${isSelected || hasAnsweredNext
-                                                                    ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'
-                                                                    : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-600 text-zinc-400 group'
+                                                            <button
+                                                                key={chip.label}
+                                                                onClick={() => {
+                                                                    setTerpeneSelection(prev =>
+                                                                        isSelected ? prev.filter(t => t !== chip.label) : [...prev, chip.label]
+                                                                    );
+                                                                }}
+                                                                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${isSelected
+                                                                    ? 'bg-green-neon border-green-neon text-black'
+                                                                    : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500'
                                                                     }`}
                                                             >
-                                                                <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{opt.emoji}</span>
-                                                                <span className="text-sm font-bold tracking-tight">{opt.label}</span>
-                                                                <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isSelected || hasAnsweredNext ? 'text-green-neon rotate-90' : 'text-zinc-600'}`} />
-                                                            </motion.button>
+                                                                <span>{chip.emoji}</span>
+                                                                <span className="truncate">{chip.label}</span>
+                                                                {isSelected && <CheckCircle2 className="w-3 h-3 ml-auto" />}
+                                                            </button>
                                                         );
                                                     })}
                                                 </div>
-                                            )}
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={confirmTerpeneSelection}
+                                                    className="w-full bg-zinc-100 hover:bg-white text-black font-black py-3 rounded-2xl text-sm transition-all shadow-lg flex items-center justify-center gap-2"
+                                                >
+                                                    {terpeneSelection.length > 0 ? (
+                                                        <>Confirmer la sélection ({terpeneSelection.length}) <ChevronRight className="w-4 h-4" /></>
+                                                    ) : (
+                                                        <>Passer cette étape <ChevronRight className="w-4 h-4" /></>
+                                                    )}
+                                                </motion.button>
+                                            </motion.div>
+                                        )}
 
-                                            {/* ── Results ── */}
-                                            {msg.isResult && msg.recommended && (
-                                                <div className="space-y-4 pt-3">
-                                                    <p className="text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase px-1">Sélection sur-mesure</p>
-                                                    {msg.recommended.map((product, i) => (
-                                                        <motion.div
-                                                            key={product.id}
-                                                            initial={{ opacity: 0, scale: 0.95 }}
-                                                            animate={{ opacity: 1, scale: 1 }}
-                                                            transition={{ delay: i * 0.15 }}
-                                                            whileHover={{ scale: 1.02 }}
-                                                            className="flex items-center gap-4 bg-zinc-800/40 hover:bg-zinc-800/60 border border-zinc-700/50 hover:border-green-neon/30 p-4 rounded-[1.5rem] transition-all group"
+                                        {/* ── Quiz Options ── */}
+                                        {msg.isOptions && msg.options && (
+                                            <div className="grid grid-cols-1 gap-2.5 mt-3">
+                                                {msg.options.map((opt) => {
+                                                    const isSelected = answers[msg.stepId!] === opt.value;
+                                                    const hasAnsweredNext = messages.some(m => m.sender === 'user' && m.text === opt.label);
+
+                                                    return (
+                                                        <motion.button
+                                                            key={opt.value}
+                                                            whileHover={{ x: 4, backgroundColor: 'rgba(57,255,20,0.05)' }}
+                                                            disabled={stepIndex !== settings.quiz_steps.findIndex(s => s.id === msg.stepId)}
+                                                            onClick={() => handleAnswer(opt, msg.stepId!)}
+                                                            className={`flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all ${isSelected || hasAnsweredNext
+                                                                ? 'bg-green-neon/10 border-green-neon/50 text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.05)]'
+                                                                : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-600 text-zinc-400 group'
+                                                                }`}
                                                         >
-                                                            <div className="relative flex-shrink-0">
-                                                                <img
-                                                                    src={product.image_url || ''}
-                                                                    className="w-16 h-16 rounded-2xl object-cover bg-zinc-900 shadow-md transition-transform group-hover:scale-105"
-                                                                    alt={product.name}
-                                                                />
-                                                                {product.cbd_percentage && (
-                                                                    <span className="absolute -top-1 -left-1 bg-green-neon text-black text-[9px] font-black px-1.5 py-0.5 rounded-lg shadow-sm">
-                                                                        {product.cbd_percentage}%
-                                                                    </span>
+                                                            <span className="text-2xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{opt.emoji}</span>
+                                                            <span className="text-sm font-bold tracking-tight">{opt.label}</span>
+                                                            <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${isSelected || hasAnsweredNext ? 'text-green-neon rotate-90' : 'text-zinc-600'}`} />
+                                                        </motion.button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* ── Results ── */}
+                                        {msg.isResult && msg.recommended && (
+                                            <div className="space-y-4 pt-3">
+                                                <p className="text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase px-1">Sélection sur-mesure</p>
+                                                {msg.recommended.map((product, i) => (
+                                                    <motion.div
+                                                        key={product.id}
+                                                        initial={{ opacity: 0, scale: 0.95 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        transition={{ delay: i * 0.15 }}
+                                                        whileHover={{ scale: 1.02 }}
+                                                        className="flex items-center gap-4 bg-zinc-800/40 hover:bg-zinc-800/60 border border-zinc-700/50 hover:border-green-neon/30 p-4 rounded-[1.5rem] transition-all group"
+                                                    >
+                                                        <div className="relative flex-shrink-0">
+                                                            <img
+                                                                src={product.image_url || ''}
+                                                                className="w-16 h-16 rounded-2xl object-cover bg-zinc-900 shadow-md transition-transform group-hover:scale-105"
+                                                                alt={product.name}
+                                                            />
+                                                            {product.cbd_percentage && (
+                                                                <span className="absolute -top-1 -left-1 bg-green-neon text-black text-[9px] font-black px-1.5 py-0.5 rounded-lg shadow-sm">
+                                                                    {product.cbd_percentage}%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1">
+                                                                {product.name}
+                                                            </Link>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <p className="text-base font-black text-green-neon">{product.price}€</p>
+                                                                {product.original_value && (
+                                                                    <p className="text-[10px] text-zinc-500 line-through">{product.original_value}€</p>
                                                                 )}
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1">
-                                                                    {product.name}
-                                                                </Link>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <p className="text-base font-black text-green-neon">{product.price}€</p>
-                                                                    {product.original_value && (
-                                                                        <p className="text-[10px] text-zinc-500 line-through">{product.original_value}€</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <motion.button
-                                                                whileTap={{ scale: 0.9 }}
-                                                                onClick={() => { addItem(product); openSidebar(); }}
-                                                                className="w-10 h-10 rounded-xl bg-green-neon hover:bg-green-400 text-black flex items-center justify-center transition-all shadow-lg hover:shadow-green-neon/20"
-                                                            >
-                                                                <ShoppingCart className="w-4 h-4" />
-                                                            </motion.button>
-                                                        </motion.div>
-                                                    ))}
-
-                                                    {/* ── Feedback on recommendations ── */}
-                                                    <BudTenderFeedback
-                                                        onFeedback={(type) => {
-                                                            console.log(`[BudTender] Recommendation feedback: ${type}`);
-                                                        }}
-                                                    />
-
-                                                    {/* ── Ambassador / Share section ── */}
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ delay: 0.8 }}
-                                                        className="mt-6 bg-gradient-to-br from-green-neon/10 to-transparent border border-green-neon/20 rounded-2xl p-4 sm:p-5 relative overflow-hidden"
-                                                    >
-                                                        <div className="absolute top-0 right-0 p-3 opacity-10">
-                                                            <Gift className="w-12 h-12 text-green-neon" />
                                                         </div>
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.9 }}
+                                                            onClick={() => { addItem(product); openSidebar(); }}
+                                                            className="w-10 h-10 rounded-xl bg-green-neon hover:bg-green-400 text-black flex items-center justify-center transition-all shadow-lg hover:shadow-green-neon/20"
+                                                        >
+                                                            <ShoppingCart className="w-4 h-4" />
+                                                        </motion.button>
+                                                    </motion.div>
+                                                ))}
 
-                                                        {!hasShared ? (
-                                                            <div className="space-y-3 relative z-10">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Sparkles className="w-4 h-4 text-green-neon" />
-                                                                    <p className="text-xs font-black uppercase tracking-wider text-white">Cadeau Ambassadeur 🏆</p>
+                                                {/* ── Feedback on recommendations ── */}
+                                                <BudTenderFeedback
+                                                    onFeedback={(type) => {
+                                                        console.log(`[BudTender] Recommendation feedback: ${type}`);
+                                                    }}
+                                                />
+
+                                                {/* ── Ambassador / Share section ── */}
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.8 }}
+                                                    className="mt-6 bg-gradient-to-br from-green-neon/10 to-transparent border border-green-neon/20 rounded-2xl p-4 sm:p-5 relative overflow-hidden"
+                                                >
+                                                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                                                        <Gift className="w-12 h-12 text-green-neon" />
+                                                    </div>
+
+                                                    {!hasShared ? (
+                                                        <div className="space-y-3 relative z-10">
+                                                            <div className="flex items-center gap-2">
+                                                                <Sparkles className="w-4 h-4 text-green-neon" />
+                                                                <p className="text-xs font-black uppercase tracking-wider text-white">Cadeau Ambassadeur 🏆</p>
+                                                            </div>
+                                                            <p className="text-xs text-zinc-400 leading-relaxed">
+                                                                Partagez vos résultats ou invitez un ami à faire le test pour débloquer un code promo de <span className="text-green-neon font-bold">-10%</span> sur votre commande !
+                                                            </p>
+                                                            <button
+                                                                onClick={handleShare}
+                                                                className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl transition-all text-xs border border-zinc-700"
+                                                            >
+                                                                <Share2 className="w-3.5 h-3.5" />
+                                                                Partager & Débloquer
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-4 relative z-10">
+                                                            <div className="flex items-center gap-2 text-green-neon">
+                                                                <CheckCircle2 className="w-4 h-4" />
+                                                                <p className="text-xs font-black uppercase tracking-wider">Lien Partagé !</p>
+                                                            </div>
+                                                            <div className="bg-zinc-950/50 border border-green-neon/30 rounded-xl p-3 flex items-center justify-between group">
+                                                                <div>
+                                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Votre code :</p>
+                                                                    <p className="text-lg font-black text-green-neon tracking-tighter">BUDTENDER10</p>
                                                                 </div>
-                                                                <p className="text-xs text-zinc-400 leading-relaxed">
-                                                                    Partagez vos résultats ou invitez un ami à faire le test pour débloquer un code promo de <span className="text-green-neon font-bold">-10%</span> sur votre commande !
-                                                                </p>
                                                                 <button
-                                                                    onClick={handleShare}
-                                                                    className="w-full flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl transition-all text-xs border border-zinc-700"
+                                                                    onClick={() => copyPromoCode('BUDTENDER10')}
+                                                                    className="relative p-2 bg-green-neon/10 hover:bg-green-neon text-green-neon hover:text-black rounded-lg transition-all"
                                                                 >
-                                                                    <Share2 className="w-3.5 h-3.5" />
-                                                                    Partager & Débloquer
+                                                                    <Copy className="w-4 h-4" />
+                                                                    {showPromoTooltip && (
+                                                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] px-2 py-1 rounded font-bold whitespace-nowrap shadow-xl">
+                                                                            Copié !
+                                                                        </span>
+                                                                    )}
                                                                 </button>
                                                             </div>
-                                                        ) : (
-                                                            <div className="space-y-4 relative z-10">
-                                                                <div className="flex items-center gap-2 text-green-neon">
-                                                                    <CheckCircle2 className="w-4 h-4" />
-                                                                    <p className="text-xs font-black uppercase tracking-wider">Lien Partagé !</p>
-                                                                </div>
-                                                                <div className="bg-zinc-950/50 border border-green-neon/30 rounded-xl p-3 flex items-center justify-between group">
-                                                                    <div>
-                                                                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Votre code :</p>
-                                                                        <p className="text-lg font-black text-green-neon tracking-tighter">BUDTENDER10</p>
-                                                                    </div>
-                                                                    <button
-                                                                        onClick={() => copyPromoCode('BUDTENDER10')}
-                                                                        className="relative p-2 bg-green-neon/10 hover:bg-green-neon text-green-neon hover:text-black rounded-lg transition-all"
-                                                                    >
-                                                                        <Copy className="w-4 h-4" />
-                                                                        {showPromoTooltip && (
-                                                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] px-2 py-1 rounded font-bold whitespace-nowrap shadow-xl">
-                                                                                Copié !
-                                                                            </span>
-                                                                        )}
-                                                                    </button>
-                                                                </div>
-                                                                <p className="text-[10px] text-zinc-500 text-center italic">Valable sur tout le catalogue Green Moon.</p>
-                                                            </div>
-                                                        )}
-                                                    </motion.div>
-                                                </div>
-                                            )}
+                                                            <p className="text-[10px] text-zinc-500 text-center italic">Valable sur tout le catalogue Green Moon.</p>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            </div>
+                                        )}
                                     </BudTenderMessage>
                                 ))}
 

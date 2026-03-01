@@ -159,21 +159,52 @@ export function useBudTenderMemory() {
         fetchHistory();
     }, [user]);
 
-    // ── Save preferences ─────────────────────────────────────────────────────
-    const savePrefs = (prefs: SavedPrefs) => {
+    // ─── Save preferences ─────────────────────────────────────────────────────
+    const savePrefs = async (prefs: SavedPrefs & { terpene_preferences?: string[] }) => {
         try {
+            // Local fallback
             localStorage.setItem(LS_KEY, JSON.stringify(prefs));
             setSavedPrefs(prefs);
-        } catch {
-            // ignore
+
+            // Supabase sync
+            if (user) {
+                await supabase.from('user_ai_preferences').upsert({
+                    user_id: user.id,
+                    goal: prefs.goal,
+                    experience_level: prefs.experience,
+                    preferred_format: prefs.format,
+                    budget_range: prefs.budget,
+                    terpene_preferences: prefs.terpene_preferences ?? [],
+                    updated_at: new Date().toISOString()
+                });
+            }
+        } catch (err) {
+            console.error('[BudTenderMemory] Error saving prefs:', err);
         }
     };
 
-    const saveChatHistory = (history: ChatMessage[]) => {
+    const saveChatHistory = async (history: ChatMessage[]) => {
         try {
+            // Local fallback
             localStorage.setItem('budtender_chat_history_v1', JSON.stringify(history));
             setChatHistory(history);
-        } catch { /* ignore */ }
+
+            // Supabase sync (Record interaction session)
+            if (user && history.length > 0) {
+                // We use a simple session_id based on the first message id or date
+                const sessionId = history[0].id || new Date().toISOString();
+
+                await supabase.from('budtender_interactions').upsert({
+                    user_id: user.id,
+                    session_id: sessionId,
+                    interaction_type: 'chat_session',
+                    quiz_answers: { messages: history },
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'user_id, session_id' });
+            }
+        } catch (err) {
+            console.error('[BudTenderMemory] Error saving history:', err);
+        }
     };
 
     const clearChatHistory = () => {
@@ -187,6 +218,53 @@ export function useBudTenderMemory() {
         setSavedPrefs(null);
         setChatHistory([]);
     };
+
+    // ── Load from Supabase on Login ───────────────────────────────────────────
+    useEffect(() => {
+        if (!user) return;
+
+        const syncWithSupabase = async () => {
+            try {
+                // 1. Fetch AI Preferences
+                const { data: prefsData } = await supabase
+                    .from('user_ai_preferences')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (prefsData) {
+                    const syncedPrefs: SavedPrefs = {
+                        goal: prefsData.goal ?? '',
+                        experience: prefsData.experience_level ?? '',
+                        format: prefsData.preferred_format ?? '',
+                        budget: prefsData.budget_range ?? '',
+                    };
+                    setSavedPrefs(syncedPrefs);
+                    localStorage.setItem(LS_KEY, JSON.stringify(syncedPrefs));
+                }
+
+                // 2. Fetch Latest Chat Session
+                const { data: interactionData } = await supabase
+                    .from('budtender_interactions')
+                    .select('quiz_answers')
+                    .eq('user_id', user.id)
+                    .eq('interaction_type', 'chat_session')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (interactionData && interactionData.quiz_answers?.messages) {
+                    const history = interactionData.quiz_answers.messages as ChatMessage[];
+                    setChatHistory(history);
+                    localStorage.setItem('budtender_chat_history_v1', JSON.stringify(history));
+                }
+            } catch (err) {
+                // Likely no data yet or single() error, normal
+            }
+        };
+
+        syncWithSupabase();
+    }, [user]);
 
     return {
         isLoggedIn,
