@@ -28,14 +28,14 @@ export default function Quality() {
 
       {/* Hero Header */}
       <section className="relative pt-40 pb-32 px-4 overflow-hidden">
-        {/* Background Image Layer */}
-        <div className="absolute inset-0 -z-20">
+        {/* L'image de fond doit avoir une opacité contrôlée pour laisser ressortir le texte */}
+        <div className="absolute inset-0 z-0">
           <img
             src="/images/cbd-oil.png"
             alt="Pure CBD Gold"
-            className="w-full h-full object-cover opacity-20 grayscale-[20%] scale-105"
+            className="w-full h-full object-cover opacity-60 scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/80 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/70 to-zinc-950" />
         </div>
 
         {/* Decorative elements */}

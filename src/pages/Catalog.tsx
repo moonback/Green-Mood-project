@@ -119,11 +119,10 @@ export default function Catalog() {
             <img
               src="/images/products-flower.png"
               alt="Molécule N10 d'exception"
-              className="w-full h-full object-cover opacity-15 blur-[2px]"
+              className="w-full h-full object-cover opacity-60 blur-[2px]"
             />
           </motion.div>
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-950/80 to-zinc-950" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(57,255,20,0.04)_0%,transparent_70%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
         </div>
 
         <div className="max-w-7xl mx-auto w-full relative z-10 text-center">

@@ -60,15 +60,13 @@ export default function Shop() {
 
       {/* Hero Header */}
       <section className="relative min-h-[70vh] flex items-center justify-center pt-24 px-4 overflow-hidden">
-        {/* Background Layer */}
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2070&auto=format&fit=crop"
             alt="Intérieur de la boutique Green Mood"
-            className="w-full h-full object-cover opacity-20"
+            className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/90 via-zinc-950/70 to-zinc-950" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-green-neon/5 rounded-full blur-[180px]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto text-center">
