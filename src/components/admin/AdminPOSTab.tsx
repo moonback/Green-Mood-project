@@ -28,6 +28,7 @@ import {
     History as HistoryIcon,
     ChevronRight,
     Maximize,
+    Star,
     Minimize,
     LayoutGrid,
     LogOut,
@@ -471,10 +472,15 @@ function AdminPOSTab({
     const change = Math.max(0, cashNum - total);
 
     const filteredProducts = products.filter((p) => {
-        const matchCat = selectedCategory === 'all' || p.category_id === selectedCategory;
         const matchSearch =
             !searchQuery ||
             p.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+        if (selectedCategory === 'favorites') {
+            return p.is_featured && matchSearch && p.stock_quantity > 0;
+        }
+
+        const matchCat = selectedCategory === 'all' || p.category_id === selectedCategory;
         return matchCat && matchSearch && p.stock_quantity > 0;
     });
 
@@ -996,13 +1002,13 @@ function AdminPOSTab({
                                 <Lock className="w-5 h-5" />
                                 Forcer Ouverture
                             </button>
-                            <button
+                            {/* <button
                                 onClick={() => handleGenerateReport('view')}
                                 className="flex items-center gap-2 px-8 py-4 bg-white text-black rounded-2xl font-bold transition-all shadow-xl shadow-white/5 hover:scale-105"
                             >
                                 <FileText className="w-5 h-5" />
                                 Détails du Rapport
-                            </button>
+                            </button> */}
                             {onExit && (
                                 <button
                                     onClick={onExit}
@@ -1037,6 +1043,16 @@ function AdminPOSTab({
                                 >
                                     <LayoutGrid className="w-4 h-4" />
                                     Tous
+                                </button>
+                                <button
+                                    onClick={() => setSelectedCategory('favorites')}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${selectedCategory === 'favorites'
+                                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+                                        : 'text-zinc-500 hover:text-amber-400 hover:bg-zinc-800/50'
+                                        }`}
+                                >
+                                    <Star className="w-4 h-4" />
+                                    Favoris
                                 </button>
                                 {categories.map(cat => (
                                     <button
