@@ -89,8 +89,8 @@ export default function RelatedProducts({
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden animate-pulse">
-                            <div className="aspect-square bg-zinc-800" />
+                        <div key={i} className="bg-zinc-900/50 rounded-2xl border border-white/[0.06] overflow-hidden animate-pulse">
+                            <div className="aspect-[4/5] bg-zinc-800/50" />
                             <div className="p-3 space-y-2">
                                 <div className="h-4 bg-zinc-800 rounded-md w-3/4" />
                                 <div className="h-3 bg-zinc-800 rounded-md w-1/2" />
@@ -130,7 +130,7 @@ export default function RelatedProducts({
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.07 }}
-                            className="group relative bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden hover:border-green-neon/30 transition-all duration-300 flex flex-col"
+                            className="group relative bg-zinc-900/50 rounded-2xl border border-white/[0.06] overflow-hidden hover:border-green-neon/20 transition-all duration-300 flex flex-col"
                         >
                             {/* Badge */}
                             {product.is_bundle ? (
@@ -146,7 +146,7 @@ export default function RelatedProducts({
                             ) : null}
 
                             {/* Image */}
-                            <Link to={`/catalogue/${product.slug}`} className="block aspect-square overflow-hidden">
+                            <Link to={`/catalogue/${product.slug}`} className="block aspect-[4/5] overflow-hidden bg-zinc-800/50">
                                 <img
                                     src={product.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=400'}
                                     alt={product.name}

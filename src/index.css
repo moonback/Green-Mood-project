@@ -15,50 +15,79 @@
 
 @layer base {
   body {
-    @apply bg-zinc-950 text-zinc-50 font-sans antialiased selection:bg-green-neon selection:text-black;
+    @apply bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-green-neon selection:text-black;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+
+  /* Accessibilité : focus visible global */
+  *:focus-visible {
+    outline: 2px solid rgba(57, 255, 20, 0.6);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Accessibilité : respect du choix utilisateur */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Scrollbar sobre sur les zones scrollables */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
   }
 }
 
 @layer utilities {
-  /* Neon text glow — identique à l'effet lumineux du logo */
+  /* ─── Glow system (simplifié : 2 niveaux text + 2 niveaux box) ─── */
+
+  /* Text glow — prix, titres featured */
   .glow-green {
     text-shadow:
-      0 0 8px #39ff14,
-      0 0 20px #39ff1488,
-      0 0 45px #39ff1444;
+      0 0 8px rgba(57, 255, 20, 0.6),
+      0 0 24px rgba(57, 255, 20, 0.25);
   }
 
-  /* Neon box glow — pour les boutons et badges */
+  /* Box glow — boutons primaires, badges actifs */
   .glow-box-green {
     box-shadow:
-      0 0 10px rgba(57, 255, 20, 0.45),
-      0 0 25px rgba(57, 255, 20, 0.2),
-      inset 0 0 0 1px rgba(57, 255, 20, 0.15);
+      0 0 12px rgba(57, 255, 20, 0.35),
+      0 0 24px rgba(57, 255, 20, 0.15),
+      inset 0 0 0 1px rgba(57, 255, 20, 0.12);
   }
 
-  /* Subtil — bordures, icônes secondaires */
+  /* Box glow subtil — bordures, hover secondaires */
   .glow-box-green-sm {
     box-shadow:
-      0 0 6px rgba(57, 255, 20, 0.35),
-      0 0 14px rgba(57, 255, 20, 0.12);
+      0 0 8px rgba(57, 255, 20, 0.2),
+      0 0 16px rgba(57, 255, 20, 0.08);
   }
 
-  /* Logo : lueur diffuse autour de l'image */
+  /* Logo glow */
   .glow-logo {
-    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))
-            drop-shadow(0 0 20px rgba(57, 255, 20, 0.25));
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.5))
+            drop-shadow(0 0 20px rgba(57, 255, 20, 0.2));
   }
 
-  /* Pulsation lente — pour les badges "En direct" ou featured */
+  /* Pulsation — badges "featured", indicateurs live */
   .glow-pulse-green {
     animation: glow-pulse 2.5s ease-in-out infinite;
   }
@@ -66,14 +95,14 @@
   @keyframes glow-pulse {
     0%, 100% {
       box-shadow:
-        0 0 6px rgba(57, 255, 20, 0.4),
-        0 0 14px rgba(57, 255, 20, 0.15);
+        0 0 6px rgba(57, 255, 20, 0.3),
+        0 0 14px rgba(57, 255, 20, 0.1);
     }
     50% {
       box-shadow:
-        0 0 14px rgba(57, 255, 20, 0.75),
-        0 0 30px rgba(57, 255, 20, 0.35),
-        0 0 50px rgba(57, 255, 20, 0.1);
+        0 0 14px rgba(57, 255, 20, 0.6),
+        0 0 30px rgba(57, 255, 20, 0.25),
+        0 0 50px rgba(57, 255, 20, 0.08);
     }
   }
 
@@ -93,8 +122,8 @@
     }
     50% {
       box-shadow:
-        0 0 28px rgba(57, 255, 20, 0.45),
-        0 0 50px rgba(57, 255, 20, 0.2),
+        0 0 28px rgba(57, 255, 20, 0.4),
+        0 0 50px rgba(57, 255, 20, 0.15),
         0 8px 32px rgba(0, 0, 0, 0.5);
     }
   }

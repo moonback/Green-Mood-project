@@ -99,7 +99,7 @@ export default function FreeShippingGauge({ variant = 'compact' }: FreeShippingG
             </div>
 
             {/* Threshold labels */}
-            <div className="flex justify-between text-[10px] text-zinc-500 mb-2">
+            <div className="flex justify-between text-xs text-zinc-500 mb-2">
                 <span>{sub.toFixed(2)} €</span>
                 <span>{threshold.toFixed(0)} €</span>
             </div>

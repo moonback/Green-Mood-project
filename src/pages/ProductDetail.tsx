@@ -228,7 +228,7 @@ export default function ProductDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-4 text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-600 mb-12">
+        <nav className="flex items-center gap-4 text-xs uppercase tracking-wider text-zinc-600 mb-12">
           <Link to="/catalogue" className="flex items-center gap-2 hover:text-green-neon transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Archives
@@ -248,7 +248,7 @@ export default function ProductDetail() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative group"
+            className="relative group lg:sticky lg:top-28"
           >
             {/* Decorative Glow */}
             <div className="absolute inset-0 bg-green-neon/5 blur-[120px] -z-10 group-hover:bg-green-neon/10 transition-all duration-1000" />
@@ -256,20 +256,20 @@ export default function ProductDetail() {
             {/* Badges */}
             <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
               {product.is_bundle && (
-                <div className="flex items-center gap-2 bg-purple-600/90 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-2xl">
+                <div className="flex items-center gap-2 bg-purple-600/90 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider text-white shadow-2xl">
                   <Package className="w-3 h-3" />
                   Écrin Prestige
                 </div>
               )}
               {product.is_featured && !product.is_bundle && (
-                <div className="flex items-center gap-2 bg-green-neon px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-black shadow-2xl">
+                <div className="flex items-center gap-2 bg-green-neon px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider text-black shadow-2xl">
                   <Star className="w-3 h-3 fill-current" />
                   Sélection Maître
                 </div>
               )}
             </div>
 
-            <div className="aspect-[4/5] rounded-[3rem] overflow-hidden bg-white/[0.02] border border-white/5 relative">
+            <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-white/[0.03] border border-white/[0.06] relative">
               <img
                 src={product.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
                 alt={product.name}
@@ -281,9 +281,9 @@ export default function ProductDetail() {
             {/* Specifications Overlay (Desktop Only) */}
             <div className="hidden md:flex absolute -bottom-6 -right-6 gap-3 z-30">
               {product.cbd_percentage != null && (
-                <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-3xl">
-                  <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">Concentration</p>
-                  <p className="text-3xl font-serif font-black text-green-neon leading-none">{product.cbd_percentage}% <span className="text-xs uppercase font-sans tracking-tight">CBD</span></p>
+                <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+                  <p className="text-xs text-zinc-500 font-medium uppercase mb-1">Concentration</p>
+                  <p className="text-3xl font-serif font-bold text-green-neon leading-none">{product.cbd_percentage}% <span className="text-xs uppercase font-sans tracking-tight">CBD</span></p>
                 </div>
               )}
             </div>
@@ -297,9 +297,9 @@ export default function ProductDetail() {
           >
             <div className="space-y-4">
               {product.category && (
-                <p className="text-xs font-mono text-green-neon uppercase tracking-[0.5em]">{product.category.name.toUpperCase()}</p>
+                <p className="text-xs text-green-neon uppercase tracking-wider font-medium">{product.category.name.toUpperCase()}</p>
               )}
-              <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-[0.9] uppercase italic grayscale hover:grayscale-0 transition-all duration-1000">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold tracking-tight leading-[0.9] uppercase italic grayscale hover:grayscale-0 transition-all duration-1000">
                 {product.name}.
               </h1>
 
@@ -308,7 +308,7 @@ export default function ProductDetail() {
                   <div className="flex text-yellow-500">
                     <StarRating rating={avgRating} size="sm" />
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
+                  <span className="text-xs text-zinc-500 font-medium">
                     EXPÉRIENCE CLIENT : {avgRating.toFixed(1)}/5 — {reviews.length} TÉMOIGNAGES
                   </span>
                 </div>
@@ -323,12 +323,12 @@ export default function ProductDetail() {
               <div className="flex flex-wrap gap-8">
                 {(product.attributes?.benefits || []).length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest flex items-center gap-2">
+                    <p className="text-xs text-zinc-500 font-medium flex items-center gap-2">
                       <span className="w-1 h-1 bg-green-neon rounded-full" /> EFFETS RECHERCHÉS
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {product.attributes.benefits!.map(b => (
-                        <span key={b} className="text-[9px] font-black uppercase tracking-widest text-zinc-400 border border-white/10 px-3 py-1.5 rounded-full hover:border-green-neon/50 transition-colors">
+                        <span key={b} className="text-xs font-semibold uppercase tracking-wider text-zinc-400 border border-white/10 px-3 py-1.5 rounded-full hover:border-green-neon/50 transition-colors">
                           {b}
                         </span>
                       ))}
@@ -338,13 +338,13 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 md:p-10 space-y-10 relative overflow-hidden group/panel">
+            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 md:p-8 space-y-10 relative overflow-hidden group/panel">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-neon/20 to-transparent" />
 
               <div className="flex items-end justify-between">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">VALEUR UNITAIRE</p>
-                  <p className="text-6xl font-serif font-black text-white leading-none">
+                  <p className="text-xs text-zinc-500 font-medium uppercase">VALEUR UNITAIRE</p>
+                  <p className="text-4xl font-serif font-bold text-white leading-none">
                     {product.price.toFixed(2)}<span className="text-lg ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
                   </p>
                 </div>
@@ -354,7 +354,7 @@ export default function ProductDetail() {
               {product.is_available && product.stock_quantity > 0 ? (
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-center gap-4">
-                    <div className="bg-white/5 border border-white/5 rounded-2xl p-2 flex items-center">
+                    <div className="bg-white/5 border border-white/[0.06] rounded-2xl p-2 flex items-center">
                       <QuantitySelector
                         quantity={quantity}
                         onChange={setQuantity}
@@ -363,22 +363,22 @@ export default function ProductDetail() {
                     </div>
                     <button
                       onClick={handleAddToCart}
-                      className="flex-1 w-full bg-white text-black font-black uppercase tracking-[0.3em] py-6 rounded-2xl hover:bg-green-neon transition-all shadow-2xl group flex items-center justify-center gap-4"
+                      className="flex-1 w-full bg-green-neon text-black font-semibold uppercase tracking-wider py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all shadow-2xl group flex items-center justify-center gap-4"
                     >
                       <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform" />
                       {addedFeedback ? 'DÉPOSÉ AU PANIER' : 'ACQUÉRIR MAINTENANT'}
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-4 text-[10px] font-mono text-zinc-600 uppercase tracking-widest justify-center">
+                  <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium uppercase justify-center">
                     <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-green-neon" /> LIVRAISON DISCRÈTE</span>
                     <div className="w-1 h-1 bg-white/10 rounded-full" />
                     <span className="flex items-center gap-1.5"><Shield className="w-3 h-3 text-zinc-500" /> PAIEMENT SÉCURISÉ</span>
                   </div>
                 </div>
               ) : (
-                <div className="py-6 border-2 border-dashed border-white/5 rounded-2xl text-center">
-                  <p className="text-[10px] font-mono text-zinc-700 uppercase tracking-[0.4em]">ÉDITION TEMPORAIREMENT ÉPUISÉE</p>
+                <div className="py-6 border-2 border-dashed border-white/[0.06] rounded-2xl text-center">
+                  <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">ÉDITION TEMPORAIREMENT ÉPUISÉE</p>
                 </div>
               )}
             </div>
@@ -386,7 +386,7 @@ export default function ProductDetail() {
             {/* Bundle Content */}
             {product.is_bundle && bundleItems.length > 0 && (
               <div className="space-y-6">
-                <h3 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-2 flex items-center gap-3">
+                <h3 className="text-xs text-zinc-500 font-medium uppercase tracking-wider px-2 flex items-center gap-3">
                   <Package className="w-3 h-3 text-purple-500" /> COMPOSITION DE L'ÉCRIN
                 </h3>
                 <div className="grid gap-4">
@@ -394,10 +394,10 @@ export default function ProductDetail() {
                     <motion.div
                       key={item.id}
                       whileHover={{ x: 5 }}
-                      className="flex items-center gap-6 bg-white/[0.02] border border-white/5 rounded-3xl p-4 group/item"
+                      className="flex items-center gap-6 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 group/item"
                     >
                       {item.product?.image_url && (
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/[0.06] bg-zinc-900">
                           <img
                             src={item.product.image_url}
                             alt={item.product?.name}
@@ -408,13 +408,13 @@ export default function ProductDetail() {
                       <div className="flex-1 min-w-0">
                         <Link
                           to={`/catalogue/${item.product?.slug}`}
-                          className="text-sm font-black uppercase tracking-widest text-white hover:text-green-neon transition-colors line-clamp-1"
+                          className="text-sm font-bold uppercase tracking-wider text-white hover:text-green-neon transition-colors line-clamp-1"
                         >
                           {item.quantity > 1 && <span className="text-green-neon mr-2">{item.quantity}×</span>}
                           {item.product?.name}
                         </Link>
                         {item.product?.cbd_percentage && (
-                          <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mt-1">CONCENTRATION : {item.product.cbd_percentage}%</p>
+                          <p className="text-xs text-zinc-500 font-medium uppercase mt-1">CONCENTRATION : {item.product.cbd_percentage}%</p>
                         )}
                       </div>
                     </motion.div>
@@ -425,28 +425,28 @@ export default function ProductDetail() {
 
             {/* Subscription Card */}
             {settings.subscriptions_enabled && isOil && !subSuccess && (
-              <div className="bg-gradient-to-br from-green-neon/5 to-transparent border border-green-neon/20 rounded-[2.5rem] p-10 space-y-8 relative overflow-hidden">
+              <div className="bg-gradient-to-br from-green-neon/5 to-transparent border border-green-neon/20 rounded-2xl p-6 md:p-8 space-y-8 relative overflow-hidden">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-green-neon/10 flex items-center justify-center text-green-neon">
                     <RefreshCw className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-xl font-black uppercase italic text-white tracking-tight">Rituel d'Excellence.</h3>
-                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mt-1">Abonnement Automatisé</p>
+                    <h3 className="font-serif text-xl font-bold uppercase italic text-white tracking-tight">Rituel d'Excellence.</h3>
+                    <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-1">Abonnement Automatisé</p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <p className="text-[10px] font-mono text-zinc-600 mb-4 uppercase tracking-[0.3em]">FRÉQUENCE DE LIVRAISON</p>
+                    <p className="text-xs text-zinc-500 font-medium mb-4 uppercase tracking-wider">FRÉQUENCE DE LIVRAISON</p>
                     <div className="flex flex-wrap gap-2">
                       {(Object.keys(FREQUENCY_LABELS) as SubscriptionFrequency[]).map((freq) => (
                         <button
                           key={freq}
                           onClick={() => setSubFrequency(freq)}
-                          className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subFrequency === freq
+                          className={`px-6 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${subFrequency === freq
                             ? 'bg-green-neon text-black shadow-lg shadow-green-neon/20'
-                            : 'bg-white/5 border border-white/5 text-zinc-500 hover:border-white/10'
+                            : 'bg-white/5 border border-white/[0.06] text-zinc-500 hover:border-white/10'
                             }`}
                         >
                           {FREQUENCY_LABELS[freq]}
@@ -458,7 +458,7 @@ export default function ProductDetail() {
                   <button
                     onClick={handleSubscribe}
                     disabled={subLoading}
-                    className="w-full flex items-center justify-center gap-4 bg-zinc-900 border border-white/10 hover:border-green-neon/50 text-white font-black uppercase tracking-[0.3em] py-5 rounded-2xl transition-all"
+                    className="w-full flex items-center justify-center gap-4 bg-zinc-900 border border-white/10 hover:border-green-neon/50 text-white font-bold uppercase tracking-wider py-5 rounded-2xl transition-all"
                   >
                     {subLoading ? (
                       <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -498,16 +498,16 @@ export default function ProductDetail() {
 
         {/* Reviews Section */}
         <div className="mt-32 space-y-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/5 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/[0.06] pb-8">
             <div className="space-y-4">
-              <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em]">EXPÉRIENCE & TÉMOIGNAGES</h2>
-              <p className="text-4xl font-serif font-black italic text-white uppercase tracking-tight">L'Expression de nos Membres.</p>
+              <h2 className="text-xs text-zinc-500 font-medium uppercase tracking-wider">EXPÉRIENCE & TÉMOIGNAGES</h2>
+              <p className="text-2xl md:text-3xl font-serif font-bold italic text-white uppercase tracking-tight">L'Expression de nos Membres.</p>
             </div>
             {reviews.length > 0 && (
-              <div className="flex items-center gap-6 bg-white/5 border border-white/5 px-8 py-4 rounded-2xl backdrop-blur-3xl">
+              <div className="flex items-center gap-6 bg-white/5 border border-white/[0.06] px-8 py-4 rounded-2xl backdrop-blur-xl">
                 <StarRating rating={avgRating} size="sm" />
                 <div className="w-px h-6 bg-white/10" />
-                <span className="text-sm font-black text-white">{avgRating.toFixed(1)} <span className="text-[10px] text-zinc-500 font-mono ml-1">/ 5.0</span></span>
+                <span className="text-sm font-bold text-white">{avgRating.toFixed(1)} <span className="text-xs text-zinc-500 ml-1">/ 5.0</span></span>
               </div>
             )}
           </div>
@@ -517,16 +517,16 @@ export default function ProductDetail() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-neon/5 border border-dashed border-green-neon/20 rounded-[2rem] p-10 text-center space-y-6"
+              className="bg-green-neon/5 border border-dashed border-green-neon/20 rounded-2xl p-6 md:p-8 text-center space-y-6"
             >
               <MessageSquare className="w-12 h-12 mx-auto text-green-neon/40" />
               <div className="space-y-2">
-                <p className="font-serif text-2xl font-black text-white">Partagez votre voyage sensoriel.</p>
+                <p className="font-serif text-2xl font-bold text-white">Partagez votre voyage sensoriel.</p>
                 <p className="text-zinc-500 text-sm max-w-sm mx-auto italic">Votre expertise contribue à l'excellence de notre catalogue.</p>
               </div>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="bg-white text-black font-black uppercase tracking-widest px-8 py-4 rounded-xl hover:bg-green-neon transition-all"
+                className="bg-green-neon text-black font-semibold uppercase tracking-wider px-8 py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all"
               >
                 Rédiger mon Impression
               </button>
@@ -535,12 +535,12 @@ export default function ProductDetail() {
 
           {/* Review success message */}
           {reviewSuccess && (
-            <div className="bg-green-neon/5 border border-green-neon/20 rounded-[2rem] p-8 flex items-center gap-6">
+            <div className="bg-green-neon/5 border border-green-neon/20 rounded-2xl p-6 md:p-8 flex items-center gap-6">
               <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center text-green-neon">
                 <CheckCircle className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-white font-black uppercase tracking-widest text-xs">Impression Transmise</p>
+                <p className="text-white font-semibold uppercase tracking-wider text-xs">Impression Transmise</p>
                 <p className="text-zinc-500 text-sm italic mt-1 font-serif">Votre témoignage est en cours de modération par notre comité d'excellence.</p>
               </div>
             </div>
@@ -553,10 +553,10 @@ export default function ProductDetail() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-10 space-y-10"
+                className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 md:p-8 space-y-10"
               >
                 <div className="space-y-2">
-                  <h3 className="font-serif text-2xl font-black italic text-white leading-none">Votre Note.</h3>
+                  <h3 className="font-serif text-2xl font-bold italic text-white leading-none">Votre Note.</h3>
                   <StarRating
                     rating={reviewRating}
                     size="lg"
@@ -566,32 +566,32 @@ export default function ProductDetail() {
                 </div>
 
                 <div className="space-y-4">
-                  <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">VOTRE TÉMOIGNAGE</p>
+                  <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">VOTRE TÉMOIGNAGE</p>
                   <textarea
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
                     rows={5}
                     placeholder="Décrivez les nuances, l'arôme, et l'expérience vécue..."
-                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-8 py-6 text-lg font-serif italic text-white placeholder:text-zinc-800 focus:outline-none focus:border-green-neon transition-all resize-none"
+                    className="w-full bg-white/5 border border-white/[0.06] rounded-2xl px-5 py-4 text-lg font-serif italic text-white placeholder:text-zinc-800 focus:outline-none focus:border-green-neon transition-all resize-none"
                   />
                 </div>
 
                 {reviewError && (
-                  <p className="text-xs font-black uppercase tracking-widest text-red-500">{reviewError}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-red-500">{reviewError}</p>
                 )}
 
                 <div className="flex flex-col md:flex-row gap-4">
                   <button
                     onClick={handleSubmitReview}
                     disabled={isSubmittingReview}
-                    className="flex-1 bg-white text-black font-black uppercase tracking-[0.3em] py-5 rounded-xl hover:bg-green-neon transition-all flex items-center justify-center gap-3 shadow-2xl"
+                    className="flex-1 bg-green-neon text-black font-semibold uppercase tracking-wider py-5 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-2xl"
                   >
                     <Send className="w-4 h-4" />
                     {isSubmittingReview ? 'TRANSMISSION...' : 'TRANSMETTRE'}
                   </button>
                   <button
                     onClick={() => setShowReviewForm(false)}
-                    className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-white transition-colors"
+                    className="px-10 py-5 text-xs font-semibold uppercase tracking-wider text-zinc-600 hover:text-white transition-colors"
                   >
                     ANNULER
                   </button>
@@ -602,10 +602,10 @@ export default function ProductDetail() {
 
           {/* Reviews list */}
           {reviews.length === 0 ? (
-            <div className="py-24 text-center space-y-6 bg-white/[0.01] border border-dashed border-white/5 rounded-[3rem]">
+            <div className="py-24 text-center space-y-6 bg-white/[0.01] border border-dashed border-white/[0.06] rounded-2xl">
               <MessageSquare className="w-16 h-16 mx-auto text-zinc-800" />
               <div className="space-y-2">
-                <p className="font-serif text-2xl font-black text-white italic">Silence Éloquent.</p>
+                <p className="font-serif text-2xl font-bold text-white italic">Silence Éloquent.</p>
                 <p className="text-zinc-600 text-sm max-w-xs mx-auto font-serif">Aucune impression n'a encore été consignée pour cette édition.</p>
               </div>
             </div>
@@ -624,24 +624,24 @@ export default function ProductDetail() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 hover:bg-white/[0.04] transition-all group"
+                    className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 md:p-8 hover:bg-white/[0.04] transition-all group"
                   >
                     <div className="flex flex-col md:flex-row gap-8">
-                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-black text-xs tracking-widest shrink-0">
+                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-bold text-xs tracking-wider shrink-0">
                         {initials}
                       </div>
                       <div className="flex-1 space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div className="space-y-1">
-                            <p className="text-sm font-black uppercase tracking-widest text-white">{review.profile?.full_name ?? 'Membre Anonyme'}</p>
+                            <p className="text-sm font-bold uppercase tracking-wider text-white">{review.profile?.full_name ?? 'Membre Anonyme'}</p>
                             <div className="flex items-center gap-4">
                               <StarRating rating={review.rating} size="sm" />
                               {review.is_verified && (
-                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-green-neon px-2 py-1 bg-green-neon/5 rounded-full">ACHAT CERTIFIÉ</span>
+                                <span className="text-xs font-semibold uppercase tracking-wider text-green-neon px-2 py-1 bg-green-neon/5 rounded-full">ACHAT CERTIFIÉ</span>
                               )}
                             </div>
                           </div>
-                          <p className="text-[10px] font-mono text-zinc-700 uppercase tracking-widest">
+                          <p className="text-xs text-zinc-500 font-medium uppercase">
                             ARCHIVÉ LE {new Date(review.created_at).toLocaleDateString('fr-FR', {
                               day: 'numeric',
                               month: 'long',
@@ -664,17 +664,17 @@ export default function ProductDetail() {
         </div>
 
         {/* Related Products Section */}
-        <div className="mt-40 pt-20 border-t border-white/5">
+        <div className="mt-20 pt-12 border-t border-white/[0.06]">
           <div className="mb-16 space-y-4">
-            <h2 className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em]">VOUS POURRIEZ AUSSI APPRÉCIER</h2>
-            <p className="text-5xl font-serif font-black italic text-white uppercase tracking-tight">Suite de l'Odyssée.</p>
+            <h2 className="text-xs text-zinc-500 font-medium uppercase tracking-wider">VOUS POURRIEZ AUSSI APPRÉCIER</h2>
+            <p className="text-2xl md:text-3xl font-serif font-bold italic text-white uppercase tracking-tight">Suite de l'Odyssée.</p>
           </div>
           <RelatedProducts productId={product.id} categoryId={product.category_id} />
         </div>
 
         {/* Legal Footer */}
-        <div className="mt-32 pt-16 border-t border-white/5 text-center">
-          <p className="text-[9px] font-mono text-zinc-700 uppercase tracking-[0.5em] leading-loose max-w-2xl mx-auto">
+        <div className="mt-32 pt-16 border-t border-white/[0.06] text-center">
+          <p className="text-xs text-zinc-700 uppercase tracking-wider leading-loose max-w-2xl mx-auto">
             LES PRODUITS PRÉSENTÉS SONT CONFORMES AUX DÉCRETS N°2021-1282. TAUX DE THC INFÉRIEUR À 0.3%.
             DESTINÉS EXCLUSIVEMENT À UN PUBLIC MAJEUR ET AVERTI.
           </p>
