@@ -69,6 +69,7 @@ interface DailyReport {
     itemsSold: number;
     orderCount: number;
     date: Date;
+    productBreakdown: { [name: string]: { qty: number, total: number } };
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -424,6 +425,12 @@ function AdminPOSTab({
         loadTodayStats();
     }, [loadProducts, loadTodayStats]);
 
+    useEffect(() => {
+        if (showHistory) {
+            loadHistory();
+        }
+    }, [showHistory]);
+
     // ── Customer search ──
     useEffect(() => {
         const handler = setTimeout(async () => {
@@ -659,7 +666,8 @@ function AdminPOSTab({
                 mobileTotal: 0,
                 itemsSold: 0,
                 orderCount: orders?.length || 0,
-                date: new Date()
+                date: new Date(),
+                productBreakdown: {}
             };
 
             orders?.forEach(o => {
@@ -670,6 +678,12 @@ function AdminPOSTab({
 
                 o.order_items?.forEach((item: any) => {
                     report.itemsSold += item.quantity;
+                    const name = item.product_name || 'Inconnu';
+                    if (!report.productBreakdown[name]) {
+                        report.productBreakdown[name] = { qty: 0, total: 0 };
+                    }
+                    report.productBreakdown[name].qty += item.quantity;
+                    report.productBreakdown[name].total += item.total_price;
                 });
             });
 
@@ -764,7 +778,7 @@ function AdminPOSTab({
                 .from('orders')
                 .select(`
                     id, total, notes, delivery_type,
-                    order_items (quantity)
+                    order_items (quantity, product_name, total_price)
                 `)
                 .eq('delivery_type', 'in_store')
                 .gte('created_at', start.toISOString())
@@ -779,7 +793,8 @@ function AdminPOSTab({
                 mobileTotal: 0,
                 itemsSold: 0,
                 orderCount: orders?.length || 0,
-                date: new Date(dateStr)
+                date: new Date(dateStr),
+                productBreakdown: {}
             };
 
             orders?.forEach(o => {
@@ -790,6 +805,12 @@ function AdminPOSTab({
 
                 o.order_items?.forEach((item: any) => {
                     report.itemsSold += item.quantity;
+                    const name = item.product_name || 'Inconnu';
+                    if (!report.productBreakdown[name]) {
+                        report.productBreakdown[name] = { qty: 0, total: 0 };
+                    }
+                    report.productBreakdown[name].qty += item.quantity;
+                    report.productBreakdown[name].total += item.total_price;
                 });
             });
 
@@ -1782,6 +1803,35 @@ function AdminPOSTab({
                                         <p className="text-lg font-bold text-white">{reportData.itemsSold} unités</p>
                                     </div>
                                     <Package className="w-8 h-8 text-zinc-700" />
+                                </div>
+
+                                {/* Product Breakdown */}
+                                <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                                    <div className="bg-black/40 border border-zinc-800 rounded-2xl overflow-hidden">
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="bg-zinc-800/50 text-zinc-500 uppercase font-black tracking-widest">
+                                                <tr>
+                                                    <th className="px-4 py-2">Produit</th>
+                                                    <th className="px-4 py-2 text-center">Qté</th>
+                                                    <th className="px-4 py-2 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
+                                                {Object.entries(reportData.productBreakdown || {}).map(([name, stats]) => (
+                                                    <tr key={name}>
+                                                        <td className="px-4 py-2.5 font-medium">{name}</td>
+                                                        <td className="px-4 py-2.5 text-center font-bold text-white">{stats.qty}</td>
+                                                        <td className="px-4 py-2.5 text-right font-bold text-green-400">{stats.total.toFixed(2)} €</td>
+                                                    </tr>
+                                                ))}
+                                                {Object.keys(reportData.productBreakdown || {}).length === 0 && (
+                                                    <tr>
+                                                        <td colSpan={3} className="px-4 py-6 text-center text-zinc-600 italic">Aucun article vendu</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
 
