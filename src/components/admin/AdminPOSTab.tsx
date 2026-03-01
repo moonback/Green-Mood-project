@@ -248,6 +248,9 @@ function AdminPOSTab({
     const [historyDays, setHistoryDays] = useState<{ date: string; total: number; count: number }[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [isUnlockedManually, setIsUnlockedManually] = useState(false);
+    const [showUnlockModal, setShowUnlockModal] = useState(false);
+    const [unlockPin, setUnlockPin] = useState('');
+    const [unlockError, setUnlockError] = useState(false);
 
     // Business Date helper (working day starts at 6:00 AM)
     const getBusinessDate = useCallback(() => {
@@ -919,13 +922,9 @@ function AdminPOSTab({
                             </button>
                             <button
                                 onClick={() => {
-                                    const code = prompt("Entrez le code de déverrouillage prioritaire :");
-                                    if (code === "0606") {
-                                        setIsUnlockedManually(true);
-                                        alert("Caisse déverrouillée.");
-                                    } else if (code) {
-                                        alert("Code incorrect.");
-                                    }
+                                    setUnlockPin('');
+                                    setUnlockError(false);
+                                    setShowUnlockModal(true);
                                 }}
                                 className="flex items-center gap-2 px-8 py-4 bg-red-600/10 text-red-500 rounded-2xl font-bold transition-all border border-red-500/20 hover:bg-red-600 hover:text-white"
                             >
@@ -1584,6 +1583,86 @@ function AdminPOSTab({
                 )}
             </AnimatePresence>
 
+            {/* ── UNLOCK MODAL ── */}
+            <AnimatePresence>
+                {showUnlockModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl p-8 text-center"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-red-600/10 flex items-center justify-center mx-auto mb-6 border border-red-600/20">
+                                <Lock className="w-8 h-8 text-red-500" />
+                            </div>
+
+                            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Accès Prioritaire</h2>
+                            <p className="text-zinc-500 text-sm mb-8">Entrez le code de déverrouillage pour réouvrir la session.</p>
+
+                            <div className="space-y-6">
+                                <div className="flex justify-center gap-3">
+                                    {[0, 1, 2, 3].map((i) => (
+                                        <div
+                                            key={i}
+                                            className={`w-12 h-16 rounded-2xl border-2 flex items-center justify-center text-2xl font-black transition-all ${unlockError
+                                                    ? 'border-red-500 bg-red-500/10 text-red-500'
+                                                    : unlockPin.length > i
+                                                        ? 'border-green-500 bg-green-500/10 text-green-400'
+                                                        : 'border-zinc-800 bg-zinc-950 text-zinc-700'
+                                                }`}
+                                        >
+                                            {unlockPin.length > i ? '•' : ''}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {unlockError && (
+                                    <p className="text-red-500 text-xs font-bold uppercase tracking-widest animate-bounce">Code incorrect</p>
+                                )}
+
+                                <div className="grid grid-cols-3 gap-3">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, 'OK'].map((btn) => (
+                                        <button
+                                            key={btn.toString()}
+                                            onClick={() => {
+                                                setUnlockError(false);
+                                                if (btn === 'C') setUnlockPin('');
+                                                else if (btn === 'OK') {
+                                                    if (unlockPin === '0606') {
+                                                        setIsUnlockedManually(true);
+                                                        setShowUnlockModal(false);
+                                                    } else {
+                                                        setUnlockError(true);
+                                                        setUnlockPin('');
+                                                    }
+                                                } else if (unlockPin.length < 4) {
+                                                    setUnlockPin(prev => prev + btn);
+                                                }
+                                            }}
+                                            className={`h-14 rounded-xl font-black text-lg transition-all ${btn === 'OK'
+                                                    ? 'bg-green-500 text-black hover:bg-green-400 col-span-1'
+                                                    : btn === 'C'
+                                                        ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                                        : 'bg-zinc-950 text-white hover:bg-zinc-800 border border-zinc-900'
+                                                }`}
+                                        >
+                                            {btn}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setShowUnlockModal(false)}
+                                    className="text-zinc-600 hover:text-white text-xs font-bold uppercase tracking-[0.2em] pt-4 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
             {/* ── Receipt Modal ── */}
             {completedSale && (
                 <ReceiptModal
