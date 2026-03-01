@@ -77,32 +77,32 @@ export class GeminiLiveSession {
         if (this.isConnected) return;
         this.hasErrored = false;
 
-        console.log('[GeminiLive] Connecting to model:', MODEL_NAME);
+        // console.log('[GeminiLive] Connecting to model:', MODEL_NAME);
 
         try {
             this.session = await this.genAI.live.connect({
                 model: MODEL_NAME,
                 callbacks: {
                     onopen: () => {
-                        console.log('[GeminiLive] ✅ WebSocket onopen — session active');
+                        // console.log('[GeminiLive] ✅ WebSocket onopen — session active');
                         this.isConnected = true;
                         this.callbacks.onOpen?.();
                     },
 
                     onmessage: (message: any) => {
-                        console.log('[GeminiLive] onmessage:', JSON.stringify(message).slice(0, 200));
+                        // console.log('[GeminiLive] onmessage:', JSON.stringify(message).slice(0, 200));
                         this._handleMessage(message);
                     },
 
                     onerror: (err: any) => {
-                        console.error('[GeminiLive] ❌ onerror:', err);
+                        // console.error('[GeminiLive] ❌ onerror:', err);
                         this.hasErrored = true;
                         const error = err instanceof Error ? err : new Error(String(err));
                         this.callbacks.onError?.(error);
                     },
 
                     onclose: (evt: any) => {
-                        console.log('[GeminiLive] onclose — code:', evt?.code, 'reason:', evt?.reason);
+                        // console.log('[GeminiLive] onclose — code:', evt?.code, 'reason:', evt?.reason);
                         this.isConnected = false;
                         // Only notify close if we didn't already signal an error
                         if (!this.hasErrored) {
@@ -149,15 +149,15 @@ export class GeminiLiveSession {
                 },
             });
 
-            console.log('[GeminiLive] live.connect() resolved, starting mic...');
+            // console.log('[GeminiLive] live.connect() resolved, starting mic...');
 
             // Start capturing microphone
             await this._startMicCapture();
 
-            console.log('[GeminiLive] Mic capture started');
+            // console.log('[GeminiLive] Mic capture started');
 
         } catch (err) {
-            console.error('[GeminiLive] connect() threw:', err);
+            // console.error('[GeminiLive] connect() threw:', err);
             this.hasErrored = true;
             const error = err instanceof Error ? err : new Error(String(err));
             this.callbacks.onError?.(error);
@@ -172,7 +172,7 @@ export class GeminiLiveSession {
 
         // 1. Setup Complete
         if (message?.setupComplete) {
-            console.log('[GeminiLive] Setup complete acknowledgement received.');
+            // console.log('[GeminiLive] Setup complete acknowledgement received.');
         }
 
         // 2. Server Content (Audio/Text from model)
@@ -191,15 +191,15 @@ export class GeminiLiveSession {
                             for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
                             this.enqueueAudio(buf);
                         } catch (e) {
-                            console.error('[GeminiLive] audio decode error:', e);
+                            // console.error('[GeminiLive] audio decode error:', e);
                         }
                     }
                     if (part.text) {
-                        console.log('[GeminiLive] Model text:', part.text.slice(0, 100));
+                        // console.log('[GeminiLive] Model text:', part.text.slice(0, 100));
                         this.callbacks.onTranscript?.(part.text, 'model');
                     }
                     if (part.functionCall) {
-                        console.log('[GeminiLive] 🛠️ Nested functionCall detected in part:', part.functionCall.name);
+                        // console.log('[GeminiLive] 🛠️ Nested functionCall detected in part:', part.functionCall.name);
                         const toolCall = { functionCalls: [part.functionCall] };
                         this.callbacks.onToolCall?.(toolCall);
                         this.sendToolResponse(toolCall);
@@ -209,7 +209,7 @@ export class GeminiLiveSession {
             }
 
             if (serverContent.turnComplete) {
-                console.log('[GeminiLive] turnComplete');
+                // console.log('[GeminiLive] turnComplete');
                 this.callbacks.onSpeakingChange?.(false);
                 // Reset scheduled playback time so next response starts immediately
                 if (this.playbackContext) {
@@ -221,7 +221,7 @@ export class GeminiLiveSession {
         // 3. Tool calls (Function calls from model - top level)
         const toolCall = message?.toolCall;
         if (toolCall) {
-            console.log('[GeminiLive] 🛠️ Top-level toolCall received:', JSON.stringify(toolCall));
+            // console.log('[GeminiLive] 🛠️ Top-level toolCall received:', JSON.stringify(toolCall));
             // Robustness: Ensure functionCalls is always an array if it's missing but function_calls is present
             if (!toolCall.functionCalls && toolCall.function_calls) {
                 toolCall.functionCalls = toolCall.function_calls;
@@ -234,7 +234,7 @@ export class GeminiLiveSession {
         // 4. Input transcription (user speech → text)
         const inputTranscript = message?.inputTranscription;
         if (inputTranscript?.text) {
-            console.log('[GeminiLive] User said:', inputTranscript.text.slice(0, 100));
+            // console.log('[GeminiLive] User said:', inputTranscript.text.slice(0, 100));
             this.callbacks.onTranscript?.(inputTranscript.text, 'user');
         }
 
@@ -289,7 +289,7 @@ export class GeminiLiveSession {
                 });
             } catch (e) {
                 // Session might have closed during sending
-                console.warn('[GeminiLive] sendRealtimeInput error:', e);
+                // console.warn('[GeminiLive] sendRealtimeInput error:', e);
             }
         };
 
@@ -334,7 +334,7 @@ export class GeminiLiveSession {
 
     setMuted(muted: boolean): void {
         this.isMuted = muted;
-        console.log('[GeminiLive] Mic muted:', muted);
+        // console.log('[GeminiLive] Mic muted:', muted);
     }
 
     isMicMuted(): boolean { return this.isMuted; }
@@ -355,7 +355,7 @@ export class GeminiLiveSession {
         const functionCalls = toolCall.functionCalls || toolCall.function_calls || [];
         if (functionCalls.length === 0) return;
 
-        console.log('[GeminiLive] Sending tool response for IDs:', functionCalls.map((fc: any) => fc.id || fc.call_id || fc.callId));
+        // console.log('[GeminiLive] Sending tool response for IDs:', functionCalls.map((fc: any) => fc.id || fc.call_id || fc.callId));
 
         this.session.sendToolResponse({
             functionResponses: functionCalls.map((fc: any) => ({
@@ -369,7 +369,7 @@ export class GeminiLiveSession {
     // ── Cleanup ────────────────────────────────────────────────────────────────
 
     async disconnect(): Promise<void> {
-        console.log('[GeminiLive] disconnect()');
+        // console.log('[GeminiLive] disconnect()');
 
         this.workletNode?.disconnect();
         this.sourceNode?.disconnect();
