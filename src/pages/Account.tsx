@@ -14,6 +14,7 @@ import {
   ArrowRight,
   CreditCard,
   Settings,
+  Heart,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -68,6 +69,13 @@ export default function Account() {
       description: 'PARTAGER VOTRE EXPÉRIENCE SENSORIELLE',
       to: '/compte/avis',
       accent: 'from-zinc-500/5 to-zinc-500/2',
+    },
+    {
+      icon: Heart,
+      label: 'Mes Favoris',
+      description: 'VOS PRODUITS COUP DE CŒUR',
+      to: '/compte/favoris',
+      accent: 'from-red-500/5 to-red-500/2',
     },
     {
       icon: Settings,

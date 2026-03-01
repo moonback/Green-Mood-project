@@ -23,6 +23,7 @@ import Admin from "./pages/Admin";
 import Subscriptions from "./pages/Subscriptions";
 import LoyaltyHistory from "./pages/LoyaltyHistory";
 import MyReviews from "./pages/MyReviews";
+import Favorites from "./pages/Favorites";
 import { useAuthStore } from "./store/authStore";
 import { useSettingsStore } from "./store/settingsStore";
 import SplashScreen from "./components/SplashScreen";
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="compte/abonnements" element={<Subscriptions />} />
             <Route path="compte/fidelite" element={<LoyaltyHistory />} />
             <Route path="compte/avis" element={<MyReviews />} />
+            <Route path="compte/favoris" element={<Favorites />} />
             <Route path="compte/profil" element={<Profile />} />
           </Route>
         </Route>
