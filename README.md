@@ -30,6 +30,8 @@ Green Mood Project se distingue par une suite de fonctionnalités robustes et in
 
 3.  **🛒 Système de Caisse POS (Point of Sale) Immersif**
     *   **Interface Futuriste** : Design ultra-moderne avec effets de flou (Glassmorphism), mode plein écran dédié et navigation tactile fluide.
+    *   **⚡ Scanner Barcode Natif** : Support ultra-rapide des scanners USB/Bluetooth. Scannez un produit, il s'ajoute instantanément au panier sans aucune manipulation.
+    *   **📦 Gestion Intelligente des Packs** : Reconnaissance automatique des bundles. Lorsqu'un pack est vendu, le système décrémente automatiquement le stock de chaque composant individuel.
     *   **Historique Persistent & Rapports** : Gestion native des rapports de lecture (X) et de clôture (Z) enregistrés directement en base de données pour une comptabilité parfaite.
     *   **Gestion Client & Fidélité Avancée** : Recherche rapide, attribution automatique des points et utilisation des réductions fidélité en direct à la caisse.
     *   **Encaissement Multi-modes** : Support des espèces (avec calcul du rendu), cartes bancaires et paiements mobiles.

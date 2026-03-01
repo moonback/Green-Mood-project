@@ -57,7 +57,7 @@ Ce document présente une feuille de route stratégique pour le développement f
 *   **Amélioration du BudTender** : Affinage des prompts, ajout de scénarios de conversation plus complexes, intégration de l'historique des commandes pour des recommandations.
 *   **Dashboard Admin V2** : Ajout de métriques clés (taux de conversion, LTV moyenne, performance du BudTender) et alertes de stock bas.
 *   **Tests Automatisés (Phase 1)** : Mise en place de tests unitaires pour les fonctions critiques et les hooks.
-*   **🛒 Système de Caisse POS Haut de Gamme** : Implémentation du système complet de vente en boutique avec design immersif (glassmorphism), mode plein écran, historique persistent en base de données et rapports Z/X (Terminé).
+*   **🛒 Système de Caisse POS Haut de Gamme** : Implémentation du système complet de vente en boutique avec design immersif (glassmorphism), support scanner barcode, gestion des bundles/packs et historique persistent (Terminé).
 
 ### 3.2. Moyen Terme (3-9 mois) : Croissance & Engagement
 

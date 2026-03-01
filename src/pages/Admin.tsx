@@ -40,6 +40,7 @@ import {
   ArrowLeft,
   Award,
   ShoppingCart,
+  Hash,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
@@ -123,6 +124,7 @@ const EMPTY_PRODUCT = {
   category_id: '',
   slug: '',
   name: '',
+  sku: null as string | null,
   description: null as string | null,
   cbd_percentage: null as number | null,
   thc_max: 0.2 as number | null,
@@ -330,6 +332,7 @@ export default function Admin() {
         category_id: product.category_id,
         slug: product.slug,
         name: product.name,
+        sku: product.sku ?? null,
         description: product.description,
         cbd_percentage: product.cbd_percentage,
         thc_max: product.thc_max,
@@ -597,6 +600,19 @@ export default function Admin() {
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className={LABEL}>Code-barres / SKU</label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                      <input
+                        value={productForm.sku ?? ''}
+                        onChange={(e) => setProductForm({ ...productForm, sku: e.target.value || null })}
+                        className={`${INPUT} pl-10`}
+                        placeholder="Scanner ou saisir un code (ex: 123456789)"
+                      />
+                    </div>
                   </div>
 
                   <div className="col-span-2">

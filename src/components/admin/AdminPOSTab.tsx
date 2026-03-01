@@ -247,8 +247,116 @@ function AdminPOSTab({
 
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
 
+    // ── Cart actions ──
+    const addToCart = useCallback((product: Product) => {
+        setCart((prev) => {
+            const existing = prev.find((l) => l.product.id === product.id);
+            if (existing) {
+                if (existing.quantity >= product.stock_quantity) {
+                    alert(`Stock insuffisant pour ${product.name} (Max: ${product.stock_quantity})`);
+                    return prev;
+                }
+                return prev.map((l) =>
+                    l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l
+                );
+            }
+            return [...prev, { product, quantity: 1, unitPrice: product.price }];
+        });
+    }, []);
+
+    const updateQty = (productId: string, delta: number) => {
+        setCart((prev) =>
+            prev
+                .map((l) =>
+                    l.product.id === productId
+                        ? { ...l, quantity: Math.max(0, Math.min(l.quantity + delta, l.product.stock_quantity)) }
+                        : l
+                )
+                .filter((l) => l.quantity > 0)
+        );
+    };
+
+    const updatePrice = (productId: string, price: string) => {
+        const p = parseFloat(price);
+        if (!isNaN(p) && p >= 0) {
+            setCart((prev) =>
+                prev.map((l) =>
+                    l.product.id === productId ? { ...l, unitPrice: p } : l
+                )
+            );
+        }
+    };
+
+    const removeLine = (productId: string) => {
+        setCart((prev) => prev.filter((l) => l.product.id !== productId));
+    };
+
+    const clearCart = () => {
+        setCart([]);
+        setDiscountValue('');
+        setCashGiven('');
+        setPaymentMethod('cash');
+        setSelectedCustomer(null);
+        setCustomerSearch('');
+        setUseLoyaltyPoints(false);
+        setPointsToRedeem(0);
+    };
+
     // ── Real-time Stats ──
     const [todayTotal, setTodayTotal] = useState(0);
+
+    // --- Barcode Scanner Listener ---
+    const scanBuffer = useRef('');
+    const lastScanTime = useRef(0);
+
+    const handleScan = useCallback(
+        async (sku: string) => {
+            if (!sku || sku.length < 3) return;
+            // Search in currently loaded products first
+            const product = products.find((p) => p.sku === sku);
+            if (product) {
+                addToCart(product);
+            } else {
+                // Try fetching from DB if not in current list
+                const { data } = await supabase
+                    .from('products')
+                    .select('*')
+                    .eq('sku', sku)
+                    .eq('is_active', true)
+                    .single();
+                if (data) {
+                    addToCart(data as Product);
+                }
+            }
+        },
+        [products] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+            const currentTime = Date.now();
+            if (currentTime - lastScanTime.current > 50) {
+                scanBuffer.current = '';
+            }
+            lastScanTime.current = currentTime;
+
+            if (e.key === 'Enter') {
+                if (scanBuffer.current.length >= 3) {
+                    handleScan(scanBuffer.current);
+                    scanBuffer.current = '';
+                    e.preventDefault();
+                }
+            } else if (e.key.length === 1) {
+                scanBuffer.current += e.key;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleScan]);
 
     // ── Load data ──
     const loadProducts = useCallback(async () => {
@@ -325,59 +433,6 @@ function AdminPOSTab({
     });
 
     // ── Cart actions ──
-    const addToCart = (product: Product) => {
-        setCart((prev) => {
-            const existing = prev.find((l) => l.product.id === product.id);
-            if (existing) {
-                if (existing.quantity >= product.stock_quantity) {
-                    alert(`Stock insuffisant pour ${product.name} (Max: ${product.stock_quantity})`);
-                    return prev;
-                }
-                return prev.map((l) =>
-                    l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l
-                );
-            }
-            return [...prev, { product, quantity: 1, unitPrice: product.price }];
-        });
-    };
-
-    const updateQty = (productId: string, delta: number) => {
-        setCart((prev) =>
-            prev
-                .map((l) =>
-                    l.product.id === productId
-                        ? { ...l, quantity: Math.max(0, Math.min(l.quantity + delta, l.product.stock_quantity)) }
-                        : l
-                )
-                .filter((l) => l.quantity > 0)
-        );
-    };
-
-    const updatePrice = (productId: string, price: string) => {
-        const p = parseFloat(price);
-        if (!isNaN(p) && p >= 0) {
-            setCart((prev) =>
-                prev.map((l) =>
-                    l.product.id === productId ? { ...l, unitPrice: p } : l
-                )
-            );
-        }
-    };
-
-    const removeLine = (productId: string) => {
-        setCart((prev) => prev.filter((l) => l.product.id !== productId));
-    };
-
-    const clearCart = () => {
-        setCart([]);
-        setDiscountValue('');
-        setCashGiven('');
-        setPaymentMethod('cash');
-        setSelectedCustomer(null);
-        setCustomerSearch('');
-        setUseLoyaltyPoints(false);
-        setPointsToRedeem(0);
-    };
 
     // ── Process sale ──
     const processSale = async () => {
@@ -423,18 +478,56 @@ function AdminPOSTab({
 
             // 3. Decrement stock
             for (const line of cart) {
-                const newStock = Math.max(0, line.product.stock_quantity - line.quantity);
-                await supabase
-                    .from('products')
-                    .update({ stock_quantity: newStock })
-                    .eq('id', line.product.id);
+                if (line.product.is_bundle) {
+                    // Logic for bundles: decrement components
+                    const { data: components } = await supabase
+                        .from('bundle_items')
+                        .select('product_id, quantity')
+                        .eq('bundle_id', line.product.id);
 
-                await supabase.from('stock_movements').insert({
-                    product_id: line.product.id,
-                    quantity_change: -line.quantity,
-                    type: 'sale',
-                    note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
-                });
+                    if (components) {
+                        for (const comp of components) {
+                            const totalQty = comp.quantity * line.quantity;
+                            // Fetch current stock to avoid race conditions or use RPC
+                            // Since we don't have decrement_stock RPC yet, we fetch & update
+                            const { data: compProd } = await supabase
+                                .from('products')
+                                .select('stock_quantity')
+                                .eq('id', comp.product_id)
+                                .single();
+
+                            if (compProd) {
+                                await supabase
+                                    .from('products')
+                                    .update({ stock_quantity: Math.max(0, compProd.stock_quantity - totalQty) })
+                                    .eq('id', comp.product_id);
+
+                                await supabase.from('stock_movements').insert({
+                                    product_id: comp.product_id,
+                                    quantity_change: -totalQty,
+                                    type: 'sale',
+                                    note: `[POS] Bundle component #${order.id.slice(0, 8).toUpperCase()}`,
+                                });
+                            }
+                        }
+                    }
+                    // Trigger sync (the SQL trigger should also handle it, but we force it for UI freshness)
+                    await supabase.rpc('sync_bundle_stock', { p_bundle_id: line.product.id });
+                } else {
+                    // Regular product
+                    const newStock = Math.max(0, line.product.stock_quantity - line.quantity);
+                    await supabase
+                        .from('products')
+                        .update({ stock_quantity: newStock })
+                        .eq('id', line.product.id);
+
+                    await supabase.from('stock_movements').insert({
+                        product_id: line.product.id,
+                        quantity_change: -line.quantity,
+                        type: 'sale',
+                        note: `[POS] Vente boutique #${order.id.slice(0, 8).toUpperCase()}`,
+                    });
+                }
             }
 
             // 4. Update customer loyalty points if linked
@@ -907,8 +1000,8 @@ function AdminPOSTab({
                                                     whileTap={{ scale: 0.95 }}
                                                     onClick={() => addToCart(product)}
                                                     className={`group relative flex flex-col items-center text-center rounded-[2.5rem] border transition-all overflow-hidden p-2 ${inCart
-                                                            ? 'bg-green-500/10 border-green-500/40 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
-                                                            : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900/60 shadow-xl'
+                                                        ? 'bg-green-500/10 border-green-500/40 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
+                                                        : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900/60 shadow-xl'
                                                         }`}
                                                 >
                                                     {/* Badge stock */}
