@@ -21,6 +21,7 @@ import {
     ChevronDown,
     User,
     UserPlus,
+    FileText,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -46,6 +47,16 @@ interface CompletedSale {
     cashGiven?: number;
     change?: number;
     timestamp: Date;
+}
+
+interface DailyReport {
+    totalSales: number;
+    cashTotal: number;
+    cardTotal: number;
+    mobileTotal: number;
+    itemsSold: number;
+    orderCount: number;
+    date: Date;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -200,6 +211,11 @@ export default function AdminPOSTab({
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
     const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
     const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
+    // ── Report ──
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportData, setReportData] = useState<DailyReport | null>(null);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     // ── Result ──
     const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
@@ -430,6 +446,54 @@ export default function AdminPOSTab({
         }
     };
 
+    const handleGenerateReport = async () => {
+        setIsGeneratingReport(true);
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        try {
+            const { data: orders, error } = await supabase
+                .from('orders')
+                .select(`
+                    id, total, notes, delivery_type,
+                    order_items (quantity)
+                `)
+                .eq('delivery_type', 'in_store')
+                .gte('created_at', startOfDay.toISOString());
+
+            if (error) throw error;
+
+            const report: DailyReport = {
+                totalSales: 0,
+                cashTotal: 0,
+                cardTotal: 0,
+                mobileTotal: 0,
+                itemsSold: 0,
+                orderCount: orders?.length || 0,
+                date: new Date()
+            };
+
+            orders?.forEach(o => {
+                report.totalSales += o.total;
+                if (o.notes?.includes('Paiement: Espèces')) report.cashTotal += o.total;
+                else if (o.notes?.includes('Paiement: Carte')) report.cardTotal += o.total;
+                else if (o.notes?.includes('Paiement: Mobile')) report.mobileTotal += o.total;
+
+                o.order_items?.forEach((item: any) => {
+                    report.itemsSold += item.quantity;
+                });
+            });
+
+            setReportData(report);
+            setShowReportModal(true);
+        } catch (err) {
+            console.error(err);
+            alert('Erreur lors de la génération du rapport');
+        } finally {
+            setIsGeneratingReport(false);
+        }
+    };
+
     const pmOptions: { key: PaymentMethod; label: string; icon: React.ElementType; color: string }[] = [
         { key: 'cash', label: 'Espèces', icon: Banknote, color: 'border-green-500 bg-green-900/20 text-green-400' },
         { key: 'card', label: 'Carte', icon: CreditCard, color: 'border-blue-500 bg-blue-900/20 text-blue-400' },
@@ -468,6 +532,15 @@ export default function AdminPOSTab({
                         className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-green-400 hover:border-green-500 transition-all text-sm"
                     >
                         ↻ Sync
+                    </button>
+
+                    <button
+                        onClick={handleGenerateReport}
+                        disabled={isGeneratingReport}
+                        className="px-4 py-2.5 bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-400 hover:text-yellow-400 hover:border-yellow-500 transition-all text-sm flex items-center gap-2"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Rapport du jour
                     </button>
                 </div>
 
@@ -933,6 +1006,98 @@ export default function AdminPOSTab({
                     storePhone={storePhone}
                     onClose={() => setCompletedSale(null)}
                 />
+            )}
+
+            {/* ── Daily Report Modal ── */}
+            {showReportModal && reportData && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+                    >
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-yellow-500">
+                                        <FileText className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-white">Rapport de Clôture</h2>
+                                        <p className="text-xs text-zinc-500">Synthèse du {reportData.date.toLocaleDateString('fr-FR')}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowReportModal(false)}
+                                    className="p-2 hover:bg-zinc-800 rounded-full text-zinc-500 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Ventes Totales</p>
+                                        <p className="text-2xl font-black text-white">{reportData.totalSales.toFixed(2)} €</p>
+                                    </div>
+                                    <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Commandes</p>
+                                        <p className="text-2xl font-black text-white">{reportData.orderCount}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-800/30 rounded-2xl border border-zinc-800 divide-y divide-zinc-800">
+                                    <div className="p-4 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Banknote className="w-4 h-4 text-green-400" />
+                                            <span className="text-sm text-zinc-300">Espèces</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{reportData.cashTotal.toFixed(2)} €</span>
+                                    </div>
+                                    <div className="p-4 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <CreditCard className="w-4 h-4 text-blue-400" />
+                                            <span className="text-sm text-zinc-300">Carte Bancaire</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{reportData.cardTotal.toFixed(2)} €</span>
+                                    </div>
+                                    <div className="p-4 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <Smartphone className="w-4 h-4 text-purple-400" />
+                                            <span className="text-sm text-zinc-300">Mobile</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white">{reportData.mobileTotal.toFixed(2)} €</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800 flex justify-between items-center">
+                                    <div>
+                                        <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Articles vendus</p>
+                                        <p className="text-lg font-bold text-white">{reportData.itemsSold} unités</p>
+                                    </div>
+                                    <Package className="w-8 h-8 text-zinc-700" />
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex gap-3">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Printer className="w-5 h-5" />
+                                    Imprimer
+                                </button>
+                                <button
+                                    onClick={() => setShowReportModal(false)}
+                                    className="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-2xl transition-all"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
             )}
         </div>
     );
