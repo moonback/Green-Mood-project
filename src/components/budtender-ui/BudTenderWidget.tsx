@@ -24,7 +24,7 @@ export default function BudTenderWidget({ onClick, pulse = false, unreadCount = 
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
             aria-label="Toggle BudTender"
-            className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-zinc-900/80 backdrop-blur-xl border border-green-neon/30 text-white rounded-2xl px-5 py-4 shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon/60 hover:shadow-[0_0_40px_rgba(57,255,20,0.2)] transition-all group ${pulse ? 'animate-pulse-slow' : ''}`}
+            className={`fixed bottom-6 right-6 z-[60] flex items-center gap-3 bg-zinc-900/80 backdrop-blur-xl border border-green-neon/30 text-white rounded-2xl px-5 py-4 shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon/60 hover:shadow-[0_0_40px_rgba(57,255,20,0.2)] transition-all group ${pulse ? 'animate-pulse-slow' : ''}`}
         >
             <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-green-neon/20 flex items-center justify-center group-hover:bg-green-neon/30 transition-colors">

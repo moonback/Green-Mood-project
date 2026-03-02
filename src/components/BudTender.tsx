@@ -774,7 +774,7 @@ export default function BudTender() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOpen(false)}
-                            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md"
+                            className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-md"
                         />
 
                         <motion.div
@@ -782,7 +782,7 @@ export default function BudTender() {
                             animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
                             exit={{ opacity: 0, y: 40, scale: 0.95, rotate: -1 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-32px)] sm:w-[440px] h-[min(650px,85vh)] bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800/50 rounded-2xl sm:rounded-[2.5rem] shadow-[0_32px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(57,255,20,0.05)] flex flex-col overflow-hidden"
+                            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[70] w-[calc(100vw-32px)] sm:w-[440px] h-[min(650px,85vh)] bg-zinc-900/95 backdrop-blur-2xl border border-zinc-800/50 rounded-2xl sm:rounded-[2.5rem] shadow-[0_32px_80px_rgba(0,0,0,0.6),0_0_40px_rgba(57,255,20,0.05)] flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="flex items-center gap-4 px-5 py-5 sm:px-6 sm:py-6 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950/80 to-zinc-900/80">
