@@ -113,8 +113,16 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
 
         const greeting = userName ? `Le client s'appelle ${userName}. ` : '';
         const prefs = savedPrefs
-            ? `Préférences client: objectif "${savedPrefs.goal}", expérience "${savedPrefs.experience}", format "${savedPrefs.format}", budget "${savedPrefs.budget}". `
-            : '';
+            ? `CONTEXTE BIEN-ÊTRE DU CLIENT:
+- Objectif: ${savedPrefs.goal}
+- Expérience: ${savedPrefs.experience}
+- Format préféré: ${savedPrefs.format}
+- Budget: ${savedPrefs.budget}
+- Âge: ${savedPrefs.age ?? 'Non précisé'}
+- Intensité recherchée: ${savedPrefs.intensity ?? 'Non précisé'}
+- Arômes/Terpènes préférés: ${Array.isArray(savedPrefs.terpenes) ? savedPrefs.terpenes.join(', ') : 'Aucun spécifique'}
+`
+            : 'Le client n\'a pas encore défini de préférences de profil.';
         const history =
             pastProducts.length > 0
                 ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
