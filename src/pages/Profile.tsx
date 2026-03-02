@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Mail, Shield, ArrowLeft, Save, Sparkles, Phone, BrainCircuit, Target, Zap, Waves, Coins, Cake, Flame, Leaf } from 'lucide-react';
+import { User, Mail, Shield, ArrowLeft, Save, Sparkles, Phone, BrainCircuit, Target, Zap, Waves, Coins, Cake, Flame, Leaf, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
@@ -16,6 +16,7 @@ export default function Profile() {
     const [phone, setPhone] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showBudTender, setShowBudTender] = useState(false);
 
     // Dynamic quiz steps from DB
     const [quizSteps, setQuizSteps] = useState<QuizStep[]>(BUDTENDER_DEFAULT_QUIZ);
@@ -155,17 +156,21 @@ export default function Profile() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSave} className="space-y-12">
+                <form onSubmit={handleSave} className="space-y-8">
                     {/* Section 1: Informations Personnelles */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden"
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group"
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-green-neon/5 blur-[50px] -z-10" />
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-green-neon/5 blur-[60px] -z-10 group-hover:bg-green-neon/8 transition-colors duration-700" />
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/3 blur-[40px] -z-10" />
 
                         <div className="flex items-center gap-3 mb-10">
-                            <User className="w-5 h-5 text-green-neon" />
+                            <div className="w-10 h-10 rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
+                                <User className="w-5 h-5 text-green-neon" />
+                            </div>
                             <h2 className="text-xl font-serif italic uppercase tracking-wider">Informations Personnelles</h2>
                         </div>
 
@@ -179,7 +184,7 @@ export default function Profile() {
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Votre nom..."
-                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-serif italic text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-800"
+                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-serif italic text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
                                     required
                                 />
                             </div>
@@ -193,7 +198,7 @@ export default function Profile() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="06 XX XX XX XX"
-                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-800"
+                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
                                 />
                             </div>
 
@@ -212,20 +217,22 @@ export default function Profile() {
 
                     {/* Section: Récompenses & Fidélité */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.05 }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden"
+                        transition={{ delay: 0.1, duration: 0.5, ease: 'easeOut' }}
+                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group"
                     >
-                        <div className="absolute top-0 left-0 w-32 h-32 bg-amber-400/5 blur-[50px] -z-10" />
+                        <div className="absolute top-0 left-0 w-40 h-40 bg-amber-400/5 blur-[60px] -z-10 group-hover:bg-amber-400/8 transition-colors duration-700" />
 
                         <div className="flex items-center gap-3 mb-10">
-                            <Coins className="w-5 h-5 text-amber-400" />
+                            <div className="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
+                                <Coins className="w-5 h-5 text-amber-400" />
+                            </div>
                             <h2 className="text-xl font-serif italic uppercase tracking-wider">Récompenses & Fidélité</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between">
+                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between hover:border-amber-400/20 transition-all duration-300">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Points accumulés</p>
                                     <p className="text-3xl font-black text-amber-400">{profile?.loyalty_points || 0}</p>
@@ -235,7 +242,7 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between">
+                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between hover:border-white/10 transition-all duration-300">
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Code de Parrainage</p>
                                     <p className="text-xl font-mono font-black text-white tracking-widest">{profile?.referral_code || '---'}</p>
@@ -257,62 +264,128 @@ export default function Profile() {
                         </div>
                     </motion.div>
 
-                    {/* Section 2: Préférences Bien-être (AI) */}
+                    {/* Section 2: Préférences BudTender — Collapsible */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden"
+                        transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
                     >
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-green-neon/5 blur-[50px] -z-10" />
-
-                        <div className="flex items-center justify-between mb-10">
-                            <div className="flex items-center gap-3">
-                                <BrainCircuit className="w-5 h-5 text-green-neon" />
-                                <h2 className="text-xl font-serif italic uppercase tracking-wider">Préférences BudTender</h2>
+                        {/* Toggle button — always visible */}
+                        <button
+                            type="button"
+                            onClick={() => setShowBudTender(!showBudTender)}
+                            className={`w-full group relative overflow-hidden rounded-[3rem] border transition-all duration-500 ${showBudTender
+                                    ? 'bg-white/[0.02] border-green-neon/20 p-8 md:p-12'
+                                    : 'bg-gradient-to-br from-green-neon/[0.04] via-white/[0.02] to-emerald-500/[0.03] border-white/5 hover:border-green-neon/30 p-8 md:p-10'
+                                }`}
+                        >
+                            {/* Glow background */}
+                            <div className={`absolute inset-0 transition-opacity duration-700 ${showBudTender ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                }`}>
+                                <div className="absolute top-0 right-1/4 w-48 h-48 bg-green-neon/5 blur-[80px]" />
+                                <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-emerald-400/5 blur-[60px]" />
                             </div>
-                            <Sparkles className="w-4 h-4 text-green-neon animate-pulse" />
-                        </div>
 
-                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] mb-8 leading-relaxed">
-                            Ces informations permettent à notre IA BudTender de personnaliser vos recommandations et d'adapter son expertise à vos besoins réels.
-                        </p>
-
-                        <div className="space-y-10">
-                            {quizSteps.map((step) => (
-                                <div key={step.id} className="space-y-4">
-                                    <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-4">
-                                        {step.id === 'goal' && <Target className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'experience' && <Zap className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'format' && <Waves className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'budget' && <Coins className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'age' && <Cake className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'intensity' && <Flame className="w-3 h-3 text-green-neon" />}
-                                        {step.id === 'terpenes' && <Leaf className="w-3 h-3 text-green-neon" />}
-                                        {!['goal', 'experience', 'format', 'budget', 'age', 'intensity', 'terpenes'].includes(step.id) && <BrainCircuit className="w-3 h-3 text-green-neon" />}
-                                        {step.question}
-                                    </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                        {step.options.map((option) => (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                onClick={() => updatePref(step.id, option.value)}
-                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isPrefSelected(step.id, option.value)
-                                                    ? 'bg-green-neon/10 border-green-neon text-white shadow-[0_0_20px_rgba(34,255,148,0.1)]'
-                                                    : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.08] hover:border-white/10'
-                                                    }`}
-                                            >
-                                                <span className="text-lg">{option.emoji}</span>
-                                                <span className="text-[11px] font-black uppercase tracking-tighter leading-tight">
-                                                    {option.label}
-                                                </span>
-                                            </button>
-                                        ))}
+                            <div className="relative flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${showBudTender
+                                            ? 'bg-green-neon/15 border border-green-neon/30 shadow-[0_0_20px_rgba(57,255,20,0.1)]'
+                                            : 'bg-green-neon/10 border border-green-neon/20 group-hover:shadow-[0_0_25px_rgba(57,255,20,0.15)] group-hover:border-green-neon/40'
+                                        }`}>
+                                        <SlidersHorizontal className={`w-5 h-5 text-green-neon transition-transform duration-500 ${showBudTender ? 'rotate-90' : 'group-hover:rotate-12'
+                                            }`} />
+                                    </div>
+                                    <div className="text-left">
+                                        <h2 className="text-xl font-serif italic uppercase tracking-wider text-white flex items-center gap-3">
+                                            Préférences BudTender
+                                            <Sparkles className={`w-4 h-4 text-green-neon transition-all duration-300 ${showBudTender ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'
+                                                }`} />
+                                        </h2>
+                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] mt-1">
+                                            {showBudTender ? 'Cliquez pour réduire' : 'Personnalisez vos recommandations IA'}
+                                        </p>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="flex items-center gap-3">
+                                    {!showBudTender && (
+                                        <span className="hidden md:inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-neon/60 group-hover:text-green-neon transition-colors">
+                                            <BrainCircuit className="w-3.5 h-3.5" />
+                                            Configurer
+                                        </span>
+                                    )}
+                                    <motion.div
+                                        animate={{ rotate: showBudTender ? 180 : 0 }}
+                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                        className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-green-neon/30 transition-colors"
+                                    >
+                                        <ChevronDown className="w-4 h-4 text-zinc-400 group-hover:text-green-neon transition-colors" />
+                                    </motion.div>
+                                </div>
+                            </div>
+                        </button>
+
+                        {/* Expandable content */}
+                        <AnimatePresence>
+                            {showBudTender && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 border-t-0 rounded-b-[3rem] px-8 md:px-12 pb-8 md:pb-12 pt-2 relative">
+                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-green-neon/5 blur-[50px] -z-10" />
+
+                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] mb-8 leading-relaxed">
+                                            Ces informations permettent à notre IA BudTender de personnaliser vos recommandations et d'adapter son expertise à vos besoins réels.
+                                        </p>
+
+                                        <div className="space-y-10">
+                                            {quizSteps.map((step, idx) => (
+                                                <motion.div
+                                                    key={step.id}
+                                                    initial={{ opacity: 0, y: 15 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: idx * 0.06, duration: 0.4 }}
+                                                    className="space-y-4"
+                                                >
+                                                    <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-4">
+                                                        {step.id === 'goal' && <Target className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'experience' && <Zap className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'format' && <Waves className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'budget' && <Coins className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'age' && <Cake className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'intensity' && <Flame className="w-3 h-3 text-green-neon" />}
+                                                        {step.id === 'terpenes' && <Leaf className="w-3 h-3 text-green-neon" />}
+                                                        {!['goal', 'experience', 'format', 'budget', 'age', 'intensity', 'terpenes'].includes(step.id) && <BrainCircuit className="w-3 h-3 text-green-neon" />}
+                                                        {step.question}
+                                                    </label>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                        {step.options.map((option) => (
+                                                            <button
+                                                                key={option.value}
+                                                                type="button"
+                                                                onClick={() => updatePref(step.id, option.value)}
+                                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isPrefSelected(step.id, option.value)
+                                                                    ? 'bg-green-neon/10 border-green-neon text-white shadow-[0_0_20px_rgba(34,255,148,0.1)]'
+                                                                    : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.08] hover:border-white/10'
+                                                                    }`}
+                                                            >
+                                                                <span className="text-lg">{option.emoji}</span>
+                                                                <span className="text-[11px] font-black uppercase tracking-tighter leading-tight">
+                                                                    {option.label}
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.div>
 
                     {/* Submit Button */}
