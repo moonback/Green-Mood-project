@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
+import { X, Leaf, Mic, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
@@ -8,7 +8,9 @@ import { getQuizPrompt, getChatPrompt, QuizAnswers } from '../lib/budtenderPromp
 import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTENDER_DEFAULTS, QuizStep, QuizOption } from '../lib/budtenderSettings';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
+import { CATEGORY_SLUGS } from '../lib/constants';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
+import VoiceAdvisor from './VoiceAdvisor';
 
 // ─── Shared types and logic imported ───
 
@@ -51,17 +53,17 @@ function scoreProduct(product: Product, answers: Answers): number {
 
     if (answers.goal === 'sleep') {
         if (name.includes('sommeil') || desc.includes('sommeil') || desc.includes('nuit')) score += 5;
-        if (cat === 'huiles' && (product.cbd_percentage ?? 0) >= 15) score += 3;
-        if (cat === 'infusions') score += 2;
+        if (cat === CATEGORY_SLUGS.OILS && (product.cbd_percentage ?? 0) >= 15) score += 3;
+        if (cat === CATEGORY_SLUGS.INFUSIONS) score += 2;
     }
     if (answers.goal === 'stress') {
         if (desc.includes('détente') || desc.includes('stress') || desc.includes('relaxat')) score += 5;
-        if (cat === 'infusions') score += 3;
-        if (cat === 'huiles') score += 2;
+        if (cat === CATEGORY_SLUGS.INFUSIONS) score += 3;
+        if (cat === CATEGORY_SLUGS.OILS) score += 2;
     }
     if (answers.goal === 'pain') {
         if ((product.cbd_percentage ?? 0) >= 20) score += 5;
-        if (cat === 'huiles') score += 3;
+        if (cat === CATEGORY_SLUGS.OILS) score += 3;
         if (desc.includes('douleur') || desc.includes('récupér')) score += 4;
     }
     if (answers.goal === 'wellness') {
@@ -71,16 +73,16 @@ function scoreProduct(product: Product, answers: Answers): number {
 
     if (answers.experience === 'beginner') {
         if ((product.cbd_percentage ?? 0) <= 10) score += 3;
-        if (cat === 'infusions') score += 2;
+        if (cat === CATEGORY_SLUGS.INFUSIONS) score += 2;
         if (product.is_bundle) score += 2;
     }
     if (answers.experience === 'expert') {
         if ((product.cbd_percentage ?? 0) >= 20) score += 3;
     }
 
-    if (answers.format === 'oil' && cat === 'huiles') score += 4;
-    if (answers.format === 'flower' && (cat === 'fleurs' || cat === 'resines')) score += 4;
-    if (answers.format === 'infusion' && cat === 'infusions') score += 4;
+    if (answers.format === 'oil' && cat === CATEGORY_SLUGS.OILS) score += 4;
+    if (answers.format === 'flower' && (cat === CATEGORY_SLUGS.FLOWERS || cat === CATEGORY_SLUGS.RESINS)) score += 4;
+    if (answers.format === 'infusion' && cat === CATEGORY_SLUGS.INFUSIONS) score += 4;
     if (answers.format === 'bundle' && product.is_bundle) score += 6;
 
     const price = product.price;
@@ -241,6 +243,8 @@ export default function BudTender() {
     // Free chat input
     const [chatInput, setChatInput] = useState('');
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
+    // Voice advisor overlay
+    const [isVoiceOpen, setIsVoiceOpen] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -298,7 +302,7 @@ export default function BudTender() {
 
     // ── Message helpers ──────────────────────────────────────────────────────
 
-    const addBotMessage = (msg: Partial<Message>, delay?: number) => {
+    const addBotMessage = useCallback((msg: Partial<Message>, delay?: number) => {
         setIsTyping(true);
 
         // Use speed from settings
@@ -315,15 +319,15 @@ export default function BudTender() {
             }]);
             setIsTyping(false);
         }, ms);
-    };
+    }, [settings.typing_speed]);
 
-    const addUserMessage = (text: string) => {
+    const addUserMessage = useCallback((text: string) => {
         setMessages((prev) => [...prev, {
             id: Math.random().toString(36).substring(7),
             sender: 'user',
             text,
         }]);
-    };
+    }, []);
 
     // ── Welcome flow ─────────────────────────────────────────────────────────
 
@@ -781,6 +785,15 @@ export default function BudTender() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
+                                        onClick={() => setIsVoiceOpen(true)}
+                                        title="Conseiller vocal IA (Gemini Live)"
+                                        className="p-2 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-xl transition-all"
+                                        aria-label="Ouvrir le conseiller vocal"
+                                    >
+                                        <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </button>
+                                    <button
                                         onClick={reset}
                                         title="Nouvelle discussion (garder vos préférences)"
                                         className="p-2 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-xl transition-all"
@@ -795,6 +808,16 @@ export default function BudTender() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* ── Voice Advisor overlay (absolute, fills the panel) ── */}
+                            <VoiceAdvisor
+                                products={products}
+                                pastProducts={memory.pastProducts}
+                                savedPrefs={memory.savedPrefs}
+                                userName={memory.userName}
+                                isOpen={isVoiceOpen}
+                                onClose={() => setIsVoiceOpen(false)}
+                            />
 
                             {/* Messages area */}
                             <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 custom-scrollbar bg-gradient-to-b from-transparent via-zinc-900/20 to-green-neon/[0.02]">

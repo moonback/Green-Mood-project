@@ -129,7 +129,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           });
         }
       } catch (err) {
-        console.error('Referral logic failed, but user was created:', err);
+        if (import.meta.env.DEV) console.error('Referral logic failed, but user was created:', err);
       }
     }
   },

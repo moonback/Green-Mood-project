@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
-import { getBudTenderSettings } from '../lib/budtenderSettings';
+import { getBudTenderSettings, QuizOption, BudTenderSettings } from '../lib/budtenderSettings';
+import { CATEGORY_SLUGS } from '../lib/constants';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,9 +21,9 @@ export interface ChatMessage {
     type?: string;
     isResult?: boolean;
     isOptions?: boolean;
-    options?: any[];
+    options?: QuizOption[];
     stepId?: string;
-    recommended?: any[];
+    recommended?: Product[];
 }
 
 export interface PastProduct {
@@ -40,12 +41,32 @@ export interface RestockCandidate extends PastProduct {
     threshold: number;
 }
 
+// Shape of each order_items row returned by the join query
+interface OrderHistoryItem {
+    product_id: string;
+    product_name: string;
+    unit_price: number;
+    product: {
+        slug: string;
+        image_url: string | null;
+        category: { slug: string } | null;
+    } | null;
+}
+
+// Maps a category slug to the matching BudTenderSettings threshold key.
+// Any slug not present falls back to 'restock_threshold_other'.
+const CATEGORY_THRESHOLD_KEYS: Partial<Record<string, keyof BudTenderSettings>> = {
+    [CATEGORY_SLUGS.OILS]: 'restock_threshold_oils',
+    [CATEGORY_SLUGS.FLOWERS]: 'restock_threshold_flowers',
+    [CATEGORY_SLUGS.RESINS]: 'restock_threshold_flowers',
+};
+
 // Fallback defaults if settings fail
 const FALLBACK_THRESHOLDS: Record<string, number> = {
-    huiles: 30,
-    fleurs: 14,
-    resines: 14,
-    infusions: 21,
+    [CATEGORY_SLUGS.OILS]: 30,
+    [CATEGORY_SLUGS.FLOWERS]: 14,
+    [CATEGORY_SLUGS.RESINS]: 14,
+    [CATEGORY_SLUGS.INFUSIONS]: 21,
 };
 const FALLBACK_DEFAULT = 21;
 
@@ -112,18 +133,17 @@ export function useBudTenderMemory() {
                 const restock: RestockCandidate[] = [];
 
                 for (const order of orders) {
-                    const items = (order.order_items as any[]) ?? [];
+                    const items = (order.order_items as unknown as OrderHistoryItem[]) ?? [];
                     const orderedAt = order.created_at as string;
                     const daysSince = (now - new Date(orderedAt).getTime()) / (1000 * 60 * 60 * 24);
 
                     for (const item of items) {
-                        const product = item.product as Product | null;
-                        const catSlug = (product?.category as any)?.slug ?? null;
+                        const catSlug = item.product?.category?.slug ?? null;
                         const candidate: PastProduct = {
                             product_id: item.product_id,
                             product_name: item.product_name,
-                            slug: product?.slug ?? null,
-                            image_url: product?.image_url ?? null,
+                            slug: item.product?.slug ?? null,
+                            image_url: item.product?.image_url ?? null,
                             price: item.unit_price,
                             orderedAt,
                             categorySlug: catSlug,
@@ -135,11 +155,9 @@ export function useBudTenderMemory() {
                             past.push(candidate);
                         }
 
-                        // Restock check
-                        let threshold = settings.restock_threshold_other;
-                        if (catSlug === 'huiles') threshold = settings.restock_threshold_oils;
-                        if (catSlug === 'fleurs' || catSlug === 'resines') threshold = settings.restock_threshold_flowers;
-                        if (catSlug === 'infusions') threshold = settings.restock_threshold_other; // or add infusions specifically if needed
+                        // Restock check — map category slug to its threshold setting key
+                        const thresholdKey = (catSlug && CATEGORY_THRESHOLD_KEYS[catSlug]) ?? 'restock_threshold_other';
+                        const threshold = settings[thresholdKey] as number;
 
                         if (daysSince >= threshold && !restock.find(r => r.product_id === item.product_id)) {
                             restock.push({ ...candidate, daysSince: Math.round(daysSince), threshold });
@@ -150,7 +168,7 @@ export function useBudTenderMemory() {
                 setPastProducts(past.slice(0, 5));
                 setRestockCandidates(restock.slice(0, 2)); // max 2 restock suggestions
             } catch (err) {
-                console.error('[BudTenderMemory]', err);
+                if (import.meta.env.DEV) console.error('[BudTenderMemory]', err);
             } finally {
                 setIsLoading(false);
             }
@@ -179,7 +197,7 @@ export function useBudTenderMemory() {
                 });
             }
         } catch (err) {
-            console.error('[BudTenderMemory] Error saving prefs:', err);
+            if (import.meta.env.DEV) console.error('[BudTenderMemory] Error saving prefs:', err);
         }
     };
 
@@ -200,10 +218,10 @@ export function useBudTenderMemory() {
                     interaction_type: 'chat_session',
                     quiz_answers: { messages: history },
                     created_at: new Date().toISOString()
-                }, { onConflict: 'user_id, session_id' });
+                }, { onConflict: 'user_id,session_id' });
             }
         } catch (err) {
-            console.error('[BudTenderMemory] Error saving history:', err);
+            if (import.meta.env.DEV) console.error('[BudTenderMemory] Error saving history:', err);
         }
     };
 
@@ -258,7 +276,7 @@ export function useBudTenderMemory() {
                     setChatHistory(history);
                     localStorage.setItem('budtender_chat_history_v1', JSON.stringify(history));
                 }
-            } catch (err) {
+            } catch {
                 // Likely no data yet or single() error, normal
             }
         };

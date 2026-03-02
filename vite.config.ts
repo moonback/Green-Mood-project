@@ -14,6 +14,13 @@ export default defineConfig(({mode}) => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+      // Force a single React instance — prevents "Invalid hook call" when motion/react
+      // is pre-bundled with a separate CJS React copy alongside the ESM one used by react-dom.
+      dedupe: ['react', 'react-dom'],
+    },
+    optimizeDeps: {
+      // Pre-bundle React as ESM so all packages share the exact same instance.
+      include: ['react', 'react-dom', 'react/jsx-runtime'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
