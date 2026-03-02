@@ -98,22 +98,135 @@ export default function Layout() {
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
         className="sticky top-0 z-50 w-full"
       >
-        <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_4px_24px_rgba(0,0,0,0.4)]" />
+        {/* Header Background with Glassmorphism */}
+        <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-3xl border-b border-white/[0.04] shadow-[0_8px_32px_rgba(0,0,0,0.5)]" />
 
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 relative z-10">
-          <div className="flex justify-between items-center h-18 md:h-20">
-            {/* Logo */}
-            <Link to="/" className="flex items-center group relative" aria-label="Green Mood CBD Shop — Accueil">
-              <div className="absolute -inset-4 bg-green-neon/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <img
-                src="/logo.png"
-                alt="Green Mood CBD Shop"
-                className="h-16 md:h-18 w-auto object-contain transition-all duration-500 group-hover:scale-105 group-hover:glow-logo"
-              />
-            </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col">
+            {/* Top Row: Logo & Actions */}
+            <div className="flex items-center justify-between h-20 md:h-24">
+              {/* Left spacer for desktop symmetry, Mobile menu button for mobile */}
+              <div className="flex-1 lg:flex items-center hidden">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold hidden xl:block">
+                  Premium CBD Experience
+                </span>
+              </div>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-1.5">
+              {/* Mobile Menu Button - Left on mobile */}
+              <div className="lg:hidden flex-1">
+                <button
+                  className="p-2.5 text-zinc-400 hover:text-white bg-white/[0.04] rounded-xl border border-white/[0.08] transition-all active:scale-95"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                >
+                  {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
+
+              {/* Centered Logo */}
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <Link to="/" className="flex items-center group relative z-50" aria-label="Green Mood CBD Shop — Accueil">
+                  <div className="absolute -inset-8 bg-green-neon/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <img
+                    src="/logo.png"
+                    alt="Green Mood CBD Shop"
+                    className="h-16 md:h-40 w-auto object-contain transition-all duration-700 group-hover:scale-105 group-hover:glow-logo"
+                  />
+                </Link>
+              </div>
+
+              {/* Right Actions: Cart & Account */}
+              <div className="flex-1 flex justify-end items-center gap-2 md:gap-4">
+                {/* Cart button */}
+                <button
+                  onClick={openSidebar}
+                  className="group relative p-3 text-zinc-400 hover:text-green-neon transition-all duration-300 hover:bg-white/[0.04] rounded-xl border border-transparent hover:border-white/[0.08]"
+                  aria-label="Ouvrir le panier"
+                >
+                  <ShoppingCart className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-green-neon text-black text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center shadow-[0_0_12px_rgba(57,255,20,0.5)]">
+                      {itemCount > 99 ? "99+" : itemCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Account (Desktop) */}
+                {user ? (
+                  <div className="relative hidden md:block">
+                    <button
+                      onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                      className={`flex items-center gap-2.5 p-1.5 pr-4 rounded-full border transition-all duration-300 ${isAccountMenuOpen
+                        ? "bg-green-neon border-green-neon text-black"
+                        : "bg-white/[0.04] border-white/[0.08] text-zinc-300 hover:border-green-neon/40 hover:text-white shadow-lg"
+                        }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isAccountMenuOpen ? "bg-black/20" : "bg-white/[0.08]"
+                        }`}>
+                        <User className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">
+                        {profile?.full_name?.split(" ")[0] ?? "Profil"}
+                      </span>
+                    </button>
+
+                    <AnimatePresence>
+                      {isAccountMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 12, scale: 0.95 }}
+                          className="absolute right-0 top-full mt-4 w-56 bg-zinc-900/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-50 p-2"
+                        >
+                          <Link
+                            to="/compte"
+                            className="flex items-center gap-3 px-4 py-3 text-xs font-semibold text-zinc-400 hover:bg-white/[0.04] hover:text-white rounded-xl transition-all"
+                          >
+                            <User className="h-4 w-4" />
+                            Tableau de bord
+                          </Link>
+                          <Link
+                            to="/compte/commandes"
+                            className="flex items-center gap-3 px-4 py-3 text-xs font-semibold text-zinc-400 hover:bg-white/[0.04] hover:text-white rounded-xl transition-all"
+                          >
+                            <Clock className="h-4 w-4" />
+                            Historique
+                          </Link>
+                          {profile?.is_admin && (
+                            <Link
+                              to="/admin"
+                              className="flex items-center gap-3 px-4 py-3 text-xs font-bold text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
+                            >
+                              <ShieldCheck className="h-4 w-4" />
+                              Administration
+                            </Link>
+                          )}
+                          <div className="h-px bg-white/[0.06] my-2 mx-4" />
+                          <button
+                            onClick={signOut}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Déconnexion
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <Link
+                    to="/connexion"
+                    className="hidden md:flex items-center gap-3 px-6 py-2.5 bg-white/[0.04] border border-white/[0.08] hover:bg-white/10 hover:border-green-neon/20 text-white rounded-full transition-all duration-300 group"
+                  >
+                    <User className="h-3.5 w-3.5 text-zinc-500 group-hover:text-green-neon transition-colors" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Connexion</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Row: Navigation (Desktop only) */}
+            <nav className="hidden lg:flex items-center justify-center gap-2 pb-5 pt-2 border-t border-white/[0.03]">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path ||
                   (link.path !== "/" && location.pathname.startsWith(link.path));
@@ -121,125 +234,29 @@ export default function Layout() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`relative px-3.5 py-2 text-xs font-semibold uppercase tracking-[0.15em] transition-all duration-300 group ${isActive ? "text-green-neon" : "text-zinc-400 hover:text-white"
+                    className={`relative px-5 py-2 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-500 group ${isActive ? "text-green-neon" : "text-zinc-400 hover:text-white"
                       }`}
                   >
                     <span className="relative z-10">{link.name}</span>
                     {isActive ? (
                       <motion.span
                         layoutId="nav-active"
-                        className="absolute inset-0 bg-white/[0.04] rounded-xl border border-white/[0.08] -z-0"
+                        className="absolute inset-0 bg-green-neon/[0.03] rounded-full border border-green-neon/10 -z-0"
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
                     ) : (
-                      <span className="absolute inset-0 bg-white/0 rounded-xl group-hover:bg-white/[0.04] transition-all duration-300 -z-0" />
+                      <span className="absolute inset-0 bg-transparent rounded-full group-hover:bg-white/[0.03] transition-all duration-300 -z-0" />
                     )}
                     {isActive && (
-                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-neon rounded-full shadow-[0_0_8px_rgba(57,255,20,0.8)]" />
+                      <motion.span
+                        layoutId="nav-dot"
+                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-green-neon rounded-full shadow-[0_0_8px_rgba(57,255,20,0.8)]"
+                      />
                     )}
                   </Link>
                 );
               })}
             </nav>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-2.5">
-              {/* Cart button */}
-              <button
-                onClick={openSidebar}
-                className="group relative p-2.5 text-zinc-400 hover:text-green-neon transition-all duration-300 hover:bg-white/[0.04] rounded-xl border border-transparent hover:border-white/[0.08]"
-                aria-label="Ouvrir le panier"
-              >
-                <ShoppingCart className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-green-neon text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_12px_rgba(57,255,20,0.4)]">
-                    {itemCount > 99 ? "99+" : itemCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Account */}
-              {user ? (
-                <div className="relative hidden md:block">
-                  <button
-                    onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
-                    className={`flex items-center gap-2.5 p-2 pr-3.5 rounded-xl border transition-all duration-300 ${isAccountMenuOpen
-                      ? "bg-green-neon border-green-neon text-black"
-                      : "bg-white/[0.04] border-white/[0.08] text-zinc-300 hover:border-green-neon/40 hover:text-white"
-                      }`}
-                  >
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isAccountMenuOpen ? "bg-black/20" : "bg-white/[0.08]"
-                      }`}>
-                      <User className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-wider">
-                      {profile?.full_name?.split(" ")[0] ?? "Profil"}
-                    </span>
-                  </button>
-
-                  <AnimatePresence>
-                    {isAccountMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-3 w-52 bg-zinc-900/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden z-50 p-1.5"
-                      >
-                        <Link
-                          to="/compte"
-                          className="flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-zinc-400 hover:bg-white/[0.04] hover:text-white rounded-xl transition-all"
-                        >
-                          <User className="h-4 w-4" />
-                          Tableau de bord
-                        </Link>
-                        <Link
-                          to="/compte/commandes"
-                          className="flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-zinc-400 hover:bg-white/[0.04] hover:text-white rounded-xl transition-all"
-                        >
-                          <Clock className="h-4 w-4" />
-                          Historique
-                        </Link>
-                        {profile?.is_admin && (
-                          <Link
-                            to="/admin"
-                            className="flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
-                          >
-                            <ShieldCheck className="h-4 w-4" />
-                            Administration
-                          </Link>
-                        )}
-                        <div className="h-px bg-white/[0.06] my-1.5 mx-3" />
-                        <button
-                          onClick={signOut}
-                          className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          Déconnexion
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <Link
-                  to="/connexion"
-                  className="hidden md:flex items-center gap-2.5 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.12] text-white rounded-xl transition-all duration-300 group"
-                >
-                  <User className="h-4 w-4 text-zinc-500 group-hover:text-green-neon transition-colors" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">Accès Client</span>
-                </Link>
-              )}
-
-              {/* Mobile Menu Button */}
-              <button
-                className="lg:hidden p-2.5 text-zinc-400 hover:text-white bg-white/[0.04] rounded-xl border border-white/[0.08] transition-all"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-              >
-                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            </div>
           </div>
         </div>
 
@@ -251,40 +268,49 @@ export default function Layout() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-0 z-50 lg:hidden bg-zinc-950/98 backdrop-blur-2xl flex flex-col"
+              className="fixed inset-0 z-[100] lg:hidden bg-zinc-950 flex flex-col overflow-hidden"
             >
+              {/* Background Glow Decorations */}
+              <div className="absolute top-0 right-0 w-[80%] h-[40%] bg-green-neon/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-[60%] h-[30%] bg-green-neon/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+
               {/* Mobile header */}
-              <div className="flex items-center justify-between px-5 h-18">
-                <Link to="/" className="flex items-center" aria-label="Green Mood CBD Shop">
-                  <img src="/logo.png" alt="Green Mood CBD Shop" className="h-12 w-auto object-contain" />
+              <div className="flex items-center justify-between px-6 h-20 relative z-10 border-b border-white/[0.04] bg-zinc-950/50 backdrop-blur-md">
+                <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
+                  <img src="/logo.png" alt="Green Mood" className="h-10 w-auto object-contain" />
                 </Link>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2.5 text-zinc-500 hover:text-white rounded-xl hover:bg-white/[0.04] transition-all"
+                  className="p-3 text-zinc-400 hover:text-white rounded-2xl bg-white/[0.04] border border-white/[0.08] active:scale-90 transition-all"
                   aria-label="Fermer le menu"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Navigation links */}
-              <nav className="flex-1 overflow-y-auto px-5 pt-8 pb-6">
-                <div className="space-y-1">
+              <nav className="flex-1 overflow-y-auto px-6 py-10 relative z-10 scrollbar-none">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-600 font-black mb-4 ml-4">Menu Principal</span>
                   {navLinks.map((link, i) => (
                     <motion.div
                       key={link.path}
-                      initial={{ opacity: 0, x: 24 }}
+                      initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.3 }}
+                      transition={{ delay: 0.1 + i * 0.05, duration: 0.4 }}
                     >
                       <Link
                         to={link.path}
-                        className={`block px-4 py-3.5 rounded-2xl text-xl font-serif font-semibold transition-all ${location.pathname === link.path
-                          ? "text-green-neon bg-green-neon/[0.06]"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`group flex items-center justify-between px-5 py-4 rounded-3xl transition-all duration-300 ${location.pathname === link.path
+                          ? "bg-green-neon/10 text-green-neon"
                           : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
                           }`}
                       >
-                        {link.name}
+                        <span className="text-2xl font-serif font-bold tracking-tight">{link.name}</span>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${location.pathname === link.path ? "bg-green-neon text-black rotate-0" : "bg-white/5 text-zinc-600 -rotate-45 group-hover:rotate-0 group-hover:bg-white/10 group-hover:text-white"}`}>
+                          <Leaf className="w-4 h-4" />
+                        </div>
                       </Link>
                     </motion.div>
                   ))}
@@ -292,24 +318,52 @@ export default function Layout() {
               </nav>
 
               {/* Mobile footer actions */}
-              <div className="px-5 pb-8 pt-4 border-t border-white/[0.06] space-y-4">
+              <div className="px-6 pb-10 pt-6 border-t border-white/[0.06] bg-zinc-950/80 backdrop-blur-xl relative z-20 space-y-4">
                 {user ? (
-                  <div className={`${profile?.is_admin ? "grid-cols-1" : "grid-cols-2"} grid gap-3`}>
-                    <Link to="/compte" className="flex items-center justify-center gap-2.5 p-3.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm font-semibold">
-                      <User className="h-4 w-4 text-green-neon" /> Mon compte
-                    </Link>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-4 p-4 bg-white/[0.03] rounded-3xl border border-white/[0.06]">
+                      <div className="w-12 h-12 rounded-2xl bg-green-neon/10 flex items-center justify-center text-green-neon">
+                        <User className="w-6 h-6" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Bienvenue</span>
+                        <span className="text-lg font-serif font-black text-white">{profile?.full_name ?? "Client Mood"}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Link
+                        to="/compte"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl hover:bg-white/[0.08] transition-all"
+                      >
+                        <User className="h-5 w-5 text-green-neon" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Profil</span>
+                      </Link>
+                      <button
+                        onClick={() => { signOut(); setIsMenuOpen(false); }}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-red-400/5 border border-red-400/10 rounded-3xl hover:bg-red-400/10 transition-all group"
+                      >
+                        <LogOut className="h-5 w-5 text-red-400 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-red-300">Sortie</span>
+                      </button>
+                    </div>
                     {profile?.is_admin && (
-                      <Link to="/admin" className="flex items-center justify-center gap-2.5 p-3.5 bg-green-neon/10 border border-green-neon/20 rounded-xl text-sm font-semibold text-green-neon">
+                      <Link
+                        to="/admin"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center justify-center gap-3 p-4 bg-green-neon text-black rounded-3xl text-xs font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(57,255,20,0.2)]"
+                      >
                         <ShieldCheck className="h-4 w-4" /> Administration
                       </Link>
                     )}
-                    <button onClick={signOut} className="flex items-center justify-center gap-2.5 p-3.5 bg-red-400/10 border border-red-400/20 rounded-xl text-sm font-semibold text-red-400">
-                      <LogOut className="h-4 w-4" /> Déconnexion
-                    </button>
                   </div>
                 ) : (
-                  <Link to="/connexion" className="flex items-center justify-center gap-3 p-4 bg-green-neon text-black rounded-2xl text-sm font-bold uppercase tracking-wider">
-                    <User className="h-4 w-4" /> Connexion
+                  <Link
+                    to="/connexion"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-4 p-5 bg-green-neon text-black rounded-3xl text-sm font-black uppercase tracking-[0.2em] shadow-[0_15px_40px_rgba(57,255,20,0.3)] active:scale-95 transition-all"
+                  >
+                    <User className="h-5 w-5" /> Connexion
                   </Link>
                 )}
               </div>
