@@ -116,6 +116,8 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
     const setupTimeoutRef = useRef<number | null>(null);
     const startInFlightRef = useRef(false);
+    const sessionIdRef = useRef(0);
+    const isManualCloseRef = useRef(false);
 
     // ── System prompt ────────────────────────────────────────────────────────
 
@@ -324,6 +326,7 @@ OBJECTIF FINAL :
     }, []);
 
     const cleanup = useCallback(() => {
+        isManualCloseRef.current = true;
         clearSetupTimeout();
         stopAllPlayback();
         processorRef.current?.disconnect();
@@ -339,6 +342,8 @@ OBJECTIF FINAL :
         scheduledUntilRef.current = 0;
         isSpeakingRef.current = false;
         isMutedRef.current = false;
+        startInFlightRef.current = false;
+        sessionIdRef.current += 1;
     }, [clearSetupTimeout, stopAllPlayback]);
 
     useEffect(() => {
@@ -351,11 +356,18 @@ OBJECTIF FINAL :
         cleanup();
         setVoiceState('idle');
         setIsMuted(false);
-        startInFlightRef.current = false;
     }, [cleanup]);
 
     const startSession = useCallback(async () => {
         if (startInFlightRef.current || voiceState === 'connecting') return;
+
+        if (wsRef.current || streamRef.current || captureCtxRef.current || playbackCtxRef.current) {
+            cleanup();
+        }
+
+        isManualCloseRef.current = false;
+        const sessionId = sessionIdRef.current + 1;
+        sessionIdRef.current = sessionId;
 
         if (compatibilityError) {
             setError(compatibilityError);
@@ -406,13 +418,14 @@ OBJECTIF FINAL :
         wsRef.current = ws;
 
         setupTimeoutRef.current = window.setTimeout(() => {
+            if (sessionIdRef.current !== sessionId) return;
             setError('La connexion vocale met trop de temps. Vérifiez votre réseau et réessayez.');
             setVoiceState('error');
             cleanup();
-            startInFlightRef.current = false;
         }, CONNECTION_TIMEOUT_MS);
 
         ws.onopen = () => {
+            if (sessionIdRef.current !== sessionId) return;
             ws.send(
                 JSON.stringify({
                     setup: {
@@ -434,6 +447,7 @@ OBJECTIF FINAL :
         };
 
         ws.onmessage = async (event) => {
+            if (sessionIdRef.current !== sessionId) return;
             try {
                 const raw: string =
                     event.data instanceof Blob ? await event.data.text() : (event.data as string);
@@ -520,19 +534,20 @@ OBJECTIF FINAL :
         };
 
         ws.onerror = () => {
+            if (sessionIdRef.current !== sessionId) return;
             clearSetupTimeout();
             setError('Erreur de connexion WebSocket. Vérifiez votre clé API Gemini et votre connexion internet.');
             setVoiceState('error');
             cleanup();
-            startInFlightRef.current = false;
         };
 
         ws.onclose = (e) => {
+            if (sessionIdRef.current !== sessionId) return;
             clearSetupTimeout();
             startInFlightRef.current = false;
-            if (e.code !== 1000 && voiceState !== 'error') {
+            if (!isManualCloseRef.current && e.code !== 1000) {
                 setError('Session vocale fermée de manière inattendue.');
-                setVoiceState('idle');
+                setVoiceState('error');
             }
         };
     }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, voiceState, compatibilityError, clearSetupTimeout]);
