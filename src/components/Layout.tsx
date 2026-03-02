@@ -130,7 +130,7 @@ export default function Layout() {
                   <img
                     src="/logo.png"
                     alt="Green Mood CBD Shop"
-                    className="h-16 md:h-40 w-auto object-contain transition-all duration-700 group-hover:scale-105 group-hover:glow-logo"
+                    className="h-28 md:h-40 w-auto object-contain transition-all duration-700 group-hover:scale-105 group-hover:glow-logo"
                   />
                 </Link>
               </div>
