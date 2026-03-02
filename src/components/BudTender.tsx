@@ -11,6 +11,7 @@ import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { CATEGORY_SLUGS } from '../lib/constants';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
 import VoiceAdvisor from './VoiceAdvisor';
+import { VoiceUtterance } from '../hooks/useGeminiLiveVoice';
 
 // ─── Shared types and logic imported ───
 
@@ -252,6 +253,25 @@ export default function BudTender() {
     const hasTriedLoad = useRef(false);
 
     const memory = useBudTenderMemory();
+
+    // Feature 4: Continue from voice session in text chat
+    const handleContinueFromVoice = useCallback((voiceTranscript: VoiceUtterance[]) => {
+        setIsVoiceOpen(false);
+        if (voiceTranscript.length === 0) return;
+
+        // Build a brief context message from the voice conversation
+        const lastExchanges = voiceTranscript.slice(-6);
+        const summaryText = lastExchanges
+            .map(u => `${u.role === 'user' ? 'Client' : 'BudTender'}: ${u.text}`)
+            .join('\n');
+
+        const msgId = `msg-voice-${Date.now()}`;
+        setMessages(prev => [...prev, {
+            id: msgId,
+            sender: 'bot' as const,
+            text: `Suite de votre session vocale. Voici le contexte de notre échange :\n\n${summaryText}\n\nComment puis-je vous aider davantage ?`,
+        }]);
+    }, []);
 
     // Load admin settings from DB when opening
     useEffect(() => {
@@ -839,6 +859,7 @@ export default function BudTender() {
                                 userName={memory.userName}
                                 isOpen={isVoiceOpen}
                                 onClose={() => setIsVoiceOpen(false)}
+                                onContinueInChat={handleContinueFromVoice}
                             />
 
                             {/* Messages area */}

@@ -14,9 +14,16 @@ const CONNECTION_TIMEOUT_MS = 10000;
 // Minimal scheduling ahead — keeps playback tight without gaps
 const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
 
+// Reconnection constants
+const MAX_RECONNECT_ATTEMPTS = 3;
+const RECONNECT_BASE_DELAY_MS = 1000;
+
+// Amplitude throttle: update every ~64ms (24 frames at ~2.67ms per AudioWorklet callback)
+const AMPLITUDE_THROTTLE_FRAMES = 24;
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
+export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'reconnecting' | 'error';
 
 export interface VoiceUtterance {
     role: 'user' | 'assistant';
@@ -92,6 +99,14 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const [error, setError] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
 
+    // Feature 1: Session timer
+    const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+    const [reconnectAttempt, setReconnectAttempt] = useState(0);
+
+    // Feature 2: Audio amplitude
+    const [outputAmplitude, setOutputAmplitude] = useState(0);
+    const [inputAmplitude, setInputAmplitude] = useState(0);
+
     const [compatibilityError] = useState<string | null>(() => {
         if (typeof window === 'undefined') return null;
         if (!window.isSecureContext) return 'La voix nécessite une connexion sécurisée (HTTPS).';
@@ -118,6 +133,13 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const startInFlightRef = useRef(false);
     const sessionIdRef = useRef(0);
     const isManualCloseRef = useRef(false);
+
+    // Feature 1: Reconnection refs
+    const reconnectTimerRef = useRef<number | null>(null);
+    const reconnectAttemptRef = useRef(0);
+
+    // Feature 2: Amplitude throttle ref
+    const amplitudeFrameRef = useRef(0);
 
     // ── System prompt ────────────────────────────────────────────────────────
 
@@ -176,7 +198,7 @@ CATALOGUE DISPONIBLE (NE JAMAIS SORTIR DE CE CADRE) :
 ${catalogStr}
 
 EXPERTISE PRODUITS :
-- THCV : molécule stimulante orientée énergie, clarté mentale et contrôle de l’appétit. Utilisation plutôt en journée.
+- THCV : molécule stimulante orientée énergie, clarté mentale et contrôle de l'appétit. Utilisation plutôt en journée.
 - THV-N10 : cannabinoïde nouvelle génération orienté détente profonde, lâcher-prise et relaxation mentale, sans effet planant type THC.
 - Tu connais les synergies, dosages progressifs et profils utilisateurs.
 
@@ -185,11 +207,11 @@ RÈGLES ABSOLUES (OBLIGATOIRES) :
 - Réponses ORALES et naturelles (1 à 4 phrases maximum).
 - Jamais de listes, jamais de jargon médical.
 - ZÉRO promesse thérapeutique (pas de soigner, traiter, guérir).
-- Tu parles en bien-être, sensations, retours d’expérience.
+- Tu parles en bien-être, sensations, retours d'expérience.
 - Propose UN SEUL produit à la fois.
 - Uniquement des produits présents dans le catalogue ci-dessus.
 - Si une info manque, pose UNE question simple et directe.
-- Si l’utilisateur interrompt, tu t’arrêtes immédiatement.
+- Si l'utilisateur interrompt, tu t'arrêtes immédiatement.
 - PRIORITÉ DÉCOUVERTE : Ne propose AUCUN produit avant d'avoir qualifié le besoin (objectif, moment de la journée, expérience souhaitée).
 - ANTICIPATION : Une fois le besoin qualifié, précède les questions futures (ex: mode de consommation idéal).
 
@@ -199,8 +221,8 @@ STRUCTURE MENTALE À RESPECTER À CHAQUE RÉPONSE :
 3. Justification + ANTICIPATION (ex: "Tu cherches plutôt à te détendre après le travail ou à rester actif ?")
 
 EXEMPLES INTERNES (NE PAS AFFICHER) :
-- “Bienvenu chez Green Moon ! Dis-moi, pour t'orienter au mieux, tu recherches quel type de ressenti aujourd'hui ?”
-- “C'est noté pour la détente. Tu cherches plutôt un effet léger pour rester focus ou quelque chose de plus marqué pour décrocher ?”
+- "Bienvenu chez Green Moon ! Dis-moi, pour t'orienter au mieux, tu recherches quel type de ressenti aujourd'hui ?"
+- "C'est noté pour la détente. Tu cherches plutôt un effet léger pour rester focus ou quelque chose de plus marqué pour décrocher ?"
 
 OBJECTIF FINAL :
 Écouter et comprendre avant de conseiller.
@@ -212,6 +234,13 @@ OBJECTIF FINAL :
         if (setupTimeoutRef.current) {
             window.clearTimeout(setupTimeoutRef.current);
             setupTimeoutRef.current = null;
+        }
+    }, []);
+
+    const clearReconnectTimer = useCallback(() => {
+        if (reconnectTimerRef.current) {
+            window.clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
         }
     }, []);
 
@@ -244,6 +273,7 @@ OBJECTIF FINAL :
         stopAllPlayback();
         scheduledUntilRef.current = ctx.currentTime;
         isSpeakingRef.current = false;
+        setOutputAmplitude(0);
         setVoiceState('listening');
     }, [stopAllPlayback]);
 
@@ -257,7 +287,15 @@ OBJECTIF FINAL :
 
                 const int16 = new Int16Array(bytes.buffer);
                 const float32 = new Float32Array(int16.length);
-                for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
+
+                // Feature 2: Compute RMS amplitude from output audio
+                let sumSq = 0;
+                for (let i = 0; i < int16.length; i++) {
+                    float32[i] = int16[i] / 32768;
+                    sumSq += float32[i] * float32[i];
+                }
+                const rms = Math.sqrt(sumSq / float32.length);
+                setOutputAmplitude(Math.min(1, rms * 4));
 
                 const audioBuffer = ctx.createBuffer(1, float32.length, OUTPUT_SAMPLE_RATE);
                 audioBuffer.copyToChannel(float32, 0);
@@ -279,6 +317,7 @@ OBJECTIF FINAL :
                     activeSourcesRef.current.delete(source);
                     if (ctx.currentTime >= scheduledUntilRef.current - 0.05) {
                         isSpeakingRef.current = false;
+                        setOutputAmplitude(0);
                         setVoiceState('listening');
                     }
                 };
@@ -303,10 +342,20 @@ OBJECTIF FINAL :
         processorRef.current = workletNode;
 
         workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
+            const raw: Float32Array = event.data;
+
+            // Feature 2: Compute input amplitude (throttled)
+            amplitudeFrameRef.current++;
+            if (amplitudeFrameRef.current % AMPLITUDE_THROTTLE_FRAMES === 0) {
+                let sumSq = 0;
+                for (let i = 0; i < raw.length; i++) sumSq += raw[i] * raw[i];
+                const rms = Math.sqrt(sumSq / raw.length);
+                setInputAmplitude(Math.min(1, rms * 6));
+            }
+
             if (wsRef.current?.readyState !== WebSocket.OPEN) return;
             if (isMutedRef.current) return;
 
-            const raw: Float32Array = event.data;
             const downsampled = downsampleBuffer(raw, nativeRate, INPUT_SAMPLE_RATE);
             const pcm16 = float32ToInt16(downsampled);
             const b64 = toBase64(new Uint8Array(pcm16.buffer));
@@ -328,6 +377,7 @@ OBJECTIF FINAL :
     const cleanup = useCallback(() => {
         isManualCloseRef.current = true;
         clearSetupTimeout();
+        clearReconnectTimer();
         stopAllPlayback();
         processorRef.current?.disconnect();
         processorRef.current = null;
@@ -343,8 +393,10 @@ OBJECTIF FINAL :
         isSpeakingRef.current = false;
         isMutedRef.current = false;
         startInFlightRef.current = false;
+        reconnectAttemptRef.current = 0;
+        amplitudeFrameRef.current = 0;
         sessionIdRef.current += 1;
-    }, [clearSetupTimeout, stopAllPlayback]);
+    }, [clearSetupTimeout, clearReconnectTimer, stopAllPlayback]);
 
     useEffect(() => {
         return () => {
@@ -356,63 +408,17 @@ OBJECTIF FINAL :
         cleanup();
         setVoiceState('idle');
         setIsMuted(false);
+        setSessionStartTime(null);
+        setReconnectAttempt(0);
+        setOutputAmplitude(0);
+        setInputAmplitude(0);
     }, [cleanup]);
 
-    const startSession = useCallback(async () => {
-        if (startInFlightRef.current || voiceState === 'connecting') return;
+    // ── WebSocket connection (extracted for reconnection reuse) ───────────────
 
-        if (wsRef.current || streamRef.current || captureCtxRef.current || playbackCtxRef.current) {
-            cleanup();
-        }
-
-        isManualCloseRef.current = false;
-        const sessionId = sessionIdRef.current + 1;
-        sessionIdRef.current = sessionId;
-
-        if (compatibilityError) {
-            setError(compatibilityError);
-            setVoiceState('error');
-            return;
-        }
-
+    const connectWebSocket = useCallback((sessionId: number, stream: MediaStream) => {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-        if (!apiKey) {
-            setError('Clé API Gemini manquante. Ajoutez VITE_GEMINI_API_KEY dans votre fichier .env');
-            setVoiceState('error');
-            return;
-        }
-
-        startInFlightRef.current = true;
-        setVoiceState('connecting');
-        setTranscript([]);
-        setError(null);
-        scheduledUntilRef.current = 0;
-        isMutedRef.current = false;
-        setIsMuted(false);
-
-        let stream: MediaStream;
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    channelCount: 1,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                    sampleRate: INPUT_SAMPLE_RATE,
-                },
-            });
-            streamRef.current = stream;
-        } catch (err) {
-            const isDenied = err instanceof DOMException && err.name === 'NotAllowedError';
-            setError(
-                isDenied
-                    ? "Accès au microphone refusé. Autorisez le micro dans les paramètres de votre navigateur."
-                    : "Impossible d'accéder au microphone."
-            );
-            setVoiceState('error');
-            startInFlightRef.current = false;
-            return;
-        }
+        if (!apiKey) return;
 
         const ws = new WebSocket(`${WS_ENDPOINT}?key=${apiKey}`);
         wsRef.current = ws;
@@ -455,8 +461,16 @@ OBJECTIF FINAL :
 
                 if (msg.setupComplete) {
                     clearSetupTimeout();
+                    // Feature 1: Set session start time (only on first connect, not reconnect)
+                    setSessionStartTime(prev => prev ?? Date.now());
+                    // Reset reconnect counter on successful connection
+                    reconnectAttemptRef.current = 0;
+                    setReconnectAttempt(0);
                     setVoiceState('listening');
-                    await startMicCapture(stream);
+                    // Only start mic capture if not already running (reconnect case)
+                    if (!processorRef.current) {
+                        await startMicCapture(stream);
+                    }
                     startInFlightRef.current = false;
                     return;
                 }
@@ -464,6 +478,7 @@ OBJECTIF FINAL :
                 if (msg.goingAway) {
                     cleanup();
                     setVoiceState('idle');
+                    setSessionStartTime(null);
                     startInFlightRef.current = false;
                     return;
                 }
@@ -486,6 +501,7 @@ OBJECTIF FINAL :
                 if (sc.turnComplete) {
                     scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
                     isSpeakingRef.current = false;
+                    setOutputAmplitude(0);
                     setVoiceState('listening');
                     return;
                 }
@@ -539,18 +555,109 @@ OBJECTIF FINAL :
             setError('Erreur de connexion WebSocket. Vérifiez votre clé API Gemini et votre connexion internet.');
             setVoiceState('error');
             cleanup();
+            setSessionStartTime(null);
         };
 
+        // Feature 1: Auto-reconnect on unexpected close
         ws.onclose = (e) => {
             if (sessionIdRef.current !== sessionId) return;
             clearSetupTimeout();
             startInFlightRef.current = false;
+
             if (!isManualCloseRef.current && e.code !== 1000) {
-                setError('Session vocale fermée de manière inattendue.');
-                setVoiceState('error');
+                const attempt = reconnectAttemptRef.current;
+                if (attempt < MAX_RECONNECT_ATTEMPTS) {
+                    reconnectAttemptRef.current = attempt + 1;
+                    setReconnectAttempt(attempt + 1);
+                    setVoiceState('reconnecting');
+                    setError(null);
+
+                    const delay = Math.min(RECONNECT_BASE_DELAY_MS * Math.pow(2, attempt), 8000);
+                    reconnectTimerRef.current = window.setTimeout(() => {
+                        if (sessionIdRef.current !== sessionId) return;
+                        wsRef.current = null;
+                        connectWebSocket(sessionId, stream);
+                    }, delay);
+                } else {
+                    setError('Connexion perdue après 3 tentatives. Veuillez réessayer.');
+                    setVoiceState('error');
+                    setSessionStartTime(null);
+                    // Clean up mic resources since we gave up
+                    processorRef.current?.disconnect();
+                    processorRef.current = null;
+                    captureCtxRef.current?.close().catch(() => { });
+                    captureCtxRef.current = null;
+                    streamRef.current?.getTracks().forEach(t => t.stop());
+                    streamRef.current = null;
+                }
             }
         };
-    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, voiceState, compatibilityError, clearSetupTimeout]);
+    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, clearSetupTimeout]);
+
+    const startSession = useCallback(async () => {
+        if (startInFlightRef.current || voiceState === 'connecting') return;
+
+        if (wsRef.current || streamRef.current || captureCtxRef.current || playbackCtxRef.current) {
+            cleanup();
+        }
+
+        isManualCloseRef.current = false;
+        const sessionId = sessionIdRef.current + 1;
+        sessionIdRef.current = sessionId;
+
+        if (compatibilityError) {
+            setError(compatibilityError);
+            setVoiceState('error');
+            return;
+        }
+
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+        if (!apiKey) {
+            setError('Clé API Gemini manquante. Ajoutez VITE_GEMINI_API_KEY dans votre fichier .env');
+            setVoiceState('error');
+            return;
+        }
+
+        startInFlightRef.current = true;
+        setVoiceState('connecting');
+        setTranscript([]);
+        setError(null);
+        scheduledUntilRef.current = 0;
+        isMutedRef.current = false;
+        setIsMuted(false);
+        reconnectAttemptRef.current = 0;
+        setReconnectAttempt(0);
+        setSessionStartTime(null);
+        setOutputAmplitude(0);
+        setInputAmplitude(0);
+        amplitudeFrameRef.current = 0;
+
+        let stream: MediaStream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    sampleRate: INPUT_SAMPLE_RATE,
+                },
+            });
+            streamRef.current = stream;
+        } catch (err) {
+            const isDenied = err instanceof DOMException && err.name === 'NotAllowedError';
+            setError(
+                isDenied
+                    ? "Accès au microphone refusé. Autorisez le micro dans les paramètres de votre navigateur."
+                    : "Impossible d'accéder au microphone."
+            );
+            setVoiceState('error');
+            startInFlightRef.current = false;
+            return;
+        }
+
+        connectWebSocket(sessionId, stream);
+    }, [connectWebSocket, cleanup, voiceState, compatibilityError]);
 
     const toggleMute = useCallback(() => {
         isMutedRef.current = !isMutedRef.current;
@@ -559,5 +666,21 @@ OBJECTIF FINAL :
 
     const isSupported = useMemo(() => !compatibilityError, [compatibilityError]);
 
-    return { voiceState, transcript, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute };
+    return {
+        voiceState,
+        transcript,
+        error,
+        isMuted,
+        isSupported,
+        compatibilityError,
+        startSession,
+        stopSession,
+        toggleMute,
+        // Feature 1: Session timer & reconnect
+        sessionStartTime,
+        reconnectAttempt,
+        // Feature 2: Audio amplitude
+        outputAmplitude,
+        inputAmplitude,
+    };
 }
