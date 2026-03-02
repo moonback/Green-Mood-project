@@ -140,7 +140,7 @@ function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose }: Props) {
-    const { voiceState, transcript, error, isMuted, startSession, stopSession, toggleMute } =
+    const { voiceState, transcript, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
         useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName });
 
     const [showTranscript, setShowTranscript] = useState(false);
@@ -279,8 +279,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 type="button"
                                 whileTap={{ scale: 0.92 }}
                                 whileHover={!isActive && voiceState !== 'connecting' ? { scale: 1.05 } : {}}
-                                onClick={isActive || voiceState === 'connecting' ? undefined : startSession}
-                                disabled={voiceState === 'connecting'}
+                                onClick={isActive || voiceState === 'connecting' || !isSupported ? undefined : startSession}
+                                disabled={voiceState === 'connecting' || !isSupported}
                                 aria-label={isActive ? 'Session active' : 'Démarrer la session vocale'}
                                 className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500
                                     ${voiceState === 'error'
@@ -333,7 +333,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 {STATUS[voiceState]}
                             </motion.p>
                             <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed">
-                                {error || STATUS_SUB[voiceState]}
+                                {error || compatibilityError || STATUS_SUB[voiceState]}
                             </p>
                         </div>
 
@@ -391,7 +391,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
 
                     {/* ── Start / retry button ── */}
                     <AnimatePresence>
-                        {(voiceState === 'idle' || voiceState === 'error') && (
+                        {(voiceState === 'idle' || voiceState === 'error') && isSupported && (
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}

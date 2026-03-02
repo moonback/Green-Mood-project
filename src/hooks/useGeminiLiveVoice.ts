@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from './useBudTenderMemory';
 
@@ -9,7 +9,7 @@ const WS_ENDPOINT =
 const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live API requires 16kHz PCM input
 const OUTPUT_SAMPLE_RATE = 24000; // Gemini Live API outputs 24kHz PCM
-
+const CONNECTION_TIMEOUT_MS = 10000;
 
 // Minimal scheduling ahead — keeps playback tight without gaps
 const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
@@ -92,6 +92,18 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const [error, setError] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
 
+    const [compatibilityError] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        if (!window.isSecureContext) return 'La voix nécessite une connexion sécurisée (HTTPS).';
+        if (!navigator.mediaDevices?.getUserMedia) return 'Microphone non supporté par ce navigateur.';
+        if (typeof window.AudioContext === 'undefined') return 'AudioContext non supporté par ce navigateur.';
+        if (typeof window.WebSocket === 'undefined') return 'WebSocket non supporté par ce navigateur.';
+        if (!('audioWorklet' in AudioContext.prototype)) {
+            return 'AudioWorklet non supporté. Utilisez une version récente de Chrome, Edge ou Safari.';
+        }
+        return null;
+    });
+
     // All mutable session state lives in refs so audio callbacks always see current values
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
@@ -101,6 +113,9 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const scheduledUntilRef = useRef<number>(0); // next available playback time
     const isSpeakingRef = useRef(false);
     const isMutedRef = useRef(false);
+    const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+    const setupTimeoutRef = useRef<number | null>(null);
+    const startInFlightRef = useRef(false);
 
     // ── System prompt ────────────────────────────────────────────────────────
 
@@ -134,7 +149,6 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
                 `Terpènes: ${Array.isArray(terpenes) ? terpenes.join(', ') : 'Aucun'}`
             ];
 
-            // Add any other dynamic fields
             Object.entries(others).forEach(([key, val]) => {
                 if (val) entries.push(`${key}: ${val}`);
             });
@@ -192,33 +206,45 @@ OBJECTIF FINAL :
 `;
     }, [products, pastProducts, savedPrefs, userName]);
 
+    const clearSetupTimeout = useCallback(() => {
+        if (setupTimeoutRef.current) {
+            window.clearTimeout(setupTimeoutRef.current);
+            setupTimeoutRef.current = null;
+        }
+    }, []);
+
+    const stopAllPlayback = useCallback(() => {
+        activeSourcesRef.current.forEach(source => {
+            try {
+                source.stop(0);
+            } catch {
+                // already stopped
+            }
+        });
+        activeSourcesRef.current.clear();
+    }, []);
+
     // ── Audio playback ───────────────────────────────────────────────────────
 
     const getPlaybackCtx = useCallback((): AudioContext => {
         if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
             playbackCtxRef.current = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
         }
-        // Resume if suspended (browser autoplay policy)
         if (playbackCtxRef.current.state === 'suspended') {
             playbackCtxRef.current.resume().catch(() => { });
         }
         return playbackCtxRef.current;
     }, []);
 
-    /**
-     * Immediately stop any queued audio playback.
-     * Called when the server signals `interrupted`.
-     */
     const interruptAudio = useCallback(() => {
         const ctx = playbackCtxRef.current;
         if (!ctx || ctx.state === 'closed') return;
-        // Reset the scheduling pointer to now — future chunks start fresh
+        stopAllPlayback();
         scheduledUntilRef.current = ctx.currentTime;
         isSpeakingRef.current = false;
         setVoiceState('listening');
-    }, []);
+    }, [stopAllPlayback]);
 
-    /** Decode a base64-encoded PCM 16-bit 24kHz chunk and schedule it for gapless playback. */
     const playPcmChunk = useCallback(
         (base64Data: string) => {
             try {
@@ -227,12 +253,10 @@ OBJECTIF FINAL :
                 const bytes = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 
-                // PCM Int16 → Float32
                 const int16 = new Int16Array(bytes.buffer);
                 const float32 = new Float32Array(int16.length);
                 for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
 
-                // Create buffer — AudioContext handles resampling automatically
                 const audioBuffer = ctx.createBuffer(1, float32.length, OUTPUT_SAMPLE_RATE);
                 audioBuffer.copyToChannel(float32, 0);
 
@@ -240,17 +264,17 @@ OBJECTIF FINAL :
                 source.buffer = audioBuffer;
                 source.connect(ctx.destination);
 
-                // Schedule contiguously for gapless output, minimal ahead time for low latency
                 const now = ctx.currentTime;
                 const startAt = Math.max(now + AUDIO_SCHEDULE_AHEAD_SEC, scheduledUntilRef.current);
                 source.start(startAt);
                 scheduledUntilRef.current = startAt + audioBuffer.duration;
 
+                activeSourcesRef.current.add(source);
                 isSpeakingRef.current = true;
                 setVoiceState('speaking');
 
                 source.onended = () => {
-                    // Only transition back when the queue is truly empty
+                    activeSourcesRef.current.delete(source);
                     if (ctx.currentTime >= scheduledUntilRef.current - 0.05) {
                         isSpeakingRef.current = false;
                         setVoiceState('listening');
@@ -265,32 +289,19 @@ OBJECTIF FINAL :
 
     // ── Audio capture ────────────────────────────────────────────────────────
 
-    /**
-     * Start mic capture using AudioWorkletNode (replaces deprecated ScriptProcessorNode).
-     *
-     * AudioWorklet runs on the audio rendering thread (separate from the main JS thread),
-     * which gives lower and more stable latency (~2.7ms per 128-sample block at 48kHz).
-     *
-     * The mic stays active even when the AI is speaking so Gemini's server-side
-     * VAD can detect user speech and trigger interruption automatically.
-     */
     const startMicCapture = useCallback(async (stream: MediaStream) => {
         const ctx = new AudioContext();
         captureCtxRef.current = ctx;
         const nativeRate = ctx.sampleRate;
 
-        // Load the AudioWorklet processor module from the public folder
         await ctx.audioWorklet.addModule('/audio-processor.js');
 
         const source = ctx.createMediaStreamSource(stream);
         const workletNode = new AudioWorkletNode(ctx, 'mic-processor');
         processorRef.current = workletNode;
 
-        // Receive Float32 chunks from the worklet thread
         workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
             if (wsRef.current?.readyState !== WebSocket.OPEN) return;
-            // Only skip when manually muted — keep mic open when AI speaks
-            // so the server VAD can trigger interruption naturally
             if (isMutedRef.current) return;
 
             const raw: Float32Array = event.data;
@@ -305,7 +316,6 @@ OBJECTIF FINAL :
             );
         };
 
-        // Connect: mic → worklet → silent gain (no audio to speakers)
         const silentGain = ctx.createGain();
         silentGain.gain.value = 0;
         source.connect(workletNode);
@@ -313,9 +323,9 @@ OBJECTIF FINAL :
         silentGain.connect(ctx.destination);
     }, []);
 
-    // ── Session lifecycle ────────────────────────────────────────────────────
-
     const cleanup = useCallback(() => {
+        clearSetupTimeout();
+        stopAllPlayback();
         processorRef.current?.disconnect();
         processorRef.current = null;
         captureCtxRef.current?.close().catch(() => { });
@@ -329,15 +339,30 @@ OBJECTIF FINAL :
         scheduledUntilRef.current = 0;
         isSpeakingRef.current = false;
         isMutedRef.current = false;
-    }, []);
+    }, [clearSetupTimeout, stopAllPlayback]);
+
+    useEffect(() => {
+        return () => {
+            cleanup();
+        };
+    }, [cleanup]);
 
     const stopSession = useCallback(() => {
         cleanup();
         setVoiceState('idle');
         setIsMuted(false);
+        startInFlightRef.current = false;
     }, [cleanup]);
 
     const startSession = useCallback(async () => {
+        if (startInFlightRef.current || voiceState === 'connecting') return;
+
+        if (compatibilityError) {
+            setError(compatibilityError);
+            setVoiceState('error');
+            return;
+        }
+
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
         if (!apiKey) {
             setError('Clé API Gemini manquante. Ajoutez VITE_GEMINI_API_KEY dans votre fichier .env');
@@ -345,6 +370,7 @@ OBJECTIF FINAL :
             return;
         }
 
+        startInFlightRef.current = true;
         setVoiceState('connecting');
         setTranscript([]);
         setError(null);
@@ -352,7 +378,6 @@ OBJECTIF FINAL :
         isMutedRef.current = false;
         setIsMuted(false);
 
-        // Request microphone
         let stream: MediaStream;
         try {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -373,12 +398,19 @@ OBJECTIF FINAL :
                     : "Impossible d'accéder au microphone."
             );
             setVoiceState('error');
+            startInFlightRef.current = false;
             return;
         }
 
-        // Open WebSocket
         const ws = new WebSocket(`${WS_ENDPOINT}?key=${apiKey}`);
         wsRef.current = ws;
+
+        setupTimeoutRef.current = window.setTimeout(() => {
+            setError('La connexion vocale met trop de temps. Vérifiez votre réseau et réessayez.');
+            setVoiceState('error');
+            cleanup();
+            startInFlightRef.current = false;
+        }, CONNECTION_TIMEOUT_MS);
 
         ws.onopen = () => {
             ws.send(
@@ -403,30 +435,30 @@ OBJECTIF FINAL :
 
         ws.onmessage = async (event) => {
             try {
-                // Gemini Live API sends WebSocket frames as Blobs (binary), not plain strings.
                 const raw: string =
                     event.data instanceof Blob ? await event.data.text() : (event.data as string);
                 const msg = JSON.parse(raw) as GeminiServerMessage;
 
                 if (msg.setupComplete) {
+                    clearSetupTimeout();
                     setVoiceState('listening');
                     await startMicCapture(stream);
+                    startInFlightRef.current = false;
                     return;
                 }
 
                 if (msg.goingAway) {
                     cleanup();
                     setVoiceState('idle');
+                    startInFlightRef.current = false;
                     return;
                 }
 
                 const sc = msg.serverContent;
                 if (!sc) return;
 
-                // ── Interruption: server detected user speaking over the AI
                 if (sc.interrupted) {
                     interruptAudio();
-                    // Add visual marker in transcript
                     setTranscript(prev => {
                         const last = prev[prev.length - 1];
                         if (last?.role === 'assistant' && !last.text.endsWith('…')) {
@@ -437,7 +469,6 @@ OBJECTIF FINAL :
                     return;
                 }
 
-                // ── End of AI turn: model finished speaking
                 if (sc.turnComplete) {
                     scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
                     isSpeakingRef.current = false;
@@ -445,13 +476,11 @@ OBJECTIF FINAL :
                     return;
                 }
 
-                // ── Audio and text parts from the model
                 if (sc.modelTurn?.parts) {
                     for (const part of sc.modelTurn.parts) {
                         if (part.inlineData?.data && part.inlineData.mimeType.includes('audio')) {
                             playPcmChunk(part.inlineData.data);
                         }
-                        // Text transcript of AI response (some model variants include this)
                         if (part.text?.trim()) {
                             setTranscript(prev => {
                                 const last = prev[prev.length - 1];
@@ -464,21 +493,17 @@ OBJECTIF FINAL :
                     }
                 }
 
-                // ── What the user said (speech → text by VAD)
                 const inputText = sc.inputTranscription?.text;
                 if (inputText?.trim()) {
                     setTranscript(prev => {
-                        // If the transcription is final, push a new utterance; otherwise update the last user line
                         const last = prev[prev.length - 1];
                         if (last?.role === 'user' && sc.inputTranscription?.final !== true) {
-                            // Live partial update
                             return [...prev.slice(0, -1), { role: 'user', text: inputText.trim() }];
                         }
                         return [...prev, { role: 'user', text: inputText.trim() }];
                     });
                 }
 
-                // ── Alternative AI output transcription field
                 const outputText = sc.outputTranscription?.text;
                 if (outputText?.trim()) {
                     setTranscript(prev => {
@@ -495,23 +520,29 @@ OBJECTIF FINAL :
         };
 
         ws.onerror = () => {
+            clearSetupTimeout();
             setError('Erreur de connexion WebSocket. Vérifiez votre clé API Gemini et votre connexion internet.');
             setVoiceState('error');
             cleanup();
+            startInFlightRef.current = false;
         };
 
         ws.onclose = (e) => {
-            // 1000 = normal closure (we closed it), anything else is unexpected
-            if (e.code !== 1000) {
+            clearSetupTimeout();
+            startInFlightRef.current = false;
+            if (e.code !== 1000 && voiceState !== 'error') {
+                setError('Session vocale fermée de manière inattendue.');
                 setVoiceState('idle');
             }
         };
-    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup]);
+    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, voiceState, compatibilityError, clearSetupTimeout]);
 
     const toggleMute = useCallback(() => {
         isMutedRef.current = !isMutedRef.current;
         setIsMuted(m => !m);
     }, []);
 
-    return { voiceState, transcript, error, isMuted, startSession, stopSession, toggleMute };
+    const isSupported = useMemo(() => !compatibilityError, [compatibilityError]);
+
+    return { voiceState, transcript, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute };
 }
