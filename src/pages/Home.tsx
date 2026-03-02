@@ -140,9 +140,6 @@ export default function Home() {
                   DÉCOUVRIR LE N10 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Link>
-              <Link to="/catalogue" className="px-10 py-5 border border-white/10 backdrop-blur-md hover:bg-white/5 rounded-full font-medium transition-all">
-                Explorer la gamme Bio
-              </Link>
             </div>
           </motion.div>
         </div>
