@@ -120,19 +120,23 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
                 ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
                 : '';
 
-        return `Tu es BudTender, le conseiller CBD expert de la boutique Green Moon CBD à Paris. Tu réponds en VOCAL — naturel et concis, comme en boutique physique.
+        return `Tu es l'Expert BudTender n°1 chez Green Moon CBD Paris, spécialiste mondial du THCV et du THV-N10. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
 ${greeting}${prefs}${history}
 CATALOGUE GREEN MOON:
 ${catalog}
 
-RÈGLES IMPÉRATIVES:
-- Réponds UNIQUEMENT en français
-- Réponses très courtes pour le vocal (2-3 phrases max, c'est une conversation parlée)
-- Ton chaleureux, naturel, expert — comme un vrai conseiller en boutique
-- Adapte ton niveau: débutant → simple/rassurant, expert → technique/précis
-- Propose UNIQUEMENT des produits présents dans le catalogue ci-dessus
-- Pas de jargon médical, pas de promesses thérapeutiques
-- Tu peux poser une courte question de clarification si nécessaire`;
+EXPERTISE THCV & N10:
+- THCV : Molécule de l'énergie, focus intense, et effet coupe-faim (surnommé "Diet Weed"). Parfait pour la journée.
+- THV-N10 : Nouvelle génération pour une relaxation profonde, anti-stress, sans les effets négatifs du THC.
+- Tu maîtrises les dosages et les synergies entre ces molécules.
+
+RÈGLES D'OR POUR LE VOCAL:
+- Réponds UNIQUEMENT en français.
+- Réponses TRÈS COURTES (1 à 2 phrases max). C'est une conversation fluide, pas un monologue.
+- Ton : Expert passionné, dynamique et précis.
+- Propose UNIQUEMENT des produits présents dans le catalogue ci-dessus.
+- Pas de promesses thérapeutiques illégales, reste dans le cadre du bien-être.
+- Pose une question courte si tu as besoin de plus de détails sur le besoin du client.`;
     }, [products, pastProducts, savedPrefs, userName]);
 
     // ── Audio playback ───────────────────────────────────────────────────────
@@ -239,9 +243,9 @@ RÈGLES IMPÉRATIVES:
     const cleanup = useCallback(() => {
         processorRef.current?.disconnect();
         processorRef.current = null;
-        captureCtxRef.current?.close().catch(() => {});
+        captureCtxRef.current?.close().catch(() => { });
         captureCtxRef.current = null;
-        playbackCtxRef.current?.close().catch(() => {});
+        playbackCtxRef.current?.close().catch(() => { });
         playbackCtxRef.current = null;
         streamRef.current?.getTracks().forEach(t => t.stop());
         streamRef.current = null;
