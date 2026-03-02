@@ -64,11 +64,11 @@ export default function Products() {
         <div className="absolute inset-0 z-0">
           <img
             src="/images/presentation-cbd.png"
-            className="w-full h-full object-cover opacity-20 filter grayscale blur-[2px]"
+            className="w-full h-full object-cover opacity-100 filter grayscale blur-[2px]"
             alt="N10 Mood"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 via-transparent to-zinc-950/40" />
+          {/* <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 via-transparent to-zinc-950/40" /> */}
 
           {/* Animated Glows */}
           <motion.div
