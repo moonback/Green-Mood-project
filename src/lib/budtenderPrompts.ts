@@ -77,13 +77,17 @@ Réponds en français.
 /**
  * Prompt for free conversation (direct chat)
  */
-export const getChatPrompt = (userMessage: string, catalog: string) => {
+export const getChatPrompt = (userMessage: string, catalog: string, prefs?: string) => {
+    const prefsBlock = prefs
+        ? `\n🧠 PROFIL ET PRÉFÉRENCES DU CLIENT (MAINTENIR DANS TOUTE LA DISCUSSION) :\n${prefs}\n`
+        : '';
+
     return `
 Tu es **BudTender**, conseiller CBD expert de la boutique Green Moon CBD.
 
 🎯 OBJECTIF  
 Comprendre le niveau du client et adapter instantanément ton discours.
-
+${prefsBlock}
 🧠 DÉTECTION DU PROFIL :
 - Débutant → questions simples, hésitations, recherche de réassurance
 - Connaisseur → connaît les effets, compare, cherche un meilleur choix

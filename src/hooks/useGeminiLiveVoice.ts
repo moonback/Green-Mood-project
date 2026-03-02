@@ -112,24 +112,34 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
             .join('\n');
 
         const greeting = userName ? `Le client s'appelle ${userName}. ` : '';
-        const prefs = savedPrefs
-            ? `CONTEXTE BIEN-ÊTRE DU CLIENT:
-- Objectif: ${savedPrefs.goal}
-- Expérience: ${savedPrefs.experience}
-- Format préféré: ${savedPrefs.format}
-- Budget: ${savedPrefs.budget}
-- Âge: ${savedPrefs.age ?? 'Non précisé'}
-- Intensité recherchée: ${savedPrefs.intensity ?? 'Non précisé'}
-- Arômes/Terpènes préférés: ${Array.isArray(savedPrefs.terpenes) ? savedPrefs.terpenes.join(', ') : 'Aucun spécifique'}
-`
-            : 'Le client n\'a pas encore défini de préférences de profil.';
+
+        let prefsText = 'Le client n\'a pas encore défini de préférences de profil.';
+        if (savedPrefs) {
+            const { goal, experience, format, budget, age, intensity, terpenes, ...others } = savedPrefs;
+            const entries = [
+                `Objectif: ${goal}`,
+                `Expérience: ${experience}`,
+                `Format: ${format}`,
+                `Budget: ${budget}`,
+                `Âge: ${age || 'Non précisé'}`,
+                `Intensité: ${intensity || 'Non précisé'}`,
+                `Terpènes: ${Array.isArray(terpenes) ? terpenes.join(', ') : 'Aucun'}`
+            ];
+
+            // Add any other dynamic fields
+            Object.entries(others).forEach(([key, val]) => {
+                if (val) entries.push(`${key}: ${val}`);
+            });
+
+            prefsText = `CONTEXTE BIEN-ÊTRE DU CLIENT:\n- ${entries.join('\n- ')}`;
+        }
         const history =
             pastProducts.length > 0
                 ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
                 : '';
 
         return `Tu es l'Expert BudTender n°1 chez Green Moon CBD Paris, spécialiste mondial du THCV et du THV-N10. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
-${greeting}${prefs}${history}
+${greeting}${prefsText}${history}
 CATALOGUE GREEN MOON:
 ${catalog}
 

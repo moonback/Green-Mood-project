@@ -15,6 +15,7 @@ export interface SavedPrefs {
     age?: string;
     intensity?: string;
     terpenes?: string[]; // Multiple choice possible
+    [key: string]: any; // Support for dynamic/extra fields
 }
 
 export interface ChatMessage {

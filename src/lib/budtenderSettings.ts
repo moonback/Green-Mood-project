@@ -74,32 +74,31 @@ export const BUDTENDER_DEFAULT_QUIZ: QuizStep[] = [
         id: 'age',
         question: 'Quel est votre âge ?',
         options: [
-            { label: 'Moins de 18 ans', value: 'minor', emoji: '👶' },
             { label: '18 – 65 ans', value: 'adult', emoji: '🙂' },
             { label: 'Plus de 65 ans', value: 'senior', emoji: '👵' },
         ],
     },
     // Dans budtenderSettings.ts, ajoutez simplement un objet à la liste :
-    {
-        id: 'intensity',
-        question: 'Quelle intensité recherchez-vous ?',
-        options: [
-            { label: 'Légère', value: 'low', emoji: '🍃' },
-            { label: 'Modérée', value: 'mid', emoji: '🌿' },
-            { label: 'Puissante', value: 'high', emoji: '🔥' },
-        ],
-    },
-    {
-        id: 'terpenes',
-        question: 'Quels arômes préférez-vous ? (Terpènes)',
-        options: [
-            { label: 'Citronné (Limonène)', value: 'limonene', emoji: '🍋' },
-            { label: 'Terreux (Myrcène)', value: 'myrcene', emoji: '🌍' },
-            { label: 'Floral (Linalol)', value: 'linalool', emoji: '🌸' },
-            { label: 'Boisé/Pin (Pinène)', value: 'pinene', emoji: '🌲' },
-            { label: 'Poivré (Caryophyllène)', value: 'caryophyllene', emoji: '🌶️' },
-        ],
-    },
+    // {
+    //     id: 'intensity',
+    //     question: 'Quelle intensité recherchez-vous ?',
+    //     options: [
+    //         { label: 'Légère', value: 'low', emoji: '🍃' },
+    //         { label: 'Modérée', value: 'mid', emoji: '🌿' },
+    //         { label: 'Puissante', value: 'high', emoji: '🔥' },
+    //     ],
+    // },
+    // {
+    //     id: 'terpenes',
+    //     question: 'Quels arômes préférez-vous ? (Terpènes)',
+    //     options: [
+    //         { label: 'Citronné (Limonène)', value: 'limonene', emoji: '🍋' },
+    //         { label: 'Terreux (Myrcène)', value: 'myrcene', emoji: '🌍' },
+    //         { label: 'Floral (Linalol)', value: 'linalool', emoji: '🌸' },
+    //         { label: 'Boisé/Pin (Pinène)', value: 'pinene', emoji: '🌲' },
+    //         { label: 'Poivré (Caryophyllène)', value: 'caryophyllene', emoji: '🌶️' },
+    //     ],
+    // },
 
 ];
 

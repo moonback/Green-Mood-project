@@ -632,7 +632,29 @@ export default function BudTender() {
             })
             .join('\n');
 
-        const systemPrompt = getChatPrompt(text, catalog);
+        // Build user context from memory
+        const { savedPrefs, userName, pastProducts } = memory;
+        let userContext = '';
+        if (userName) userContext += `Nom du client: ${userName}\n`;
+        if (pastProducts.length > 0) {
+            userContext += `Historique d'achats: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}\n`;
+        }
+        if (savedPrefs) {
+            const { goal, experience, format, budget, age, intensity, terpenes, ...others } = savedPrefs;
+            const entries = [
+                `Objectif: ${goal}`,
+                `Expérience: ${experience}`,
+                `Format: ${format}`,
+                `Budget: ${budget}`,
+                `Âge: ${age || 'Non précisé'}`,
+                `Intensité: ${intensity || 'Non précisé'}`,
+                `Terpènes: ${Array.isArray(terpenes) ? terpenes.join(', ') : 'Aucun'}`
+            ];
+            Object.entries(others).forEach(([k, v]) => { if (v) entries.push(`${k}: ${v}`); });
+            userContext += `Préférences: ${entries.join(' | ')}`;
+        }
+
+        const systemPrompt = getChatPrompt(text, catalog, userContext);
 
         // Build history for OpenRouter (OpenAI format)
         // IMPORTANT: Roles must alternate and not be empty
