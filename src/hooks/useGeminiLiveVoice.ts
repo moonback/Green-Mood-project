@@ -106,7 +106,7 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
 
     const buildSystemPrompt = useCallback((): string => {
         const catalog = products
-            .slice(0, 25) // cap to avoid token overflow
+            .slice(0, 10) // cap to avoid token overflow
             .map(p => {
                 const aromas = (p.attributes?.aromas ?? []).join(', ');
                 const benefits = (p.attributes?.benefits ?? []).join(', ');
@@ -146,7 +146,7 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
                 ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
                 : '';
 
-        return `Tu es l'Expert BudTender n°1 chez Green Moon CBD Paris, spécialiste mondial du THCV et du THV-N10. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
+        return `Tu es l'Expert BudTender n°1 chez Green Moon CBD, spécialiste mondial du THCV et du THV-N10. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
 ${greeting}${prefsText}${history}
 CATALOGUE GREEN MOON:
 ${catalog}
