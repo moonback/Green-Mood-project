@@ -275,13 +275,13 @@ export default function Layout() {
               <div className="absolute bottom-0 left-0 w-[60%] h-[30%] bg-green-neon/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
               {/* Mobile header */}
-              <div className="flex items-center justify-between px-6 h-20 relative z-10 border-b border-white/[0.04] bg-zinc-950/50 backdrop-blur-md">
+              <div className="flex items-center justify-center px-6 h-32 relative z-10 border-b border-white/[0.04] bg-zinc-950/50 backdrop-blur-md">
                 <Link to="/" className="flex items-center" onClick={() => setIsMenuOpen(false)}>
-                  <img src="/logo.png" alt="Green Mood" className="h-10 w-auto object-contain" />
+                  <img src="/logo.png" alt="Green Mood" className="h-32 w-auto object-contain" />
                 </Link>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-3 text-zinc-400 hover:text-white rounded-2xl bg-white/[0.04] border border-white/[0.08] active:scale-90 transition-all"
+                  className="absolute right-6 p-3 text-zinc-400 hover:text-white rounded-2xl bg-white/[0.04] border border-white/[0.08] active:scale-90 transition-all"
                   aria-label="Fermer le menu"
                 >
                   <X className="w-5 h-5" />
