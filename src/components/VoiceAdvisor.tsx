@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Volume2, X } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, X, MessageSquare } from 'lucide-react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { useGeminiLiveVoice, VoiceState, VoiceUtterance } from '../hooks/useGeminiLiveVoice';
@@ -62,11 +62,10 @@ function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
                     key={i}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`text-xs px-3 py-2 rounded-xl leading-relaxed ${
-                        u.role === 'user'
-                            ? 'bg-zinc-800/60 text-zinc-400 ml-10'
-                            : 'bg-green-neon/5 border border-green-neon/10 text-zinc-300 mr-10'
-                    }`}
+                    className={`text-xs px-3 py-2 rounded-xl leading-relaxed ${u.role === 'user'
+                        ? 'bg-zinc-800/60 text-zinc-400 ml-10'
+                        : 'bg-green-neon/5 border border-green-neon/10 text-zinc-300 mr-10'
+                        }`}
                 >
                     <span className="text-[9px] font-black uppercase tracking-wider opacity-50 block mb-0.5">
                         {u.role === 'user' ? 'Vous' : 'BudTender'}
@@ -84,6 +83,8 @@ function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose }: Props) {
     const { voiceState, transcript, error, isMuted, startSession, stopSession, toggleMute } =
         useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName });
+
+    const [showTranscript, setShowTranscript] = useState(false);
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';
 
@@ -112,17 +113,39 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 </span>
                             </h3>
                             <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">
-                                Gemini 2.5 Flash · Audio natif
+                                Conseiller vocal IA · Audio natif
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleClose}
-                            className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-                            aria-label="Fermer le conseiller vocal"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {transcript.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTranscript(!showTranscript)}
+                                    className={`p-2 rounded-xl transition-all relative ${showTranscript
+                                        ? 'text-green-neon bg-green-neon/10'
+                                        : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                                        }`}
+                                    title={showTranscript ? "Masquer la transcription" : "Afficher la transcription"}
+                                >
+                                    <MessageSquare className="w-4 h-4" />
+                                    {!showTranscript && transcript.length > 0 && (
+                                        <motion.span
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-green-neon rounded-full shadow-[0_0_5px_rgba(57,255,20,0.5)]"
+                                        />
+                                    )}
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                                aria-label="Fermer le conseiller vocal"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* ── Main voice area ── */}
@@ -181,10 +204,10 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     ${voiceState === 'error'
                                         ? 'bg-red-500/15 border-2 border-red-500/40 text-red-400'
                                         : isActive
-                                        ? 'bg-green-neon/10 border-2 border-green-neon/50 text-green-neon shadow-[0_0_30px_rgba(57,255,20,0.1)]'
-                                        : voiceState === 'connecting'
-                                        ? 'bg-zinc-800/60 border-2 border-zinc-700 text-zinc-500 cursor-wait'
-                                        : 'bg-zinc-800/80 border-2 border-zinc-700 text-zinc-400 hover:border-green-neon/40 hover:text-green-neon/70 cursor-pointer'
+                                            ? 'bg-green-neon/10 border-2 border-green-neon/50 text-green-neon shadow-[0_0_30px_rgba(57,255,20,0.1)]'
+                                            : voiceState === 'connecting'
+                                                ? 'bg-zinc-800/60 border-2 border-zinc-700 text-zinc-500 cursor-wait'
+                                                : 'bg-zinc-800/80 border-2 border-zinc-700 text-zinc-400 hover:border-green-neon/40 hover:text-green-neon/70 cursor-pointer'
                                     }`}
                             >
                                 <AnimatePresence mode="wait">
@@ -235,11 +258,10 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     <button
                                         type="button"
                                         onClick={toggleMute}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                                            isMuted
-                                                ? 'bg-orange-500/15 border border-orange-500/40 text-orange-400'
-                                                : 'bg-zinc-800/80 border border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                                        }`}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${isMuted
+                                            ? 'bg-orange-500/15 border border-orange-500/40 text-orange-400'
+                                            : 'bg-zinc-800/80 border border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                                            }`}
                                         aria-label={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
                                     >
                                         {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
@@ -261,7 +283,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                     </div>
 
                     {/* ── Transcript ── */}
-                    <TranscriptList utterances={transcript} />
+                    {showTranscript && <TranscriptList utterances={transcript} />}
 
                     {/* ── Start / retry button ── */}
                     <AnimatePresence>
@@ -280,7 +302,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     {voiceState === 'error' ? '🔄 Réessayer' : '🎤 Démarrer la session vocale'}
                                 </button>
                                 <p className="text-[10px] text-zinc-600 text-center mt-2 font-medium">
-                                    Microphone requis · Connexion directe à Gemini Live
+                                    Microphone requis · Connexion directe au conseiller vocal
                                 </p>
                             </motion.div>
                         )}
