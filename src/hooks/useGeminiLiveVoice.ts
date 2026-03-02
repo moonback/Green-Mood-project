@@ -122,20 +122,6 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     // ── System prompt ────────────────────────────────────────────────────────
 
     const buildSystemPrompt = useCallback((): string => {
-        const catalog = products
-            .slice(0, 10) // cap to avoid token overflow
-            .map(p => {
-                const aromas = (p.attributes?.aromas ?? []).join(', ');
-                const benefits = (p.attributes?.benefits ?? []).join(', ');
-                return (
-                    `• ${p.name} | ${p.category?.name ?? ''} | CBD ${p.cbd_percentage ?? '?'}% | ${p.price}€` +
-                    (p.description ? ` | ${p.description.slice(0, 100)}` : '') +
-                    (aromas ? ` | Arômes: ${aromas}` : '') +
-                    (benefits ? ` | Effets: ${benefits}` : '')
-                );
-            })
-            .join('\n');
-
         const greeting = userName ? `Le client s'appelle ${userName}. ` : '';
 
         let prefsText = 'Le client n\'a pas encore défini de préférences de profil.';
@@ -157,10 +143,24 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
 
             prefsText = `CONTEXTE BIEN-ÊTRE DU CLIENT:\n- ${entries.join('\n- ')}`;
         }
-        const history =
-            pastProducts.length > 0
-                ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
-                : '';
+
+        const catalogStr = products
+            .slice(0, 10)
+            .map(p => {
+                const aromas = (p.attributes?.aromas ?? []).join(', ');
+                const benefits = (p.attributes?.benefits ?? []).join(', ');
+                return (
+                    `• ${p.name} | ${p.category?.name ?? ''} | CBD ${p.cbd_percentage ?? '?'}% | ${p.price}€` +
+                    (p.description ? ` | ${p.description.slice(0, 100)}` : '') +
+                    (aromas ? ` | Arômes: ${aromas}` : '') +
+                    (benefits ? ` | Effets: ${benefits}` : '')
+                );
+            })
+            .join('\n');
+
+        const historyStr = pastProducts.length > 0
+            ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
+            : '';
 
         return `
 TU ES :
@@ -170,10 +170,10 @@ Tu parles à voix haute : ton langage est ORAL, naturel et fluide.
 
 ${greeting}
 ${prefsText}
-${history}
+${historyStr}
 
 CATALOGUE DISPONIBLE (NE JAMAIS SORTIR DE CE CADRE) :
-${catalog}
+${catalogStr}
 
 EXPERTISE PRODUITS :
 - THCV : molécule stimulante orientée énergie, clarté mentale et contrôle de l’appétit. Utilisation plutôt en journée.
