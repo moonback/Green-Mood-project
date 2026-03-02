@@ -18,10 +18,6 @@ const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
-export interface VoiceUtterance {
-    role: 'user' | 'assistant';
-    text: string;
-}
 
 interface GeminiServerMessage {
     setupComplete?: boolean;
@@ -88,7 +84,6 @@ function toBase64(bytes: Uint8Array): string {
 
 export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, userName }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-    const [transcript, setTranscript] = useState<VoiceUtterance[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
 
@@ -384,7 +379,6 @@ OBJECTIF FINAL :
 
         startInFlightRef.current = true;
         setVoiceState('connecting');
-        setTranscript([]);
         setError(null);
         scheduledUntilRef.current = 0;
         isMutedRef.current = false;
@@ -473,13 +467,6 @@ OBJECTIF FINAL :
 
                 if (sc.interrupted) {
                     interruptAudio();
-                    setTranscript(prev => {
-                        const last = prev[prev.length - 1];
-                        if (last?.role === 'assistant' && !last.text.endsWith('…')) {
-                            return [...prev.slice(0, -1), { role: 'assistant', text: last.text + ' …' }];
-                        }
-                        return prev;
-                    });
                     return;
                 }
 
@@ -495,39 +482,9 @@ OBJECTIF FINAL :
                         if (part.inlineData?.data && part.inlineData.mimeType.includes('audio')) {
                             playPcmChunk(part.inlineData.data);
                         }
-                        if (part.text?.trim()) {
-                            setTranscript(prev => {
-                                const last = prev[prev.length - 1];
-                                if (last?.role === 'assistant') {
-                                    return [...prev.slice(0, -1), { role: 'assistant', text: last.text + part.text }];
-                                }
-                                return [...prev, { role: 'assistant', text: part.text!.trim() }];
-                            });
-                        }
                     }
                 }
 
-                const inputText = sc.inputTranscription?.text;
-                if (inputText?.trim()) {
-                    setTranscript(prev => {
-                        const last = prev[prev.length - 1];
-                        if (last?.role === 'user' && sc.inputTranscription?.final !== true) {
-                            return [...prev.slice(0, -1), { role: 'user', text: inputText.trim() }];
-                        }
-                        return [...prev, { role: 'user', text: inputText.trim() }];
-                    });
-                }
-
-                const outputText = sc.outputTranscription?.text;
-                if (outputText?.trim()) {
-                    setTranscript(prev => {
-                        const last = prev[prev.length - 1];
-                        if (last?.role === 'assistant') {
-                            return [...prev.slice(0, -1), { role: 'assistant', text: last.text + outputText }];
-                        }
-                        return [...prev, { role: 'assistant', text: outputText.trim() }];
-                    });
-                }
             } catch (e) {
                 if (import.meta.env.DEV) console.error('[VoiceAdvisor] WS message error:', e);
             }
@@ -559,5 +516,5 @@ OBJECTIF FINAL :
 
     const isSupported = useMemo(() => !compatibilityError, [compatibilityError]);
 
-    return { voiceState, transcript, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute };
+    return { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute };
 }

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Volume2, X, MessageSquare, Radio, Headphones } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
-import { useGeminiLiveVoice, VoiceState, VoiceUtterance } from '../hooks/useGeminiLiveVoice';
+import { useGeminiLiveVoice, VoiceState } from '../hooks/useGeminiLiveVoice';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -96,54 +96,13 @@ function OrbitingDots() {
     );
 }
 
-// ─── Transcript list ─────────────────────────────────────────────────────────
-
-function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
-    const bottomRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [utterances.length]);
-
-    if (utterances.length === 0) return null;
-
-    return (
-        <div className="w-full px-5 pb-3 space-y-2 max-h-52 overflow-y-auto scrollbar-thin" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Transcription de la conversation">
-            <div className="flex items-center gap-2 px-1 mb-1">
-                <div className="w-4 h-px bg-gradient-to-r from-green-neon/30 to-transparent" />
-                <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.3em]">Transcript</p>
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-zinc-800/50 to-transparent" />
-            </div>
-            {utterances.slice(-6).map((u, i) => (
-                <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className={`text-xs px-4 py-2.5 rounded-2xl leading-relaxed backdrop-blur-sm ${u.role === 'user'
-                        ? 'bg-white/[0.04] border border-white/5 text-zinc-400 ml-12'
-                        : 'bg-green-neon/[0.04] border border-green-neon/10 text-zinc-300 mr-12'
-                        }`}
-                >
-                    <span className={`text-[9px] font-black uppercase tracking-wider block mb-0.5 ${u.role === 'user' ? 'text-zinc-600' : 'text-green-neon/60'
-                        }`}>
-                        {u.role === 'user' ? 'Vous' : '🌿 BudTender'}
-                    </span>
-                    {u.text}
-                </motion.div>
-            ))}
-            <div ref={bottomRef} />
-        </div>
-    );
-}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose }: Props) {
-    const { voiceState, transcript, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
+    const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
         useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName });
 
-    const [showTranscript, setShowTranscript] = useState(false);
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';
 
@@ -191,26 +150,6 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                             </div>
                         </div>
                         <div className="flex items-center gap-1.5">
-                            {transcript.length > 0 && (
-                                <button
-                                    type="button"
-                                    onClick={() => setShowTranscript(!showTranscript)}
-                                    className={`p-2.5 rounded-xl transition-all relative ${showTranscript
-                                        ? 'text-green-neon bg-green-neon/10 border border-green-neon/20'
-                                        : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
-                                        }`}
-                                    title={showTranscript ? "Masquer la transcription" : "Afficher la transcription"}
-                                >
-                                    <MessageSquare className="w-4 h-4" />
-                                    {!showTranscript && transcript.length > 0 && (
-                                        <motion.span
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-neon rounded-full shadow-[0_0_6px_rgba(57,255,20,0.6)]"
-                                        />
-                                    )}
-                                </button>
-                            )}
                             <button
                                 type="button"
                                 onClick={handleClose}
@@ -374,20 +313,6 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                         </AnimatePresence>
                     </div>
 
-                    {/* ── Transcript ── */}
-                    <AnimatePresence>
-                        {showTranscript && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                className="overflow-hidden border-t border-white/[0.04]"
-                            >
-                                <TranscriptList utterances={transcript} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
 
 
                     {/* ── Fallback when voice is unsupported ── */}
