@@ -14,6 +14,7 @@ interface Props {
     userName: string | null;
     isOpen: boolean;
     onClose: () => void;
+    onAddItem?: (product: Product) => void;
 }
 
 // ─── Status labels ───────────────────────────────────────────────────────────
@@ -99,9 +100,9 @@ function OrbitingDots() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose }: Props) {
+export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onAddItem }: Props) {
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
-        useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName });
+        useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName, onAddItem });
 
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';

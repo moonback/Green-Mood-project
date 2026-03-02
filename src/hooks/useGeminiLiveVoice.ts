@@ -18,14 +18,11 @@ const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
-
 interface GeminiServerMessage {
     setupComplete?: boolean;
     goingAway?: boolean;
     serverContent?: {
-        /** True when the model finishes its current turn */
         turnComplete?: boolean;
-        /** True when the model has been interrupted by user speech */
         interrupted?: boolean;
         modelTurn?: {
             parts?: Array<{
@@ -36,6 +33,13 @@ interface GeminiServerMessage {
         inputTranscription?: { text?: string; final?: boolean };
         outputTranscription?: { text?: string };
     };
+    toolCall?: {
+        functionCalls: Array<{
+            name: string;
+            args: any;
+            id: string;
+        }>;
+    };
 }
 
 interface Options {
@@ -43,6 +47,7 @@ interface Options {
     pastProducts?: PastProduct[];
     savedPrefs?: SavedPrefs | null;
     userName?: string | null;
+    onAddItem?: (product: Product) => void;
 }
 
 // ─── Audio utilities ─────────────────────────────────────────────────────────
@@ -82,7 +87,7 @@ function toBase64(bytes: Uint8Array): string {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, userName }: Options) {
+export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, userName, onAddItem }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [error, setError] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
@@ -187,15 +192,21 @@ RÈGLES ABSOLUES (OBLIGATOIRES) :
 - Si l’utilisateur interrompt, tu t’arrêtes immédiatement.
 - PRIORITÉ DÉCOUVERTE : Ne propose AUCUN produit avant d'avoir qualifié le besoin (objectif, moment de la journée, expérience souhaitée).
 - ANTICIPATION : Une fois le besoin qualifié, précède les questions futures (ex: mode de consommation idéal).
+- CONFIRMATION : Demande TOUJOURS "Est-ce que tu veux que je l'ajoute à ton panier ?" avant d'utiliser l'outil 'add_to_cart'. N'utilise JAMAIS l'outil 'add_to_cart' sans un accord explicite du client.
+
+GEOFENCING / ACTIONS :
+- Commande 'add_to_cart' : À utiliser UNIQUEMENT après que le client a confirmé vouloir acheter le produit proposé.
 
 STRUCTURE MENTALE À RESPECTER À CHAQUE RÉPONSE :
 1. Accueil chaleureux ou Accusé de compréhension
 2. Qualification (Question pour affiner le besoin) OU Recommandation (si le besoin est déjà clair)
 3. Justification + ANTICIPATION (ex: "Tu cherches plutôt à te détendre après le travail ou à rester actif ?")
+4. CONTEXTE PANIER : Si tu recommandes un produit spécifique, demande s'il faut l'ajouter au panier.
 
 EXEMPLES INTERNES (NE PAS AFFICHER) :
 - “Bienvenu chez Green Moon ! Dis-moi, pour t'orienter au mieux, tu recherches quel type de ressenti aujourd'hui ?”
 - “C'est noté pour la détente. Tu cherches plutôt un effet léger pour rester focus ou quelque chose de plus marqué pour décrocher ?”
+- “Je te recommande la Blue Dream pour son côté relaxant mais créatif. C'est exactement ce qu'il te faut pour ta soirée. Est-ce que tu veux que je l'ajoute à ton panier ?”
 
 OBJECTIF FINAL :
 Écouter et comprendre avant de conseiller.
@@ -435,6 +446,26 @@ OBJECTIF FINAL :
                         systemInstruction: {
                             parts: [{ text: buildSystemPrompt() }],
                         },
+                        tools: [
+                            {
+                                function_declarations: [
+                                    {
+                                        name: 'add_to_cart',
+                                        description: 'Ajouter un produit du catalogue au panier du client.',
+                                        parameters: {
+                                            type: 'OBJECT',
+                                            properties: {
+                                                product_name: {
+                                                    type: 'STRING',
+                                                    description: 'Le nom du produit à ajouter au panier.',
+                                                },
+                                            },
+                                            required: ['product_name'],
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 })
             );
@@ -463,25 +494,52 @@ OBJECTIF FINAL :
                 }
 
                 const sc = msg.serverContent;
-                if (!sc) return;
+                if (sc) {
+                    if (sc.interrupted) {
+                        interruptAudio();
+                        return;
+                    }
 
-                if (sc.interrupted) {
-                    interruptAudio();
-                    return;
-                }
+                    if (sc.turnComplete) {
+                        scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
+                        isSpeakingRef.current = false;
+                        setVoiceState('listening');
+                        return;
+                    }
 
-                if (sc.turnComplete) {
-                    scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
-                    isSpeakingRef.current = false;
-                    setVoiceState('listening');
-                    return;
-                }
-
-                if (sc.modelTurn?.parts) {
-                    for (const part of sc.modelTurn.parts) {
-                        if (part.inlineData?.data && part.inlineData.mimeType.includes('audio')) {
-                            playPcmChunk(part.inlineData.data);
+                    if (sc.modelTurn?.parts) {
+                        for (const part of sc.modelTurn.parts) {
+                            if (part.inlineData?.data && part.inlineData.mimeType.includes('audio')) {
+                                playPcmChunk(part.inlineData.data);
+                            }
                         }
+                    }
+                }
+
+                if (msg.toolCall?.functionCalls) {
+                    const responses = [];
+                    for (const fc of msg.toolCall.functionCalls) {
+                        if (fc.name === 'add_to_cart') {
+                            const name = fc.args.product_name?.toLowerCase() || '';
+                            const product = products.find(p => p.name.toLowerCase().includes(name) || name.includes(p.name.toLowerCase()));
+                            if (product && onAddItem) {
+                                onAddItem(product);
+                                responses.push({
+                                    name: fc.name,
+                                    id: fc.id,
+                                    response: { result: `Produit "${product.name}" ajouté au panier.` },
+                                });
+                            } else {
+                                responses.push({
+                                    name: fc.name,
+                                    id: fc.id,
+                                    response: { error: `Produit "${fc.args.product_name}" non trouvé dans le catalogue.` },
+                                });
+                            }
+                        }
+                    }
+                    if (responses.length > 0) {
+                        ws.send(JSON.stringify({ toolResponse: { functionResponses: responses } }));
                     }
                 }
 
@@ -507,7 +565,7 @@ OBJECTIF FINAL :
                 setVoiceState('error');
             }
         };
-    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, voiceState, compatibilityError, clearSetupTimeout]);
+    }, [buildSystemPrompt, startMicCapture, playPcmChunk, interruptAudio, cleanup, voiceState, compatibilityError, clearSetupTimeout, products, onAddItem]);
 
     const toggleMute = useCallback(() => {
         isMutedRef.current = !isMutedRef.current;
