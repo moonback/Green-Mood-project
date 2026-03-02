@@ -839,8 +839,8 @@ export default function BudTender() {
                                 userName={memory.userName}
                                 isOpen={isVoiceOpen}
                                 onClose={() => setIsVoiceOpen(false)}
-                                onAddItem={(product) => {
-                                    addItem(product);
+                                onAddItem={(product, quantity) => {
+                                    addItem(product, quantity);
                                     openSidebar();
                                 }}
                             />

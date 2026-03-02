@@ -4,6 +4,7 @@ import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-rea
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { useGeminiLiveVoice, VoiceState } from '../hooks/useGeminiLiveVoice';
+import { useSettingsStore } from '../store/settingsStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,7 @@ interface Props {
     userName: string | null;
     isOpen: boolean;
     onClose: () => void;
-    onAddItem?: (product: Product) => void;
+    onAddItem?: (product: Product, quantity: number) => void;
 }
 
 // ─── Status labels ───────────────────────────────────────────────────────────
@@ -101,8 +102,18 @@ function OrbitingDots() {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onAddItem }: Props) {
+    const { settings } = useSettingsStore();
+
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
-        useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName, onAddItem });
+        useGeminiLiveVoice({
+            products,
+            pastProducts,
+            savedPrefs,
+            userName,
+            onAddItem,
+            deliveryFee: settings.delivery_fee,
+            deliveryFreeThreshold: settings.delivery_free_threshold
+        });
 
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';

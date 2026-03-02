@@ -64,9 +64,9 @@ export default function CartSidebar() {
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 flex flex-col min-h-0 ">
               {items.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center px-8 text-center space-y-6">
+                <div className="flex-1 flex flex-col items-center justify-center px-8 text-center space-y-6 z-[9999]">
                   <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
                     <ShoppingBag className="w-6 h-6 text-zinc-700" />
                   </div>
