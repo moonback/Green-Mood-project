@@ -96,7 +96,7 @@ export default function Layout() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 20 }}
-        className="sticky top-0 z-50 w-full"
+        className="sticky top-0 z-[999] w-full"
       >
         {/* Header Background with Glassmorphism */}
         <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-3xl border-b border-white/[0.04] shadow-[0_8px_32px_rgba(0,0,0,0.5)]" />
@@ -125,7 +125,7 @@ export default function Layout() {
 
               {/* Centered Logo */}
               <div className="flex-shrink-0 flex items-center justify-center">
-                <Link to="/" className="flex items-center group relative z-50" aria-label="Green Mood CBD Shop — Accueil">
+                <Link to="/" className="flex items-center group relative z-[1000]" aria-label="Green Mood CBD Shop — Accueil">
                   <div className="absolute -inset-8 bg-green-neon/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                   <img
                     src="/logo.png"
