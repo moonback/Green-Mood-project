@@ -34,6 +34,7 @@ import {
     LogOut,
     Settings,
     Calculator,
+    Tag,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -48,12 +49,22 @@ interface CartLine {
 
 type PaymentMethod = 'cash' | 'card' | 'mobile';
 
+interface AppliedPromo {
+    code: string;
+    description: string | null;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number;
+    discount_amount: number;
+}
+
 interface CompletedSale {
     orderId: string;
     shortId: string;
     lines: CartLine[];
     subtotal: number;
     discount: number;
+    promoCode?: string;
+    promoDiscount?: number;
     total: number;
     paymentMethod: PaymentMethod;
     cashGiven?: number;
@@ -152,6 +163,9 @@ function ReceiptModal({
                     <div className="row"><span>Sous-total</span><span>{sale.subtotal.toFixed(2)} €</span></div>
                     {sale.discount > 0 && (
                         <div className="row"><span>Remise</span><span>−{sale.discount.toFixed(2)} €</span></div>
+                    )}
+                    {sale.promoDiscount != null && sale.promoDiscount > 0 && (
+                        <div className="row"><span>Code promo ({sale.promoCode})</span><span>−{sale.promoDiscount.toFixed(2)} €</span></div>
                     )}
                     <div className="row big"><span>TOTAL</span><span>{sale.total.toFixed(2)} €</span></div>
                     <div className="divider" />
@@ -260,6 +274,18 @@ function AdminPOSTab({
     const [unlockError, setUnlockError] = useState(false);
     const [showAdminMenu, setShowAdminMenu] = useState(false);
 
+    // ── Promo codes ──
+    const [promoInput, setPromoInput] = useState('');
+    const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+    const [promoError, setPromoError] = useState('');
+    const [isCheckingPromo, setIsCheckingPromo] = useState(false);
+
+    // ── Create customer (POS) ──
+    const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+    const [newCustomerName, setNewCustomerName] = useState('');
+    const [newCustomerPhone, setNewCustomerPhone] = useState('');
+    const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+
     // Business Date helper (working day starts at 6:00 AM)
     const getBusinessDate = useCallback(() => {
         const now = new Date();
@@ -325,6 +351,96 @@ function AdminPOSTab({
         setCustomerSearch('');
         setUseLoyaltyPoints(false);
         setPointsToRedeem(0);
+        setAppliedPromo(null);
+        setPromoInput('');
+        setPromoError('');
+        setShowCreateCustomer(false);
+        setNewCustomerName('');
+        setNewCustomerPhone('');
+    };
+
+    // ── Apply promo code ──
+    const handleApplyPromo = async () => {
+        const code = promoInput.trim().toUpperCase();
+        if (!code) return;
+        setIsCheckingPromo(true);
+        setPromoError('');
+        try {
+            const { data, error } = await supabase
+                .from('promo_codes')
+                .select('*')
+                .eq('code', code)
+                .eq('is_active', true)
+                .single();
+
+            if (error || !data) {
+                setPromoError('Code promo invalide ou inactif.');
+                return;
+            }
+            if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                setPromoError('Ce code promo a expiré.');
+                return;
+            }
+            if (data.max_uses != null && data.uses_count >= data.max_uses) {
+                setPromoError('Ce code promo a atteint son nombre maximal d\'utilisations.');
+                return;
+            }
+            if (subtotal < data.min_order_value) {
+                setPromoError(`Montant minimum requis : ${data.min_order_value.toFixed(2)} €`);
+                return;
+            }
+            const discount_amount =
+                data.discount_type === 'percent'
+                    ? Math.min(subtotal, (subtotal * data.discount_value) / 100)
+                    : Math.min(subtotal, data.discount_value);
+
+            setAppliedPromo({
+                code: data.code,
+                description: data.description,
+                discount_type: data.discount_type,
+                discount_value: data.discount_value,
+                discount_amount,
+            });
+            setPromoInput('');
+        } catch {
+            setPromoError('Erreur lors de la vérification du code.');
+        } finally {
+            setIsCheckingPromo(false);
+        }
+    };
+
+    // ── Create customer from POS ──
+    const handleCreateCustomer = async () => {
+        if (!newCustomerName.trim()) return;
+        setIsCreatingCustomer(true);
+        try {
+            const { data: userId, error } = await supabase
+                .rpc('create_pos_customer', {
+                    p_full_name: newCustomerName.trim(),
+                    p_phone: newCustomerPhone.trim() || null,
+                });
+            if (error || !userId) throw error ?? new Error('Création échouée');
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (profile) {
+                setSelectedCustomer(profile as Profile);
+            }
+            setShowCreateCustomer(false);
+            setNewCustomerName('');
+            setNewCustomerPhone('');
+            setCustomerSearch('');
+            setCustomerResults([]);
+        } catch (err) {
+            console.error(err);
+            alert('Erreur lors de la création du client. Vérifiez la console.');
+        } finally {
+            setIsCreatingCustomer(false);
+        }
     };
 
     // ── Real-time Stats ──
@@ -467,7 +583,8 @@ function AdminPOSTab({
 
     // Loyalty points conversion: 100 points = 1€
     const loyaltyDiscount = useLoyaltyPoints ? pointsToRedeem / 100 : 0;
-    const total = Math.max(0, subtotal - discount - loyaltyDiscount);
+    const promoDiscount = appliedPromo?.discount_amount ?? 0;
+    const total = Math.max(0, subtotal - discount - loyaltyDiscount - promoDiscount);
     const cashNum = parseFloat(cashGiven) || 0;
     const change = Math.max(0, cashNum - total);
 
@@ -505,10 +622,10 @@ function AdminPOSTab({
                     subtotal,
                     delivery_fee: 0,
                     total,
-                    promo_discount: discount + loyaltyDiscount,
-                    promo_code: (discount > 0 || loyaltyDiscount > 0)
+                    promo_discount: discount + loyaltyDiscount + promoDiscount,
+                    promo_code: appliedPromo?.code ?? ((discount > 0 || loyaltyDiscount > 0)
                         ? `POS-REMISE-${discount > 0 ? (discountType === 'percent' ? discountValue + '%' : discountValue + 'EUR') : ''}${loyaltyDiscount > 0 ? `-LOYALTY-${pointsToRedeem}PTS` : ''}`
-                        : null,
+                        : null),
                     loyalty_points_earned: Math.floor(total),
                     payment_status: 'paid',
                     status: 'delivered',
@@ -531,6 +648,11 @@ function AdminPOSTab({
                     total_price: l.quantity * l.unitPrice,
                 }))
             );
+
+            // 2b. Increment promo code usage counter
+            if (appliedPromo) {
+                await supabase.rpc('increment_promo_uses', { code_text: appliedPromo.code });
+            }
 
             // 3. Decrement stock
             for (const line of cart) {
@@ -625,6 +747,8 @@ function AdminPOSTab({
                 lines: [...cart],
                 subtotal,
                 discount,
+                promoCode: appliedPromo?.code,
+                promoDiscount: promoDiscount > 0 ? promoDiscount : undefined,
                 total,
                 paymentMethod,
                 cashGiven: paymentMethod === 'cash' ? cashNum : undefined,
@@ -1269,7 +1393,7 @@ function AdminPOSTab({
                                         />
                                     </div>
 
-                                    {customerResults.length > 0 && (
+                                    {customerResults.length > 0 && !showCreateCustomer && (
                                         <div className="bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl">
                                             {customerResults.map((c) => (
                                                 <button
@@ -1278,6 +1402,7 @@ function AdminPOSTab({
                                                         setSelectedCustomer(c);
                                                         setCustomerSearch('');
                                                         setCustomerResults([]);
+                                                        setShowCreateCustomer(false);
                                                     }}
                                                     className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 border-b border-zinc-800 last:border-0 transition-colors"
                                                 >
@@ -1286,6 +1411,65 @@ function AdminPOSTab({
                                                     <p className="text-yellow-500/80 text-[10px]">{c.loyalty_points} pts</p>
                                                 </button>
                                             ))}
+                                        </div>
+                                    )}
+
+                                    {/* "No results" + Create customer button */}
+                                    {customerSearch.trim().length >= 2 && !isSearchingCustomer && customerResults.length === 0 && !showCreateCustomer && (
+                                        <div className="flex items-center justify-between px-1">
+                                            <span className="text-[10px] text-zinc-600">Aucun client trouvé</span>
+                                            <button
+                                                onClick={() => {
+                                                    setShowCreateCustomer(true);
+                                                    setNewCustomerName(customerSearch.trim());
+                                                }}
+                                                className="flex items-center gap-1 text-[10px] font-bold text-green-400 hover:text-green-300 transition-colors"
+                                            >
+                                                <UserPlus className="w-3 h-3" />
+                                                Créer un client
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Inline create customer form */}
+                                    {showCreateCustomer && (
+                                        <div className="bg-zinc-900 border border-green-500/30 rounded-lg p-2.5 space-y-2">
+                                            <p className="text-[10px] font-black text-green-400 uppercase tracking-wider flex items-center gap-1">
+                                                <UserPlus className="w-3 h-3" />
+                                                Nouveau client
+                                            </p>
+                                            <input
+                                                value={newCustomerName}
+                                                onChange={(e) => setNewCustomerName(e.target.value)}
+                                                placeholder="Nom complet *"
+                                                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                            />
+                                            <input
+                                                value={newCustomerPhone}
+                                                onChange={(e) => setNewCustomerPhone(e.target.value)}
+                                                placeholder="Téléphone (optionnel)"
+                                                className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-2.5 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                            />
+                                            <div className="flex gap-1.5">
+                                                <button
+                                                    onClick={handleCreateCustomer}
+                                                    disabled={!newCustomerName.trim() || isCreatingCustomer}
+                                                    className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-400 disabled:opacity-40 text-black font-bold py-1.5 rounded-md text-xs transition-colors"
+                                                >
+                                                    {isCreatingCustomer ? <RotateCcw className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                                                    {isCreatingCustomer ? 'Création…' : 'Créer'}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setShowCreateCustomer(false);
+                                                        setNewCustomerName('');
+                                                        setNewCustomerPhone('');
+                                                    }}
+                                                    className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-md text-xs font-bold transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1516,6 +1700,51 @@ function AdminPOSTab({
                                 />
                             </div>
 
+                            {/* Promo code */}
+                            {!appliedPromo ? (
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="relative flex-1">
+                                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500" />
+                                            <input
+                                                value={promoInput}
+                                                onChange={(e) => {
+                                                    setPromoInput(e.target.value.toUpperCase());
+                                                    setPromoError('');
+                                                }}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                                                placeholder="Code promo…"
+                                                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-7 pr-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors uppercase"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleApplyPromo}
+                                            disabled={!promoInput.trim() || isCheckingPromo}
+                                            className="px-2.5 py-1.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-colors shrink-0"
+                                        >
+                                            {isCheckingPromo ? '…' : 'OK'}
+                                        </button>
+                                    </div>
+                                    {promoError && (
+                                        <p className="text-[10px] text-red-400 font-medium">{promoError}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-green-900/20 border border-green-500/30 rounded-lg px-2.5 py-1.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <Tag className="w-3 h-3 text-green-400 shrink-0" />
+                                        <span className="text-xs font-bold text-green-400">{appliedPromo.code}</span>
+                                        <span className="text-[10px] text-zinc-400">−{appliedPromo.discount_amount.toFixed(2)} €</span>
+                                    </div>
+                                    <button
+                                        onClick={() => { setAppliedPromo(null); setPromoInput(''); }}
+                                        className="text-zinc-500 hover:text-red-400 transition-colors"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Totals */}
                             <div className="space-y-1 text-xs text-zinc-400">
                                 <div className="flex justify-between">
@@ -1526,6 +1755,12 @@ function AdminPOSTab({
                                     <div className="flex justify-between text-orange-400">
                                         <span>Remise ({discountType === 'percent' ? `${discountValue}%` : `${discountValue}€`})</span>
                                         <span>−{discount.toFixed(2)} €</span>
+                                    </div>
+                                )}
+                                {promoDiscount > 0 && (
+                                    <div className="flex justify-between text-green-400">
+                                        <span>Promo ({appliedPromo?.code})</span>
+                                        <span>−{promoDiscount.toFixed(2)} €</span>
                                     </div>
                                 )}
                                 {loyaltyDiscount > 0 && (
