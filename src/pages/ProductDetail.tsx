@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { CATEGORY_SLUGS } from '../lib/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
@@ -229,7 +230,12 @@ export default function ProductDetail() {
     setTimeout(() => setAddedFeedback(false), 2000);
   };
 
-  const isOil = product?.category?.slug === 'huiles' && !product?.is_bundle;
+  const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!product) return;
+    setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)));
+  }, [product?.stock_quantity]);
+
+  const isOil = product?.category?.slug === CATEGORY_SLUGS.OILS && !product?.is_bundle;
 
   if (isLoading) {
     return (
@@ -435,7 +441,7 @@ export default function ProductDetail() {
                             min="1"
                             max={product.stock_quantity}
                             value={quantity}
-                            onChange={(e) => setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)))}
+                            onChange={handleQuantityChange}
                             className="w-12 bg-transparent text-sm font-black text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <span className="text-[10px] text-zinc-500 font-bold">g</span>

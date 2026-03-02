@@ -32,7 +32,7 @@ export default function Layout() {
   const itemCount = useCartStore((s) => s.itemCount());
   const openSidebar = useCartStore((s) => s.openSidebar);
   const { user, profile, signOut } = useAuthStore();
-  const { settings } = useSettingsStore();
+  const settings = useSettingsStore((s) => s.settings);
 
   // Close menus on route change and scroll to top
   useEffect(() => {

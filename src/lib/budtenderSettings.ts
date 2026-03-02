@@ -124,7 +124,7 @@ export function getBudTenderSettings(): BudTenderSettings {
         const raw = localStorage.getItem(BUDTENDER_LS_KEY);
         if (raw) return migrateSettings(JSON.parse(raw));
     } catch (err) {
-        console.error('[budtenderSettings] Error loading settings:', err);
+        if (import.meta.env.DEV) console.error('[budtenderSettings] Error loading settings:', err);
     }
     return BUDTENDER_DEFAULTS;
 }
@@ -144,7 +144,7 @@ export async function fetchBudTenderSettings(): Promise<BudTenderSettings> {
         if (data?.value) return migrateSettings(data.value);
     } catch (err) {
         // Quietly fallback if it's just a missing row or initial setup
-        console.warn('[budtenderSettings] No config found in DB, using defaults');
+        if (import.meta.env.DEV) console.warn('[budtenderSettings] No config found in DB, using defaults');
     }
     // Fallback if DB fails or is empty
     return getBudTenderSettings();
