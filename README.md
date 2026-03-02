@@ -16,19 +16,26 @@ Green Mood Project se distingue par une suite de fonctionnalités robustes et in
     *   **Configuration Admin** : Entièrement configurable via un panneau d'administration dédié, permettant d'ajuster les prompts, les modèles d'IA (via OpenRouter), la vitesse de frappe, et les seuils de réapprovisionnement.
     *   **Valeur Ajoutée** : Réduit la friction à l'achat, augmente la confiance des clients et personnalise l'expérience, transformant les visiteurs en acheteurs fidèles.
 
-2.  **💖 Programme de Fidélité Gamifié & Abonnements**
+2.  **🎙️ Conseiller Vocal Live : L'IA qui vous écoute et vous répond**
+    *   **Technologie Live** : Intégration de l'IA pour une interaction vocale bidirectionnelle en temps réel avec une latence ultra-faible.
+    *   **Interface Immersive** : Visualisation dynamique par ondes sonores (Waveform) et transcription en direct de la conversation pour une accessibilité maximale.
+    *   **Expertise Métier** : Un conseiller spécialisé dans le CBD, le THCV et le THV-N10, capable de conseiller sur les dosages, les arômes et les effets recherchés.
+    *   **Conscience Contextuelle** : L'IA connaît le nom du client, ses préférences enregistrées et son historique d'achats récents pour un conseil "comme en boutique".
+    *   **Valeur Ajoutée** : Une expérience futuriste unique sur le marché qui humanise la vente en ligne et offre un support client instantané et expert.
+
+3.  **💖 Programme de Fidélité Gamifié & Abonnements**
     *   **Système de Points à Niveaux (Bronze, Silver, Gold)** : Incite à la répétition d'achats avec des récompenses progressives (points par euro, livraisons offertes, accès ventes privées, réductions VIP).
     *   **Abonnements Récurrents** : Permet aux clients de s'abonner à leurs produits favoris avec des livraisons automatiques et des réductions, assurant des revenus récurrents et prévisibles.
     *   **Gestion Complète** : Les utilisateurs peuvent gérer leurs abonnements (pause, reprise, annulation, changement de fréquence) directement depuis leur compte.
     *   **Valeur Ajoutée** : Augmente la Life-Time Value (LTV) des clients et fidélise la base d'utilisateurs.
 
-3.  **🛍️ Expérience E-commerce Premium**
+4.  **🛍️ Expérience E-commerce Premium**
     *   **Catalogue Produit Avancé** : Navigation intuitive avec filtres par catégorie, bénéfices, arômes, et recherche full-text.
     *   **Fiches Produits Détaillées** : Informations complètes, images multiples, gestion des stocks, et système d'avis clients vérifiés.
     *   **Tunnel de Commande Optimisé** : Processus d'achat fluide et sécurisé, gestion des adresses, codes promotionnels.
     *   **PWA (Progressive Web App)** : Offre une expérience utilisateur rapide, fiable et engageante, avec installation sur l'écran d'accueil et fonctionnement hors ligne partiel.
 
-3.  **🛒 Système de Caisse POS (Point of Sale) Immersif**
+5.  **🛒 Système de Caisse POS (Point of Sale) Immersif**
     *   **Interface Futuriste** : Design ultra-moderne avec effets de flou (Glassmorphism), mode plein écran dédié et navigation tactile fluide.
     *   **⚡ Scanner Barcode Natif** : Support ultra-rapide des scanners USB/Bluetooth. Scannez un produit, il s'ajoute instantanément au panier sans aucune manipulation.
     *   **📦 Gestion Intelligente des Packs** : Reconnaissance automatique des bundles. Lorsqu'un pack est vendu, le système décrémente automatiquement le stock de chaque composant individuel.
@@ -38,10 +45,10 @@ Green Mood Project se distingue par une suite de fonctionnalités robustes et in
     *   **Synchronisation en Temps Réel** : Mise à jour instantanée des stocks globaux et génération de reçus professionnels.
     *   **Valeur Ajoutée** : Unifie la gestion des ventes omnicanales, offrant une expérience premium tant pour l'opérateur que pour le client.
 
-4.  **📊 Panneau d'Administration Complet**
-    *   Un back-office intuitif pour gérer tous les aspects de la boutique : produits, catégories, commandes, clients, stocks, codes promotionnels, avis, et paramètres de l'IA BudTender.
-    *   **Analytique Intégrée** : Tableau de bord avec des métriques clés (chiffre d'affaires, top produits, distribution des statuts de commande, acquisition client) pour une prise de décision éclairée.
-    *   **Valeur Ajoutée** : Autonomie totale pour l'opérateur, réduisant la dépendance aux développeurs pour la gestion quotidienne et stratégique.
+6.  **📊 Panneau d'Administration Complet**
+    *   Back-office intuitif pour gérer tous les aspects de la boutique : produits, catégories, commandes, clients, stocks, codes promotionnels, avis, et paramètres de l'IA BudTender.
+    *   **Analytique Intégrée** : Tableau de bord avec des métriques clés pour une prise de décision éclairée.
+    *   **Valeur Ajoutée** : Autonomie totale pour l'opérateur, réduisant la dépendance aux développeurs.
 
 ## ⚙️ Stack Technique Robuste & Moderne
 
@@ -54,7 +61,9 @@ L'application est construite sur une architecture solide, garantissant performan
     *   **Row-Level Security (RLS)** : Sécurité granulaire des données, garantissant que chaque utilisateur n'accède qu'à ses propres informations.
     *   **Fonctions & Triggers SQL** : Logique métier complexe implémentée directement en base de données pour une cohérence et une fiabilité maximales (ex: gestion des stocks, points de fidélité, synchronisation des bundles).
 *   **State Management** : `Zustand` pour une gestion d'état réactive et performante.
-*   **IA** : Intégration via `OpenRouter` pour une flexibilité dans le choix des modèles de langage (par défaut `google/gemini-2.0-flash-lite-preview-02-05`).
+*   **IA & Vocal** : 
+    *   **Chat** : Intégration via `OpenRouter` pour une flexibilité de modèles (ex: `Gemini 2.0 Flash Lite`).
+    *   **Vocal** : Utilisation de l'API `Gemini Multimodal Live` via WebSockets (WSS) pour le traitement audio natif.
 *   **Animations** : `Motion` pour des transitions et animations fluides et élégantes.
 
 ## 🏗️ Architecture & Qualité du Code
