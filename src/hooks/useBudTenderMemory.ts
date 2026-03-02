@@ -12,6 +12,9 @@ export interface SavedPrefs {
     experience: string;
     format: string;
     budget: string;
+    age?: string;
+    intensity?: string;
+    terpenes?: string[]; // Multiple choice possible
 }
 
 export interface ChatMessage {
@@ -178,7 +181,7 @@ export function useBudTenderMemory() {
     }, [user]);
 
     // ─── Save preferences ─────────────────────────────────────────────────────
-    const savePrefs = async (prefs: SavedPrefs & { terpene_preferences?: string[] }) => {
+    const savePrefs = async (prefs: SavedPrefs) => {
         try {
             // Local fallback
             localStorage.setItem(LS_KEY, JSON.stringify(prefs));
@@ -186,15 +189,28 @@ export function useBudTenderMemory() {
 
             // Supabase sync
             if (user) {
+                // Separate fixed DB columns from dynamic ones
+                const { goal, experience, format, budget, age, intensity, terpenes, ...extra } = prefs as any;
+
+                if (import.meta.env.DEV) {
+                    console.log('[BudTenderMemory] Supabase Upsert Payload:', {
+                        user_id: user.id,
+                        goal, experience, format, budget, age, intensity, terpenes, extra
+                    });
+                }
+
                 await supabase.from('user_ai_preferences').upsert({
                     user_id: user.id,
-                    goal: prefs.goal,
-                    experience_level: prefs.experience,
-                    preferred_format: prefs.format,
-                    budget_range: prefs.budget,
-                    terpene_preferences: prefs.terpene_preferences ?? [],
+                    goal: goal,
+                    experience_level: experience,
+                    preferred_format: format,
+                    budget_range: budget,
+                    age_range: age,
+                    intensity_preference: intensity,
+                    terpene_preferences: terpenes ?? [],
+                    extra_prefs: extra, // This can store any dynamic questions added in Admin
                     updated_at: new Date().toISOString()
-                });
+                }, { onConflict: 'user_id' });
             }
         } catch (err) {
             if (import.meta.env.DEV) console.error('[BudTenderMemory] Error saving prefs:', err);
@@ -256,6 +272,10 @@ export function useBudTenderMemory() {
                         experience: prefsData.experience_level ?? '',
                         format: prefsData.preferred_format ?? '',
                         budget: prefsData.budget_range ?? '',
+                        age: prefsData.age_range ?? '',
+                        intensity: prefsData.intensity_preference ?? '',
+                        terpenes: prefsData.terpene_preferences ?? [],
+                        ...(prefsData.extra_prefs || {}) // Restore any dynamic/custom questions
                     };
                     setSavedPrefs(syncedPrefs);
                     localStorage.setItem(LS_KEY, JSON.stringify(syncedPrefs));
