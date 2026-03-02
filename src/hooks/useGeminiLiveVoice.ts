@@ -83,12 +83,13 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
     const [transcript, setTranscript] = useState<VoiceUtterance[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isMuted, setIsMuted] = useState(false);
+    const [isThinking, setIsThinking] = useState(false);
 
     // All mutable session state lives in refs so audio callbacks always see current values
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
     const playbackCtxRef = useRef<AudioContext | null>(null);
-    const processorRef = useRef<ScriptProcessorNode | null>(null);
+    const audioWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const scheduledUntilRef = useRef<number>(0); // next available playback time
     const isSpeakingRef = useRef(false);
@@ -98,7 +99,7 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
 
     const buildSystemPrompt = useCallback((): string => {
         const catalog = products
-            .slice(0, 25) // cap to avoid token overflow
+            .slice(0, 10) // further capped for vocal speed
             .map(p => {
                 const aromas = (p.attributes?.aromas ?? []).join(', ');
                 const benefits = (p.attributes?.benefits ?? []).join(', ');
@@ -138,7 +139,8 @@ export function useGeminiLiveVoice({ products, pastProducts = [], savedPrefs, us
                 ? `Achats récents: ${pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}. `
                 : '';
 
-        return `Tu es l'Expert BudTender n°1 chez Green Moon CBD Paris, spécialiste mondial du THCV et du THV-N10. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
+        return `Tu es l'Expert BudTender n°1 chez Green Moon CBD Paris. Tu réponds en VOCAL — ultra-direct, naturel et percutant.
+RÉPONDS DÈS QUE TU AS COMPRIS L’INTENTION. NE PAS ATTENDRE LA FIN DE LA PHRASE. UNE SEULE RECOMMANDATION MAX.
 ${greeting}${prefsText}${history}
 CATALOGUE GREEN MOON:
 ${catalog}
@@ -189,11 +191,13 @@ RÈGLES D'OR POUR LE VOCAL:
                 source.connect(ctx.destination);
 
                 // Schedule contiguously for gapless output
-                const startAt = Math.max(ctx.currentTime + 0.04, scheduledUntilRef.current);
+                // Reduced buffer from 0.04 to 0.015 for immediate playback
+                const startAt = Math.max(ctx.currentTime + 0.015, scheduledUntilRef.current);
                 source.start(startAt);
                 scheduledUntilRef.current = startAt + audioBuffer.duration;
 
                 isSpeakingRef.current = true;
+                setIsThinking(false);
                 setVoiceState('speaking');
 
                 source.onended = () => {
@@ -213,54 +217,61 @@ RÈGLES D'OR POUR LE VOCAL:
     // ── Audio capture ────────────────────────────────────────────────────────
 
     /**
-     * Start mic capture using ScriptProcessorNode.
-     * Captures at the browser's native rate, downsamples to 16kHz, and streams
-     * base64-encoded PCM chunks over the WebSocket.
-     *
-     * Note: ScriptProcessorNode is deprecated; migrate to AudioWorklet for future-proofing.
+     * Start mic capture using AudioWorklet (low latency, off-main-thread).
      */
-    const startMicCapture = useCallback((stream: MediaStream) => {
-        const ctx = new AudioContext();
-        captureCtxRef.current = ctx;
-        const nativeRate = ctx.sampleRate;
+    const startMicCapture = useCallback(async (stream: MediaStream) => {
+        try {
+            const ctx = new AudioContext();
+            captureCtxRef.current = ctx;
+            const nativeRate = ctx.sampleRate;
 
-        const source = ctx.createMediaStreamSource(stream);
+            // Load the worklet module from public/voice-processor.js
+            await ctx.audioWorklet.addModule('/voice-processor.js');
 
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
-        const processor = ctx.createScriptProcessor(4096, 1, 1);
-        processorRef.current = processor;
+            const source = ctx.createMediaStreamSource(stream);
+            const workletNode = new AudioWorkletNode(ctx, 'voice-processor');
+            audioWorkletNodeRef.current = workletNode;
 
-        processor.onaudioprocess = (e: AudioProcessingEvent) => {
-            if (wsRef.current?.readyState !== WebSocket.OPEN) return;
-            // Don't send mic while muted or AI is speaking (avoids echo feedback)
-            if (isMutedRef.current || isSpeakingRef.current) return;
+            workletNode.port.onmessage = (event) => {
+                if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+                // Don't send mic while muted or AI is speaking
+                if (isMutedRef.current || isSpeakingRef.current) return;
 
-            const raw = e.inputBuffer.getChannelData(0);
-            const downsampled = downsampleBuffer(raw, nativeRate, INPUT_SAMPLE_RATE);
-            const pcm16 = float32ToInt16(downsampled);
-            const b64 = toBase64(new Uint8Array(pcm16.buffer));
+                const raw = event.data as Float32Array;
 
-            wsRef.current.send(
-                JSON.stringify({
-                    realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: b64 }] },
-                })
-            );
-        };
+                // Simple silence gating to reduce network spam
+                // Threshold 0.005 is a good balance for speech detection
+                let sumSq = 0;
+                for (let i = 0; i < raw.length; i++) sumSq += raw[i] * raw[i];
+                const rms = Math.sqrt(sumSq / raw.length);
+                if (rms < 0.005) return;
 
-        // Connect through a silent gain to keep the node in the graph without
-        // feeding mic audio back to the speakers
-        const silentGain = ctx.createGain();
-        silentGain.gain.value = 0;
-        source.connect(processor);
-        processor.connect(silentGain);
-        silentGain.connect(ctx.destination);
+                const downsampled = downsampleBuffer(raw, nativeRate, INPUT_SAMPLE_RATE);
+                const pcm16 = float32ToInt16(downsampled);
+                const b64 = toBase64(new Uint8Array(pcm16.buffer));
+
+                wsRef.current.send(
+                    JSON.stringify({
+                        realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: b64 }] },
+                    })
+                );
+            };
+
+            const silentGain = ctx.createGain();
+            silentGain.gain.value = 0;
+            source.connect(workletNode);
+            workletNode.connect(silentGain);
+            silentGain.connect(ctx.destination);
+        } catch (e) {
+            if (import.meta.env.DEV) console.error('[VoiceAdvisor] AudioWorklet init error:', e);
+        }
     }, []);
 
     // ── Session lifecycle ────────────────────────────────────────────────────
 
     const cleanup = useCallback(() => {
-        processorRef.current?.disconnect();
-        processorRef.current = null;
+        audioWorkletNodeRef.current?.disconnect();
+        audioWorkletNodeRef.current = null;
         captureCtxRef.current?.close().catch(() => { });
         captureCtxRef.current = null;
         playbackCtxRef.current?.close().catch(() => { });
@@ -292,8 +303,11 @@ RÈGLES D'OR POUR LE VOCAL:
         setTranscript([]);
         setError(null);
         scheduledUntilRef.current = 0;
-        isMutedRef.current = false;
+        setIsThinking(false);
         setIsMuted(false);
+
+        // Pre-initialize AudioContext for faster response
+        getPlaybackCtx();
 
         // Request microphone
         let stream: MediaStream;
@@ -329,6 +343,8 @@ RÈGLES D'OR POUR LE VOCAL:
                         model: LIVE_MODEL,
                         generationConfig: {
                             responseModalities: ['AUDIO'],
+                            candidateCount: 1,
+                            temperature: 0.3,
                             speechConfig: {
                                 voiceConfig: {
                                     prebuiltVoiceConfig: { voiceName: 'Aoede' },
@@ -384,6 +400,7 @@ RÈGLES D'OR POUR LE VOCAL:
                 // What the user said (speech → text by VAD)
                 const inputText = msg.serverContent?.inputTranscription?.text;
                 if (inputText?.trim()) {
+                    setIsThinking(true);
                     setTranscript(prev => [...prev, { role: 'user', text: inputText.trim() }]);
                 }
 
@@ -422,5 +439,5 @@ RÈGLES D'OR POUR LE VOCAL:
         setIsMuted(m => !m);
     }, []);
 
-    return { voiceState, transcript, error, isMuted, startSession, stopSession, toggleMute };
+    return { voiceState, transcript, error, isMuted, isThinking, startSession, stopSession, toggleMute };
 }

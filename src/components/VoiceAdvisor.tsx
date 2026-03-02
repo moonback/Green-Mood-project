@@ -18,19 +18,21 @@ interface Props {
 
 // ─── Status labels ───────────────────────────────────────────────────────────
 
-const STATUS: Record<VoiceState, string> = {
+const STATUS: Record<VoiceState | 'thinking', string> = {
     idle: 'Appuyez pour démarrer',
     connecting: 'Connexion en cours…',
     listening: 'Je vous écoute…',
     speaking: 'BudTender répond…',
+    thinking: 'Analyse en cours…',
     error: 'Erreur de connexion',
 };
 
-const STATUS_SUB: Record<VoiceState, string> = {
+const STATUS_SUB: Record<VoiceState | 'thinking', string> = {
     idle: 'Votre conseiller vocal IA est prêt',
     connecting: 'Établissement de la connexion sécurisée',
     listening: 'Parlez naturellement, je vous comprends',
-    speaking: 'Analyse et réponse en cours…',
+    speaking: 'Diffusion de la réponse audio…',
+    thinking: 'Calcul de la meilleure recommandation…',
     error: 'Vérifiez votre connexion et réessayez',
 };
 
@@ -140,7 +142,7 @@ function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose }: Props) {
-    const { voiceState, transcript, error, isMuted, startSession, stopSession, toggleMute } =
+    const { voiceState, transcript, error, isMuted, isThinking, startSession, stopSession, toggleMute } =
         useGeminiLiveVoice({ products, pastProducts, savedPrefs, userName });
 
     const [showTranscript, setShowTranscript] = useState(false);
@@ -307,12 +309,32 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                             className="w-8 h-8 border-2 border-green-neon/30 border-t-green-neon rounded-full animate-spin"
                                         />
                                     )}
-                                    {voiceState === 'speaking' && (
+                                    {isThinking && (
+                                        <motion.div
+                                            key="thinking"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute"
+                                        >
+                                            <div className="flex gap-1.5">
+                                                {[0, 1, 2].map(i => (
+                                                    <motion.div
+                                                        key={i}
+                                                        animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                                                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                                                        className="w-1.5 h-1.5 bg-green-neon rounded-full"
+                                                    />
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                    {!isThinking && voiceState === 'speaking' && (
                                         <motion.div key="vol" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
                                             <Volume2 className="w-9 h-9" />
                                         </motion.div>
                                     )}
-                                    {(voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
+                                    {!isThinking && (voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
                                         <motion.div key="mic" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
                                             {isMuted ? <MicOff className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
                                         </motion.div>
@@ -330,10 +352,10 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 className={`text-base font-bold tracking-tight ${voiceState === 'error' ? 'text-red-400' : isActive ? 'text-white' : 'text-zinc-300'
                                     }`}
                             >
-                                {STATUS[voiceState]}
+                                {isThinking ? STATUS.thinking : STATUS[voiceState]}
                             </motion.p>
                             <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed">
-                                {error || STATUS_SUB[voiceState]}
+                                {error || (isThinking ? STATUS_SUB.thinking : STATUS_SUB[voiceState])}
                             </p>
                         </div>
 
