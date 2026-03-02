@@ -108,7 +108,7 @@ function TranscriptList({ utterances }: { utterances: VoiceUtterance[] }) {
     if (utterances.length === 0) return null;
 
     return (
-        <div className="w-full px-5 pb-3 space-y-2 max-h-52 overflow-y-auto scrollbar-thin">
+        <div className="w-full px-5 pb-3 space-y-2 max-h-52 overflow-y-auto scrollbar-thin" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Transcription de la conversation">
             <div className="flex items-center gap-2 px-1 mb-1">
                 <div className="w-4 h-px bg-gradient-to-r from-green-neon/30 to-transparent" />
                 <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.3em]">Transcript</p>
@@ -332,7 +332,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                             >
                                 {STATUS[voiceState]}
                             </motion.p>
-                            <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed">
+                            <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed" aria-live="polite" aria-atomic="true">
                                 {error || compatibilityError || STATUS_SUB[voiceState]}
                             </p>
                         </div>
@@ -388,6 +388,23 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                             </motion.div>
                         )}
                     </AnimatePresence>
+
+
+                    {/* ── Fallback when voice is unsupported ── */}
+                    {!isSupported && (
+                        <div className="relative px-5 pb-5 pt-2 shrink-0">
+                            <button
+                                type="button"
+                                onClick={handleClose}
+                                className="w-full py-4 rounded-2xl bg-zinc-800/80 border border-zinc-700 text-zinc-200 font-black text-sm uppercase tracking-wider hover:bg-zinc-700/80 transition-all duration-300"
+                            >
+                                💬 Continuer en chat texte
+                            </button>
+                            <p className="text-[10px] text-zinc-600 text-center mt-3 font-medium">
+                                Votre navigateur ne supporte pas toutes les APIs vocales nécessaires.
+                            </p>
+                        </div>
+                    )}
 
                     {/* ── Start / retry button ── */}
                     <AnimatePresence>
