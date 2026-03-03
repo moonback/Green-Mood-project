@@ -226,6 +226,28 @@ interface Message {
     };
 }
 
+// ─── Header components ───────────────────────────────────────────────────────
+
+function HeaderAction({ icon, title, onClick, isActive, label }: { icon: React.ReactNode; title: string; onClick: () => void; isActive?: boolean; label: string }) {
+    return (
+        <button
+            onClick={onClick}
+            title={title}
+            className={`
+                flex flex-col items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-all group
+                ${isActive ? 'bg-green-neon text-black shadow-[0_0_15px_rgba(57,255,20,0.3)]' : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10'}
+            `}
+        >
+            <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? 'scale-110' : ''}`}>
+                {icon}
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-widest hidden sm:block ${isActive ? 'text-black' : 'text-zinc-600 group-hover:text-zinc-400 font-bold'}`}>
+                {label}
+            </span>
+        </button>
+    );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BudTender() {
@@ -842,59 +864,74 @@ export default function BudTender() {
                             className="fixed inset-0 z-[9999] bg-zinc-950/98 backdrop-blur-3xl flex flex-col overflow-hidden origin-bottom-right"
                         >
                             {/* Header */}
-                            <div className="flex items-center gap-4 px-5 py-5 sm:px-6 sm:py-8 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950/80 to-zinc-900/80">
-                                <div className="max-w-7xl mx-auto w-full flex items-center gap-4">
-                                    <div className="relative">
-                                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center shadow-inner">
-                                            <Leaf className="w-6 h-6 sm:w-7 sm:h-7 text-green-neon" />
+                            <div className="relative z-40 px-6 py-6 sm:py-8 border-b border-white/5 bg-zinc-950/40 backdrop-blur-xl">
+                                <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-6">
+
+                                    {/* Left: Branding & Status */}
+                                    <div className="flex items-center gap-5">
+                                        <div className="relative group">
+                                            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center transition-all group-hover:border-green-neon/40 shadow-2xl overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-br from-green-neon/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <Leaf className="w-6 h-6 sm:w-7 sm:h-7 text-green-neon transition-transform group-hover:scale-110" />
+                                            </div>
+                                            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-neon rounded-full border-[3px] border-zinc-950 shadow-[0_0_10px_rgba(57,255,20,0.4)]" />
                                         </div>
-                                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-neon rounded-full border-[3px] border-zinc-900" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-lg sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-                                            BUDTENDER <span className="text-[10px] sm:text-xs bg-green-neon/10 text-green-neon px-2.5 py-0.5 rounded-full border border-green-neon/20">V2.0</span>
-                                        </h3>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="w-2 h-2 bg-green-neon rounded-full animate-pulse" />
-                                            <p className="text-xs sm:text-sm text-zinc-400 font-medium">
+
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tighter uppercase italic">
+                                                    BudTender <span className="text-green-neon not-italic">AI</span>
+                                                </h3>
+                                                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-neon/5 border border-green-neon/10">
+                                                    <span className="w-1.5 h-1.5 bg-green-neon rounded-full animate-pulse shadow-[0_0_5px_rgba(57,255,20,0.8)]" />
+                                                    <span className="text-[10px] font-black text-green-neon tracking-widest uppercase">Live Expert</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
                                                 {memory.isLoggedIn && memory.userName
-                                                    ? `Bonjour, ${memory.userName} 👋`
-                                                    : 'Expert en cannabinoïdes actif'}
+                                                    ? `Session active · Bonjour, ${memory.userName}`
+                                                    : 'Conseiller spécialisé en cannabinoïdes'}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            type="button"
+
+                                    {/* Right: Actions */}
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <div className="h-10 w-[1px] bg-white/5 mx-2 hidden sm:block" />
+
+                                        <HeaderAction
+                                            icon={<Mic className="w-5 h-5" />}
+                                            title="Conseiller vocal (Gemini Live)"
                                             onClick={() => setIsVoiceOpen(true)}
-                                            title="Conseiller vocal IA (Gemini Live)"
-                                            className="p-3 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-2xl transition-all"
-                                            aria-label="Ouvrir le conseiller vocal"
-                                        >
-                                            <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
-                                        </button>
-                                        <button
+                                            label="Voix"
+                                        />
+
+                                        <HeaderAction
+                                            icon={<History className="w-5 h-5" />}
+                                            title="Historique des discussions"
                                             onClick={() => {
                                                 setIsHistoryOpen(!isHistoryOpen);
                                                 if (!isHistoryOpen) memory.fetchAllSessions();
                                             }}
-                                            title="Historique des conversations"
-                                            className={`p-3 rounded-2xl transition-all ${isHistoryOpen ? 'bg-green-neon text-black' : 'text-zinc-500 hover:text-green-neon hover:bg-green-neon/5'}`}
-                                        >
-                                            <History className="w-5 h-5 sm:w-6 sm:h-6" />
-                                        </button>
-                                        <button
+                                            isActive={isHistoryOpen}
+                                            label="Historique"
+                                        />
+
+                                        <HeaderAction
+                                            icon={<RefreshCw className="w-5 h-5" />}
+                                            title="Nouvelle session"
                                             onClick={reset}
-                                            title="Nouvelle discussion (garder vos préférences)"
-                                            className="p-3 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-2xl transition-all"
-                                        >
-                                            <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
-                                        </button>
+                                            label="Nouvelle"
+                                        />
+
+                                        <div className="h-10 w-[1px] bg-white/5 mx-2" />
+
                                         <button
                                             onClick={() => setIsOpen(false)}
-                                            className="p-3 text-zinc-500 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
+                                            className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl text-zinc-500 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
+                                            title="Fermer"
                                         >
-                                            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                                            <X className="w-6 h-6" />
                                         </button>
                                     </div>
                                 </div>
