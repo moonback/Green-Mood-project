@@ -285,7 +285,7 @@ ${prefsText}
                         model: LIVE_MODEL,
                         generation_config: {
                             response_modalities: ['AUDIO'],
-                            speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Aoede' } } }
+                            speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Gacrux' } } }
                         },
                         system_instruction: { parts: [{ text: buildSystemPrompt() }] },
                         tools: [{
