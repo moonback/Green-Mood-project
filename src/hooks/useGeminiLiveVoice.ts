@@ -3,6 +3,7 @@ import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from './useBudTenderMemory';
 import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
+import { getVoicePrompt } from '../lib/budtenderPrompts';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -145,40 +146,16 @@ export function useGeminiLiveVoice({
     const startInFlightRef = useRef(false);
     const sessionIdRef = useRef(0);
     const isManualCloseRef = useRef(false);
+    const searchResultsRef = useRef<Product[]>([]);
 
     const buildSystemPrompt = useCallback((): string => {
-        const greeting = userName ? `Le client s'appelle ${userName}. ` : '';
-        let prefsText = 'Profil nouveau client.';
-        if (savedPrefs) {
-            const { goal, experience, format, budget, terpenes } = savedPrefs;
-            prefsText = `CONTEXTE CLIENT CONNU :\nObjectif: ${goal}\nExpérience: ${experience}\nFormat favori: ${format}\nBudget: ${budget}\nPréférences: ${terpenes?.join(', ')}\nCONSIGNE : Ne repose pas de questions sur son objectif principal car tu le connais déjà. Rebondis dessus directement.`;
-        }
-
-        const catalogStr = productsRef.current.slice(0, 10).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}%`).join('\n');
-
-        return `
-TON RÔLE :
-Expert Budtender en magasin physique chez Green Moon. Ton approche est HUMAINE, PATIENTE et EXPERTE.
-
-PROTOCOLE MAGASIN (OBLIGATOIRE) :
-1. ACCUEIL : Salue chaleureusement. Si tu as le nom (${userName || 'le client'}), utilise-le.
-2. DÉCOUVERTE : Ne propose JAMAIS de produit immédiatement. Pose des questions : "Qu'est-ce qui vous amène aujourd'hui ?", "Cherchez-vous de la détente, du sommeil, ou un boost d'énergie ?".
-3. CONSEIL : Une fois le besoin compris, présente max 2 produits. Explique LEURS BIENFAITS ET LEURS ARÔMES comme si tu les avais devant toi.
-4. TRANSACTION : Uniquement si le client confirme son intérêt, demande la quantité (grammes/unités) puis confirme "Je l'ajoute à votre panier ?" avant d'utiliser l'outil 'add_to_cart'.
-
-RÈGLES D'OR :
-- Parle comme un humain (oral, fluide, "tu" ou "vous" chaleureux selon le feeling).
-- Un produit à la fois dans le détail.
-- INTERDICTION de parler de guérison médicale.
-- FRAIS : Standard ${deliveryFee}€, Gratuit dès ${deliveryFreeThreshold}€.
-- RECHERCHE : Si le client cherche un produit spécifique ou a un besoin que tu ne peux pas combler avec la liste ci-dessous, utilise SYSTEMATIQUEMENT l'outil 'search_catalog' pour accéder à 100% du catalogue.
-
-CATALOGUE RÉDUIT (ÉCHANTILLON) :
-${catalogStr}
-
-CONTEXTE CLIENT :
-${prefsText}
-`;
+        return getVoicePrompt(
+            productsRef.current,
+            savedPrefs,
+            userName,
+            deliveryFee,
+            deliveryFreeThreshold
+        );
     }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs]);
 
     const stopAllPlayback = useCallback(() => {
@@ -205,6 +182,7 @@ ${prefsText}
         isMutedRef.current = false;
         startInFlightRef.current = false;
         sessionIdRef.current += 1;
+        searchResultsRef.current = [];
     }, [stopAllPlayback]);
 
     useEffect(() => cleanup, [cleanup]);
@@ -405,21 +383,77 @@ ${prefsText}
                     if (calls) {
                         const responses = await Promise.all(calls.map(async (c) => {
                             if (c.name === 'add_to_cart') {
-                                const prodName = (c.args.product_name || '').toLowerCase();
+                                const prodName = (c.args.product_name || '').trim();
                                 const qty = Number(c.args.quantity) || 1;
-                                const p = productsRef.current.find(i => i.name.toLowerCase().includes(prodName) || prodName.includes(i.name.toLowerCase()));
+                                const prodNameLower = prodName.toLowerCase();
+
+                                console.info(`[Voice] add_to_cart called: "${prodName}" x${qty}`);
+
+                                // Search in both initial products AND search results
+                                const allKnown = [
+                                    ...productsRef.current,
+                                    ...searchResultsRef.current
+                                ];
+
+                                // 1) Exact name match
+                                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower);
+
+                                // 2) Partial includes (bidirectional)
+                                if (!p) {
+                                    p = allKnown.find(i =>
+                                        i.name.toLowerCase().includes(prodNameLower) ||
+                                        prodNameLower.includes(i.name.toLowerCase())
+                                    );
+                                }
+
+                                // 3) Word-level fuzzy: all words of query appear in product name
+                                if (!p) {
+                                    const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
+                                    p = allKnown.find(i => {
+                                        const nameLow = i.name.toLowerCase();
+                                        return words.length > 0 && words.every(w => nameLow.includes(w));
+                                    });
+                                }
+
+                                // 4) Reverse: all words of product name appear in query
+                                if (!p) {
+                                    p = allKnown.find(i => {
+                                        const nameParts = i.name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                                        return nameParts.length > 0 && nameParts.every(w => prodNameLower.includes(w));
+                                    });
+                                }
+
+                                // 5) Last resort: Supabase text search
+                                if (!p) {
+                                    console.warn(`[Voice] Product not found locally: "${prodName}", trying Supabase…`);
+                                    try {
+                                        const { data } = await supabase
+                                            .from('products')
+                                            .select('*, category:categories(slug, name)')
+                                            .ilike('name', `%${prodName}%`)
+                                            .eq('is_active', true)
+                                            .limit(1)
+                                            .maybeSingle();
+                                        if (data) p = data as Product;
+                                    } catch (e) {
+                                        console.error('[Voice] Supabase fallback failed:', e);
+                                    }
+                                }
+
                                 if (p && onAddItemRef.current) {
+                                    console.info(`[Voice] ✅ Adding to cart: "${p.name}" x${qty}`);
                                     onAddItemRef.current(p, qty);
-                                    return { name: c.name, id: c.id, response: { result: "OK" } };
+                                    return { name: c.name, id: c.id, response: { result: `OK — ${p.name} x${qty} ajouté au panier` } };
                                 } else {
-                                    return { name: c.name, id: c.id, response: { error: "Non trouvé" } };
+                                    console.warn(`[Voice] ❌ Product NOT found: "${prodName}"`);
+                                    return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue. Vérifie le nom exact.` } };
                                 }
                             }
 
                             if (c.name === 'search_catalog') {
                                 const query = c.args.query;
                                 try {
-                                    console.info(`RAG Search for: "${query}"`);
+                                    console.info(`[Voice] search_catalog: "${query}"`);
                                     const embedding = await generateEmbedding(query);
                                     const { data, error: rpcError } = await supabase.rpc('match_products', {
                                         query_embedding: embedding,
@@ -428,6 +462,12 @@ ${prefsText}
                                     });
 
                                     if (rpcError) throw rpcError;
+
+                                    // Store search results for subsequent add_to_cart calls
+                                    if (data && data.length > 0) {
+                                        searchResultsRef.current = data as Product[];
+                                        console.info(`[Voice] search_catalog found ${data.length} results, stored for add_to_cart`);
+                                    }
 
                                     const results = (data as any[]).map(p =>
                                         `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}% | ${p.description}`
@@ -442,7 +482,7 @@ ${prefsText}
                                         }
                                     };
                                 } catch (e) {
-                                    console.error("Search Tool Error:", e);
+                                    console.error("[Voice] Search Tool Error:", e);
                                     return { name: c.name, id: c.id, response: { error: "Erreur technique lors de la recherche" } };
                                 }
                             }
