@@ -8,7 +8,7 @@ import { generateEmbedding } from '../lib/embeddings';
 
 const WS_ENDPOINT =
     'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
-const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+const LIVE_MODEL = 'models/gemini-2.0-flash-exp';
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live API requires 16kHz PCM input
 const OUTPUT_SAMPLE_RATE = 24000; // Gemini Live API outputs 24kHz PCM
 const CONNECTION_TIMEOUT_MS = 10000;
@@ -165,8 +165,7 @@ RÈGLES D'OR :
 - Un produit à la fois dans le détail.
 - INTERDICTION de parler de guérison médicale.
 - FRAIS : Standard ${deliveryFee}€, Gratuit dès ${deliveryFreeThreshold}€.
-
-167. RAG : Si le client cherche un produit spécifique ou a un besoin que tu ne peux pas combler avec la liste ci-dessous, utilise SYSTEMATIQUEMENT l'outil 'search_catalog' pour accéder à 100% du catalogue.
+- RECHERCHE : Si le client cherche un produit spécifique ou a un besoin que tu ne peux pas combler avec la liste ci-dessous, utilise SYSTEMATIQUEMENT l'outil 'search_catalog' pour accéder à 100% du catalogue.
 
 CATALOGUE RÉDUIT (ÉCHANTILLON) :
 ${catalogStr}

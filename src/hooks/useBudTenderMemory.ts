@@ -242,6 +242,21 @@ export function useBudTenderMemory() {
         }
     };
 
+    const logQuestion = async (question: string) => {
+        if (!user) return;
+        try {
+            const { error } = await supabase.from('budtender_interactions').insert({
+                user_id: user.id,
+                interaction_type: 'question',
+                quiz_answers: { question },
+                created_at: new Date().toISOString()
+            });
+            if (error) console.error('[BudTenderMemory] Question log error:', error);
+        } catch (err) {
+            console.error('[BudTenderMemory] Question log exception:', err);
+        }
+    };
+
     const clearChatHistory = () => {
         localStorage.removeItem('budtender_chat_history_v1');
         setChatHistory([]);
@@ -314,6 +329,7 @@ export function useBudTenderMemory() {
         chatHistory,
         savePrefs,
         saveChatHistory,
+        logQuestion,
         clearChatHistory,
         clearPrefs,
         isLoading,

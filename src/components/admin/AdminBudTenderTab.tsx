@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Leaf, Save, CheckCircle, ToggleLeft, ToggleRight, Sliders,
-    Clock, Brain, MessageSquare, Zap, Info, Plus, Trash2, X
+    Clock, Brain, MessageSquare, Zap, Info, Plus, Trash2, X,
+    TrendingUp, ThumbsUp, ThumbsDown, Target
 } from 'lucide-react';
+import {
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
+    PieChart, Pie
+} from 'recharts';
 import { supabase } from '../../lib/supabase';
 
 import { BudTenderSettings, BUDTENDER_DEFAULTS, BUDTENDER_LS_KEY } from '../../lib/budtenderSettings';
@@ -115,9 +120,16 @@ export default function AdminBudTenderTab() {
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'memory' | 'quiz'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'ai' | 'memory' | 'quiz' | 'stats'>('general');
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
+    const [stats, setStats] = useState({
+        interactionTypes: [] as { name: string; value: number }[],
+        topQuestions: [] as { question: string; count: number }[],
+        satisfaction: { positive: 0, negative: 0, score: 0 },
+        conversion: { rate: 0, buyersCount: 0, quizCount: 0 }
+    });
 
-    // Load from Supabase (and fallback to localStorage) on mount
+    // Load settings from Supabase (and fallback to localStorage) on mount
     useEffect(() => {
         const load = async () => {
             try {
@@ -130,18 +142,108 @@ export default function AdminBudTenderTab() {
 
                 if (data?.value) {
                     setSettings({ ...BUDTENDER_DEFAULTS, ...data.value });
-                    return;
+                } else {
+                    // 2. Fallback to localStorage
+                    const raw = localStorage.getItem(BUDTENDER_LS_KEY);
+                    if (raw) setSettings({ ...BUDTENDER_DEFAULTS, ...JSON.parse(raw) });
                 }
-
-                // 2. Fallback to localStorage
-                const raw = localStorage.getItem(BUDTENDER_LS_KEY);
-                if (raw) setSettings({ ...BUDTENDER_DEFAULTS, ...JSON.parse(raw) });
             } catch (err) {
                 console.error('[AdminBudTenderTab] load error:', err);
             }
         };
         load();
     }, []);
+
+    // Load stats when switching to stats tab
+    useEffect(() => {
+        if (activeTab === 'stats') {
+            loadStats();
+        }
+    }, [activeTab]);
+
+    const loadStats = async () => {
+        setIsLoadingStats(true);
+        try {
+            const since = new Date();
+            since.setDate(since.getDate() - 30); // Last 30 days
+            const sinceISO = since.toISOString();
+
+            const [
+                { data: interactions },
+                { data: paidOrders }
+            ] = await Promise.all([
+                supabase
+                    .from('budtender_interactions')
+                    .select('*')
+                    .gte('created_at', sinceISO),
+                supabase
+                    .from('orders')
+                    .select('user_id')
+                    .eq('payment_status', 'paid')
+                    .gte('created_at', sinceISO)
+            ]);
+
+            if (!interactions) return;
+
+            // 1. Interaction types distribution
+            const typeMap = new Map<string, number>();
+            const questionsMap = new Map<string, number>();
+            let pos = 0;
+            let neg = 0;
+            let quizCount = 0;
+
+            interactions.forEach(i => {
+                const type = i.interaction_type || 'unknown';
+                typeMap.set(type, (typeMap.get(type) ?? 0) + 1);
+
+                if (type === 'question' && i.quiz_answers?.question) {
+                    const q = (i.quiz_answers.question as string).trim();
+                    if (q.length > 5) {
+                        questionsMap.set(q, (questionsMap.get(q) ?? 0) + 1);
+                    }
+                }
+
+                if (type === 'feedback') {
+                    if (i.feedback === 'positive') pos++;
+                    if (i.feedback === 'negative') neg++;
+                }
+
+                if (type === 'chat_session' || type === 'recommendation') {
+                    quizCount++;
+                }
+            });
+
+            // 2. Conversion calculation
+            const usersWithQuiz = new Set(interactions
+                .filter(i => i.interaction_type === 'chat_session' || i.interaction_type === 'recommendation')
+                .map(i => i.user_id)
+            );
+            const usersWithOrder = new Set(paidOrders?.map(o => o.user_id));
+            const buyersCount = Array.from(usersWithQuiz).filter(uid => usersWithOrder.has(uid)).length;
+
+            setStats({
+                interactionTypes: Array.from(typeMap.entries()).map(([name, value]) => ({ name, value })),
+                topQuestions: Array.from(questionsMap.entries())
+                    .map(([question, count]) => ({ question, count }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5),
+                satisfaction: {
+                    positive: pos,
+                    negative: neg,
+                    score: pos + neg > 0 ? Math.round((pos / (pos + neg)) * 100) : 0
+                },
+                conversion: {
+                    rate: quizCount > 0 ? Math.round((buyersCount / quizCount) * 100) : 0,
+                    buyersCount,
+                    quizCount
+                }
+            });
+        } catch (err) {
+            console.error('[AdminBudTenderTab] loadStats error:', err);
+        } finally {
+            setIsLoadingStats(false);
+        }
+    };
 
     const update = (patch: Partial<BudTenderSettings>) => {
         setSettings((prev) => ({ ...prev, ...patch }));
@@ -181,6 +283,7 @@ export default function AdminBudTenderTab() {
         { key: 'ai', label: 'IA & OpenRouter', icon: Brain },
         { key: 'memory', label: 'Mémoire', icon: Clock },
         { key: 'quiz', label: 'Quiz & UX', icon: MessageSquare },
+        { key: 'stats', label: 'Analytique', icon: Zap },
     ] as const;
 
     return (
@@ -565,6 +668,144 @@ export default function AdminBudTenderTab() {
                                 </p>
                             </Section>
                         </>
+                    )}
+
+                    {/* ── ANALYTIQUE ── */}
+                    {activeTab === 'stats' && (
+                        <div className="space-y-6">
+                            {/* KPI Rows */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-zinc-900/60 border border-zinc-800 p-5 rounded-2xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 rounded-lg bg-green-neon/10 text-green-neon">
+                                            <TrendingUp className="w-4 h-4" />
+                                        </div>
+                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Taux de Conversion</span>
+                                    </div>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-3xl font-black text-white">{stats.conversion.rate}%</span>
+                                        <span className="text-xs text-zinc-600 mb-1.5">ventes post-conseil</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-900/60 border border-zinc-800 p-5 rounded-2xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+                                            <Target className="w-4 h-4" />
+                                        </div>
+                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Total Conseils</span>
+                                    </div>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-3xl font-black text-white">{stats.conversion.quizCount}</span>
+                                        <span className="text-xs text-zinc-600 mb-1.5">sessions générées</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-zinc-900/60 border border-zinc-800 p-5 rounded-2xl">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+                                            <ThumbsUp className="w-4 h-4" />
+                                        </div>
+                                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Satisfaction</span>
+                                    </div>
+                                    <div className="flex items-end gap-2">
+                                        <span className="text-3xl font-black text-white">{stats.satisfaction.score}%</span>
+                                        <span className="text-xs text-zinc-600 mb-1.5">feedback positif</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Charts Row */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <Section icon={MessageSquare} title="Top Questions Clients" description="Les interrogations les plus fréquentes posées au BudTender">
+                                    {isLoadingStats ? (
+                                        <div className="h-48 flex items-center justify-center"><Clock className="w-6 h-6 animate-spin text-zinc-700" /></div>
+                                    ) : stats.topQuestions.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {stats.topQuestions.map((q, i) => (
+                                                <div key={i} className="flex items-center justify-between p-3 bg-zinc-800/40 rounded-xl border border-zinc-700/30">
+                                                    <span className="text-sm text-zinc-200 line-clamp-1 italic">"{q.question}"</span>
+                                                    <span className="text-xs font-black text-green-neon bg-green-neon/10 px-2 py-1 rounded-lg">{q.count}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="h-48 flex flex-col items-center justify-center text-zinc-600 italic text-sm">
+                                            Aucune question enregistrée sur les 30 derniers jours.
+                                        </div>
+                                    )}
+                                </Section>
+
+                                <Section icon={Brain} title="Distribution des Interactions" description="Breakdown des usages (quiz vs questions directes)">
+                                    {isLoadingStats ? (
+                                        <div className="h-48 flex items-center justify-center"><Clock className="w-6 h-6 animate-spin text-zinc-700" /></div>
+                                    ) : (
+                                        <div className="h-48">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={stats.interactionTypes}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                                                    <XAxis dataKey="name" stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                                                    <YAxis stroke="#71717a" fontSize={10} tickLine={false} axisLine={false} />
+                                                    <Tooltip
+                                                        contentStyle={{ background: '#09090b', border: '1px solid #27272a', borderRadius: '12px' }}
+                                                        itemStyle={{ color: '#39ff14', fontSize: '12px', fontWeight: 'bold' }}
+                                                    />
+                                                    <Bar dataKey="value" fill="#39ff14" radius={[4, 4, 0, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    )}
+                                </Section>
+                            </div>
+
+                            {/* Satisfaction Detail */}
+                            <Section icon={ThumbsUp} title="Feedback de Recommandation" description="Comment les clients perçoivent les conseils générés">
+                                <div className="flex items-center gap-10">
+                                    <div className="h-40 w-40">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Positif', value: stats.satisfaction.positive },
+                                                        { name: 'Négatif', value: stats.satisfaction.negative }
+                                                    ]}
+                                                    innerRadius={50}
+                                                    outerRadius={70}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    <Cell fill="#39ff14" />
+                                                    <Cell fill="#ef4444" />
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-green-neon/5 border border-green-neon/10 rounded-2xl">
+                                            <div className="flex items-center gap-2 text-green-neon mb-1">
+                                                <ThumbsUp className="w-3 h-3" />
+                                                <span className="text-[10px] font-black uppercase">Positif</span>
+                                            </div>
+                                            <div className="text-2xl font-black text-white">{stats.satisfaction.positive}</div>
+                                        </div>
+                                        <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-2xl">
+                                            <div className="flex items-center gap-2 text-red-500 mb-1">
+                                                <ThumbsDown className="w-3 h-3" />
+                                                <span className="text-[10px] font-black uppercase">Négatif</span>
+                                            </div>
+                                            <div className="text-2xl font-black text-white">{stats.satisfaction.negative}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 flex gap-3">
+                                <Info className="w-4 h-4 text-zinc-500 flex-shrink-0 mt-0.5" />
+                                <p className="text-[10px] text-zinc-500 leading-relaxed italic">
+                                    Les données sont synchronisées en temps réel depuis la base Supabase. Les calculs de conversion sont basés sur les utilisateurs ayant complété un quiz ou reçu une recommandation IA et ayant effectué un achat validé dans les 30 jours suivants.
+                                </p>
+                            </div>
+                        </div>
                     )}
 
                 </motion.div>

@@ -32,23 +32,23 @@ export default function BudTenderMessage({
     children,
 }: BudTenderMessageProps) {
     return (
-        <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-3`}>
+        <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-4`}>
             {sender === 'bot' && (
-                <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-sm">
-                    <Leaf className="w-3.5 h-3.5 text-green-neon" />
+                <div className="w-10 h-10 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-sm">
+                    <Leaf className="w-5 h-5 text-green-neon" />
                 </div>
             )}
-            <div className="max-w-[85%] space-y-3">
+            <div className="max-w-[90%] space-y-4">
                 {/* Text bubble */}
                 {text && (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className={`px-5 py-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
-                            sender === 'user'
-                                ? 'bg-green-neon text-black font-bold'
-                                : 'bg-zinc-800/80 border border-zinc-700/30 text-zinc-100 backdrop-blur-md'
-                        }`}
+                        className={`px-6 py-4.5 rounded-[1.75rem] text-base leading-relaxed shadow-lg whitespace-pre-wrap ${sender === 'user'
+                            ? 'bg-green-neon text-black font-black'
+                            : 'text-zinc-100 font-medium'
+                            }`}
+                        style={sender === 'bot' ? { backgroundColor: 'rgba(39, 39, 42, 0.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(113, 113, 122, 0.4)' } : {}}
                     >
                         {text}
                     </motion.div>

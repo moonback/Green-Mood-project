@@ -11,7 +11,7 @@ export default function BudTenderTypingIndicator() {
             <div className="w-8 h-8 rounded-lg bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 shadow-sm">
                 <Leaf className="w-3.5 h-3.5 text-green-neon" />
             </div>
-            <div className="bg-zinc-800/80 backdrop-blur-md px-5 py-4 rounded-2xl flex gap-1.5">
+            <div className="px-5 py-4 rounded-2xl flex gap-1.5 border border-zinc-700/30" style={{ backgroundColor: 'rgba(39, 39, 42, 0.8)', backdropFilter: 'blur(12px)' }}>
                 {[0, 1, 2].map((i) => (
                     <motion.div
                         key={i}
