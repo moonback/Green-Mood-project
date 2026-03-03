@@ -843,7 +843,7 @@ export default function BudTender() {
                         >
                             {/* Header */}
                             <div className="flex items-center gap-4 px-5 py-5 sm:px-6 sm:py-8 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950/80 to-zinc-900/80">
-                                <div className="max-w-4xl mx-auto w-full flex items-center gap-4">
+                                <div className="max-w-7xl mx-auto w-full flex items-center gap-4">
                                     <div className="relative">
                                         <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center shadow-inner">
                                             <Leaf className="w-6 h-6 sm:w-7 sm:h-7 text-green-neon" />
@@ -1010,7 +1010,7 @@ export default function BudTender() {
 
                             {/* Messages area */}
                             <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar bg-gradient-to-b from-transparent via-zinc-900/10 to-green-neon/[0.01]">
-                                <div className="max-w-4xl mx-auto w-full p-5 sm:p-10 space-y-8">
+                                <div className="max-w-7xl mx-auto w-full p-5 sm:p-10 space-y-8">
                                     {messages.map((msg) => (
                                         <BudTenderMessage
                                             key={msg.id}
@@ -1358,30 +1358,30 @@ export default function BudTender() {
                             </div>
 
                             {/* ── Chat Input Bar ── */}
-                            <div className="p-6 sm:p-10 border-t border-zinc-800/50 bg-zinc-950/80 backdrop-blur-3xl shrink-0">
-                                <div className="max-w-4xl mx-auto w-full space-y-4">
+                            <div className="p-6 sm:p-10 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-3xl shrink-0">
+                                <div className="max-w-7xl mx-auto w-full space-y-4">
                                     <form
                                         onSubmit={handleSendMessage}
-                                        className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-2 focus-within:border-green-neon/40 focus-within:bg-zinc-900 transition-all shadow-2xl"
+                                        className="flex items-center gap-3 bg-zinc-900 border-2 border-zinc-700 rounded-[2rem] p-2 focus-within:border-green-neon transition-all shadow-2xl"
                                     >
                                         <input
                                             type="text"
                                             value={chatInput}
                                             onChange={(e) => setChatInput(e.target.value)}
                                             placeholder="Posez votre question à l'IA ou décrivez vos besoins..."
-                                            className="flex-1 bg-transparent border-none text-base text-white px-5 py-3 focus:outline-none placeholder:text-zinc-600"
+                                            className="flex-1 bg-transparent border-none text-base text-white px-5 py-3 focus:outline-none placeholder:text-zinc-500"
                                         />
                                         <button
                                             type="submit"
                                             disabled={!chatInput.trim() || isTyping}
-                                            className="w-12 h-12 flex items-center justify-center rounded-full bg-green-neon text-black disabled:opacity-20 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-neon/20"
+                                            className="w-12 h-12 flex items-center justify-center rounded-full bg-green-neon text-black disabled:opacity-20 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-neon/40"
                                         >
                                             <SendHorizontal className="w-6 h-6" />
                                         </button>
                                     </form>
-                                    <div className="flex justify-between items-center px-1">
-                                        <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.3em] opacity-40">
-                                            BudTender IA Expérience Full Page
+                                    <div className="flex justify-center items-center px-1">
+                                        <p className="text-[10px] text-green-neon font-black uppercase tracking-[0.4em] opacity-80">
+                                            BudTender IA Expérience
                                         </p>
                                     </div>
                                 </div>
