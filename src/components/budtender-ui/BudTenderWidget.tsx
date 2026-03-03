@@ -8,6 +8,8 @@ export interface BudTenderWidgetProps {
     onVoiceClick?: () => void;
     /** Whether the button should play the slow-pulse attention animation */
     pulse?: boolean;
+    /** Whether a voice session is currently active */
+    isVoiceActive?: boolean;
     /** Number of unread messages to show as a badge (0 = hidden) */
     unreadCount?: number;
     /** 'default' or 'expand' (when chat is shrunk) */
@@ -18,16 +20,21 @@ export interface BudTenderWidgetProps {
  * The floating "BudTender IA" button that sits in the bottom-right corner.
  * Includes the Leaf icon, an online-status dot, and an optional unread badge.
  */
-export default function BudTenderWidget({ onClick, onVoiceClick, pulse = false, unreadCount = 0, mode = 'default' }: BudTenderWidgetProps) {
+export default function BudTenderWidget({ onClick, onVoiceClick, pulse = false, isVoiceActive = false, unreadCount = 0, mode = 'default' }: BudTenderWidgetProps) {
     const isExpand = mode === 'expand';
 
     return (
         <div className="fixed bottom-6 right-6 z-[99999] flex items-center gap-3">
-            {/* Quick Voice Button (Hidden in expand mode for cleaner UI) */}
+            {/* Quick Voice Button */}
             {!isExpand && onVoiceClick && (
                 <motion.button
                     initial={{ scale: 0, opacity: 0, x: 20 }}
-                    animate={{ scale: 1, opacity: 1, x: 0 }}
+                    animate={{
+                        scale: 1,
+                        opacity: 1,
+                        x: 0,
+                        backgroundColor: isVoiceActive ? 'rgba(57, 255, 20, 0.15)' : 'rgba(24, 24, 27, 0.8)'
+                    }}
                     exit={{ scale: 0, opacity: 0, x: 20 }}
                     whileHover={{ scale: 1.1, y: -4 }}
                     whileTap={{ scale: 0.9 }}
@@ -35,11 +42,17 @@ export default function BudTenderWidget({ onClick, onVoiceClick, pulse = false, 
                         e.stopPropagation();
                         onVoiceClick();
                     }}
-                    title="Démarrer le mode vocal"
-                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-zinc-900/80 border border-green-neon/30 text-green-neon shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon transition-all"
+                    title={isVoiceActive ? "Mode vocal actif" : "Démarrer le mode vocal"}
+                    className={`w-12 h-12 flex items-center justify-center rounded-2xl border transition-all relative ${isVoiceActive
+                            ? 'border-green-neon text-green-neon shadow-[0_0_20px_rgba(57,255,20,0.4)]'
+                            : 'border-green-neon/30 text-green-neon shadow-[0_0_30px_rgba(57,255,20,0.1)] hover:border-green-neon'
+                        }`}
                     style={{ backdropFilter: 'blur(20px)' }}
                 >
-                    <Mic className="w-5 h-5" />
+                    <Mic className={`w-5 h-5 ${isVoiceActive ? 'animate-pulse' : ''}`} />
+                    {isVoiceActive && (
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-neon rounded-full animate-ping" />
+                    )}
                 </motion.button>
             )}
 

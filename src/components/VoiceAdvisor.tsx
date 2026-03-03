@@ -18,6 +18,7 @@ interface Props {
     onHangup?: () => void;
     onAddItem?: (product: Product, quantity: number) => void;
     onViewProduct?: (product: Product) => void;
+    showUI?: boolean;
 }
 
 // ─── Status labels ───────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ function OrbitingDots() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct }: Props) {
+export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, showUI = true }: Props) {
     const { settings } = useSettingsStore();
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
@@ -141,6 +142,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
         onClose();
         if (onHangup) onHangup();
     };
+
+    if (!showUI) return null;
 
     return (
         <AnimatePresence>

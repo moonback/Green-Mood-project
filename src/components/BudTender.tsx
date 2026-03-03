@@ -832,10 +832,14 @@ export default function BudTender() {
                             }
                         }}
                         onVoiceClick={() => {
-                            setIsOpen(true);
-                            setIsVoiceOpen(true);
-                            setIsShrink(false);
+                            if (isVoiceOpen) {
+                                setIsVoiceOpen(false);
+                            } else {
+                                setIsVoiceOpen(true);
+                                // Start in background
+                            }
                         }}
+                        isVoiceActive={isVoiceOpen}
                         pulse={pulse}
                         mode={isShrink ? 'expand' : 'default'}
                     />
@@ -843,6 +847,29 @@ export default function BudTender() {
             </AnimatePresence>
 
             {/* ── Chat panel ── */}
+            <VoiceAdvisor
+                products={products}
+                pastProducts={memory.pastProducts}
+                savedPrefs={memory.savedPrefs}
+                userName={memory.userName}
+                isOpen={isVoiceOpen}
+                onClose={() => {
+                    setIsVoiceOpen(false);
+                    setIsShrink(false);
+                }}
+                onHangup={() => setIsShrink(true)}
+                onAddItem={(product, quantity) => {
+                    addItem(product, quantity);
+                    openSidebar();
+                    setIsShrink(true);
+                }}
+                onViewProduct={(product) => {
+                    navigate(`/catalogue/${product.slug}`);
+                    setIsShrink(true);
+                }}
+                showUI={isOpen}
+            />
+
             <AnimatePresence>
                 {isOpen && (
                     <>
@@ -937,28 +964,7 @@ export default function BudTender() {
                                 </div>
                             </div>
 
-                            {/* ── Voice Advisor overlay (absolute, fills the panel) ── */}
-                            <VoiceAdvisor
-                                products={products}
-                                pastProducts={memory.pastProducts}
-                                savedPrefs={memory.savedPrefs}
-                                userName={memory.userName}
-                                isOpen={isVoiceOpen}
-                                onClose={() => {
-                                    setIsVoiceOpen(false);
-                                    setIsShrink(false);
-                                }}
-                                onHangup={() => setIsShrink(true)}
-                                onAddItem={(product, quantity) => {
-                                    addItem(product, quantity);
-                                    openSidebar();
-                                    setIsShrink(true);
-                                }}
-                                onViewProduct={(product) => {
-                                    navigate(`/catalogue/${product.slug}`);
-                                    setIsShrink(true);
-                                }}
-                            />
+
 
                             {/* ── History Panel (Overlay) ── */}
                             <AnimatePresence mode="wait">
