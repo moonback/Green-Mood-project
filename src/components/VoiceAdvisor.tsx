@@ -18,6 +18,7 @@ interface Props {
     onHangup?: () => void;
     onAddItem?: (product: Product, quantity: number) => void;
     onViewProduct?: (product: Product) => void;
+    onNavigate?: (path: string) => void;
     showUI?: boolean;
 }
 
@@ -104,7 +105,7 @@ function OrbitingDots() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, showUI = true }: Props) {
+export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate, showUI = true }: Props) {
     const { settings } = useSettingsStore();
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
@@ -117,7 +118,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             deliveryFee: settings.delivery_fee,
             deliveryFreeThreshold: settings.delivery_free_threshold,
             onCloseSession: onClose,
-            onViewProduct
+            onViewProduct,
+            onNavigate
         });
 
     // Auto-start when opened

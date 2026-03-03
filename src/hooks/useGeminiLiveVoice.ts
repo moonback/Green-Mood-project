@@ -72,6 +72,7 @@ interface Options {
     deliveryFreeThreshold?: number;
     onCloseSession?: () => void;
     onViewProduct?: (product: Product) => void;
+    onNavigate?: (path: string) => void;
 }
 
 // ─── Audio utilities ─────────────────────────────────────────────────────────
@@ -117,7 +118,8 @@ export function useGeminiLiveVoice({
     deliveryFee = 5.9,
     deliveryFreeThreshold = 50,
     onCloseSession,
-    onViewProduct
+    onViewProduct,
+    onNavigate
 }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -140,6 +142,8 @@ export function useGeminiLiveVoice({
     onCloseSessionRef.current = onCloseSession;
     const onViewProductRef = useRef(onViewProduct);
     onViewProductRef.current = onViewProduct;
+    const onNavigateRef = useRef(onNavigate);
+    onNavigateRef.current = onNavigate;
 
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
@@ -323,6 +327,20 @@ export function useGeminiLiveVoice({
                                             product_name: { type: 'STRING', description: 'Le nom du produit à afficher' }
                                         },
                                         required: ['product_name']
+                                    }
+                                },
+                                {
+                                    name: 'navigate_to',
+                                    description: 'Naviguer vers une page spécifique du site.',
+                                    parameters: {
+                                        type: 'OBJECT',
+                                        properties: {
+                                            page: {
+                                                type: 'STRING',
+                                                description: 'La destination (home, shop, products, quality, contact, account, cart, catalog)'
+                                            }
+                                        },
+                                        required: ['page']
                                     }
                                 }
                             ]
@@ -511,6 +529,30 @@ export function useGeminiLiveVoice({
                                 } else {
                                     console.warn(`[Voice] ❌ Product NOT found for viewing: "${prodName}"`);
                                     return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
+                                }
+                            }
+
+                            if (c.name === 'navigate_to') {
+                                const page = (c.args.page || '').toLowerCase();
+                                const mapping: Record<string, string> = {
+                                    'home': '/',
+                                    'shop': '/boutique',
+                                    'products': '/produits',
+                                    'quality': '/qualite',
+                                    'contact': '/contact',
+                                    'account': '/compte',
+                                    'cart': '/panier',
+                                    'catalog': '/catalogue'
+                                };
+
+                                const path = mapping[page];
+                                if (path && onNavigateRef.current) {
+                                    console.info(`[Voice] ✅ Navigating to: ${page} -> ${path}`);
+                                    onNavigateRef.current(path);
+                                    return { name: c.name, id: c.id, response: { result: `Navigation vers ${page} effectuée.` } };
+                                } else {
+                                    console.warn(`[Voice] ❌ Page non reconnue: ${page}`);
+                                    return { name: c.name, id: c.id, response: { error: `La page "${page}" n'existe pas.` } };
                                 }
                             }
 

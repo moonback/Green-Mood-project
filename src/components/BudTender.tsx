@@ -867,6 +867,10 @@ export default function BudTender() {
                     navigate(`/catalogue/${product.slug}`);
                     setIsShrink(true);
                 }}
+                onNavigate={(path) => {
+                    navigate(path);
+                    setIsShrink(false); // Reset shrink when changing page
+                }}
                 showUI={isOpen}
             />
 

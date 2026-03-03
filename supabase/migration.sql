@@ -624,26 +624,28 @@ BEGIN
   SELECT category_id INTO cat_id FROM products WHERE id = p_product_id;
 
   RETURN QUERY
-    SELECT DISTINCT p.*
-      FROM (
-        SELECT p.*, 0 AS priority, r.sort_order AS srt
-          FROM product_recommendations r
-          JOIN products p ON p.id = r.recommended_id
-         WHERE r.product_id = p_product_id
-           AND p.is_active = true AND p.is_available = true
+    SELECT prod.*
+    FROM (
+        -- Combine explicit recommendations and category fallback
+        SELECT r.recommended_id as id, 0 AS priority, r.sort_order AS srt
+        FROM product_recommendations r
+        JOIN products p ON p.id = r.recommended_id
+        WHERE r.product_id = p_product_id
+          AND p.is_active = true AND p.is_available = true
         UNION ALL
-        SELECT p.*, 1 AS priority, (random() * 100)::int AS srt
-          FROM products p
-         WHERE p.category_id = cat_id
-           AND p.id <> p_product_id
-           AND p.is_active = true AND p.is_available = true
-           AND NOT EXISTS (
-             SELECT 1 FROM product_recommendations
-              WHERE product_id = p_product_id AND recommended_id = p.id
-           )
-      ) p
-     ORDER BY priority, srt
-     LIMIT p_limit;
+        SELECT p.id, 1 AS priority, (random() * 100)::int AS srt
+        FROM products p
+        WHERE p.category_id = cat_id
+          AND p.id <> p_product_id
+          AND p.is_active = true AND p.is_available = true
+          AND NOT EXISTS (
+            SELECT 1 FROM product_recommendations
+            WHERE product_id = p_product_id AND recommended_id = p.id
+          )
+    ) sub
+    JOIN products prod ON prod.id = sub.id
+    ORDER BY sub.priority, sub.srt
+    LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
