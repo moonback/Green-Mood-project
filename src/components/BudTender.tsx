@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Leaf, Mic, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal, History, ArrowLeft, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { getQuizPrompt, getChatPrompt, QuizAnswers } from '../lib/budtenderPrompts';
@@ -252,6 +252,7 @@ function HeaderAction({ icon, title, onClick, isActive, label }: { icon: React.R
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BudTender() {
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isTyping, setIsTyping] = useState(false);
@@ -946,6 +947,10 @@ export default function BudTender() {
                                 onAddItem={(product, quantity) => {
                                     addItem(product, quantity);
                                     openSidebar();
+                                    setIsShrink(true);
+                                }}
+                                onViewProduct={(product) => {
+                                    navigate(`/catalogue/${product.slug}`);
                                     setIsShrink(true);
                                 }}
                             />

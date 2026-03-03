@@ -71,6 +71,7 @@ interface Options {
     deliveryFee?: number;
     deliveryFreeThreshold?: number;
     onCloseSession?: () => void;
+    onViewProduct?: (product: Product) => void;
 }
 
 // ─── Audio utilities ─────────────────────────────────────────────────────────
@@ -115,7 +116,8 @@ export function useGeminiLiveVoice({
     onAddItem,
     deliveryFee = 5.9,
     deliveryFreeThreshold = 50,
-    onCloseSession
+    onCloseSession,
+    onViewProduct
 }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -136,6 +138,8 @@ export function useGeminiLiveVoice({
     onAddItemRef.current = onAddItem;
     const onCloseSessionRef = useRef(onCloseSession);
     onCloseSessionRef.current = onCloseSession;
+    const onViewProductRef = useRef(onViewProduct);
+    onViewProductRef.current = onViewProduct;
 
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
@@ -309,6 +313,17 @@ export function useGeminiLiveVoice({
                                     name: 'close_session',
                                     description: 'Terminer la discussion et fermer la fenêtre vocale (à utiliser après avoir dit au revoir).',
                                     parameters: { type: 'OBJECT', properties: {} }
+                                },
+                                {
+                                    name: 'view_product',
+                                    description: 'Ouvrir la fiche détaillée d\'un produit pour que le client puisse voir les images et détails.',
+                                    parameters: {
+                                        type: 'OBJECT',
+                                        properties: {
+                                            product_name: { type: 'STRING', description: 'Le nom du produit à afficher' }
+                                        },
+                                        required: ['product_name']
+                                    }
                                 }
                             ]
                         }]
@@ -467,6 +482,36 @@ export function useGeminiLiveVoice({
                                     if (onCloseSessionRef.current) onCloseSessionRef.current();
                                 }, 1500); // Small delay so the user hears the final words
                                 return { name: c.name, id: c.id, response: { result: "OK — Session en cours de fermeture" } };
+                            }
+
+                            if (c.name === 'view_product') {
+                                const prodName = (c.args.product_name || '').trim();
+                                const prodNameLower = prodName.toLowerCase();
+                                console.info(`[Voice] view_product called: "${prodName}"`);
+
+                                const allKnown = [...productsRef.current, ...searchResultsRef.current];
+                                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower);
+
+                                if (!p) {
+                                    p = allKnown.find(i =>
+                                        i.name.toLowerCase().includes(prodNameLower) ||
+                                        prodNameLower.includes(i.name.toLowerCase())
+                                    );
+                                }
+
+                                if (!p) {
+                                    const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
+                                    p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
+                                }
+
+                                if (p && onViewProductRef.current) {
+                                    console.info(`[Voice] ✅ Viewing product: "${p.name}"`);
+                                    onViewProductRef.current(p);
+                                    return { name: c.name, id: c.id, response: { result: `OK — Fiche de "${p.name}" affichée` } };
+                                } else {
+                                    console.warn(`[Voice] ❌ Product NOT found for viewing: "${prodName}"`);
+                                    return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
+                                }
                             }
 
                             if (c.name === 'search_catalog') {
