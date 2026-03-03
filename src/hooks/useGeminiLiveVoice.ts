@@ -11,8 +11,8 @@ const INPUT_SAMPLE_RATE = 16000; // Gemini Live API requires 16kHz PCM input
 const OUTPUT_SAMPLE_RATE = 24000; // Gemini Live API outputs 24kHz PCM
 const CONNECTION_TIMEOUT_MS = 10000;
 
-// Minimal scheduling ahead — keeps playback tight without gaps
-const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
+// Slightly safer scheduling ahead for smoother playback without micro-cuts
+const AUDIO_SCHEDULE_AHEAD_SEC = 0.015;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -138,31 +138,67 @@ export function useGeminiLiveVoice({
     const sessionIdRef = useRef(0);
     const isManualCloseRef = useRef(false);
 
-    const buildSystemPrompt = useCallback((): string => {
-        const greeting = userName ? `Le client s'appelle ${userName}. ` : '';
-        let prefsText = 'Profil non défini.';
-        if (savedPrefs) {
-            const { goal, experience, format, budget, terpenes } = savedPrefs;
-            prefsText = `CONTEXTE CLIENT:\nObjectif: ${goal}\nExp: ${experience}\nFormat: ${format}\nBudget: ${budget}\nTerpènes: ${terpenes?.join(', ')}`;
-        }
-
-        const catalogStr = products.slice(0, 10).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}%`).join('\n');
-
-        return `
+    const buildSystemPrompt = useCallback((): string => `
 TON RÔLE :
 Expert Budtender Green Moon. Langage NATUREL et ORAL (français).
-RÈGLES :
+
+RÈGLE DE LATENCE VOCALE :
+- Dès que l'intention utilisateur est comprise, réponds immédiatement par un mini ack vocal (<1,5 s) :
+  "D'accord.", "Très bien.", "Je vois."
+- Ensuite seulement, enchaîne avec la réponse utile.
+
+RÈGLE AUDIO :
+- Une réponse vocale ne doit jamais dépasser 6 secondes.
+- Si nécessaire, découpe en plusieurs tours.
+
+RÈGLE DIALOGUE :
+- Chaque tour vocal = une seule intention : comprendre OU confirmer OU recommander.
+- Ne pose qu'une question à la fois.
+- Reformulation ultra-courte, jamais explicative longue.
+
+RÈGLES MÉTIER :
 - Un produit à la fois.
-- Uniquement dans ce catalogue :
-${catalogStr}
-- FRAIS : Standard ${deliveryFee}€, Gratuit dès ${deliveryFreeThreshold}€.
-- QUANTITÉ : Demande TOUJOURS "Combien de grammes ?" avant d'ajouter.
-- CONFIRMATION : Demande "Je l'ajoute ?" avant d'utiliser 'add_to_cart'.
-- INTERDICTION : Pas de soigner/guérir.
-${greeting}
-${prefsText}
+- QUANTITÉ : demande toujours "Combien de grammes ?" avant d'ajouter.
+- CONFIRMATION : demande "Je l'ajoute ?" avant d'utiliser 'add_to_cart'.
+- INTERDICTION : ne jamais promettre de soigner ou guérir.
+`, []);
+
+    const buildContextPrompt = useCallback((): string => {
+        const profile = savedPrefs
+            ? `Objectif: ${savedPrefs.goal}\nExp: ${savedPrefs.experience}\nFormat: ${savedPrefs.format}\nBudget: ${savedPrefs.budget}\nTerpènes: ${savedPrefs.terpenes?.join(', ') || 'n/a'}`
+            : 'Profil non défini.';
+
+        const normalizedGoal = (savedPrefs?.goal || '').toLowerCase();
+        const normalizedFormat = (savedPrefs?.format || '').toLowerCase();
+        const filteredProducts = products.filter((p) => {
+            const haystack = `${p.name} ${p.category?.name || ''}`.toLowerCase();
+            const formatMatch = normalizedFormat ? haystack.includes(normalizedFormat) : true;
+            const goalMatch = normalizedGoal
+                ? haystack.includes(normalizedGoal)
+                : true;
+            return formatMatch && goalMatch;
+        });
+
+        const shortlist = (filteredProducts.length > 0 ? filteredProducts : products)
+            .slice(0, 3)
+            .map((p) => `• ${p.name} (${p.cbd_percentage}% CBD, ${p.price}€)`)
+            .join('\n');
+
+        const recentHistory = pastProducts
+            .slice(0, 2)
+            .map((p) => `• ${p.product_name}`)
+            .join('\n') || 'Aucun historique.';
+
+        return `
+CONTEXTE DYNAMIQUE SESSION :
+Client: ${userName || 'inconnu'}
+Livraison: Standard ${deliveryFee}€, gratuite dès ${deliveryFreeThreshold}€.
+Préférences:\n${profile}
+Historique récent:\n${recentHistory}
+Catalogue court (max 3):\n${shortlist}
+Utilise uniquement ce catalogue court pour recommander rapidement.
 `;
-    }, [products, userName, deliveryFee, deliveryFreeThreshold, savedPrefs]);
+    }, [savedPrefs, products, pastProducts, userName, deliveryFee, deliveryFreeThreshold]);
 
     const stopAllPlayback = useCallback(() => {
         activeSourcesRef.current.forEach(s => { try { s.stop(0); } catch { } });
@@ -234,7 +270,7 @@ ${prefsText}
         const worklet = new AudioWorkletNode(ctx, 'mic-processor');
         processorRef.current = worklet;
         worklet.port.onmessage = (e) => {
-            if (wsRef.current?.readyState !== WebSocket.OPEN || isMutedRef.current) return;
+            if (wsRef.current?.readyState !== WebSocket.OPEN || isMutedRef.current || isSpeakingRef.current) return;
             const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
             const pcm = float32ToInt16(down);
             wsRef.current.send(JSON.stringify({
@@ -308,6 +344,12 @@ ${prefsText}
                     await startMicCapture(stream);
                     startInFlightRef.current = false;
                     playbackCtxRef.current = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
+                    ws.send(JSON.stringify({
+                        client_content: {
+                            turns: [{ role: 'user', parts: [{ text: buildContextPrompt() }] }],
+                            turn_complete: true
+                        }
+                    }));
                 }
 
                 const setupTurn = () => {
@@ -358,7 +400,7 @@ ${prefsText}
             setVoiceState('error');
             startInFlightRef.current = false;
         }
-    }, [cleanup, buildSystemPrompt, startMicCapture, playPcmChunk, stopAllPlayback, compatibilityError, products, onAddItem]);
+    }, [cleanup, buildSystemPrompt, buildContextPrompt, startMicCapture, playPcmChunk, stopAllPlayback, compatibilityError, products, onAddItem]);
 
     const toggleMute = useCallback(() => {
         isMutedRef.current = !isMutedRef.current;
