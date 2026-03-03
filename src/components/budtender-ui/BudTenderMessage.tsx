@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Leaf } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 type MessageType = 'standard' | 'restock' | 'skip-quiz' | 'terpene';
 
@@ -31,26 +32,51 @@ export default function BudTenderMessage({
     isTyping: _isTyping,
     children,
 }: BudTenderMessageProps) {
+
+    // Custom components for Markdown rendering
+    const markdownComponents = {
+        p: ({ children }: { children: React.ReactNode }) => <p className="mb-3 last:mb-0">{children}</p>,
+        strong: ({ children }: { children: React.ReactNode }) => (
+            <strong className={`font-black ${sender === 'bot' ? 'text-green-neon' : 'text-black opacity-90'}`}>
+                {children}
+            </strong>
+        ),
+        em: ({ children }: { children: React.ReactNode }) => <em className="italic opacity-90">{children}</em>,
+        ul: ({ children }: { children: React.ReactNode }) => <ul className="list-disc ml-4 my-3 space-y-1.5">{children}</ul>,
+        ol: ({ children }: { children: React.ReactNode }) => <ol className="list-decimal ml-4 my-3 space-y-1.5">{children}</ol>,
+        li: ({ children }: { children: React.ReactNode }) => <li className="leading-relaxed">{children}</li>,
+    };
+
     return (
-        <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-4`}>
+        <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-3 sm:gap-4`}>
             {sender === 'bot' && (
-                <div className="w-10 h-10 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-sm">
-                    <Leaf className="w-5 h-5 text-green-neon" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-green-neon/20 to-green-neon/5 border border-green-neon/20 flex items-center justify-center mb-1 flex-shrink-0 shadow-[0_0_15px_rgba(57,255,20,0.1)]">
+                    <Leaf className="w-4 h-4 sm:w-5 sm:h-5 text-green-neon" />
                 </div>
             )}
-            <div className="max-w-[90%] space-y-4">
+            <div className={`max-w-[85%] sm:max-w-[80%] space-y-3 sm:space-y-4 ${sender === 'user' ? 'items-end' : 'items-start'}`}>
                 {/* Text bubble */}
                 {text && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className={`px-6 py-4.5 rounded-[1.75rem] text-base leading-relaxed shadow-lg whitespace-pre-wrap ${sender === 'user'
-                            ? 'bg-green-neon text-black font-black'
-                            : 'text-zinc-100 font-medium'
+                        className={`px-5 py-3.5 sm:px-6 sm:py-4.5 rounded-[1.5rem] sm:rounded-[1.75rem] text-sm sm:text-base leading-relaxed shadow-xl ${sender === 'user'
+                                ? 'bg-gradient-to-br from-green-neon to-emerald-400 text-black font-black rounded-br-none'
+                                : 'text-zinc-100 font-medium rounded-bl-none border border-white/10'
                             }`}
-                        style={sender === 'bot' ? { backgroundColor: 'rgba(39, 39, 42, 0.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(113, 113, 122, 0.4)' } : {}}
+                        style={sender === 'bot' ? {
+                            backgroundColor: 'rgba(24, 24, 27, 0.7)',
+                            backdropFilter: 'blur(16px)',
+                            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05)'
+                        } : {}}
                     >
-                        {text}
+                        {sender === 'bot' ? (
+                            <ReactMarkdown components={markdownComponents}>
+                                {text}
+                            </ReactMarkdown>
+                        ) : (
+                            text
+                        )}
                     </motion.div>
                 )}
 
