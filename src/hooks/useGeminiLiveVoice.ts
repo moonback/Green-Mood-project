@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from './useBudTenderMemory';
+import { supabase } from '../lib/supabase';
+import { generateEmbedding } from '../lib/embeddings';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -164,7 +166,9 @@ RÈGLES D'OR :
 - INTERDICTION de parler de guérison médicale.
 - FRAIS : Standard ${deliveryFee}€, Gratuit dès ${deliveryFreeThreshold}€.
 
-CATALOGUE DISPONIBLE :
+167. RAG : Si le client cherche un produit spécifique ou a un besoin que tu ne peux pas combler avec la liste ci-dessous, utilise SYSTEMATIQUEMENT l'outil 'search_catalog' pour accéder à 100% du catalogue.
+
+CATALOGUE RÉDUIT (ÉCHANTILLON) :
 ${catalogStr}
 
 CONTEXTE CLIENT :
@@ -289,18 +293,31 @@ ${prefsText}
                         },
                         system_instruction: { parts: [{ text: buildSystemPrompt() }] },
                         tools: [{
-                            function_declarations: [{
-                                name: 'add_to_cart',
-                                description: 'Ajouter au panier.',
-                                parameters: {
-                                    type: 'OBJECT',
-                                    properties: {
-                                        product_name: { type: 'STRING' },
-                                        quantity: { type: 'NUMBER' }
-                                    },
-                                    required: ['product_name', 'quantity']
+                            function_declarations: [
+                                {
+                                    name: 'add_to_cart',
+                                    description: 'Ajouter au panier.',
+                                    parameters: {
+                                        type: 'OBJECT',
+                                        properties: {
+                                            product_name: { type: 'STRING' },
+                                            quantity: { type: 'NUMBER' }
+                                        },
+                                        required: ['product_name', 'quantity']
+                                    }
+                                },
+                                {
+                                    name: 'search_catalog',
+                                    description: 'Rechercher des produits dans l\'intégralité du catalogue par mots-clés, effets ou arômes.',
+                                    parameters: {
+                                        type: 'OBJECT',
+                                        properties: {
+                                            query: { type: 'STRING', description: 'Le besoin du client (ex: "sommeil profond", "fleur fruitée", "budget serré")' }
+                                        },
+                                        required: ['query']
+                                    }
                                 }
-                            }]
+                            ]
                         }]
                     }
                 }));
@@ -381,22 +398,57 @@ ${prefsText}
                 if (tool) {
                     const calls = tool.function_calls || tool.functionCalls;
                     if (calls) {
-                        const responses = [];
-                        for (const c of calls) {
+                        const responses = await Promise.all(calls.map(async (c) => {
                             if (c.name === 'add_to_cart') {
                                 const prodName = (c.args.product_name || '').toLowerCase();
                                 const qty = Number(c.args.quantity) || 1;
                                 const p = products.find(i => i.name.toLowerCase().includes(prodName) || prodName.includes(i.name.toLowerCase()));
                                 if (p && onAddItem) {
                                     onAddItem(p, qty);
-                                    responses.push({ name: c.name, id: c.id, response: { result: "OK" } });
+                                    return { name: c.name, id: c.id, response: { result: "OK" } };
                                 } else {
-                                    responses.push({ name: c.name, id: c.id, response: { error: "Non trouvé" } });
+                                    return { name: c.name, id: c.id, response: { error: "Non trouvé" } };
                                 }
                             }
-                        }
-                        if (responses.length > 0) {
-                            ws.send(JSON.stringify({ tool_response: { function_responses: responses } }));
+
+                            if (c.name === 'search_catalog') {
+                                const query = c.args.query;
+                                try {
+                                    console.info(`RAG Search for: "${query}"`);
+                                    const embedding = await generateEmbedding(query);
+                                    const { data, error: rpcError } = await supabase.rpc('match_products', {
+                                        query_embedding: embedding,
+                                        match_threshold: 0.1,
+                                        match_count: 10
+                                    });
+
+                                    if (rpcError) throw rpcError;
+
+                                    const results = (data as any[]).map(p =>
+                                        `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}% | ${p.description}`
+                                    ).join('\n');
+
+                                    return {
+                                        name: c.name,
+                                        id: c.id,
+                                        response: {
+                                            results,
+                                            note: "Ce sont les produits les plus pertinents du catalogue complet."
+                                        }
+                                    };
+                                } catch (e) {
+                                    console.error("Search Tool Error:", e);
+                                    return { name: c.name, id: c.id, response: { error: "Erreur technique lors de la recherche" } };
+                                }
+                            }
+                            return null;
+                        }));
+
+                        const filteredResponses = responses.filter(Boolean);
+                        if (filteredResponses.length > 0) {
+                            ws.send(JSON.stringify({
+                                tool_response: { function_responses: filteredResponses }
+                            }));
                         }
                     }
                 }

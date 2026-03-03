@@ -7,8 +7,8 @@ Ce document détaille les axes d'amélioration identifiés pour transformer l'ac
 ## 1. Intelligence Artificielle & Précision (IA 2.0)
 
 ### 🧩 RAG (Retrieval-Augmented Generation)
-- **Problème actuel** : On envoie seulement les 8 à 12 premiers produits au modèle pour rester sous les limites de tokens.
-- **Amélioration** : Utiliser une recherche vectorielle pour extraire les 10 produits les plus pertinents par rapport à la question du client, puis les envoyer à l'IA. Cela permet de prendre en compte **100% du catalogue**.
+- [x] **Problème actuel** : On envoie seulement les 8 à 12 premiers produits au modèle pour rester sous les limites de tokens.
+- [x] **Amélioration** : Utiliser une recherche vectorielle pour extraire les 10 produits les plus pertinents par rapport à la question du client, puis les envoyer à l'IA. Cela permet de prendre en compte **100% du catalogue**.
 
 ### ⚙️ Intégration du Stock en Temps Réel
 - **Amélioration** : Coupler l'IA aux niveaux de stock réels. Si une fleur est presque épuisée, l'IA peut dire : *"Dépêchez-vous, il n'en reste que 2 en stock !"* pour augmenter le sentiment d'urgence.

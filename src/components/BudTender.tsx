@@ -11,6 +11,7 @@ import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { CATEGORY_SLUGS } from '../lib/constants';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
 import VoiceAdvisor from './VoiceAdvisor';
+import { generateEmbedding } from '../lib/embeddings';
 
 // ─── Shared types and logic imported ───
 
@@ -603,26 +604,49 @@ export default function BudTender() {
             return;
         }
 
-        // Basic RAG for Chat: Keyword matching
-        const keywords = text.toLowerCase().split(' ').filter(k => k.length > 3);
-        const relevantProducts = products
-            .map(p => {
-                let s = 0;
-                const pName = p.name.toLowerCase();
-                const pDesc = (p.description || '').toLowerCase();
-                const pCat = (p.category?.name || '').toLowerCase();
+        // ─── RAG: Vector Search First ──────────────────────────────────────────────
+        let relevantProducts: Product[] = [];
+        try {
+            console.log('[BudTender RAG] Semantic search for:', text);
+            const embedding = await generateEmbedding(text);
+            const { data, error: rpcError } = await supabase.rpc('match_products', {
+                query_embedding: embedding,
+                match_threshold: 0.1,
+                match_count: 10
+            });
 
-                keywords.forEach(k => {
-                    if (pName.includes(k)) s += 5;
-                    if (pDesc.includes(k)) s += 2;
-                    if (pCat.includes(k)) s += 3;
-                });
-                return { p, s };
-            })
-            .sort((a, b) => b.s - a.s)
-            .filter(x => x.s > 0 || Math.random() > 0.7) // Keep relevant + some random for variety
-            .slice(0, 15)
-            .map(x => x.p);
+            if (rpcError) throw rpcError;
+            if (data && data.length > 0) {
+                relevantProducts = data;
+                console.log(`[BudTender RAG] Found ${data.length} semantic matches.`);
+            }
+        } catch (err) {
+            console.warn('[BudTender RAG] Vector search failed, falling back to keywords:', err);
+            // Fallback: Basic keyword matching
+            const keywords = text.toLowerCase().split(' ').filter(k => k.length > 3);
+            relevantProducts = products
+                .map(p => {
+                    let s = 0;
+                    const pName = p.name.toLowerCase();
+                    const pDesc = (p.description || '').toLowerCase();
+                    const pCat = (p.category?.name || '').toLowerCase();
+                    keywords.forEach(k => {
+                        if (pName.includes(k)) s += 5;
+                        if (pDesc.includes(k)) s += 2;
+                        if (pCat.includes(k)) s += 3;
+                    });
+                    return { p, s };
+                })
+                .sort((a, b) => b.s - a.s)
+                .filter(x => x.s > 0)
+                .slice(0, 10)
+                .map(x => x.p);
+        }
+
+        // If still empty, add some featured ones for context
+        if (relevantProducts.length === 0) {
+            relevantProducts = products.filter(p => p.is_featured).slice(0, 5);
+        }
 
         const catalog = relevantProducts
             .map((p) => {
