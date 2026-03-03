@@ -831,6 +831,11 @@ export default function BudTender() {
                                 setIsOpen(true);
                             }
                         }}
+                        onVoiceClick={() => {
+                            setIsOpen(true);
+                            setIsVoiceOpen(true);
+                            setIsShrink(false);
+                        }}
                         pulse={pulse}
                         mode={isShrink ? 'expand' : 'default'}
                     />
