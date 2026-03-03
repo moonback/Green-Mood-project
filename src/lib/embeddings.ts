@@ -1,15 +1,29 @@
 import { GoogleGenAI } from "@google/genai";
+import { getCachedEmbedding, setCachedEmbedding } from './budtenderCache';
+
+// ─── Singleton client ────────────────────────────────────────────────────────
+
+let _genAI: GoogleGenAI | null = null;
+
+function getGenAI(): GoogleGenAI {
+    if (!_genAI) {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not found in environment');
+        _genAI = new GoogleGenAI({ apiKey });
+    }
+    return _genAI;
+}
 
 /**
- * Helper to generate embeddings using Google's text-embedding-004 model.
+ * Generate embeddings with LRU cache.
+ * Identical queries hit the cache instead of calling the API again.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-        throw new Error('VITE_GEMINI_API_KEY not found in environment');
-    }
+    // Check cache first
+    const cached = getCachedEmbedding(text);
+    if (cached) return cached;
 
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = getGenAI();
 
     try {
         const response = await genAI.models.embedContent({
@@ -17,7 +31,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
             contents: [{ parts: [{ text }] }]
         });
 
-        return response.embeddings?.[0]?.values || [];
+        const embedding = response.embeddings?.[0]?.values || [];
+        if (embedding.length > 0) setCachedEmbedding(text, embedding);
+        return embedding;
     } catch (error) {
         console.error('Error generating embedding:', error);
         throw error;

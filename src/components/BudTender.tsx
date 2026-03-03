@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { getQuizPrompt, getChatPrompt, QuizAnswers } from '../lib/budtenderPrompts';
-import { getBudTenderSettings, fetchBudTenderSettings, BudTenderSettings, BUDTENDER_DEFAULTS, QuizStep, QuizOption } from '../lib/budtenderSettings';
+import { getBudTenderSettings, BudTenderSettings, BUDTENDER_DEFAULTS, QuizStep, QuizOption } from '../lib/budtenderSettings';
+import { getCachedProducts, getCachedSettings } from '../lib/budtenderCache';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { CATEGORY_SLUGS } from '../lib/constants';
@@ -281,23 +282,16 @@ export default function BudTender() {
     const memory = useBudTenderMemory();
     const { logQuestion } = memory;
 
-    // Load admin settings from DB when opening
+    // Load admin settings from DB when opening (cached)
     useEffect(() => {
         if (isOpen) {
-            fetchBudTenderSettings().then(setSettings);
+            getCachedSettings().then(setSettings);
         }
     }, [isOpen]);
 
-    // Initial product load
+    // Initial product load (cached)
     useEffect(() => {
-        supabase
-            .from('products')
-            .select('*, category:categories(slug, name)')
-            .eq('is_active', true)
-            .eq('is_available', true)
-            .then(({ data }) => {
-                if (data) setProducts(data as Product[]);
-            });
+        getCachedProducts().then(setProducts);
 
         // Use delay from settings
         const currentSettings = getBudTenderSettings();

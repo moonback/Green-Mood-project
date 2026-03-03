@@ -126,6 +126,12 @@ export function useGeminiLiveVoice({
         return null;
     });
 
+    // Stable refs — avoids recreating startSession when these change
+    const productsRef = useRef(products);
+    productsRef.current = products;
+    const onAddItemRef = useRef(onAddItem);
+    onAddItemRef.current = onAddItem;
+
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
     const playbackCtxRef = useRef<AudioContext | null>(null);
@@ -148,7 +154,7 @@ export function useGeminiLiveVoice({
             prefsText = `CONTEXTE CLIENT CONNU :\nObjectif: ${goal}\nExpérience: ${experience}\nFormat favori: ${format}\nBudget: ${budget}\nPréférences: ${terpenes?.join(', ')}\nCONSIGNE : Ne repose pas de questions sur son objectif principal car tu le connais déjà. Rebondis dessus directement.`;
         }
 
-        const catalogStr = products.slice(0, 10).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}%`).join('\n');
+        const catalogStr = productsRef.current.slice(0, 10).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}%`).join('\n');
 
         return `
 TON RÔLE :
@@ -173,7 +179,7 @@ ${catalogStr}
 CONTEXTE CLIENT :
 ${prefsText}
 `;
-    }, [products, userName, deliveryFee, deliveryFreeThreshold, savedPrefs]);
+    }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs]);
 
     const stopAllPlayback = useCallback(() => {
         activeSourcesRef.current.forEach(s => { try { s.stop(0); } catch { } });
@@ -401,9 +407,9 @@ ${prefsText}
                             if (c.name === 'add_to_cart') {
                                 const prodName = (c.args.product_name || '').toLowerCase();
                                 const qty = Number(c.args.quantity) || 1;
-                                const p = products.find(i => i.name.toLowerCase().includes(prodName) || prodName.includes(i.name.toLowerCase()));
-                                if (p && onAddItem) {
-                                    onAddItem(p, qty);
+                                const p = productsRef.current.find(i => i.name.toLowerCase().includes(prodName) || prodName.includes(i.name.toLowerCase()));
+                                if (p && onAddItemRef.current) {
+                                    onAddItemRef.current(p, qty);
                                     return { name: c.name, id: c.id, response: { result: "OK" } };
                                 } else {
                                     return { name: c.name, id: c.id, response: { error: "Non trouvé" } };
@@ -457,7 +463,7 @@ ${prefsText}
             setVoiceState('error');
             startInFlightRef.current = false;
         }
-    }, [cleanup, buildSystemPrompt, startMicCapture, playPcmChunk, stopAllPlayback, compatibilityError, products, onAddItem]);
+    }, [cleanup, buildSystemPrompt, startMicCapture, playPcmChunk, stopAllPlayback, compatibilityError]);
 
     const toggleMute = useCallback(() => {
         isMutedRef.current = !isMutedRef.current;
