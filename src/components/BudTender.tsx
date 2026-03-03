@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Leaf, Mic, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal } from 'lucide-react';
+import { X, Leaf, Mic, RefreshCw, ShoppingCart, ChevronRight, Sparkles, RotateCcw, Clock, CheckCircle2, Share2, Copy, Gift, SendHorizontal, History, ArrowLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
@@ -249,6 +249,7 @@ export default function BudTender() {
     const [isVoiceOpen, setIsVoiceOpen] = useState(false);
     // Shrink state for "viewing product"
     const [isShrink, setIsShrink] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -427,7 +428,7 @@ export default function BudTender() {
 
     const skipQuizAndRecommend = async () => {
         if (!memory.savedPrefs) return;
-        addUserMessage("Utilise mes préférences enregistrées ✨");
+        addBotMessage({ text: "✨ **Recherche en cours...** Je me base sur vos préférences habituelles pour vous proposer le meilleur du catalogue." }, 200);
         const prefs = memory.savedPrefs;
         const answersFromPrefs: Answers = {
             goal: prefs.goal,
@@ -873,6 +874,16 @@ export default function BudTender() {
                                             <Mic className="w-5 h-5 sm:w-6 sm:h-6" />
                                         </button>
                                         <button
+                                            onClick={() => {
+                                                setIsHistoryOpen(!isHistoryOpen);
+                                                if (!isHistoryOpen) memory.fetchAllSessions();
+                                            }}
+                                            title="Historique des conversations"
+                                            className={`p-3 rounded-2xl transition-all ${isHistoryOpen ? 'bg-green-neon text-black' : 'text-zinc-500 hover:text-green-neon hover:bg-green-neon/5'}`}
+                                        >
+                                            <History className="w-5 h-5 sm:w-6 sm:h-6" />
+                                        </button>
+                                        <button
                                             onClick={reset}
                                             title="Nouvelle discussion (garder vos préférences)"
                                             className="p-3 text-zinc-500 hover:text-green-neon hover:bg-green-neon/5 rounded-2xl transition-all"
@@ -904,6 +915,98 @@ export default function BudTender() {
                                     setIsShrink(true);
                                 }}
                             />
+
+                            {/* ── History Panel (Overlay) ── */}
+                            <AnimatePresence mode="wait">
+                                {isHistoryOpen && (
+                                    <motion.div
+                                        initial={{ x: '100%', opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        exit={{ x: '100%', opacity: 0 }}
+                                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                        className="absolute inset-0 z-30 bg-zinc-950 flex flex-col"
+                                    >
+                                        <div className="flex items-center gap-4 px-6 py-6 border-b border-white/5 bg-zinc-900/50">
+                                            <button
+                                                onClick={() => setIsHistoryOpen(false)}
+                                                className="p-2 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-all"
+                                            >
+                                                <ArrowLeft className="w-5 h-5" />
+                                            </button>
+                                            <h3 className="text-xl font-black text-white tracking-tight">HISTORIQUE DES CHATS</h3>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gradient-to-b from-zinc-950 to-zinc-900">
+                                            {!memory.isLoggedIn ? (
+                                                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                                                    <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center border border-white/5">
+                                                        <History className="w-8 h-8 text-zinc-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white font-bold text-lg">Connectez-vous</p>
+                                                        <p className="text-zinc-500 text-sm max-w-xs mx-auto mt-1">L'historique des conversations est réservé aux membres de Green Moon.</p>
+                                                    </div>
+                                                </div>
+                                            ) : memory.isHistoryLoading ? (
+                                                <div className="space-y-4">
+                                                    {[1, 2, 3].map(i => (
+                                                        <div key={i} className="h-24 bg-zinc-900/50 rounded-2xl animate-pulse border border-white/5" />
+                                                    ))}
+                                                </div>
+                                            ) : memory.allChatSessions.length === 0 ? (
+                                                <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
+                                                    <div className="w-16 h-16 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                                                        <History className="w-8 h-8 text-zinc-800" />
+                                                    </div>
+                                                    <p className="text-zinc-400 font-medium">Aucune conversation trouvée.</p>
+                                                </div>
+                                            ) : (
+                                                memory.allChatSessions.map((session) => (
+                                                    <motion.button
+                                                        key={session.id}
+                                                        whileHover={{ scale: 1.01 }}
+                                                        whileTap={{ scale: 0.99 }}
+                                                        onClick={() => {
+                                                            setMessages(session.messages as any);
+                                                            setIsHistoryOpen(false);
+                                                        }}
+                                                        className="w-full text-left bg-zinc-900/40 hover:bg-zinc-900 border border-white/5 hover:border-green-neon/30 p-5 rounded-2xl transition-all group shadow-lg"
+                                                    >
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Calendar className="w-3 h-3 text-green-neon" />
+                                                                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-zinc-400">
+                                                                        {new Date(session.created_at).toLocaleDateString('fr-FR', {
+                                                                            day: 'numeric',
+                                                                            month: 'long',
+                                                                            year: 'numeric',
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit'
+                                                                        })}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-sm font-bold text-white line-clamp-2 group-hover:text-green-neon transition-colors leading-relaxed">
+                                                                    {session.title || "Conseil Wellness personnalisé"}
+                                                                </p>
+                                                                <div className="mt-3 flex items-center gap-4 text-[11px] text-zinc-500 font-medium">
+                                                                    <span className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md">
+                                                                        <Leaf className="w-3 h-3 text-green-neon" />
+                                                                        {session.messages.length} messages
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="w-10 h-10 rounded-xl bg-green-neon/5 border border-green-neon/10 flex items-center justify-center group-hover:bg-green-neon group-hover:text-black transition-all flex-shrink-0">
+                                                                <ChevronRight className="w-5 h-5" />
+                                                            </div>
+                                                        </div>
+                                                    </motion.button>
+                                                ))
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             {/* Messages area */}
                             <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar bg-gradient-to-b from-transparent via-zinc-900/10 to-green-neon/[0.01]">

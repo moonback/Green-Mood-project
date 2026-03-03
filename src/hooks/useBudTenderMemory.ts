@@ -85,7 +85,9 @@ export function useBudTenderMemory() {
     const [restockCandidates, setRestockCandidates] = useState<RestockCandidate[]>([]);
     const [savedPrefs, setSavedPrefs] = useState<SavedPrefs | null>(null);
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+    const [allChatSessions, setAllChatSessions] = useState<{ id: string, messages: ChatMessage[], title: string, created_at: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
     const isLoggedIn = !!user;
     const userName = profile?.full_name
@@ -242,6 +244,50 @@ export function useBudTenderMemory() {
         }
     };
 
+    const fetchAllSessions = async () => {
+        if (!user) return;
+        setIsHistoryLoading(true);
+        try {
+            const { data } = await supabase
+                .from('budtender_interactions')
+                .select('session_id, quiz_answers, created_at')
+                .eq('user_id', user.id)
+                .eq('interaction_type', 'chat_session')
+                .order('created_at', { ascending: false });
+
+            if (data) {
+                const sessions = data.map(d => {
+                    const messages = (d.quiz_answers?.messages as ChatMessage[]) || [];
+
+                    // Filter out "button-like" user messages that shouldn't be the title
+                    const nonSystemUserMessages = messages.filter(m =>
+                        m.sender === 'user' &&
+                        !m.text.includes("Utilise mes préférences") &&
+                        !m.text.includes("conseiller moi") &&
+                        !m.text.includes("Recommencer")
+                    );
+
+                    const firstRealMessage = nonSystemUserMessages[0]?.text ||
+                        messages.find(m => m.sender === 'user')?.text ||
+                        "Diagnostic personnalisé";
+
+                    return {
+                        id: d.session_id as string,
+                        messages,
+                        title: firstRealMessage,
+                        created_at: d.created_at as string
+                    };
+                }).filter(s => s.messages.length > 1); // Keep if there's at least one exchange
+
+                setAllChatSessions(sessions);
+            }
+        } catch (err) {
+            console.error('[BudTenderMemory] Error fetching sessions:', err);
+        } finally {
+            setIsHistoryLoading(false);
+        }
+    };
+
     const logQuestion = async (question: string) => {
         if (!user) return;
         try {
@@ -327,8 +373,11 @@ export function useBudTenderMemory() {
         restockCandidates,
         savedPrefs,
         chatHistory,
+        allChatSessions,
+        isHistoryLoading,
         savePrefs,
         saveChatHistory,
+        fetchAllSessions,
         logQuestion,
         clearChatHistory,
         clearPrefs,
