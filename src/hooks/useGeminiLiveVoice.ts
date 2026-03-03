@@ -296,6 +296,34 @@ ${prefsText}
                         }]
                     }
                 }));
+
+                // Auto-cancel if setup doesn't confirm in 10s
+                setupTimeoutRef.current = window.setTimeout(() => {
+                    if (sessionIdRef.current === sid && voiceState === 'connecting') {
+                        setError('Délai de connexion dépassé.');
+                        stopSession();
+                    }
+                }, CONNECTION_TIMEOUT_MS);
+            };
+
+            ws.onerror = (e) => {
+                if (sessionIdRef.current !== sid) return;
+                console.error("WS Error:", e);
+                setError('Erreur de connexion Live.');
+                setVoiceState('error');
+                startInFlightRef.current = false;
+            };
+
+            ws.onclose = (e) => {
+                if (sessionIdRef.current !== sid || isManualCloseRef.current) return;
+                console.log("WS Closed:", e.code, e.reason);
+                if (e.code !== 1000) {
+                    setError(`Session interrompue (${e.code}).`);
+                    setVoiceState('error');
+                } else {
+                    stopSession();
+                }
+                startInFlightRef.current = false;
             };
 
             ws.onmessage = async (e) => {
@@ -304,10 +332,22 @@ ${prefsText}
                 const msg = JSON.parse(raw);
 
                 if (msg.setup_complete || msg.setupComplete) {
+                    if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
+                    console.info("Gemini Live: Setup Complete");
                     setVoiceState('listening');
                     await startMicCapture(stream);
                     startInFlightRef.current = false;
+
+                    // Initialize audio context for playback
                     playbackCtxRef.current = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
+
+                    // Auto-trigger first greeting
+                    ws.send(JSON.stringify({
+                        client_content: {
+                            turns: [{ role: 'user', parts: [{ text: "Bonjour" }] }],
+                            turn_complete: true
+                        }
+                    }));
                 }
 
                 const setupTurn = () => {

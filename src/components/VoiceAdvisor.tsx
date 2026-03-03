@@ -21,7 +21,7 @@ interface Props {
 // ─── Status labels ───────────────────────────────────────────────────────────
 
 const STATUS: Record<VoiceState, string> = {
-    idle: 'Appuyez pour démarrer',
+    idle: 'Démarrage du chat vocal…',
     connecting: 'Connexion en cours…',
     listening: 'Je vous écoute…',
     speaking: 'BudTender répond…',
@@ -115,6 +115,15 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             deliveryFreeThreshold: settings.delivery_free_threshold
         });
 
+    // Auto-start when opened
+    useEffect(() => {
+        if (isOpen && voiceState === 'idle' && isSupported) {
+            const timer = setTimeout(() => {
+                startSession();
+            }, 600); // Small delay for smooth transition
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, voiceState, isSupported, startSession]);
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';
 
