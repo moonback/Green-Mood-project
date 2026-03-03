@@ -247,6 +247,8 @@ export default function BudTender() {
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
     // Voice advisor overlay
     const [isVoiceOpen, setIsVoiceOpen] = useState(false);
+    // Shrink state for "viewing product"
+    const [isShrink, setIsShrink] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
     const openSidebar = useCartStore((s) => s.openSidebar);
@@ -402,6 +404,7 @@ export default function BudTender() {
     const handleOpen = () => {
         setPulse(false);
         setIsOpen(true);
+        setIsShrink(false);
         if (messages.length === 0) {
             buildWelcomeMessages();
         }
@@ -799,12 +802,19 @@ export default function BudTender() {
 
     return (
         <>
-            {/* ── Floating button ── */}
+            {/* ── Floating button / Expand button ── */}
             <AnimatePresence>
-                {isOpen ? null : settings.enabled && (
+                {isOpen && !isShrink ? null : settings.enabled && (
                     <BudTenderWidget
-                        onClick={handleOpen}
+                        onClick={() => {
+                            if (isShrink) {
+                                setIsShrink(false);
+                            } else {
+                                setIsOpen(true);
+                            }
+                        }}
                         pulse={pulse}
+                        mode={isShrink ? 'expand' : 'default'}
                     />
                 )}
             </AnimatePresence>
@@ -815,10 +825,20 @@ export default function BudTender() {
                     <>
                         <motion.div
                             initial={{ opacity: 0, scale: 1.05 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            animate={isShrink ? {
+                                opacity: 0,
+                                scale: 0.8,
+                                y: 100,
+                                pointerEvents: 'none'
+                            } : {
+                                opacity: 1,
+                                scale: 1,
+                                y: 0,
+                                pointerEvents: 'auto'
+                            }}
                             exit={{ opacity: 0, scale: 1.05 }}
                             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                            className="fixed inset-0 z-[9999] bg-zinc-950/98 backdrop-blur-3xl flex flex-col overflow-hidden"
+                            className="fixed inset-0 z-[9999] bg-zinc-950/98 backdrop-blur-3xl flex flex-col overflow-hidden origin-bottom-right"
                         >
                             {/* Header */}
                             <div className="flex items-center gap-4 px-5 py-5 sm:px-6 sm:py-8 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950/80 to-zinc-900/80">
@@ -877,9 +897,11 @@ export default function BudTender() {
                                 userName={memory.userName}
                                 isOpen={isVoiceOpen}
                                 onClose={() => setIsVoiceOpen(false)}
+                                onHangup={() => setIsShrink(true)}
                                 onAddItem={(product, quantity) => {
                                     addItem(product, quantity);
                                     openSidebar();
+                                    setIsShrink(true);
                                 }}
                             />
 
@@ -927,21 +949,24 @@ export default function BudTender() {
                                                             onClick={() => {
                                                                 // Find in loaded products and add to cart
                                                                 const p = products.find(pr => pr.id === msg.restockProduct!.product_id);
-                                                                if (p) { addItem(p); openSidebar(); }
+                                                                if (p) {
+                                                                    addItem(p);
+                                                                    openSidebar();
+                                                                    setIsShrink(true);
+                                                                }
                                                             }}
                                                             className="flex-1 flex items-center justify-center gap-2 bg-green-neon hover:bg-green-400 text-black font-black text-xs py-2.5 rounded-xl transition-all"
                                                         >
                                                             <ShoppingCart className="w-3.5 h-3.5" />
                                                             Réapprovisionner
                                                         </motion.button>
-                                                        {msg.restockProduct.slug && (
-                                                            <Link
-                                                                to={`/catalogue/${msg.restockProduct.slug}`}
-                                                                className="px-3 py-2.5 bg-zinc-700/50 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-all flex items-center"
-                                                            >
-                                                                Voir
-                                                            </Link>
-                                                        )}
+                                                        <Link
+                                                            to={`/catalogue/${msg.restockProduct.slug}`}
+                                                            onClick={() => setIsShrink(true)}
+                                                            className="px-3 py-2.5 bg-zinc-700/50 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-all flex items-center"
+                                                        >
+                                                            Voir
+                                                        </Link>
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -1044,7 +1069,11 @@ export default function BudTender() {
                                                                 )}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <Link to={`/catalogue/${product.slug}`} className="text-sm font-bold text-white hover:text-green-neon line-clamp-1">
+                                                                <Link
+                                                                    to={`/catalogue/${product.slug}`}
+                                                                    onClick={() => setIsShrink(true)}
+                                                                    className="text-sm font-bold text-white hover:text-green-neon line-clamp-1"
+                                                                >
                                                                     {product.name}
                                                                 </Link>
                                                                 <div className="flex items-center gap-2 mt-1">
@@ -1059,6 +1088,7 @@ export default function BudTender() {
                                                                 onClick={async () => {
                                                                     addItem(product);
                                                                     openSidebar();
+                                                                    setIsShrink(true);
                                                                     const { user } = useAuthStore.getState();
                                                                     if (user) {
                                                                         try {
@@ -1257,7 +1287,7 @@ export default function BudTender() {
                         </motion.div>
                     </>
                 )}
-            </AnimatePresence>
+            </AnimatePresence >
         </>
     );
 }
