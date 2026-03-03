@@ -15,6 +15,7 @@ interface Props {
     userName: string | null;
     isOpen: boolean;
     onClose: () => void;
+    onHangup?: () => void;
     onAddItem?: (product: Product, quantity: number) => void;
 }
 
@@ -101,7 +102,7 @@ function OrbitingDots() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onAddItem }: Props) {
+export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem }: Props) {
     const { settings } = useSettingsStore();
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
@@ -130,6 +131,12 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
     const handleClose = () => {
         stopSession();
         onClose();
+    };
+
+    const handleHangup = () => {
+        stopSession();
+        onClose();
+        if (onHangup) onHangup();
     };
 
     return (
@@ -322,7 +329,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
 
                                     <button
                                         type="button"
-                                        onClick={stopSession}
+                                        onClick={handleHangup}
                                         className="flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-bold bg-red-500/[0.06] border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-300"
                                         aria-label="Terminer la session vocale"
                                     >
