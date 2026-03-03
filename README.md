@@ -1,104 +1,101 @@
-# 🌿 Green Mood Project : Plateforme E-commerce CBD Premium & IA
+# 🌿 Green Mood CBD
 
-## ✨ La Révolution du CBD en Ligne
+> Une expérience e-commerce premium dédiée au bien-être, propulsée par l'intelligence artificielle.
 
-**Green Mood Project** est une plateforme e-commerce de nouvelle génération, conçue pour transformer l'expérience d'achat de produits CBD. Au-delà d'une simple boutique en ligne, c'est un écosystème complet qui combine un design moderne, des fonctionnalités e-commerce avancées et une intelligence artificielle personnalisée pour offrir une valeur inégalée à ses utilisateurs et un potentiel de croissance exponentiel à ses propriétaires.
+Green Mood CBD est une plateforme e-commerce moderne spécialisée dans la vente de produits CBD de haute qualité. Elle intègre un **BudTender IA** (basé sur Google Gemini) capable de conseiller les clients en temps réel via une interface vocale et textuelle, offrant une expérience d'achat personnalisée et experte.
 
-Développée avec une stack technologique de pointe, cette application est prête à être déployée et à captiver un marché en pleine expansion, en se positionnant comme un leader innovant grâce à ses différenciateurs clés.
+---
 
-## 🚀 Fonctionnalités Clés & Différenciateurs
+## 🚀 Stack Technique
 
-Green Mood Project se distingue par une suite de fonctionnalités robustes et innovantes, pensées pour maximiser l'engagement client et les revenus :
+- **Frontend** : [React 19](https://react.dev/), [Vite](https://vitejs.dev/), [TypeScript](https://www.typescriptlang.org/)
+- **Styling** : [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/) (animations)
+- **Backend & Database** : [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage, Edge Functions)
+- **IA Conversationnelle** : [Google Gemini AI](https://deepmind.google/technologies/gemini/) (Multimodal Live API)
+- **Gestion d'État** : [Zustand](https://docs.pmnd.rs/zustand/)
+- **Routage** : [React Router 7](https://reactrouter.com/)
 
-1.  **🤖 BudTender AI : Votre Conseiller CBD Personnel**
-    *   Un assistant conversationnel intelligent qui guide les utilisateurs à travers un quiz interactif pour recommander les produits CBD les plus adaptés à leurs besoins.
-    *   **Mémoire Utilisateur** : Le BudTender mémorise les préférences et l'historique des interactions pour des recommandations toujours plus pertinentes.
-    *   **Configuration Admin** : Entièrement configurable via un panneau d'administration dédié, permettant d'ajuster les prompts, les modèles d'IA (via OpenRouter), la vitesse de frappe, et les seuils de réapprovisionnement.
-    *   **Valeur Ajoutée** : Réduit la friction à l'achat, augmente la confiance des clients et personnalise l'expérience, transformant les visiteurs en acheteurs fidèles.
-    *   **Recherche Vectorielle** : Utilise une recherche vectorielle pour extraire les produits les plus pertinents par rapport à la question du client, permettant de prendre en compte 100% du catalogue.
+---
 
-2.  **🎙️ Conseiller Vocal Live : L'IA qui vous écoute et vous répond**
-    *   **Technologie Live** : Intégration de l'IA pour une interaction vocale bidirectionnelle en temps réel avec une latence ultra-faible.
-    *   **Interface Immersive** : Visualisation dynamique par ondes sonores (Waveform) et transcription en direct de la conversation pour une accessibilité maximale.
-    *   **Expertise Métier** : Un conseiller spécialisé dans le CBD, le THCV et le THV-N10, capable de conseiller sur les dosages, les arômes et les effets recherchés.
-    *   **Conscience Contextuelle** : L'IA connaît le nom du client, ses préférences enregistrées et son historique d'achats récents pour un conseil "comme en boutique".
-    *   **Valeur Ajoutée** : Une expérience futuriste unique sur le marché qui humanise la vente en ligne et offre un support client instantané et expert.
+## ✨ Fonctionnalités Principales (MVP)
 
-3.  **💖 Programme de Fidélité Gamifié & Abonnements**
-    *   **Système de Points à Niveaux (Bronze, Silver, Gold)** : Incite à la répétition d'achats avec des récompenses progressives (points par euro, livraisons offertes, accès ventes privées, réductions VIP).
-    *   **Abonnements Récurrents** : Permet aux clients de s'abonner à leurs produits favoris avec des livraisons automatiques et des réductions, assurant des revenus récurrents et prévisibles.
-    *   **Gestion Complète** : Les utilisateurs peuvent gérer leurs abonnements (pause, reprise, annulation, changement de fréquence) directement depuis leur compte.
-    *   **Valeur Ajoutée** : Augmente la Life-Time Value (LTV) des clients et fidélise la base d'utilisateurs.
+- 🛒 **E-commerce Complet** : Catalogue, gestion du panier, processus de commande sécurisé.
+- 🤖 **BudTender IA** : Assistant virtuel expert en CBD capable de recommander des produits basés sur les besoins de l'utilisateur.
+- 🎙️ **Interface Vocale** : Interaction fluide avec l'IA en mode mains libres.
+- 👤 **Gestion de Compte** : Profils utilisateurs, historique des commandes, gestion des adresses.
+- 🏆 **Système de Fidélité** : Gain de points à chaque achat et programme de parrainage.
+- 📦 **Abonnements** : Gestion de livraisons récurrentes pour les produits consommables.
+- 📊 **Dashboard Admin & POS** : Interface de gestion des stocks, des commandes et terminal de point de vente.
 
-4.  **🛍️ Expérience E-commerce Premium**
-    *   **Catalogue Produit Avancé** : Navigation intuitive avec filtres par catégorie, bénéfices, arômes, et recherche full-text.
-    *   **Fiches Produits Détaillées** : Informations complètes, images multiples, gestion des stocks, et système d'avis clients vérifiés.
-    *   **Tunnel de Commande Optimisé** : Processus d'achat fluide et sécurisé, gestion des adresses, codes promotionnels.
-    *   **PWA (Progressive Web App)** : Offre une expérience utilisateur rapide, fiable et engageante, avec installation sur l'écran d'accueil et fonctionnement hors ligne partiel.
+---
 
-5.  **🛒 Système de Caisse POS (Point of Sale) Immersif**
-    *   **Interface Futuriste** : Design ultra-moderne avec effets de flou (Glassmorphism), mode plein écran dédié et navigation tactile fluide.
-    *   **⚡ Scanner Barcode Natif** : Support ultra-rapide des scanners USB/Bluetooth. Scannez un produit, il s'ajoute instantanément au panier sans aucune manipulation.
-    *   **📦 Gestion Intelligente des Packs** : Reconnaissance automatique des bundles. Lorsqu'un pack est vendu, le système décrémente automatiquement le stock de chaque composant individuel.
-    *   **Historique Persistent & Rapports** : Gestion native des rapports de lecture (X) et de clôture (Z) enregistrés directement en base de données pour une comptabilité parfaite.
-    *   **Gestion Client & Fidélité Avancée** : Recherche rapide, attribution automatique des points et utilisation des réductions fidélité en direct à la caisse.
-    *   **Encaissement Multi-modes** : Support des espèces (avec calcul du rendu), cartes bancaires et paiements mobiles.
-    *   **Synchronisation en Temps Réel** : Mise à jour instantanée des stocks globaux et génération de reçus professionnels.
-    *   **Valeur Ajoutée** : Unifie la gestion des ventes omnicanales, offrant une expérience premium tant pour l'opérateur que pour le client.
+## 🛠️ Installation et Configuration
 
-6.  **📊 Panneau d'Administration Complet**
-    *   Back-office intuitif pour gérer tous les aspects de la boutique : produits, catégories, commandes, clients, stocks, codes promotionnels, avis, et paramètres de l'IA BudTender.
-    *   **Analytique Intégrée** : Tableau de bord avec des métriques clés pour une prise de décision éclairée.
-    *   **Valeur Ajoutée** : Autonomie totale pour l'opérateur, réduisant la dépendance aux développeurs.
+### Prérequis
+- Node.js (v18+)
+- Un projet [Supabase](https://supabase.com/)
+- Une clé API [Google AI Studio](https://aistudio.google.com/)
 
-## ⚙️ Stack Technique Robuste & Moderne
+### Étapes
+1. **Cloner le projet** :
+   ```bash
+   git clone https://github.com/Mayss/Green-Moon-project.git
+   cd Green-Moon-project
+   ```
 
-L'application est construite sur une architecture solide, garantissant performance, scalabilité et maintenabilité :
+2. **Installer les dépendances** :
+   ```bash
+   npm install
+   ```
 
-*   **Frontend** : `React 19` (avec `Vite` pour le build ultra-rapide), `TypeScript`, `TailwindCSS 4` (pour un design system cohérent et rapide).
-*   **Backend & Base de Données** : `Supabase` (basé sur `PostgreSQL`) – une solution BaaS complète incluant :
-    *   **Authentification** : Gestion des utilisateurs et sessions.
-    *   **Base de Données** : Schéma relationnel robuste avec plus de 19 tables (produits, commandes, utilisateurs, abonnements, fidélité, etc.).
-    *   **Row-Level Security (RLS)** : Sécurité granulaire des données, garantissant que chaque utilisateur n'accède qu'à ses propres informations.
-    *   **Fonctions & Triggers SQL** : Logique métier complexe implémentée directement en base de données pour une cohérence et une fiabilité maximales (ex: gestion des stocks, points de fidélité, synchronisation des bundles).
-*   **State Management** : `Zustand` pour une gestion d'état réactive et performante.
-*   **IA & Vocal** : 
-    *   **Chat** : Intégration via `OpenRouter` pour une flexibilité de modèles (ex: `Gemini 2.0 Flash Lite`).
-    *   **Vocal** : Utilisation de l'API `Gemini Multimodal Live` via WebSockets (WSS) pour le traitement audio natif.
-*   **Animations** : `Motion` pour des transitions et animations fluides et élégantes.
+3. **Variables d'Environnement** :
+   Créez un fichier `.env` à la racine et configurez les variables suivantes :
+   ```env
+   VITE_SUPABASE_URL=votre_url_supabase
+   VITE_SUPABASE_ANON_KEY=votre_cle_anonyme
+   VITE_GEMINI_API_KEY=votre_cle_gemini
+   ```
 
-## 🏗️ Architecture & Qualité du Code
+4. **Base de Données** :
+   Appliquez les migrations situées dans le dossier `/supabase` via l'éditeur SQL de votre dashboard Supabase.
 
-Le projet suit une architecture modulaire et des bonnes pratiques de développement :
+---
 
-*   **Codebase** : Plus de **15 200 lignes de code TypeScript**.
-*   **Modularité** : Séparation claire des composants, pages, hooks, et stores, facilitant la compréhension et les évolutions.
-*   **Sécurité** : RLS implémentée sur toutes les tables sensibles, garantissant une protection des données utilisateurs.
-*   **Performance** : Optimisations frontend (Vite, React) et backend (fonctions SQL) pour une expérience utilisateur rapide.
-*   **Maintenabilité** : Code typé (TypeScript), conventions de nommage claires, et structure de projet logique.
+## 🏃 Lancement du Projet
 
-## 🛠️ Installation & Démarrage (pour développeurs)
+### Mode Développement
+```bash
+npm run dev
+```
+L'application sera accessible sur `http://localhost:3000`.
 
-Pour démarrer le projet en local, suivez ces étapes :
+### Mode Production
+```bash
+npm run build
+npm run preview
+```
 
-1.  **Cloner le dépôt** :
-    ```bash
-    git clone https://github.com/moonback/Green-Mood-project.git
-    cd Green-Mood-project
-    ```
-2.  **Configuration Supabase** :
-    *   Créez un nouveau projet Supabase.
-    *   Configurez les variables d'environnement `.env` avec votre `SUPABASE_URL` et `SUPABASE_ANON_KEY`.
-    *   Exécutez les migrations SQL fournies dans le dossier `supabase/` pour initialiser la base de données et les fonctions/RLS.
-3.  **Installation des dépendances** :
-    ```bash
-    pnpm install
-    ```
-4.  **Démarrage du serveur de développement** :
-    ```bash
-    pnpm dev
-    ```
+---
 
-## 📞 Contact
+## 📁 Structure du Projet
 
-Pour toute question ou information complémentaire, veuillez contacter [Nom/Email/Lien] ou ouvrir une issue sur ce dépôt GitHub.
+```text
+├── public/              # Assets statiques
+├── src/
+│   ├── components/      # Composants UI réutilisables
+│   │   ├── budtender-ui/# Interface spécifique à l'IA
+│   │   └── ui/          # Composants de base (boutons, inputs, etc.)
+│   ├── hooks/           # Hooks React personnalisés (IA, Auth, etc.)
+│   ├── lib/             # Utilitaires, types et configuration API
+│   ├── pages/           # Composants pages de l'application
+│   ├── store/           # Gestion de l'état global (Zustand)
+│   └── App.tsx          # Configuration des routes
+├── supabase/            # Migrations SQL et configuration backend
+└── package.json         # Dépendances et scripts
+```
+
+---
+
+## 📝 Licence
+
+Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](./LICENSE) pour plus de détails.
