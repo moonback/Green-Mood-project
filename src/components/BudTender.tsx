@@ -1043,7 +1043,6 @@ export default function BudTender() {
                                                 </div>
                                             )}
 
-                                            {/* ── Results ── */}
                                             {msg.isResult && msg.recommended && (
                                                 <div className="space-y-4 pt-3">
                                                     <p className="text-[10px] font-black tracking-[0.2em] text-zinc-500 uppercase px-1">Sélection sur-mesure</p>

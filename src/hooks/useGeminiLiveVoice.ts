@@ -8,7 +8,7 @@ import { generateEmbedding } from '../lib/embeddings';
 
 const WS_ENDPOINT =
     'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
-const LIVE_MODEL = 'models/gemini-2.0-flash-exp';
+const LIVE_MODEL = 'models/gemini-2.5-flash-lite-preview-09-2025';
 const INPUT_SAMPLE_RATE = 16000; // Gemini Live API requires 16kHz PCM input
 const OUTPUT_SAMPLE_RATE = 24000; // Gemini Live API outputs 24kHz PCM
 const CONNECTION_TIMEOUT_MS = 10000;
