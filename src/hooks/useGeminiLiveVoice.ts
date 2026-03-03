@@ -153,10 +153,11 @@ export function useGeminiLiveVoice({
             productsRef.current,
             savedPrefs,
             userName,
+            pastProducts,
             deliveryFee,
             deliveryFreeThreshold
         );
-    }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs]);
+    }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs, pastProducts]);
 
     const stopAllPlayback = useCallback(() => {
         activeSourcesRef.current.forEach(s => { try { s.stop(0); } catch { } });
