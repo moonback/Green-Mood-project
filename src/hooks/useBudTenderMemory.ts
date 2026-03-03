@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
@@ -79,13 +79,15 @@ const LS_KEY = 'budtender_prefs_v1';
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useBudTenderMemory() {
-    const { user, profile } = useAuthStore();
+    const { user, profile, isLoading: isAuthLoading } = useAuthStore();
 
     const [pastProducts, setPastProducts] = useState<PastProduct[]>([]);
     const [restockCandidates, setRestockCandidates] = useState<RestockCandidate[]>([]);
     const [savedPrefs, setSavedPrefs] = useState<SavedPrefs | null>(null);
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isCloudSynced, setIsCloudSynced] = useState(false);
+    const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const isLoggedIn = !!user;
     const userName = profile?.full_name
@@ -218,45 +220,87 @@ export function useBudTenderMemory() {
         }
     };
 
-    const saveChatHistory = async (history: ChatMessage[]) => {
+    const saveChatHistory = (history: ChatMessage[]) => {
         try {
-            // Local fallback
+            // Local: instant
             localStorage.setItem('budtender_chat_history_v1', JSON.stringify(history));
             setChatHistory(history);
 
-            // Supabase sync (Record interaction session)
+            // Supabase: debounced (2s) to avoid excessive upserts on every message
             if (user && history.length > 0) {
-                // We use a simple session_id based on the first message id or date
-                const sessionId = history[0].id || new Date().toISOString();
-
-                await supabase.from('budtender_interactions').upsert({
-                    user_id: user.id,
-                    session_id: sessionId,
-                    interaction_type: 'chat_session',
-                    quiz_answers: { messages: history },
-                    created_at: new Date().toISOString()
-                }, { onConflict: 'user_id,session_id' });
+                if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+                saveDebounceRef.current = setTimeout(async () => {
+                    try {
+                        const sessionId = history[0].id || new Date().toISOString();
+                        await supabase.from('budtender_interactions').upsert({
+                            user_id: user.id,
+                            session_id: sessionId,
+                            interaction_type: 'chat_session',
+                            quiz_answers: { messages: history },
+                            created_at: new Date().toISOString()
+                        }, { onConflict: 'user_id,session_id' });
+                    } catch (err) {
+                        if (import.meta.env.DEV) console.error('[BudTenderMemory] Debounced save error:', err);
+                    }
+                }, 2000);
             }
         } catch (err) {
             if (import.meta.env.DEV) console.error('[BudTenderMemory] Error saving history:', err);
         }
     };
 
-    const clearChatHistory = () => {
+    const clearChatHistory = async () => {
         localStorage.removeItem('budtender_chat_history_v1');
         setChatHistory([]);
+
+        if (user) {
+            try {
+                await supabase
+                    .from('budtender_interactions')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('interaction_type', 'chat_session');
+            } catch (err) {
+                if (import.meta.env.DEV) console.error('[BudTenderMemory] Error clearing cloud history:', err);
+            }
+        }
     };
 
-    const clearPrefs = () => {
+    const clearPrefs = async () => {
         localStorage.removeItem(LS_KEY);
         localStorage.removeItem('budtender_chat_history_v1');
         setSavedPrefs(null);
         setChatHistory([]);
+
+        if (user) {
+            try {
+                await supabase
+                    .from('user_ai_preferences')
+                    .delete()
+                    .eq('user_id', user.id);
+                await supabase
+                    .from('budtender_interactions')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('interaction_type', 'chat_session');
+            } catch (err) {
+                if (import.meta.env.DEV) console.error('[BudTenderMemory] Error clearing cloud prefs:', err);
+            }
+        }
     };
+
+    // ── Mark cloud sync done for anonymous users ────────────────────────────
+    useEffect(() => {
+        if (!isAuthLoading && !user) {
+            setIsCloudSynced(true);
+        }
+    }, [isAuthLoading, user]);
 
     // ── Load from Supabase on Login ───────────────────────────────────────────
     useEffect(() => {
         if (!user) return;
+
+        setIsCloudSynced(false);
 
         const syncWithSupabase = async () => {
             try {
@@ -299,11 +343,20 @@ export function useBudTenderMemory() {
                 }
             } catch {
                 // Likely no data yet or single() error, normal
+            } finally {
+                setIsCloudSynced(true);
             }
         };
 
         syncWithSupabase();
     }, [user]);
+
+    // ── Cleanup debounce timer on unmount ─────────────────────────────────────
+    useEffect(() => {
+        return () => {
+            if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+        };
+    }, []);
 
     return {
         isLoggedIn,
@@ -317,5 +370,6 @@ export function useBudTenderMemory() {
         clearChatHistory,
         clearPrefs,
         isLoading,
+        isCloudSynced,
     };
 }

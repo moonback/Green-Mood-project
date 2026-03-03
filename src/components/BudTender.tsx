@@ -291,15 +291,24 @@ export default function BudTender() {
         }
     }, [messages, isTyping]);
 
-    // Load persisted chat history on mount (only once)
+    // Load persisted chat history once cloud sync is done
     useEffect(() => {
-        if (!hasTriedLoad.current && memory.chatHistory.length > 0 && messages.length === 0) {
+        if (!memory.isCloudSynced) return;   // Wait for cloud data
+        if (hasTriedLoad.current) return;     // Only try once
+        hasTriedLoad.current = true;
+        if (memory.chatHistory.length > 0 && messages.length === 0) {
             setMessages(memory.chatHistory as any);
-            hasTriedLoad.current = true;
-        } else if (memory.chatHistory.length === 0) {
-            hasTriedLoad.current = true;
         }
-    }, [memory.chatHistory, messages.length]);
+    }, [memory.isCloudSynced, memory.chatHistory, messages.length]);
+
+    // Late-sync: if user opened BudTender before cloud sync, fire welcome when ready
+    useEffect(() => {
+        if (!isOpen || !memory.isCloudSynced) return;
+        if (!hasTriedLoad.current) return;
+        if (messages.length === 0) {
+            buildWelcomeMessages();
+        }
+    }, [memory.isCloudSynced]);
 
     // ── Message helpers ──────────────────────────────────────────────────────
 
@@ -400,7 +409,8 @@ export default function BudTender() {
     const handleOpen = () => {
         setPulse(false);
         setIsOpen(true);
-        if (messages.length === 0) {
+        // Only build welcome if cloud sync is done and no persisted messages were loaded
+        if (messages.length === 0 && memory.isCloudSynced && hasTriedLoad.current) {
             buildWelcomeMessages();
         }
     };
