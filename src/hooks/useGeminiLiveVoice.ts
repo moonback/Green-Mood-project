@@ -70,6 +70,7 @@ interface Options {
     onAddItem?: (product: Product, quantity: number) => void;
     deliveryFee?: number;
     deliveryFreeThreshold?: number;
+    onCloseSession?: () => void;
 }
 
 // ─── Audio utilities ─────────────────────────────────────────────────────────
@@ -113,7 +114,8 @@ export function useGeminiLiveVoice({
     userName,
     onAddItem,
     deliveryFee = 5.9,
-    deliveryFreeThreshold = 50
+    deliveryFreeThreshold = 50,
+    onCloseSession
 }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -132,6 +134,8 @@ export function useGeminiLiveVoice({
     productsRef.current = products;
     const onAddItemRef = useRef(onAddItem);
     onAddItemRef.current = onAddItem;
+    const onCloseSessionRef = useRef(onCloseSession);
+    onCloseSessionRef.current = onCloseSession;
 
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
@@ -300,6 +304,11 @@ export function useGeminiLiveVoice({
                                         },
                                         required: ['query']
                                     }
+                                },
+                                {
+                                    name: 'close_session',
+                                    description: 'Terminer la discussion et fermer la fenêtre vocale (à utiliser après avoir dit au revoir).',
+                                    parameters: { type: 'OBJECT', properties: {} }
                                 }
                             ]
                         }]
@@ -449,6 +458,15 @@ export function useGeminiLiveVoice({
                                     console.warn(`[Voice] ❌ Product NOT found: "${prodName}"`);
                                     return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue. Vérifie le nom exact.` } };
                                 }
+                            }
+
+                            if (c.name === 'close_session') {
+                                console.info('[Voice] close_session called by AI');
+                                setTimeout(() => {
+                                    stopSession();
+                                    if (onCloseSessionRef.current) onCloseSessionRef.current();
+                                }, 1500); // Small delay so the user hears the final words
+                                return { name: c.name, id: c.id, response: { result: "OK — Session en cours de fermeture" } };
                             }
 
                             if (c.name === 'search_catalog') {

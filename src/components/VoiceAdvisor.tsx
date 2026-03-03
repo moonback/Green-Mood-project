@@ -113,7 +113,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             userName,
             onAddItem,
             deliveryFee: settings.delivery_fee,
-            deliveryFreeThreshold: settings.delivery_free_threshold
+            deliveryFreeThreshold: settings.delivery_free_threshold,
+            onCloseSession: onClose
         });
 
     // Auto-start when opened
