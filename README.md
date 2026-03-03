@@ -15,6 +15,7 @@ Green Mood Project se distingue par une suite de fonctionnalités robustes et in
     *   **Mémoire Utilisateur** : Le BudTender mémorise les préférences et l'historique des interactions pour des recommandations toujours plus pertinentes.
     *   **Configuration Admin** : Entièrement configurable via un panneau d'administration dédié, permettant d'ajuster les prompts, les modèles d'IA (via OpenRouter), la vitesse de frappe, et les seuils de réapprovisionnement.
     *   **Valeur Ajoutée** : Réduit la friction à l'achat, augmente la confiance des clients et personnalise l'expérience, transformant les visiteurs en acheteurs fidèles.
+    *   **Recherche Vectorielle** : Utilise une recherche vectorielle pour extraire les produits les plus pertinents par rapport à la question du client, permettant de prendre en compte 100% du catalogue.
 
 2.  **🎙️ Conseiller Vocal Live : L'IA qui vous écoute et vous répond**
     *   **Technologie Live** : Intégration de l'IA pour une interaction vocale bidirectionnelle en temps réel avec une latence ultra-faible.
