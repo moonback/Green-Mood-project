@@ -67,12 +67,7 @@ export default function Login() {
           className="w-full max-w-md"
         >
           {/* Logo */}
-          <div className="text-center mb-12">
-            <Link to="/" className="inline-flex flex-col items-center gap-4">
-              <img src="/logo.jpeg" alt="Green Mood Logo" className="w-50 object-contain rounded-full" />
-              {/* <span className="font-serif text-3xl text-white">Green Mood</span> */}
-            </Link>
-          </div>
+
 
           <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
             {/* Tabs */}

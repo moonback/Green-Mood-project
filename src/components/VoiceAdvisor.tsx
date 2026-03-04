@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones, Sparkles } from 'lucide-react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { useGeminiLiveVoice, VoiceState } from '../hooks/useGeminiLiveVoice';
@@ -107,6 +107,11 @@ function OrbitingDots() {
 
 export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate, showUI = true }: Props) {
     const { settings } = useSettingsStore();
+    const [comparisonProducts, setComparisonProducts] = useState<[Product, Product] | null>(null);
+
+    const handleCompare = useCallback((productA: Product, productB: Product) => {
+        setComparisonProducts([productA, productB]);
+    }, []);
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
         useGeminiLiveVoice({
@@ -119,7 +124,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             deliveryFreeThreshold: settings.delivery_free_threshold,
             onCloseSession: onClose,
             onViewProduct,
-            onNavigate
+            onNavigate,
+            onCompareProducts: handleCompare
         });
 
     // Auto-start when opened
@@ -135,11 +141,13 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
     const isActive = voiceState === 'listening' || voiceState === 'speaking';
 
     const handleClose = () => {
+        setComparisonProducts(null);
         stopSession();
         onClose();
     };
 
     const handleHangup = () => {
+        setComparisonProducts(null);
         stopSession();
         onClose();
         if (onHangup) onHangup();
@@ -181,7 +189,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     </motion.span>
                                 </h3>
                                 <p className="text-[10px] text-zinc-600 mt-0.5 font-medium">
-                                    Gemini Live · Audio natif temps réel
+                                    Audio natif temps réel
                                 </p>
                             </div>
                         </div>
@@ -295,6 +303,65 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 </AnimatePresence>
                             </motion.button>
                         </div>
+
+                        {/* Comparison UI */}
+                        <AnimatePresence>
+                            {comparisonProducts && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 20 }}
+                                    className="w-full max-w-md bg-zinc-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-4 mt-6 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-2xl z-50 flex flex-col gap-4"
+                                    style={{ marginTop: '120px' }}
+                                >
+                                    <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-green-neon" /> Comparaison
+                                        </h4>
+                                        <button onClick={() => setComparisonProducts(null)} className="text-zinc-500 hover:text-white">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {comparisonProducts.map((p, idx) => (
+                                            <div key={p.id || idx} className="flex flex-col gap-2 bg-black/40 p-3 rounded-xl border border-white/5 relative overflow-hidden group">
+                                                <div className="absolute inset-0 bg-gradient-to-br from-green-neon/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                <div className="relative z-10">
+                                                    <div className="text-xs font-black text-white truncate" title={p.name}>{p.name}</div>
+                                                    <div className="text-[10px] text-green-neon font-bold mb-2">{p.price}€ </div>
+
+                                                    <div className="space-y-1.5 mb-3">
+                                                        <div className="flex justify-between items-center bg-white/5 rounded px-2 py-1">
+                                                            <span className="text-[9px] text-zinc-400">CBD</span>
+                                                            <span className="text-[10px] text-white font-bold">{p.cbd_percentage || '?'}%</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center bg-white/5 rounded px-2 py-1">
+                                                            <span className="text-[9px] text-zinc-400">THC</span>
+                                                            <span className="text-[10px] text-white font-bold">{'< 0.3'}%</span>
+                                                        </div>
+                                                        {p.attributes?.benefits && p.attributes.benefits.length > 0 && (
+                                                            <div className="text-[9px] text-zinc-300 mt-2 truncate">
+                                                                <span className="text-zinc-500">Effet :</span> {p.attributes.benefits[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => {
+                                                            if (onAddItem) onAddItem(p, 1);
+                                                            setComparisonProducts(null); // Auto-close to focus on upsell
+                                                        }}
+                                                        className="w-full py-2 bg-white/10 hover:bg-green-neon hover:text-black text-white text-[10px] font-bold rounded-lg transition-colors border border-white/10 hover:border-green-neon"
+                                                    >
+                                                        Couvrir ce choix
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {/* Status text */}
                         <div className="text-center space-y-2">

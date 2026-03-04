@@ -963,7 +963,7 @@ function AdminPOSTab({
     const pmOptions: { key: PaymentMethod; label: string; icon: React.ElementType; color: string }[] = [
         { key: 'cash', label: 'Espèces', icon: Banknote, color: 'border-green-500 bg-green-900/20 text-green-400' },
         { key: 'card', label: 'Carte', icon: CreditCard, color: 'border-blue-500 bg-blue-900/20 text-blue-400' },
-        { key: 'mobile', label: 'Mobile', icon: Smartphone, color: 'border-purple-500 bg-purple-900/20 text-purple-400' },
+        // { key: 'mobile', label: 'Mobile', icon: Smartphone, color: 'border-purple-500 bg-purple-900/20 text-purple-400' },
     ];
 
     const toggleFullScreen = () => {

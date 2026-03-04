@@ -413,7 +413,7 @@ export default function Home() {
       <FAQ />
 
       {/* ────────── Final CTA ────────── */}
-      <section className="py-16 md:py-24 text-center px-5 relative">
+      {/* <section className="py-16 md:py-24 text-center px-5 relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-green-neon/25 to-transparent" />
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -434,7 +434,7 @@ export default function Home() {
             <ArrowRight className="w-4 h-4" />
           </Link>
         </motion.div>
-      </section>
+      </section> */}
 
     </div>
   );

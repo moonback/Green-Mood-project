@@ -73,6 +73,7 @@ interface Options {
     onCloseSession?: () => void;
     onViewProduct?: (product: Product) => void;
     onNavigate?: (path: string) => void;
+    onCompareProducts?: (productA: Product, productB: Product) => void;
 }
 
 // ─── Audio utilities ─────────────────────────────────────────────────────────
@@ -119,7 +120,8 @@ export function useGeminiLiveVoice({
     deliveryFreeThreshold = 50,
     onCloseSession,
     onViewProduct,
-    onNavigate
+    onNavigate,
+    onCompareProducts
 }: Options) {
     const [voiceState, setVoiceState] = useState<VoiceState>('idle');
     const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,8 @@ export function useGeminiLiveVoice({
     onViewProductRef.current = onViewProduct;
     const onNavigateRef = useRef(onNavigate);
     onNavigateRef.current = onNavigate;
+    const onCompareProductsRef = useRef(onCompareProducts);
+    onCompareProductsRef.current = onCompareProducts;
 
     const wsRef = useRef<WebSocket | null>(null);
     const captureCtxRef = useRef<AudioContext | null>(null);
@@ -341,6 +345,18 @@ export function useGeminiLiveVoice({
                                             }
                                         },
                                         required: ['page']
+                                    }
+                                },
+                                {
+                                    name: 'compare_products',
+                                    description: 'Comparer deux produits côte à côte pour aider le client à choisir.',
+                                    parameters: {
+                                        type: 'OBJECT',
+                                        properties: {
+                                            product_a: { type: 'STRING', description: 'Le nom du premier produit' },
+                                            product_b: { type: 'STRING', description: 'Le nom du deuxième produit' }
+                                        },
+                                        required: ['product_a', 'product_b']
                                     }
                                 }
                             ]
@@ -590,6 +606,63 @@ export function useGeminiLiveVoice({
                                 } catch (e) {
                                     console.error("[Voice] Search Tool Error:", e);
                                     return { name: c.name, id: c.id, response: { error: "Erreur technique lors de la recherche" } };
+                                }
+                            }
+
+                            if (c.name === 'compare_products') {
+                                const prodA = (c.args.product_a || '').trim();
+                                const prodB = (c.args.product_b || '').trim();
+                                console.info(`[Voice] compare_products called: "${prodA}" vs "${prodB}"`);
+
+                                const allKnown = [...productsRef.current, ...searchResultsRef.current];
+
+                                const findMatchAsync = async (name: string) => {
+                                    if (!name) return undefined;
+                                    const lower = name.toLowerCase();
+                                    let p = allKnown.find(i => i.name.toLowerCase() === lower);
+                                    if (!p) p = allKnown.find(i => i.name.toLowerCase().includes(lower) || lower.includes(i.name.toLowerCase()));
+                                    if (!p) {
+                                        const words = lower.split(/\s+/).filter(w => w.length > 2);
+                                        p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
+                                    }
+                                    if (!p) {
+                                        console.warn(`[Voice] Product not found locally for comparison: "${name}", trying Supabase…`);
+                                        try {
+                                            const { data } = await supabase
+                                                .from('products')
+                                                .select('*, category:categories(slug, name)')
+                                                .ilike('name', `%${name}%`)
+                                                .eq('is_active', true)
+                                                .limit(1)
+                                                .maybeSingle();
+                                            if (data) p = data as Product;
+                                        } catch (e) {
+                                            console.error('[Voice] Supabase fallback failed for comparison:', e);
+                                        }
+                                    }
+                                    return p;
+                                }
+
+                                const productA = await findMatchAsync(prodA);
+                                const productB = await findMatchAsync(prodB);
+
+                                if (productA && productB && onCompareProductsRef.current) {
+                                    console.info(`[Voice] ✅ Comparing products: "${productA.name}" and "${productB.name}"`);
+                                    onCompareProductsRef.current(productA, productB);
+                                    return {
+                                        name: c.name,
+                                        id: c.id,
+                                        response: {
+                                            result: `OK — Fiche comparative affichée pour "${productA.name}" et "${productB.name}". Note les différences clés à voix haute.`
+                                        }
+                                    };
+                                } else {
+                                    console.warn(`[Voice] ❌ Product not found for comparison. Found A: ${!!productA}, Found B: ${!!productB}`);
+                                    return {
+                                        name: c.name,
+                                        id: c.id,
+                                        response: { error: `Produits non trouvés. A: ${prodA} (${!!productA}), B: ${prodB} (${!!productB})` }
+                                    };
                                 }
                             }
                             return null;
