@@ -498,7 +498,7 @@ export function useGeminiLiveVoice({
                                 setTimeout(() => {
                                     stopSession();
                                     if (onCloseSessionRef.current) onCloseSessionRef.current();
-                                }, 1500); // Small delay so the user hears the final words
+                                }, 3500); // Small delay so the user hears the final words
                                 return { name: c.name, id: c.id, response: { result: "OK — Session en cours de fermeture" } };
                             }
 
