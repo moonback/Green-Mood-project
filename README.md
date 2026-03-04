@@ -39,8 +39,8 @@ Green Mood CBD est une plateforme e-commerce moderne spécialisée dans la vente
 ### Étapes
 1. **Cloner le projet** :
    ```bash
-   git clone https://github.com/Mayss/Green-Moon-project.git
-   cd Green-Moon-project
+   git clone https://github.com/Mayss/Green-Mood-project.git
+   cd Green-Mood-project
    ```
 
 2. **Installer les dépendances** :

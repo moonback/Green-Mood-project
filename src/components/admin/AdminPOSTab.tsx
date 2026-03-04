@@ -177,7 +177,7 @@ function ReceiptModal({
                         </>
                     )}
                     <div className="divider" />
-                    <div className="center italic">♻ Green Moon CBD</div>
+                    <div className="center italic">♻ Green Mood CBD</div>
                     {sale.loyaltyGained !== undefined && sale.loyaltyGained > 0 && (
                         <>
                             <div className="divider" />
@@ -223,7 +223,7 @@ interface AdminPOSTabProps {
 }
 
 function AdminPOSTab({
-    storeName = 'Green Moon CBD',
+    storeName = 'Green Mood CBD',
     storeAddress = '123 Rue de la Nature, 75000 Paris',
     storePhone = '01 23 45 67 89',
     onExit,
@@ -985,7 +985,7 @@ function AdminPOSTab({
                         <ShoppingCart className="w-7 h-7" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-white tracking-tight uppercase">Green Moon POS</h1>
+                        <h1 className="text-xl font-black text-white tracking-tight uppercase">Green Mood POS</h1>
                         <p className="text-[10px] text-green-400 font-bold uppercase tracking-[0.2em]">Système de Vente Directe</p>
                     </div>
                 </div>

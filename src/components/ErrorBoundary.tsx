@@ -12,7 +12,7 @@ interface State {
 }
 
 /**
- * Composant de Error Boundary global pour Green Moon.
+ * Composant de Error Boundary global pour Green Mood.
  * Capture les erreurs JavaScript dans les composants enfants et affiche un UI de repli.
  */
 class ErrorBoundary extends Component<Props, State> {
@@ -61,7 +61,7 @@ class ErrorBoundary extends Component<Props, State> {
                         </h2>
 
                         <p className="text-zinc-400 mb-10 leading-relaxed max-w-md mx-auto">
-                            Une erreur inattendue est survenue dans l'application. Nos ingénieurs Green Moon ont été notifiés (enfin, ils bossent déjà dessus !).
+                            Une erreur inattendue est survenue dans l'application. Nos ingénieurs Green Mood ont été notifiés (enfin, ils bossent déjà dessus !).
                         </p>
 
                         {/* Error Message Tooltip-style (optionnel, affiché seulement en dev ou pour les admins) */}
@@ -94,8 +94,8 @@ class ErrorBoundary extends Component<Props, State> {
                         </div>
 
                         <div className="mt-12 flex items-center justify-center gap-2 opacity-30 grayscale hover:grayscale-0 transition-all cursor-default group">
-                            <img src="/logo.jpeg" alt="Green Moon" className="w-6 h-6 rounded-lg group-hover:rotate-12 transition-transform duration-500" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Green Moon System</span>
+                            <img src="/logo.jpeg" alt="Green Mood" className="w-6 h-6 rounded-lg group-hover:rotate-12 transition-transform duration-500" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Green Mood System</span>
                         </div>
                     </motion.div>
                 </div>

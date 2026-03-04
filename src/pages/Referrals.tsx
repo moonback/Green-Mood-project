@@ -59,7 +59,7 @@ export default function Referrals() {
     if (!settings.referral_program_enabled) {
         return (
             <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 flex flex-col items-center justify-center px-4">
-                <SEO title="Parrainage — Green Moon Privilège" description="Le programme de parrainage est temporairement désactivé." />
+                <SEO title="Parrainage — Green Mood Privilège" description="Le programme de parrainage est temporairement désactivé." />
                 <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-[10px] font-black uppercase tracking-widest mb-12">
                     <ArrowLeft className="w-4 h-4" />
                     Retour au Compte
@@ -77,7 +77,7 @@ export default function Referrals() {
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
-            <SEO title="Parrainage — Green Moon Privilège" description="Parrainez vos amis et gagnez des Carats." />
+            <SEO title="Parrainage — Green Mood Privilège" description="Parrainez vos amis et gagnez des Carats." />
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6">
                 <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-12">
@@ -96,7 +96,7 @@ export default function Referrals() {
                             Partagez <br /><span className="text-green-neon italic">L'Excellence.</span>
                         </h1>
                         <p className="text-zinc-500 text-sm max-w-lg leading-relaxed">
-                            Invitez vos amis à découvrir Green Moon. Recevez <span className="text-white font-bold">{settings.referral_reward_points} Carats</span> lors de leur première commande payée.
+                            Invitez vos amis à découvrir Green Mood. Recevez <span className="text-white font-bold">{settings.referral_reward_points} Carats</span> lors de leur première commande payée.
                         </p>
                     </div>
 
@@ -217,7 +217,7 @@ export default function Referrals() {
                         <h4 className="text-xs font-black uppercase tracking-widest text-white">Règles du Programme</h4>
                         <ul className="space-y-3">
                             {[
-                                "Le filleul doit être un nouvel utilisateur Green Moon.",
+                                "Le filleul doit être un nouvel utilisateur Green Mood.",
                                 welcomeBonus > 0 ? `Le filleul reçoit ${welcomeBonus} Carats dès son inscription.` : null,
                                 "La récompense est créditée dès que la commande du filleul est réglée.",
                                 "Pas de limite sur le nombre de parrainages.",

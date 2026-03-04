@@ -7,7 +7,7 @@ export default function NotFound() {
     return (
         <div className="min-h-[80vh] flex items-center justify-center px-4 relative overflow-hidden">
             <SEO
-                title="Page Introuvable | Green Moon"
+                title="Page Introuvable | Green Mood"
                 description="Désolé, la page que vous recherchez n'existe pas ou a été déplacée."
             />
 
