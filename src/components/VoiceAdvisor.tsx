@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, X, Radio, Headphones } from 'lucide-react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { useGeminiLiveVoice, VoiceState } from '../hooks/useGeminiLiveVoice';
@@ -98,6 +98,108 @@ function OrbitingDots() {
                     }}
                 />
             ))}
+        </motion.div>
+    );
+}
+
+function BudTenderAvatarFace({ voiceState, isMuted }: { voiceState: VoiceState; isMuted: boolean }) {
+    const isSpeaking = voiceState === 'speaking';
+    const isThinking = voiceState === 'connecting';
+    const isHappy = voiceState === 'listening' || voiceState === 'idle';
+    const strokeColor = voiceState === 'error' ? '#fb7185' : '#39ff14';
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{
+                opacity: 1,
+                scale: 1,
+                rotate: isThinking ? [0, 2, -2, 0] : [0, 1, -1, 0],
+            }}
+            transition={{
+                opacity: { duration: 0.2 },
+                scale: { duration: 0.3 },
+                rotate: { duration: isThinking ? 1.2 : 4, repeat: Infinity, ease: 'easeInOut' },
+            }}
+            className="relative flex items-center justify-center"
+        >
+            <div className="absolute inset-[-10px] rounded-full bg-[radial-gradient(circle,_rgba(57,255,20,0.18)_0%,_rgba(57,255,20,0.02)_55%,_transparent_75%)] blur-md" />
+            <svg width="78" height="78" viewBox="0 0 78 78" fill="none" className="relative drop-shadow-[0_0_16px_rgba(57,255,20,0.4)]">
+                <defs>
+                    <linearGradient id="avatarGlow" x1="12" y1="8" x2="66" y2="70" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#9DFF8A" />
+                        <stop offset="1" stopColor={strokeColor} />
+                    </linearGradient>
+                </defs>
+
+                <circle cx="39" cy="39" r="30" stroke="url(#avatarGlow)" strokeWidth="1.8" opacity="0.85" />
+                <circle cx="39" cy="39" r="22" stroke={strokeColor} strokeWidth="0.8" opacity="0.35" />
+
+                <motion.ellipse
+                    cx="29"
+                    cy="34"
+                    rx="3.1"
+                    ry="4.4"
+                    fill={strokeColor}
+                    animate={isThinking ? { ry: [4.4, 2.5, 4.4] } : { ry: [4.4, 4.4, 0.7, 4.4] }}
+                    transition={{ duration: isThinking ? 1.2 : 3, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.ellipse
+                    cx="49"
+                    cy="34"
+                    rx="3.1"
+                    ry="4.4"
+                    fill={strokeColor}
+                    animate={isThinking ? { ry: [4.4, 2.5, 4.4] } : { ry: [4.4, 4.4, 0.7, 4.4] }}
+                    transition={{ duration: isThinking ? 1.2 : 3, repeat: Infinity, ease: 'easeInOut', delay: 0.12 }}
+                />
+
+                {isThinking && (
+                    <motion.path
+                        d="M23 27 Q29 22 35 27"
+                        stroke={strokeColor}
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        initial={{ opacity: 0.45 }}
+                        animate={{ opacity: [0.45, 1, 0.45] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                    />
+                )}
+
+                <motion.path
+                    d="M43 27 Q49 22 55 27"
+                    stroke={strokeColor}
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    initial={{ opacity: 0.45 }}
+                    animate={{ opacity: [0.45, 1, 0.45] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                />
+
+                <motion.ellipse
+                    cx="39"
+                    cy="50"
+                    rx="8.5"
+                    ry="3"
+                    stroke={strokeColor}
+                    strokeWidth="2"
+                    fill="rgba(57,255,20,0.09)"
+                    animate={
+                        isSpeaking
+                            ? { ry: [2.6, 5.4, 3.1, 6.2, 2.8], rx: [8.2, 6.5, 7.8, 5.7, 8.5] }
+                            : isThinking
+                                ? { ry: [1.5, 2.3, 1.5], rx: [5.4, 6.5, 5.4] }
+                                : isHappy
+                                    ? { ry: [2.2, 2.9, 2.2], rx: [8.5, 9.5, 8.5] }
+                                    : { ry: 2.6, rx: 7.6 }
+                    }
+                    transition={{ duration: isSpeaking ? 0.35 : isThinking ? 1.2 : 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+
+                {isMuted && (
+                    <path d="M26 56 L52 30" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" />
+                )}
+            </svg>
         </motion.div>
     );
 }
@@ -282,14 +384,9 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                             className="w-8 h-8 border-2 border-green-neon/30 border-t-green-neon rounded-full animate-spin"
                                         />
                                     )}
-                                    {voiceState === 'speaking' && (
-                                        <motion.div key="vol" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            <Volume2 className="w-9 h-9" />
-                                        </motion.div>
-                                    )}
-                                    {(voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
-                                        <motion.div key="mic" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            {isMuted ? <MicOff className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
+                                    {(voiceState === 'speaking' || voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
+                                        <motion.div key="avatar" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                                            <BudTenderAvatarFace voiceState={voiceState} isMuted={isMuted} />
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
