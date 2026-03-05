@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Star, Package, RefreshCw, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../lib/types';
+import { CATEGORY_SLUGS } from '../lib/constants';
 import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import { useWishlistStore } from '../store/wishlistStore';
@@ -35,6 +36,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     openSidebar();
     addToast({ message: `${product.name} ajouté au panier`, type: 'success' });
   };
+
+  const isBulkProduct = (product.category?.slug === CATEGORY_SLUGS.FLOWERS || product.category?.slug === CATEGORY_SLUGS.RESINS);
+  const isPerUnit = !isBulkProduct || product.is_bundle || (!!product.weight_grams && product.weight_grams > 1);
+
 
   // Limit to 2 key tags for cleaner card
   const tags: { label: string; variant: 'spec' | 'benefit' | 'aroma' }[] = [];
@@ -143,6 +148,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="space-y-0.5">
             <span className="text-xl md:text-2xl font-bold font-serif text-white tracking-tight">
               {product.price.toFixed(2)}<span className="text-green-neon ml-1">€</span>
+              {!isPerUnit && <span className="text-[10px] text-zinc-500 font-sans uppercase tracking-[0.2em] ml-1">/g</span>}
             </span>
             {product.is_bundle && product.original_value && product.original_value > product.price && (
               <div className="flex items-center gap-2">
