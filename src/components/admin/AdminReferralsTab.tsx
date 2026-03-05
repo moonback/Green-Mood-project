@@ -41,7 +41,7 @@ export default function AdminReferralsTab() {
             .select(`
         *,
         referrer:profiles!referrer_id(full_name, referral_code),
-        referee:profiles!referee_id(full_name, email, created_at)
+        referee:profiles!referee_id(full_name, created_at)
       `)
             .order('created_at', { ascending: false });
 
@@ -252,7 +252,7 @@ export default function AdminReferralsTab() {
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="space-y-1">
-                                                <p className="text-sm font-bold text-white">{(r.referee as any)?.full_name || (r.referee as any)?.email}</p>
+                                                <p className="text-sm font-bold text-white">{(r.referee as any)?.full_name || 'Filleul'}</p>
                                                 <p className="text-[10px] font-mono text-zinc-500 uppercase">ID: {r.referee_id.slice(0, 8)}</p>
                                             </div>
                                         </td>
