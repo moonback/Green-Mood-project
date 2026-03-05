@@ -571,6 +571,7 @@ export default function Admin() {
     return errorText.includes('quota exceeded')
       || errorText.includes('resource_exhausted')
       || errorText.includes('too many requests')
+      || errorText.includes('rate limit')
       || errorText.includes('code":429');
   };
 
@@ -593,7 +594,7 @@ export default function Admin() {
         if (!textToEmbed) throw new Error('Texte vide pour la génération du vecteur.');
 
         const embedding = await generateEmbedding(textToEmbed);
-        if (!embedding.length) throw new Error('Vecteur vide reçu depuis Gemini.');
+        if (!embedding.length) throw new Error('Vecteur vide reçu depuis OpenRouter.');
 
         const { error } = await supabase
           .from('products')
@@ -611,7 +612,7 @@ export default function Admin() {
 
         if (isQuotaError(error)) {
           stoppedByQuota = true;
-          console.warn('Sync IA interrompue: quota/rate-limit Gemini atteint.', error);
+          console.warn('Sync IA interrompue: quota/rate-limit OpenRouter atteint.', error);
           break;
         }
 
@@ -629,7 +630,7 @@ export default function Admin() {
 
     if (stoppedByQuota) {
       alert(
-        `Quota Gemini atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
+        `Quota OpenRouter atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
         + 'Réessayez plus tard ou utilisez un plan avec plus de quota.'
       );
       return;
