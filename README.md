@@ -54,6 +54,8 @@ Green Mood CBD est une plateforme e-commerce moderne spécialisée dans la vente
    VITE_SUPABASE_URL=votre_url_supabase
    VITE_SUPABASE_ANON_KEY=votre_cle_anonyme
    VITE_GEMINI_API_KEY=votre_cle_gemini
+   OPENROUTER_API_KEY=votre_cle_openrouter
+   OPENROUTER_EMBED_MODEL=openai/text-embedding-3-small
    ```
 
 4. **Base de Données** :

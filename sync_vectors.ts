@@ -1,18 +1,46 @@
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI } from "@google/genai";
 import fs from 'fs';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const apiKey = process.env.VITE_GEMINI_API_KEY!;
+const openRouterApiKey = process.env.OPENROUTER_API_KEY!;
+const openRouterModel = process.env.OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-small';
 const supaUrl = process.env.VITE_SUPABASE_URL!;
 const supaKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(supaUrl, supaKey);
-const genAI = new GoogleGenAI({ apiKey });
+
+async function embedText(text: string): Promise<number[]> {
+    const response = await fetch('https://openrouter.ai/api/v1/embeddings', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${openRouterApiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': process.env.OPENROUTER_SITE_URL ?? 'http://localhost:3000',
+            'X-Title': process.env.OPENROUTER_APP_NAME ?? 'Green Mood Vector Sync'
+        },
+        body: JSON.stringify({
+            model: openRouterModel,
+            input: text,
+            dimensions: 768
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter ${response.status}: ${errorText}`);
+    }
+
+    const payload = await response.json();
+    return payload?.data?.[0]?.embedding ?? [];
+}
 
 async function sync() {
-    console.log('--- GENERATING EMBEDDINGS SQL (768 DIMS) ---');
+    if (!openRouterApiKey) {
+        throw new Error('OPENROUTER_API_KEY is required.');
+    }
+
+    console.log(`--- GENERATING EMBEDDINGS SQL (768 DIMS) VIA ${openRouterModel} ---`);
 
     const { data: products, error } = await supabase
         .from('products')
@@ -30,15 +58,7 @@ async function sync() {
         const textToEmbed = `${p.name} ${p.description || ''} ${p.cbd_percentage ? 'CBD ' + p.cbd_percentage + '%' : ''} ${(p.attributes?.benefits || []).join(' ')}`;
 
         try {
-            const response = await genAI.models.embedContent({
-                model: "gemini-embedding-001",
-                contents: [{ parts: [{ text: textToEmbed }] }],
-                config: {
-                    outputDimensionality: 768
-                }
-            });
-
-            let embedding = response.embeddings?.[0]?.values || [];
+            const embedding = await embedText(textToEmbed);
 
             // Validate dimension
             if (embedding.length === 768) {
@@ -50,7 +70,7 @@ async function sync() {
         } catch (e) {
             console.error(`❌ ${p.name}`, e);
         }
-        await new Promise(r => setTimeout(r, 2000)); // Rate limit delay
+        await new Promise(r => setTimeout(r, 700)); // Light pacing for provider rate limits
     }
 
     // Split and Save
