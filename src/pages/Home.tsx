@@ -148,22 +148,39 @@ export default function Home() {
       </section>
 
       {/* ────────── Atouts : Trust Bar ────────── */}
-      <div className="border-y border-white/[0.05] bg-zinc-950/50 backdrop-blur-xl relative z-30">
-        <div className="max-w-7xl mx-auto px-5 py-12 md:py-16">
-          <h3 className="text-center text-zinc-500 uppercase tracking-[0.3em] text-[10px] font-bold mb-10">Nos atouts en un coup d'œil</h3>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+      <div className="relative z-30 border-y border-white/[0.05] bg-zinc-950/60 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-14 md:py-20">
+
+          <h3 className="text-center text-zinc-500 uppercase tracking-[0.35em] text-[11px] font-semibold mb-14">
+            Nos atouts en un coup d'œil
+          </h3>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 md:gap-14">
             {stats.map((s, i) => (
-              <div key={i} className="flex flex-col items-center text-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-green-neon mb-2">
+              <div
+                key={i}
+                className="group flex flex-col items-center text-center gap-4 transition-all duration-300"
+              >
+
+                <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-green-neon 
+          transition-all duration-300 group-hover:bg-white/[0.08] group-hover:scale-105">
                   {s.icon}
                 </div>
-                <div className="space-y-1">
-                  <span className="text-xl md:text-2xl font-bold text-white block">{s.value}</span>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">{s.label}</p>
+
+                <div className="space-y-1.5">
+                  <span className="text-2xl md:text-3xl font-bold text-white block tracking-tight">
+                    {s.value}
+                  </span>
+
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
+                    {s.label}
+                  </p>
                 </div>
+
               </div>
             ))}
           </div>
+
         </div>
       </div>
 
@@ -179,7 +196,7 @@ export default function Home() {
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-green-neon/10 blur-[100px] rounded-full" />
             <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
               <img
-                src="/images/presentation-cbd.png"
+                src="/images/solution-hero-bg.png"
                 className="w-full grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
                 alt="Technologie N10"
               />
