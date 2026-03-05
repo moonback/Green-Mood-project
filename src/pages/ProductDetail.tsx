@@ -235,7 +235,9 @@ export default function ProductDetail() {
     setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)));
   }, [product?.stock_quantity]);
 
-  const isOil = product?.category?.slug === CATEGORY_SLUGS.OILS && !product?.is_bundle;
+  const isBulkProduct = (product?.category?.slug === CATEGORY_SLUGS.FLOWERS || product?.category?.slug === CATEGORY_SLUGS.RESINS);
+  const isFixedWeight = product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1);
+  const showWeightSelector = isBulkProduct && (!isFixedWeight || product?.weight_grams === 1);
 
   if (isLoading) {
     return (
@@ -397,14 +399,16 @@ export default function ProductDetail() {
               <div className="flex items-start justify-between">
                 <div className="flex flex-wrap gap-8">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Prix au gramme</p>
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{isFixedWeight ? 'Prix Unitaire' : 'Prix au gramme'}</p>
                     <p className="text-2xl font-serif font-bold text-green-neon leading-none">
-                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€/g</span>
+                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€{isFixedWeight ? '' : '/g'}</span>
                     </p>
                   </div>
                   <div className="w-px h-10 bg-white/10 hidden sm:block" />
                   <div className="space-y-1">
-                    <p className="text-[10px] text-green-neon/60 font-black uppercase tracking-widest">Total Sélectionné ({quantity}g)</p>
+                    <p className="text-[10px] text-green-neon/60 font-black uppercase tracking-widest">
+                      Total Sélectionné ({quantity} {isFixedWeight ? `unité${quantity > 1 ? 's' : ''}` : 'g'})
+                    </p>
                     <p className="text-4xl font-serif font-bold text-white leading-none">
                       {(product.price * quantity).toFixed(2)}<span className="text-xl ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
                     </p>
@@ -416,25 +420,27 @@ export default function ProductDetail() {
               {product.is_available && product.stock_quantity > 0 ? (
                 <div className="space-y-6">
                   <div className="flex-1 space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {[1, 5, 10, 30, 50, 100].map((weight) => (
-                        <button
-                          key={weight}
-                          onClick={() => setQuantity(Math.min(weight, product.stock_quantity))}
-                          className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${quantity === weight
-                            ? 'bg-green-neon border-green-neon text-black shadow-[0_0_15px_rgba(57,255,20,0.3)]'
-                            : 'bg-white/5 border-white/10 text-zinc-500 hover:text-white hover:border-white/20'
-                            }`}
-                        >
-                          {weight}g
-                        </button>
-                      ))}
-                    </div>
+                    {showWeightSelector && (
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 5, 10, 30, 50, 100].map((weight) => (
+                          <button
+                            key={weight}
+                            onClick={() => setQuantity(Math.min(weight, product.stock_quantity))}
+                            className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${quantity === weight
+                              ? 'bg-green-neon border-green-neon text-black shadow-[0_0_15px_rgba(57,255,20,0.3)]'
+                              : 'bg-white/5 border-white/10 text-zinc-500 hover:text-white hover:border-white/20'
+                              }`}
+                          >
+                            {weight}g
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="flex flex-col md:flex-row items-center gap-4">
                       <div className="bg-white/5 border border-white/[0.06] rounded-2xl p-2 flex items-center">
                         <div className="flex items-center gap-1.5 px-3">
-                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Poids:</span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{isFixedWeight ? 'Quantité:' : 'Poids:'}</span>
                           <input
                             type="number"
                             step="1"
@@ -444,7 +450,7 @@ export default function ProductDetail() {
                             onChange={handleQuantityChange}
                             className="w-12 bg-transparent text-sm font-black text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="text-[10px] text-zinc-500 font-bold">g</span>
+                          {!isFixedWeight && <span className="text-[10px] text-zinc-500 font-bold">g</span>}
                         </div>
                       </div>
                       <button
