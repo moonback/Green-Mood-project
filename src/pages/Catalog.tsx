@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
-import { Search, SlidersHorizontal, X, Sparkles, Filter, LayoutGrid, CalendarCheck, Info, ShieldCheck, ArrowUpDown, ChevronLeft, ChevronRight, Microscope, Zap, ArrowLeft } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Sparkles, Filter, LayoutGrid, CalendarCheck, Info, ShieldCheck, ArrowUpDown, ChevronLeft, ChevronRight, Microscope, Zap, ArrowLeft, Link2, PackageCheck, BadgeCheck, Repeat } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Category, Product } from '../lib/types';
 import ProductCard from '../components/ProductCard';
@@ -8,7 +8,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 
 export default function Catalog() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +18,13 @@ export default function Catalog() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'featured' | 'price_asc' | 'price_desc' | 'rating' | 'newest'>('featured');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [subscribableOnly, setSubscribableOnly] = useState(false);
+  const [priceMin, setPriceMin] = useState<number | null>(null);
+  const [priceMax, setPriceMax] = useState<number | null>(null);
+  const [displayDensity, setDisplayDensity] = useState<'cozy' | 'compact'>('cozy');
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [currentPage, setCurrentPage] = useState(1);
   const PRODUCTS_PER_PAGE = 12;
 
@@ -89,6 +96,55 @@ export default function Catalog() {
 
   const allBenefits = Array.from(new Set(products.flatMap(p => p.attributes?.benefits || [])));
   const allAromas = Array.from(new Set(products.flatMap(p => p.attributes?.aromas || [])));
+  const priceBounds = useMemo(() => {
+    if (products.length === 0) {
+      return { min: 0, max: 0 };
+    }
+    const prices = products.map((p) => p.price);
+    return {
+      min: Math.floor(Math.min(...prices)),
+      max: Math.ceil(Math.max(...prices)),
+    };
+  }, [products]);
+
+  useEffect(() => {
+    if (products.length === 0) {
+      return;
+    }
+    const minParam = searchParams.get('minPrice');
+    const maxParam = searchParams.get('maxPrice');
+    const minValue = minParam ? Number(minParam) : priceBounds.min;
+    const maxValue = maxParam ? Number(maxParam) : priceBounds.max;
+
+    setSelectedBenefit(searchParams.get('benefit'));
+    setSelectedAroma(searchParams.get('aroma'));
+    setSortBy((searchParams.get('sort') as typeof sortBy) || 'featured');
+    setInStockOnly(searchParams.get('stock') === '1');
+    setFeaturedOnly(searchParams.get('featured') === '1');
+    setSubscribableOnly(searchParams.get('subscribable') === '1');
+    setDisplayDensity(searchParams.get('density') === 'compact' ? 'compact' : 'cozy');
+    setPriceMin(Number.isFinite(minValue) ? Math.max(priceBounds.min, minValue) : priceBounds.min);
+    setPriceMax(Number.isFinite(maxValue) ? Math.min(priceBounds.max, maxValue) : priceBounds.max);
+  }, [products, priceBounds.max, priceBounds.min, searchParams]);
+
+  useEffect(() => {
+    if (priceMin === null || priceMax === null) {
+      return;
+    }
+    const nextParams = new URLSearchParams();
+    if (selectedCategory) nextParams.set('category', selectedCategory);
+    if (searchQuery) nextParams.set('search', searchQuery);
+    if (selectedBenefit) nextParams.set('benefit', selectedBenefit);
+    if (selectedAroma) nextParams.set('aroma', selectedAroma);
+    if (sortBy !== 'featured') nextParams.set('sort', sortBy);
+    if (inStockOnly) nextParams.set('stock', '1');
+    if (featuredOnly) nextParams.set('featured', '1');
+    if (subscribableOnly) nextParams.set('subscribable', '1');
+    if (displayDensity !== 'cozy') nextParams.set('density', displayDensity);
+    if (priceMin > priceBounds.min) nextParams.set('minPrice', String(priceMin));
+    if (priceMax < priceBounds.max) nextParams.set('maxPrice', String(priceMax));
+    setSearchParams(nextParams, { replace: true });
+  }, [selectedCategory, searchQuery, selectedBenefit, selectedAroma, sortBy, inStockOnly, featuredOnly, subscribableOnly, displayDensity, priceMin, priceMax, setSearchParams, priceBounds.min, priceBounds.max]);
 
   const filtered = products.filter((p) => {
     const matchCat = !selectedCategory || p.category_id === selectedCategory || p.category?.slug === selectedCategory;
@@ -98,7 +154,11 @@ export default function Catalog() {
       !searchQuery ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.description ?? '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchBenefit && matchAroma && matchSearch;
+    const matchStock = !inStockOnly || (p.is_available && p.stock_quantity > 0);
+    const matchFeatured = !featuredOnly || p.is_featured;
+    const matchSubscribable = !subscribableOnly || p.is_subscribable;
+    const matchPrice = priceMin === null || priceMax === null ? true : p.price >= priceMin && p.price <= priceMax;
+    return matchCat && matchBenefit && matchAroma && matchSearch && matchStock && matchFeatured && matchSubscribable && matchPrice;
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -117,15 +177,26 @@ export default function Catalog() {
     currentPage * PRODUCTS_PER_PAGE
   );
 
-  useEffect(() => { setCurrentPage(1); }, [selectedCategory, selectedBenefit, selectedAroma, searchQuery, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [selectedCategory, selectedBenefit, selectedAroma, searchQuery, sortBy, inStockOnly, featuredOnly, subscribableOnly, priceMin, priceMax]);
 
-  const activeFilterCount = [selectedBenefit, selectedAroma].filter(Boolean).length;
+  const activeFilterCount = [selectedBenefit, selectedAroma, inStockOnly, featuredOnly, subscribableOnly].filter(Boolean).length + ((priceMin !== null && priceMin > priceBounds.min) || (priceMax !== null && priceMax < priceBounds.max) ? 1 : 0);
+
+  const handleShareCatalog = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareStatus('copied');
+      window.setTimeout(() => setShareStatus('idle'), 1800);
+    } catch {
+      setShareStatus('error');
+      window.setTimeout(() => setShareStatus('idle'), 1800);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24 overflow-hidden">
       <SEO
-        title="Archives N10 | Boutique CBD de Haute Précision"
-        description="Explorez l'univers moléculaire du N10 et des meilleurs extraits de CBD. Livraison express 24h à Paris et tests certifiés en laboratoire."
+        title="CBD PREMIUM • ANALYSÉ EN LABORATOIRE | N10 CBD"
+        description="Explorez l'univers moléculaire du CBD Premium et des meilleurs extraits de CBD. Livraison express 24h à Paris et tests certifiés en laboratoire."
       />
 
       {/* ────────── Hero Header ────────── */}
@@ -148,7 +219,7 @@ export default function Catalog() {
             <img
               src="/images/N10.png"
               alt="Archives N10"
-              className="w-full h-full object-cover opacity-30 blur-[2px] scale-110"
+              className="w-full h-full object-cover opacity-100 blur-[1px] scale-110"
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/70 to-zinc-950" />
@@ -161,17 +232,17 @@ export default function Catalog() {
             className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-green-neon/10 border border-green-neon/20 backdrop-blur-xl mb-10"
           >
             <Sparkles className="w-3.5 h-3.5 text-green-neon animate-pulse" />
-            <span className="text-green-neon text-[10px] font-bold uppercase tracking-[0.3em]">Pureté Moléculaire Garantis</span>
+            <span className="text-green-neon text-[10px] font-bold uppercase tracking-[0.3em]">CBD PREMIUM • ANALYSÉ EN LABORATOIRE</span>
           </motion.div>
 
           <div className="space-y-6">
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold tracking-tighter leading-none mb-4"
+              className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tighter leading-none mb-4"
             >
-              ARCHIVES <br />
-              <span className="not-italic text-green-neon glow-green-strong filter hue-rotate-[15deg]">N10.</span>
+              CBD PREMIUM <br />
+              <span className="not-italic text-green-neon glow-green-strong filter hue-rotate-[15deg]">EXTRACTIONS.</span>
             </motion.h1>
 
             <motion.p
@@ -180,7 +251,8 @@ export default function Catalog() {
               transition={{ delay: 0.15 }}
               className="text-lg md:text-2xl text-zinc-400 max-w-2xl mx-auto font-light leading-relaxed"
             >
-              Explorez une sélection curatoriale des extractions les plus pures et des molécules de <span className="text-white font-medium">haute précision</span>.
+              Explorez notre sélection de fleurs, résines et extractions CBD rigoureusement sélectionnées pour leur pureté,
+              leurs arômes et leur qualité premium.
             </motion.p>
           </div>
 
@@ -355,6 +427,29 @@ export default function Catalog() {
                       </div>
                     </div>
 
+                    <div className="space-y-5">
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-500 flex items-center gap-3">
+                        <Filter className="w-4 h-4 text-green-neon" />
+                        Filtres instantanés
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        <button onClick={() => setInStockOnly((v) => !v)} className={`px-5 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${inStockOnly ? 'bg-green-neon text-black border-green-neon' : 'border-white/10 text-zinc-400 hover:text-white'}`}><PackageCheck className="w-3.5 h-3.5 inline mr-2" />En stock</button>
+                        <button onClick={() => setFeaturedOnly((v) => !v)} className={`px-5 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${featuredOnly ? 'bg-white text-black border-white' : 'border-white/10 text-zinc-400 hover:text-white'}`}><BadgeCheck className="w-3.5 h-3.5 inline mr-2" />Elite</button>
+                        <button onClick={() => setSubscribableOnly((v) => !v)} className={`px-5 py-2.5 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all ${subscribableOnly ? 'bg-purple-300 text-black border-purple-300' : 'border-white/10 text-zinc-400 hover:text-white'}`}><Repeat className="w-3.5 h-3.5 inline mr-2" />Abonnement</button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-5">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-500">Fourchette de prix</h3>
+                        <span className="text-xs text-zinc-400">{priceMin ?? 0}€ - {priceMax ?? 0}€</span>
+                      </div>
+                      <div className="space-y-3">
+                        <input type="range" min={priceBounds.min} max={priceBounds.max} value={priceMin ?? priceBounds.min} onChange={(e) => setPriceMin(Math.min(Number(e.target.value), priceMax ?? priceBounds.max))} className="w-full accent-green-neon" />
+                        <input type="range" min={priceBounds.min} max={priceBounds.max} value={priceMax ?? priceBounds.max} onChange={(e) => setPriceMax(Math.max(Number(e.target.value), priceMin ?? priceBounds.min))} className="w-full accent-green-neon" />
+                      </div>
+                    </div>
+
                     <div className="flex items-center justify-between pt-10 border-t border-white/5">
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-green-neon animate-pulse" />
@@ -363,7 +458,7 @@ export default function Catalog() {
                         </p>
                       </div>
                       <button
-                        onClick={() => { setSelectedBenefit(null); setSelectedAroma(null); setSelectedCategory(null); setSearchQuery(''); }}
+                        onClick={() => { setSelectedBenefit(null); setSelectedAroma(null); setSelectedCategory(null); setSearchQuery(''); setInStockOnly(false); setFeaturedOnly(false); setSubscribableOnly(false); setPriceMin(priceBounds.min); setPriceMax(priceBounds.max); }}
                         className="text-xs text-zinc-500 hover:text-red-400 font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
                       >
                         <X className="w-4 h-4" />
@@ -376,8 +471,8 @@ export default function Catalog() {
             </AnimatePresence>
 
             {/* Sorting Bar - Compact */}
-            <div className="flex items-center justify-between mb-12 p-2 bg-white/[0.02] border border-white/5 rounded-2xl">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 p-2 bg-white/[0.02] border border-white/5 rounded-2xl gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all text-[10px] font-bold uppercase tracking-widest ${showFilters ? 'bg-green-neon text-black' : 'text-zinc-500 hover:text-white'}`}
@@ -385,27 +480,40 @@ export default function Catalog() {
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   Filtres Avancés
                 </button>
+                <button
+                  onClick={handleShareCatalog}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  {shareStatus === 'copied' ? 'Lien copié' : shareStatus === 'error' ? 'Copie impossible' : 'Partager'}
+                </button>
               </div>
 
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="appearance-none bg-transparent pl-10 pr-6 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 focus:outline-none cursor-pointer hover:text-white transition-all"
-                >
-                  <option value="featured">Populaires</option>
-                  <option value="price_asc">Prix croissant</option>
-                  <option value="price_desc">Prix décroissant</option>
-                  <option value="rating">Mieux notés</option>
-                  <option value="newest">Nouveautés</option>
-                </select>
-                <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center bg-zinc-900/60 rounded-xl border border-white/10 p-1">
+                  <button onClick={() => setDisplayDensity('cozy')} className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${displayDensity === 'cozy' ? 'bg-green-neon text-black' : 'text-zinc-500'}`}>Confort</button>
+                  <button onClick={() => setDisplayDensity('compact')} className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${displayDensity === 'compact' ? 'bg-green-neon text-black' : 'text-zinc-500'}`}>Compact</button>
+                </div>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="appearance-none bg-transparent pl-10 pr-6 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 focus:outline-none cursor-pointer hover:text-white transition-all"
+                  >
+                    <option value="featured">Populaires</option>
+                    <option value="price_asc">Prix croissant</option>
+                    <option value="price_desc">Prix décroissant</option>
+                    <option value="rating">Mieux notés</option>
+                    <option value="newest">Nouveautés</option>
+                  </select>
+                  <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                </div>
               </div>
             </div>
 
             {/* Product Grid */}
             {isLoading ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-10">
+              <div className={`grid grid-cols-2 ${displayDensity === 'compact' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6' : 'lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-10'}`}>
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="aspect-[3/4] bg-white/[0.03] rounded-[2rem] mb-6" />
@@ -434,7 +542,7 @@ export default function Catalog() {
                   </p>
                 </div>
                 <button
-                  onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedBenefit(null); setSelectedAroma(null); }}
+                  onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedBenefit(null); setSelectedAroma(null); setInStockOnly(false); setFeaturedOnly(false); setSubscribableOnly(false); setPriceMin(priceBounds.min); setPriceMax(priceBounds.max); }}
                   className="px-12 py-5 bg-green-neon text-black font-bold uppercase tracking-widest rounded-2xl hover:scale-105 transition-all text-sm"
                 >
                   Réinitialiser
@@ -442,7 +550,7 @@ export default function Catalog() {
               </motion.div>
             ) : (
               <>
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-10">
+                <div className={`grid grid-cols-2 ${displayDensity === 'compact' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6' : 'lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-10'}`}>
                   <AnimatePresence mode="popLayout">
                     {paginatedProducts.map((product, idx) => (
                       <motion.div

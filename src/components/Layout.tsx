@@ -226,7 +226,7 @@ export default function Layout() {
             </div>
 
             {/* Bottom Row: Navigation (Desktop only) */}
-            <nav className="hidden lg:flex items-center justify-center gap-2 pb-5 pt-2 border-t border-white/[0.03]">
+            <nav className="relative z-[1001] hidden lg:flex items-center justify-center gap-2 pb-5 pt-2 border-t border-white/[0.03]">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.path ||
                   (link.path !== "/" && location.pathname.startsWith(link.path));
