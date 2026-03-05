@@ -3,6 +3,41 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/types';
 
+
+const DEVICE_ID_STORAGE_KEY = 'gm_device_id';
+
+function getDeviceId() {
+  const existing = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+  if (existing) return existing;
+
+  const deviceId = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+  localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
+  return deviceId;
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod/i.test(ua)) return 'Mobile';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows';
+  if (/Linux/i.test(ua)) return 'Linux';
+  return 'Appareil inconnu';
+}
+
+async function touchUserSession(userId: string) {
+  const deviceId = getDeviceId();
+  await supabase
+    .from('user_active_sessions')
+    .upsert({
+      user_id: userId,
+      device_id: deviceId,
+      device_name: getDeviceName(),
+      user_agent: navigator.userAgent,
+      last_seen: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,device_id' });
+}
+
 interface AuthStore {
   user: User | null;
   profile: Profile | null;
@@ -29,6 +64,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ session, user: session?.user ?? null, isLoading: false });
       if (session?.user) {
         get().fetchProfile(session.user.id);
+        touchUserSession(session.user.id);
       }
     });
 
@@ -36,6 +72,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ session, user: session?.user ?? null });
       if (session?.user) {
         get().fetchProfile(session.user.id);
+        touchUserSession(session.user.id);
       } else {
         set({ profile: null });
       }
