@@ -235,9 +235,16 @@ export default function ProductDetail() {
     setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)));
   }, [product?.stock_quantity]);
 
-  const isBulkProduct = (product?.category?.slug === CATEGORY_SLUGS.FLOWERS || product?.category?.slug === CATEGORY_SLUGS.RESINS);
-  const isFixedWeight = product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1);
-  const showWeightSelector = isBulkProduct && (!isFixedWeight || product?.weight_grams === 1);
+  const isBulkProduct = (
+    product?.category?.slug?.includes('fleurs') ||
+    product?.category?.slug?.includes('resines') ||
+    product?.category?.slug === 'nouveautes' ||
+    product?.category?.slug === CATEGORY_SLUGS.FLOWERS ||
+    product?.category?.slug === CATEGORY_SLUGS.RESINS
+  );
+  const isPerUnit = !isBulkProduct || product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1 && !product?.name.toLowerCase().includes('pack'));
+  const showWeightSelector = isBulkProduct && !isPerUnit;
+
 
   if (isLoading) {
     return (
@@ -399,15 +406,15 @@ export default function ProductDetail() {
               <div className="flex items-start justify-between">
                 <div className="flex flex-wrap gap-8">
                   <div className="space-y-1">
-                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{isFixedWeight ? 'Prix Unitaire' : 'Prix au gramme'}</p>
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{isPerUnit ? 'Prix Unitaire' : 'Prix au gramme'}</p>
                     <p className="text-2xl font-serif font-bold text-green-neon leading-none">
-                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€{isFixedWeight ? '' : '/g'}</span>
+                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€{isPerUnit ? '' : '/g'}</span>
                     </p>
                   </div>
                   <div className="w-px h-10 bg-white/10 hidden sm:block" />
                   <div className="space-y-1">
                     <p className="text-[10px] text-green-neon/60 font-black uppercase tracking-widest">
-                      Total Sélectionné ({quantity} {isFixedWeight ? `unité${quantity > 1 ? 's' : ''}` : 'g'})
+                      Total Sélectionné ({quantity} {isPerUnit ? `unité${quantity > 1 ? 's' : ''}` : 'g'})
                     </p>
                     <p className="text-4xl font-serif font-bold text-white leading-none">
                       {(product.price * quantity).toFixed(2)}<span className="text-xl ml-2 italic font-sans uppercase tracking-widest text-zinc-500">€</span>
@@ -440,7 +447,7 @@ export default function ProductDetail() {
                     <div className="flex flex-col md:flex-row items-center gap-4">
                       <div className="bg-white/5 border border-white/[0.06] rounded-2xl p-2 flex items-center">
                         <div className="flex items-center gap-1.5 px-3">
-                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{isFixedWeight ? 'Quantité:' : 'Poids:'}</span>
+                          <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{isPerUnit ? 'Quantité:' : 'Poids:'}</span>
                           <input
                             type="number"
                             step="1"
@@ -450,7 +457,7 @@ export default function ProductDetail() {
                             onChange={handleQuantityChange}
                             className="w-12 bg-transparent text-sm font-black text-white text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          {!isFixedWeight && <span className="text-[10px] text-zinc-500 font-bold">g</span>}
+                          {!isPerUnit && <span className="text-[10px] text-zinc-500 font-bold">g</span>}
                         </div>
                       </div>
                       <button
@@ -791,8 +798,10 @@ export default function ProductDetail() {
           <div className="bg-zinc-950/95 backdrop-blur-xl border-t border-white/[0.08] px-4 py-3 flex items-center gap-3">
             <div className="flex-shrink-0">
               <p className="text-lg font-serif font-bold text-white leading-none">
-                {product.price.toFixed(2)}<span className="text-xs text-zinc-500 ml-1">€</span>
+                {(product.price * quantity).toFixed(2)}<span className="text-xs text-zinc-500 ml-1">€</span>
+                {!isPerUnit && <span className="text-[10px] text-zinc-600 ml-1 uppercase">/g</span>}
               </p>
+
               {product.stock_quantity <= 5 && (
                 <p className="text-[10px] text-orange-400 font-medium mt-0.5">Plus que {product.stock_quantity} en stock</p>
               )}

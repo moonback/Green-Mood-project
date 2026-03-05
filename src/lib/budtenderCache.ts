@@ -111,8 +111,9 @@ const EMBEDDING_TTL_MS = 10 * 60 * 1000;
 const embeddingCache = new Map<string, EmbeddingCacheEntry>();
 
 function normalizeKey(text: string): string {
-    return text.trim().toLowerCase();
+    return (text || '').trim().toLowerCase();
 }
+
 
 export function getCachedEmbedding(text: string): number[] | null {
     const key = normalizeKey(text);

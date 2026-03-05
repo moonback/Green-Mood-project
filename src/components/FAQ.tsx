@@ -4,24 +4,20 @@ import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    question: "Qu'est-ce que le CBD ?",
-    answer: "Le CBD (cannabidiol) est une molécule naturellement présente dans le chanvre. Contrairement au THC, il n'a pas d'effet psychotrope et ne provoque pas d'addiction. Il est reconnu pour ses propriétés relaxantes et apaisantes."
+    question: "Où puis-je me faire livrer ?",
+    answer: "Nous livrons dans toute la France métropolitaine, avec un service express à Paris et sa région (livraison en 24h)."
   },
   {
     question: "Le CBD est-il légal en France ?",
-    answer: "Oui, le CBD est 100% légal en France et en Europe, à condition que les produits finis (fleurs, huiles, résines) contiennent moins de 0.3% de THC, conformément à la législation en vigueur."
-  },
-  {
-    question: "Quels sont les effets du CBD ?",
-    answer: "Le CBD interagit avec notre système endocannabinoïde. Nos clients l'utilisent principalement pour favoriser la détente, améliorer la qualité du sommeil, ou encore soulager certains inconforts physiques. Notez que le CBD n'est pas un médicament."
-  },
-  {
-    question: "Proposez-vous la livraison à domicile ?",
-    answer: "Actuellement, pour vous garantir le meilleur conseil personnalisé, nos produits sont disponibles exclusivement dans notre boutique physique. Venez nous rencontrer !"
+    answer: "Oui, tous nos produits respectent la législation en vigueur avec un taux de THC inférieur à 0,3 %, certifié par des tests en laboratoire indépendants."
   },
   {
     question: "Comment choisir le bon produit ?",
-    answer: "Le choix dépend de vos besoins (sommeil, détente, récupération) et de vos préférences de consommation (infusion, huile sublinguale, vaporisation). Nos experts en boutique sont là pour vous guider vers le produit le plus adapté."
+    answer: "Vous pouvez consulter notre guide d'achat détaillé, utiliser notre BudTender IA pour une recommandation personnalisée ou nous contacter directement pour une consultation sur-mesure."
+  },
+  {
+    question: "Puis-je retourner un produit ?",
+    answer: "Oui, vous disposez d'un droit de rétractation de 14 jours (satisfait ou remboursé) à compter de la réception de votre commande, conformément à nos conditions générales de vente."
   }
 ];
 

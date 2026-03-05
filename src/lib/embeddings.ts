@@ -32,8 +32,10 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         });
 
         const embedding = response.embeddings?.[0]?.values || [];
+
         if (embedding.length > 0) setCachedEmbedding(text, embedding);
         return embedding;
+
     } catch (error) {
         console.error('Error generating embedding:', error);
         throw error;
