@@ -12,6 +12,7 @@ interface AuthStore {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
   fetchProfile: (userId: string) => Promise<void>;
   setProfile: (profile: Profile | null) => void;
 }
@@ -137,5 +138,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null, profile: null, session: null });
+  },
+
+  requestPasswordReset: async (email) => {
+    const redirectTo = `${window.location.origin}/connexion`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
   },
 }));
