@@ -375,20 +375,23 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 )}
 
                                 <AnimatePresence mode="wait">
-                                    {voiceState === 'connecting' && (
-                                        <motion.div
-                                            key="spinner"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="w-8 h-8 border-2 border-green-neon/30 border-t-green-neon rounded-full animate-spin"
-                                        />
-                                    )}
-                                    {(voiceState === 'speaking' || voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
-                                        <motion.div key="avatar" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            <BudTenderAvatarFace voiceState={voiceState} isMuted={isMuted} />
-                                        </motion.div>
-                                    )}
+                                    <motion.div
+                                        key={`avatar-${voiceState}`}
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.92 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="relative"
+                                    >
+                                        <BudTenderAvatarFace voiceState={voiceState} isMuted={isMuted} />
+                                        {voiceState === 'connecting' && (
+                                            <motion.div
+                                                className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-green-neon shadow-[0_0_12px_rgba(57,255,20,0.9)]"
+                                                animate={{ opacity: [0.4, 1, 0.4], scale: [0.85, 1.15, 0.85] }}
+                                                transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                                            />
+                                        )}
+                                    </motion.div>
                                 </AnimatePresence>
                             </motion.button>
                         </div>
