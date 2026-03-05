@@ -36,6 +36,7 @@ export interface Product {
     aromas?: string[];
     [key: string]: any;
   };
+  embedding?: number[] | string | null;
   created_at: string;
   // joined
   category?: Category;

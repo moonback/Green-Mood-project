@@ -41,6 +41,7 @@ import {
   Award,
   ShoppingCart,
   Hash,
+  Brain,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
@@ -284,7 +285,11 @@ export default function Admin() {
   };
 
   const loadProducts = async () => {
-    const { data } = await supabase.from('products').select('*, category:categories(*)').order('name');
+    // Explicitly listing columns to ensure embedding is included
+    const { data } = await supabase
+      .from('products')
+      .select('*, embedding, category:categories(*)')
+      .order('name');
     setProducts((data as Product[]) ?? []);
   };
 
@@ -1368,6 +1373,7 @@ export default function Admin() {
                               <th className="px-4 py-3">CBD</th>
                               <th className="px-4 py-3">Stock</th>
                               <th className="px-4 py-3">Statut</th>
+                              <th className="px-4 py-3 text-center" title="Statut de vectorisation (IA)">Vecteur</th>
                               <th className="px-4 py-3">Actions</th>
                             </tr>
                           </thead>
@@ -1428,6 +1434,19 @@ export default function Admin() {
                                       </span>
                                     )}
                                   </div>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  {product.embedding ? (
+                                    <div className="flex justify-center" title="Ce produit est prêt pour la recherche IA">
+                                      <div className="w-8 h-8 rounded-full bg-green-neon/20 flex items-center justify-center border border-green-neon/30">
+                                        <Brain className="w-4 h-4 text-green-neon" />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-center opacity-20" title="Vecteur manquant — sync nécessaire">
+                                      <Brain className="w-4 h-4 text-zinc-500" />
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-1">
