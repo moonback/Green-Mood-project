@@ -60,20 +60,12 @@ export default function Login() {
         description="Connectez-vous ou créez un compte pour accéder à votre historique de commandes et programme de fidélité."
       />
 
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-16">
+      <div className="min-h-[calc(100vh-10rem)] bg-zinc-950 flex items-center justify-center px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          {/* Logo */}
-          <div className="text-center mb-12">
-            <Link to="/" className="inline-flex flex-col items-center gap-4">
-              <img src="/logo.jpeg" alt="Green Mood Logo" className="w-50 object-contain rounded-full" />
-              {/* <span className="font-serif text-3xl text-white">Green Mood</span> */}
-            </Link>
-          </div>
-
           <div className="bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
             {/* Tabs */}
             <div className="flex mb-8 bg-zinc-800 rounded-xl p-1">
