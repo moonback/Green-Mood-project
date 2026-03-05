@@ -121,6 +121,7 @@ export function useGeminiLiveVoice({
 
   const cleanup = useCallback(() => {
     isManualCloseRef.current = true;
+    (sessionRef.current as any)?._ws?.close?.(); // Attempt direct WS close if accessible to speed up state change
     sessionRef.current?.close();
     sessionRef.current = null;
 
@@ -184,19 +185,27 @@ export function useGeminiLiveVoice({
     const worklet = new AudioWorkletNode(ctx, 'mic-processor');
     processorRef.current = worklet;
     worklet.port.onmessage = (e) => {
-      if (!sessionRef.current || isMutedRef.current) return;
+      // Robust check: Is the session valid, is it not muted, and is it NOT in the middle of a manual close?
+      if (!sessionRef.current || isMutedRef.current || isManualCloseRef.current) return;
+
       try {
         const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
         const pcm = float32ToInt16(down);
+
+        // Additional guard: check if the session is still active using private property check if needed,
+        // or rely on the try/catch plus the explicit isManualCloseRef flag.
         sessionRef.current.sendRealtimeInput({
           media: {
             mimeType: 'audio/pcm;rate=16000',
             data: toBase64(new Uint8Array(pcm.buffer))
           }
         });
-      } catch (err) {
-        // Silently catch socket closed errors during teardown
-        console.warn('[Voice] Mic capture error (likely closed):', err);
+      } catch (err: any) {
+        // Silently catch socket closed/closing errors during teardown to prevent console noise
+        if (err?.message?.includes('CLOSED') || err?.message?.includes('CLOSING')) {
+          return;
+        }
+        console.warn('[Voice] Mic capture error:', err);
       }
     };
 

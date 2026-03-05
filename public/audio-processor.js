@@ -11,14 +11,26 @@
  * at least 256 samples and typically 4096 to avoid glitches).
  */
 class MicProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this.buffer = new Float32Array(2048);
+        this.writeIdx = 0;
+    }
+
     process(inputs) {
-        const channel = inputs[0]?.[0];
-        if (channel && channel.length > 0) {
-            // Transfer the buffer to avoid a copy where possible
-            const copy = channel.slice();
-            this.port.postMessage(copy, [copy.buffer]);
+        const input = inputs[0]?.[0];
+        if (!input) return true;
+
+        for (let i = 0; i < input.length; i++) {
+            this.buffer[this.writeIdx++] = input[i];
+
+            if (this.writeIdx >= this.buffer.length) {
+                // Send a copy to the main thread
+                const copy = this.buffer.slice();
+                this.port.postMessage(copy, [copy.buffer]);
+                this.writeIdx = 0;
+            }
         }
-        // Return true to keep the processor alive
         return true;
     }
 }
