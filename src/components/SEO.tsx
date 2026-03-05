@@ -1,41 +1,55 @@
+import { Helmet } from 'react-helmet-async';
 
 interface SEOProps {
   title: string;
   description: string;
+  canonical?: string;
+  robots?: string;
   keywords?: string;
-  schema?: object;
+  ogImage?: string;
+  ogType?: 'website' | 'article' | 'product';
+  twitterCard?: 'summary' | 'summary_large_image';
+  schema?: object | object[];
 }
 
-export default function SEO({ title, description, keywords, schema }: SEOProps) {
-  // Base URL for canonical links and Open Graph
-  const siteUrl = 'https://greenMood-cbd.fr'; // Replace with actual domain
+export default function SEO({
+  title,
+  description,
+  canonical,
+  robots = 'index, follow',
+  keywords,
+  ogImage = 'https://green-ia.io/images/hero-bg.png',
+  ogType = 'website',
+  twitterCard = 'summary_large_image',
+  schema,
+}: SEOProps) {
+  const schemas = Array.isArray(schema) ? schema : schema ? [schema] : [];
 
   return (
-    <>
-      {/* Standard SEO */}
+    <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="robots" content={robots} />
       {keywords && <meta name="keywords" content={keywords} />}
+      {canonical && <link rel="canonical" href={canonical} />}
 
-      {/* Open Graph / Social Media */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={siteUrl} />
-      <meta property="og:site_name" content="Green Mood CBD Shop" />
-      <meta property="og:locale" content="fr_FR" />
+      <meta property="og:type" content={ogType} />
+      {canonical && <meta property="og:url" content={canonical} />}
+      <meta property="og:image" content={ogImage} />
+      <meta property="og:site_name" content="Green IA" />
 
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:card" content={twitterCard} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={ogImage} />
 
-      {/* GEO (Generative Engine Optimization) - Structured Data */}
-      {schema && (
-        <script type="application/ld+json">
-          {JSON.stringify(schema)}
+      {schemas.map((item, index) => (
+        <script key={index} type="application/ld+json">
+          {JSON.stringify(item)}
         </script>
-      )}
-    </>
+      ))}
+    </Helmet>
   );
 }

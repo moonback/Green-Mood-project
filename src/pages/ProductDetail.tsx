@@ -29,6 +29,8 @@ import SEO from '../components/SEO';
 import RelatedProducts from '../components/RelatedProducts';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import { useSettingsStore } from '../store/settingsStore';
+import { productSchema, breadcrumbSchema } from '../utils/seoSchema';
+import { generateCanonical, generateKeywords } from '../utils/seo';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -261,6 +263,25 @@ export default function ProductDetail() {
       <SEO
         title={`${product.name} — Excellence Green Mood`}
         description={product.description ?? `Découvrez ${product.name} par Green Mood. L'excellence du CBD.`}
+        canonical={generateCanonical(`/catalogue/${product.slug}`)}
+        keywords={generateKeywords([product.name, product.category?.name ?? 'CBD product'])}
+        schema={[
+          productSchema({
+            name: product.name,
+            description: product.description ?? `${product.name} premium CBD`,
+            image: product.image_url ?? 'https://green-ia.io/logo.png',
+            price: product.price,
+            brand: 'Green Mood',
+            availability: product.stock_quantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            aggregateRating: reviews.length > 0 ? { ratingValue: Number(avgRating.toFixed(1)), reviewCount: reviews.length } : undefined,
+            url: generateCanonical(`/catalogue/${product.slug}`),
+          }),
+          breadcrumbSchema([
+            { name: 'Accueil', url: 'https://green-ia.io/' },
+            { name: 'Catalogue', url: 'https://green-ia.io/catalogue' },
+            { name: product.name, url: generateCanonical(`/catalogue/${product.slug}`) },
+          ]),
+        ]}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -317,6 +338,7 @@ export default function ProductDetail() {
                   src={productImages[activeImageIndex] || product.image_url || 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
                   alt={`${product.name} - Image ${activeImageIndex + 1}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
+                  loading="lazy"
                 />
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
@@ -334,7 +356,7 @@ export default function ProductDetail() {
                       : 'border-white/[0.08] opacity-60 hover:opacity-100'
                       }`}
                   >
-                    <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>

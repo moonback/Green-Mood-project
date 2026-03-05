@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://green-ia.io/sitemap.xml

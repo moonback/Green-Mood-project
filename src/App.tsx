@@ -31,6 +31,7 @@ const Favorites = lazy(() => import("./pages/Favorites"));
 const Referrals = lazy(() => import("./pages/Referrals"));
 const POSPage = lazy(() => import("./pages/POSPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ProgrammaticLanding = lazy(() => import("./pages/ProgrammaticLanding"));
 
 function PageLoader() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="mentions-legales" element={<Legal />} />
             <Route path="connexion" element={<Login />} />
+            <Route path=":slug(cbd-shop-software|cbd-pos-system|cbd-ecommerce-platform|cbd-ai-budtender)" element={<ProgrammaticLanding />} />
 
             {/* Catalogue en ligne */}
             <Route path="catalogue" element={<Catalog />} />

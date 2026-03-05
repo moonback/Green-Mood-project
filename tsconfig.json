@@ -18,6 +18,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "react-helmet-async": [
+        "./src/shims/react-helmet-async.tsx"
       ]
     },
     "allowImportingTsExtensions": true,

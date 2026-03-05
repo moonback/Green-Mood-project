@@ -13,6 +13,7 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        'react-helmet-async': path.resolve(__dirname, 'src/shims/react-helmet-async.tsx'),
       },
       // Force a single React instance — prevents "Invalid hook call" when motion/react
       // is pre-bundled with a separate CJS React copy alongside the ESM one used by react-dom.
