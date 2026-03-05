@@ -1,0 +1,30 @@
+# Green Mood CBD - LLM Discovery File
+
+site: https://greenmood.fr
+name: Green Mood CBD
+purpose: Ecommerce platform for premium CBD products with AI BudTender recommendations.
+
+catalog:
+- CBD oils
+- CBD flowers
+- CBD resins
+- CBD infusions
+
+knowledge_areas:
+- CBD dosage
+- CBD and sleep
+- CBD and anxiety
+- CBD legality in France
+- lab-tested product quality
+
+assistant:
+- name: AI BudTender
+- role: product recommendation and education assistant
+
+primary_pages:
+- /catalogue
+- /guides/guide-huile-cbd
+- /guides/guide-dosage-cbd
+- /guides/guide-cbd-sommeil
+- /guides/guide-cbd-anxiete
+- /guides/guide-legalite-cbd-france

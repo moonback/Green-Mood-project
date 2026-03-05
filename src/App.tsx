@@ -31,6 +31,8 @@ const Favorites = lazy(() => import("./pages/Favorites"));
 const Referrals = lazy(() => import("./pages/Referrals"));
 const POSPage = lazy(() => import("./pages/POSPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Guides = lazy(() => import("./pages/Guides"));
+const GuidePage = lazy(() => import("./pages/guides/GuidePage"));
 
 function PageLoader() {
   return (
@@ -72,6 +74,13 @@ export default function App() {
 
             {/* Catalogue en ligne */}
             <Route path="catalogue" element={<Catalog />} />
+            <Route path="guides" element={<Guides />} />
+            <Route path="guides/guide-huile-cbd" element={<GuidePage slug="guide-huile-cbd" />} />
+            <Route path="guides/guide-dosage-cbd" element={<GuidePage slug="guide-dosage-cbd" />} />
+            <Route path="guides/guide-cbd-sommeil" element={<GuidePage slug="guide-cbd-sommeil" />} />
+            <Route path="guides/guide-cbd-anxiete" element={<GuidePage slug="guide-cbd-anxiete" />} />
+            <Route path="guides/guide-legalite-cbd-france" element={<GuidePage slug="guide-legalite-cbd-france" />} />
+
             <Route path="catalogue/:slug" element={<ProductDetail />} />
             <Route path="panier" element={<Cart />} />
 
