@@ -1,63 +1,96 @@
-# 🏗️ Architecture du Projet
+# ARCHITECTURE
 
-Ce document détaille l'organisation technique et les choix architecturaux de Green Mood CBD.
+## System Overview
 
-## 📱 Frontend
+Green Mood V2 est une application **SPA React + Vite** qui s’appuie sur **Supabase** comme backend managé (authentification, base PostgreSQL, stockage d’images, RPC SQL). Le front interagit directement avec Supabase via `@supabase/supabase-js` (pas de couche API Express active dans `src/`). Les pages publiques (catalogue, contenu SEO) et privées (compte, commandes, abonnements) cohabitent dans un routage React Router avec gardes d’accès (`ProtectedRoute`, `AdminRoute`).
 
-L'application est une **Single Page Application (SPA)** construite avec **React 19** et **Vite**.
+Le domaine e-commerce est centralisé dans PostgreSQL (produits, commandes, stock, fidélité, promo, bundles, recommandations, POS). La logique métier critique est partagée entre le front (workflows UI, calculs panier, UX checkout, console admin) et des fonctions SQL côté Supabase (ex: `sync_bundle_stock`, `increment_promo_uses`, `get_product_recommendations`, `match_products`, `create_pos_customer`).
 
-### Organisation des dossiers
-- `src/pages/` : Contient les composants de haut niveau représentant les routes.
-- `src/components/` : Composants UI atomiques et complexes.
-- `src/store/` : Gestion de l'état global via **Zustand**. Sépare les préoccupations (Auth, Cart, Settings).
-- `src/hooks/` : Encapsulation de la logique réutilisable (ex: `useGeminiLiveVoice`).
-
-### Gestion de l'état
-- **AuthStore** : Gère la session utilisateur avec Supabase Auth.
-- **CartStore** : Persistance locale du panier.
-- **SettingsStore** : Paramètres globaux de la boutique récupérés depuis la DB.
-
----
-
-## ☁️ Backend (BaaS)
-
-Nous utilisons **Supabase** comme solution Backend-as-a-Service.
-
-### Services utilisés
-1. **PostgreSQL** : Base de données relationnelle principale.
-2. **Supabase Auth** : Gestion des inscriptions, connexions et RLS (Row Level Security).
-3. **Supabase Storage** : Hébergement des images produits via des buckets publics.
-4. **Supabase Edge Functions** : (Optionnel) Pour les traitements lourds ou secrets (ex: intégration paiement Viva Wallet).
-
-### Sécurité (RLS)
-Chaque table est protégée par des politiques de **Row Level Security** :
-- Lecture publique pour les produits et catégories.
-- Lecture/Écriture restreinte à l'utilisateur pour son profil et ses commandes.
-- Accès total pour les administrateurs (`is_admin = true`).
-
----
-
-## 🤖 Intelligence Artificielle
-
-L'intégration de l'IA est le coeur de l'innovation du projet.
-
-### Google Gemini AI
-- **Modèle** : Gemini 2.0 (via Multimodal Live API).
-- **Intégration** : Communication via WebSockets pour une interaction vocale à faible latence.
-- **Fonctions (Tools)** : L'IA peut appeler des fonctions pour interagir avec l'application (ex: `add_to_cart`).
-
----
-
-## 📡 Flux de Données
+L’IA est intégrée en deux canaux: (1) **chat BudTender** avec OpenRouter (LLM + embeddings) et recherche vectorielle Supabase, (2) **voix temps réel** avec Gemini Live (`wss://generativelanguage.googleapis.com/ws/...`) pour le conseiller vocal. Les préférences et interactions IA sont persistées en base (`user_ai_preferences`, `budtender_interactions`) et exploitées dans l’expérience personnalisée.
 
 ```mermaid
 graph TD
-    Client[Navigateur / React] <--> |Auth / REST / Realtime| Supabase[Supabase Platform]
-    Client <--> |WebSocket| Gemini[Google Gemini AI]
-    Supabase <--> |DB Queries| Postgres[(PostgreSQL)]
-    Gemini -.-> |Tool Calls| Client
-    Client --> |Update Cart| Supabase
+  Client[Navigateur utilisateur] --> Frontend[React 19 + Vite SPA]
+  Frontend --> SupabaseAPI[Supabase API / RPC]
+  SupabaseAPI --> Postgres[(PostgreSQL + pgvector)]
+  Frontend --> OpenRouter[OpenRouter Chat + Embeddings]
+  Frontend --> Gemini[Gemini Live WebSocket]
+  Frontend --> Storage[Supabase Storage: product-images]
 ```
 
-## 🔐 Authentification
-Le flux d'authentification utilise les JWT fournis par Supabase. Le hook `useAuthStore` initialise la session au chargement de l'application (`App.tsx`).
+## Frontend Architecture
+
+### Routing
+- Entrée: `src/App.tsx` avec lazy loading des pages.
+- Routes publiques: accueil, boutique, catalogue, guides, pages légales.
+- Routes protégées: checkout, espace compte, commandes, adresses, abonnements, fidélité, avis, favoris, parrainage.
+- Routes admin: `/admin` et `/pos` hors layout standard (header/footer public).
+
+### State Management (Zustand)
+- `authStore`: session Supabase Auth, profil utilisateur, login/signup/reset password.
+- `cartStore`: panier persistant (`persist`), type de livraison, totaux dépendants des settings.
+- `settingsStore`: paramètres dynamiques de boutique depuis `store_settings`.
+- Stores complémentaires: wishlist, notifications toast, préférences UI.
+
+### Domain UI
+- Parcours catalogue/produit: `Catalog`, `ProductDetail`, `RelatedProducts`, `FrequentlyBoughtTogether`.
+- Parcours transactionnel: `Cart`, `Checkout`, `OrderConfirmation`.
+- Espace client: adresses, profil, commandes, abonnements, reviews, referrals, fidélité.
+- Back-office: tabs admin (analytics, POS, BudTender, subscriptions, promo codes, recommandations, reviews).
+
+## Backend / API Architecture
+
+## Execution model
+- **Pas de backend Node/Express actif** malgré dépendance `express` présente dans `package.json`.
+- Le frontend appelle directement Supabase (tables + RPC + storage + auth).
+
+## Data access patterns
+- CRUD direct sur les tables via `supabase.from(...)`.
+- RPC SQL utilisées pour logique métier spécifique:
+  - `get_product_recommendations`
+  - `sync_bundle_stock`
+  - `increment_promo_uses`
+  - `match_products`
+  - `create_pos_customer`
+
+## Authentication & Authorization
+- Authentification: Supabase Auth (`signInWithPassword`, `signUp`, reset/update password).
+- Autorisation: RLS généralisée sur tables métier (owner policies, admin policies, lecture publique catalogue).
+- Contrôle d’accès UI: composants `ProtectedRoute` et `AdminRoute`.
+
+## Database Architecture
+
+- Migrations SQL versionnées dans `supabase/`.
+- Noyau e-commerce: `categories`, `products`, `orders`, `order_items`, `addresses`, `profiles`.
+- Extensions métier:
+  - Fidélité: `loyalty_transactions`
+  - Abonnements: `subscriptions`, `subscription_orders`
+  - Avis: `reviews`
+  - Promotions: `promo_codes`
+  - Bundles/recommandations: `bundle_items`, `product_recommendations`
+  - IA: `user_ai_preferences`, `budtender_interactions`
+  - Social commerce: `wishlists`, `referrals`
+  - POS: `pos_reports`
+- Recherche vectorielle: `products.embedding` + fonction `match_products` (pgvector).
+
+## AI & Integrations
+
+- **OpenRouter**
+  - Chat completions depuis le widget BudTender.
+  - Embeddings (`/api/v1/embeddings`) via front et scripts de sync.
+- **Gemini**
+  - Voix temps réel via WebSocket Live API.
+  - Scripts utilitaires de test/sync autour de `@google/genai`.
+- **Supabase Storage**
+  - Upload/suppression d’images produit via bucket `product-images`.
+- **Viva Wallet**
+  - Variables présentes et hooks côté checkout/POS.
+  - ⚠️ À compléter : implémentation serveur de paiement non exposée dans ce repository (appel backend commenté).
+
+## Configuration & Deployment
+
+- Build tooling: Vite 6 + React 19 + Tailwind 4.
+- TypeScript en mode `noEmit`.
+- Variables d’environnement documentées dans `.env.example`.
+- Script de génération sitemap (`scripts/generate-sitemap.ts`).
+- ⚠️ À compléter : pipeline CI/CD (aucun workflow visible dans le repository).

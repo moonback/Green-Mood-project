@@ -1,73 +1,104 @@
-# 🗃️ Schéma de la Base de Données
+# DB_SCHEMA
 
-Green Mood CBD utilise Supabase (PostgreSQL). Voici une vue d'ensemble structurée des tables et relations.
+## Vue d’ensemble
 
-## 📋 Tables Principales
+Base: PostgreSQL (Supabase), avec RLS et extension `vector` pour la recherche sémantique produits.
 
-### `categories`
-Catégories de produits (ex: Fleurs, Huiles).
-- `id` (uuid, PK)
-- `slug` (text, unique) : Identifiant URL.
-- `name` (text) : Nom affiché.
-- `is_active` (boolean) : Statut de visibilité.
+## Tables principales
 
-### `products`
-Catalogue complet des articles.
-- `id` (uuid, PK)
-- `category_id` (uuid, FK) : Référence à `categories`.
-- `name` (text), `description` (text)
-- `price` (numeric) : Prix TTC.
-- `stock_quantity` (int) : Quantité disponible.
-- `is_bundle` (boolean) : Indique si c'est un pack de produits.
-- `attributes` (jsonb) : Propriétés variables (Bénéfices, Arômes).
+### Catalogue
+- `categories`
+- `products`
+- `product_images`
+- `bundle_items`
+- `product_recommendations`
 
-### `profiles`
-Données étendues des utilisateurs (liées à `auth.users`).
-- `id` (uuid, PK) : Référence à l'utilisateur authentifié.
-- `full_name` (text), `phone` (text)
-- `loyalty_points` (int) : Solde de fidélité.
-- `is_admin` (boolean) : Droits d'administration.
+### Utilisateurs
+- `profiles` (lié à `auth.users`)
+- `addresses`
+- `wishlists`
 
----
+### Commerce
+- `orders`
+- `order_items`
+- `stock_movements`
+- `promo_codes`
+- `store_settings`
 
-## 🧾 Gestion des Commandes
+### Fidélité / Engagement
+- `loyalty_transactions`
+- `subscriptions`
+- `subscription_orders`
+- `reviews`
+- `referrals`
 
-### `orders`
-En-tête des transactions.
-- `id` (uuid, PK)
-- `user_id` (uuid, FK) : L'acheteur.
-- `status` (text) : `pending`, `paid`, `shipped`, etc.
-- `total` (numeric) : Montant final.
-- `delivery_type` (text) : `click_collect`, `delivery`.
+### IA / Personnalisation
+- `user_ai_preferences`
+- `budtender_interactions`
 
-### `order_items`
-Détail des produits achetés par commande.
-- `id` (uuid, PK)
-- `order_id` (uuid, FK), `product_id` (uuid, FK)
-- `quantity` (int), `unit_price` (numeric).
+### POS
+- `pos_reports`
 
----
+## Relations clés
 
-## 🎁 Fidélité & Réductions
+- `products.category_id -> categories.id`
+- `product_images.product_id -> products.id`
+- `bundle_items.bundle_id -> products.id`
+- `bundle_items.product_id -> products.id`
+- `product_recommendations.product_id -> products.id`
+- `product_recommendations.recommended_id -> products.id`
+- `profiles.id -> auth.users.id`
+- `addresses.user_id -> profiles.id`
+- `orders.user_id -> profiles.id`
+- `orders.address_id -> addresses.id`
+- `order_items.order_id -> orders.id`
+- `order_items.product_id -> products.id`
+- `stock_movements.product_id -> products.id`
+- `loyalty_transactions.user_id -> profiles.id`
+- `loyalty_transactions.order_id -> orders.id`
+- `subscriptions.user_id -> profiles.id`
+- `subscriptions.product_id -> products.id`
+- `subscription_orders.subscription_id -> subscriptions.id`
+- `subscription_orders.order_id -> orders.id`
+- `reviews.user_id -> profiles.id`
+- `reviews.product_id -> products.id`
+- `reviews.order_id -> orders.id`
+- `referrals.referrer_id -> profiles.id`
+- `referrals.referee_id -> profiles.id`
+- `wishlists.user_id -> auth.users.id`
+- `wishlists.product_id -> products.id`
+- `user_ai_preferences.user_id -> auth.users.id`
+- `budtender_interactions.user_id -> auth.users.id`
+- `pos_reports.closed_by -> profiles.id`
 
-### `loyalty_transactions`
-Historique des points gagnés ou utilisés.
-- `user_id`, `points`, `type` (earned, redeemed).
+## Fonctions SQL / RPC
 
-### `promo_codes`
-Codes promo configurables.
-- `code` (text), `discount_type` (percent/fixed), `expires_at`.
+- `handle_new_user()` + trigger `on_auth_user_created`
+- `generate_referral_code()`
+- `tr_generate_referral_code()` + trigger `on_profile_created_gen_code`
+- `increment_promo_uses(code_text)`
+- `sync_bundle_stock(p_bundle_id)`
+- `trigger_sync_bundles_on_stock_change()`
+- `get_product_recommendations(p_product_id, p_limit)`
+- `match_products(query_embedding, match_threshold, match_count)`
+- `create_pos_customer(p_full_name, p_phone)`
 
----
+## Évolutions de schéma notables
 
-## 🔄 Relations Clés
+- `products.embedding` introduit pour recherche vectorielle (migrations 768 puis 3072 dimensions présentes).
+- `products.sku` ajouté pour POS/scanner code-barres.
+- `user_ai_preferences` enrichie avec `age_range`, `intensity_preference`, `extra_prefs`.
+- `pos_reports` enrichie avec `product_breakdown`, `cash_counted`, `cash_difference`.
 
-- **`products` ↔ `categories`** : N à 1 (un produit appartient à une catégorie).
-- **`orders` ↔ `profiles`** : N à 1 (un utilisateur peut avoir plusieurs commandes).
-- **`bundle_items` ↔ `products`** : Relation Many-to-Many pour composer des packs.
-- **`product_recommendations` ↔ `products`** : Relation réflexive pour le cross-selling.
+## Sécurité / RLS
 
----
+- RLS activée sur la quasi-totalité des tables applicatives.
+- Politiques observées:
+  - public read sur tables catalogue/config sélectionnées
+  - owner CRUD sur données personnelles
+  - admin all sur tables d’administration
 
-## 🛡️ Sécurité (RLS)
-Des politiques de **Row Level Security** s'appliquent sur toutes les tables pour garantir que les utilisateurs ne voient que leurs propres données et que le catalogue reste protégé.
+## Points à valider
+
+- ⚠️ À compléter : état final cible de dimension vectorielle (768 et 3072 coexistent dans les migrations).
+- ⚠️ À compléter : dictionnaire exhaustif des colonnes avec types/contraintes par table (possible, mais non maintenu dans un fichier de référence unique dans le repo).

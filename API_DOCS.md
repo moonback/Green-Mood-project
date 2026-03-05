@@ -1,58 +1,101 @@
-# 📖 Documentation API
+# API_DOCS
 
-Green Mood CBD utilise principalement les APIs de Supabase (Post-gREST) et des fonctions personnalisées (RPC).
+## 1) API Surface réelle du projet
 
-## 🗄️ Supabase Remote Procedure Calls (RPC)
+Le projet n’expose pas une API REST custom (pas de contrôleurs Express/Node actifs dans `src/`). L’API effective est composée de:
+- **Supabase PostgREST** (accès tables)
+- **Supabase RPC** (fonctions SQL)
+- **Supabase Auth**
+- **Supabase Storage**
+- **APIs externes IA** (OpenRouter, Gemini Live)
 
-Certaines fonctionnalités complexes sont gérées directement en base de données pour plus de performance.
+## 2) Supabase Auth
 
-### `get_product_recommendations`
-Récupère les produits recommandés pour un produit donné (recommandations croisées + fallback par catégorie).
-- **Paramètres** : 
-  - `p_product_id` (uuid) : ID du produit source.
-  - `p_limit` (int) : Nombre maximum de recommandations (défaut: 4).
-- **Retour** : Ensemble d'objets `products`.
+### Session & identité
+- `supabase.auth.getSession()`
+- `supabase.auth.onAuthStateChange(...)`
 
-### `sync_bundle_stock`
-Synchronise le stock d'un pack (bundle) basé sur le stock de ses composants.
-- **Paramètres** : 
-  - `p_bundle_id` (uuid) : ID du bundle.
+### Login / Signup / Logout
+- `signInWithPassword({ email, password })`
+- `signUp({ email, password, options.data.full_name })`
+- `signOut()`
 
----
+### Password
+- `resetPasswordForEmail(email, { redirectTo })`
+- `updateUser({ password })`
 
-## 🤖 Gemini Live AI Interface
+## 3) Supabase RPC utilisées
 
-L'application communique avec Gemini 2.0 via le protocole Multimodal Live.
+### `get_product_recommendations(p_product_id uuid, p_limit int default 4)`
+Retourne des produits recommandés (priorité recommandations explicites puis fallback catégorie).
 
-### Outils (Tools) disponibles pour l'IA
-L'IA peut déclencher les actions suivantes dans l'application :
+### `sync_bundle_stock(p_bundle_id uuid)`
+Recalcule le stock d’un bundle à partir de ses composants.
 
-1. **`get_products`** : Récupérer la liste des produits disponibles.
-2. **`add_to_cart`** : Ajouter un produit spécifique au panier utilisateur.
-   - Arguments : `product_id`, `quantity`.
-3. **`get_cart_total`** : Obtenir la valeur actuelle du panier.
+### `increment_promo_uses(code_text text)`
+Incrémente l’usage d’un code promo.
 
----
+### `match_products(query_embedding vector, match_threshold float, match_count int)`
+Recherche vectorielle de produits (similarité embedding).
 
-## 🔐 Authentification & Sécurité
+### `create_pos_customer(p_full_name text, p_phone text default null)`
+Création d’un client depuis l’interface POS (admin only côté SQL).
 
-### Headers requis
-Pour toutes les requêtes authentifiées via le client Supabase :
-```json
-{
-  "apikey": "VITE_SUPABASE_ANON_KEY",
-  "Authorization": "Bearer <user_jwt_token>"
-}
-```
+## 4) Tables accédées depuis le frontend
 
----
+- `categories`
+- `products`
+- `product_images`
+- `bundle_items`
+- `product_recommendations`
+- `wishlists`
+- `profiles`
+- `addresses`
+- `orders`
+- `order_items`
+- `stock_movements`
+- `store_settings`
+- `loyalty_transactions`
+- `subscriptions`
+- `subscription_orders`
+- `reviews`
+- `promo_codes`
+- `referrals`
+- `user_ai_preferences`
+- `budtender_interactions`
+- `pos_reports`
 
-## 🛍️ Endpoints de Données (Collections)
+## 5) Stockage fichiers
 
-| Table | Méthodes | Description |
-| :--- | :--- | :--- |
-| `products` | `SELECT` | Liste des produits (public) |
-| `categories` | `SELECT` | Liste des catégories (public) |
-| `orders` | `SELECT, INSERT` | Commandes de l'utilisateur |
-| `profiles` | `SELECT, UPDATE` | Informations du profil utilisateur |
-| `loyalty_transactions`| `SELECT` | Historique des points de fidélité |
+### Bucket
+- `product-images`
+
+### Opérations observées
+- Upload image produit
+- Récupération URL publique
+- Suppression d’image
+
+## 6) APIs externes
+
+### OpenRouter
+- `POST https://openrouter.ai/api/v1/chat/completions`
+- `POST https://openrouter.ai/api/v1/embeddings`
+
+Auth: `Authorization: Bearer <VITE_OPENROUTER_API_KEY>`
+
+### Gemini Live
+- WebSocket temps réel vers `generativelanguage.googleapis.com`.
+- Auth par clé `VITE_GEMINI_API_KEY`.
+
+## 7) Sécurité
+
+- RLS activée sur les tables métier principales.
+- Modèle d’accès principal:
+  - lecture publique: catalogue/contenus non sensibles
+  - accès owner: données utilisateur (adresses, commandes, préférences)
+  - accès admin: maintenance catalogue/stock/analytics/POS
+
+## 8) Limites observables
+
+- ⚠️ À compléter : spécification OpenAPI/Swagger non présente.
+- ⚠️ À compléter : endpoints backend de paiement Viva non implémentés dans ce repo (appel `/api/payment/create-order` commenté).
