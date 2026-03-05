@@ -1,32 +1,36 @@
-# Roadmap
+# ROADMAP
 
 ## Current Version (V2)
-Green Mood CBD V2 is a mature, production-oriented commerce platform that already includes:
-- End-to-end e-commerce journeys (catalog, cart, checkout, order lifecycle)
-- AI-powered BudTender guidance (including voice-oriented interactions)
-- Customer retention modules (loyalty, referrals, subscriptions, reviews)
-- Operational tooling (admin dashboard + POS + analytics)
-- SEO/content support (guides and sitemap automation)
+Le projet est déjà à un niveau V2 structuré, avec un socle fonctionnel large :
+- [x] Storefront e-commerce (catalogue, fiche produit, panier, checkout, confirmation)
+- [x] Espace client complet (profil, adresses, commandes, abonnements, fidélité, avis, favoris, parrainage)
+- [x] Backoffice admin multi-domaines (produits, commandes, stock, clients, analytics, promos, recommandations)
+- [x] Mode POS dédié pour les opérations terrain
+- [x] Assistant IA BudTender (texte + composante vocale)
+- [x] Migrations SQL Supabase versionnées pour la couche data
 
-## Next Milestones (Short Term)
-- [ ] Harden checkout and payment pathways with clearer failure recovery UX
-- [ ] Improve admin productivity (bulk actions for products/orders/categories)
-- [ ] Expand automated quality checks (CI lint/build/type checks + smoke tests)
-- [ ] Add role/audit visibility for sensitive admin operations
-- [ ] Improve observability dashboards for support and incident triage
+## Next Milestones
+Améliorations court terme orientées robustesse et opérabilité :
+- [ ] Renforcer les parcours de paiement (gestion d’échecs, retries, traçabilité)
+- [ ] Industrialiser les contrôles qualité en CI (type-check + build + smoke tests)
+- [ ] Ajouter des actions bulk en administration (produits / commandes / catégories)
+- [ ] Améliorer l’observabilité applicative (logs métier + erreurs critiques)
+- [ ] Documenter un runbook d’exploitation (incidents checkout, sync embeddings)
 
-## Planned Features (Medium Term)
-- [ ] Personalization upgrades using behavioral + purchase history signals
-- [ ] Recommendation quality tuning (hybrid rules + vector relevance feedback)
-- [ ] Marketing automation hooks (campaign segments, lifecycle triggers)
-- [ ] Multi-language content and localized storefront metadata
-- [ ] Advanced subscription controls (pause, skip, interval management, reminders)
-- [ ] Enhanced referral analytics (cohort-level conversion and ROI tracking)
+## Planned Features
+Périmètre moyen terme orienté croissance et personnalisation :
+- [ ] Améliorer la pertinence des recommandations produits (feedback loop)
+- [ ] Étendre les parcours d’abonnement (pause, skip, reprise)
+- [ ] Renforcer le module parrainage avec tableaux de bord de conversion
+- [ ] Consolider les fonctionnalités SEO éditoriales autour des guides
+- [ ] Ajouter des exports opérationnels (commandes/stock/clients) côté admin
 
-## Future Ideas (Long Term)
-- [ ] Multi-store / multi-brand architecture support
-- [ ] Native mobile experience (React Native or high-capability PWA extensions)
-- [ ] International expansion tooling (tax, currency, compliance presets)
-- [ ] Deeper in-store omnichannel flows (shared carts, kiosk mode, loyalty sync)
-- [ ] AI copilot for internal teams (inventory and merchandising recommendations)
-- [ ] Data warehouse + BI connector strategy for enterprise reporting
+## Future Ideas
+Vision long terme :
+- [ ] Stratégie multi-boutiques / multi-marques
+- [ ] Expérience mobile avancée (PWA enrichie ou app native)
+- [ ] Expansion internationale (localisation, devise, conformité)
+- [ ] IA interne pour assistance merchandising et optimisation stock
+- [ ] Connecteurs BI / entrepôt de données
+
+> ⚠️ À compléter : priorisation finale, owners et dates cibles non détectés dans le repository.
