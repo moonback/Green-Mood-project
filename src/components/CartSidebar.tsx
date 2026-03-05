@@ -119,10 +119,17 @@ export default function CartSidebar() {
                   <div className="flex-1 overflow-y-auto px-6 py-2 space-y-3 scrollbar-thin">
                     <AnimatePresence initial={false} mode="popLayout">
                       {items.map(({ product, quantity }) => {
-                        const isBulkProduct = (product.category?.slug === CATEGORY_SLUGS.FLOWERS || product.category?.slug === CATEGORY_SLUGS.RESINS);
-                        const isPerUnit = !isBulkProduct || product.is_bundle || (!!product.weight_grams && product.weight_grams > 1);
+                        const isBulkProduct = (
+                          product.category?.slug?.includes('fleurs') ||
+                          product.category?.slug?.includes('resines') ||
+                          product.category?.slug === 'nouveautes' ||
+                          product.category?.slug === CATEGORY_SLUGS.FLOWERS ||
+                          product.category?.slug === CATEGORY_SLUGS.RESINS
+                        );
+                        const isPerUnit = !isBulkProduct || product.is_bundle || (!!product.weight_grams && product.weight_grams > 1 && !product.name.toLowerCase().includes('pack'));
 
                         return (
+
                           <motion.div
                             key={product.id}
                             layout

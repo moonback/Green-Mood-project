@@ -4,18 +4,24 @@ import { ShoppingCart, Star, Package, RefreshCw, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../lib/types';
 import { CATEGORY_SLUGS } from '../lib/constants';
+
+
 import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import StockBadge from './StockBadge';
 import StarRating from './StarRating';
+import { useState } from 'react';
+
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
+
   const openSidebar = useCartStore((s) => s.openSidebar);
   const addToast = useToastStore((s) => s.addToast);
   const toggleWishlist = useWishlistStore((s) => s.toggleItem);
@@ -32,13 +38,22 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const handleAddToCart = (e: MouseEvent) => {
     e.preventDefault();
-    addItem(product);
+    addItem(product, selectedQuantity);
     openSidebar();
-    addToast({ message: `${product.name} ajouté au panier`, type: 'success' });
+    addToast({ message: `${product.name} (${selectedQuantity}${isPerUnit ? '' : 'g'}) ajouté au panier`, type: 'success' });
   };
 
-  const isBulkProduct = (product.category?.slug === CATEGORY_SLUGS.FLOWERS || product.category?.slug === CATEGORY_SLUGS.RESINS);
-  const isPerUnit = !isBulkProduct || product.is_bundle || (!!product.weight_grams && product.weight_grams > 1);
+
+  const isBulkProduct = (
+    product.category?.slug?.includes('fleurs') ||
+    product.category?.slug?.includes('resines') ||
+    product.category?.slug === 'nouveautes' ||
+    product.category?.slug === CATEGORY_SLUGS.FLOWERS ||
+    product.category?.slug === CATEGORY_SLUGS.RESINS
+  );
+
+  const isPerUnit = !isBulkProduct || product.is_bundle || (!!product.weight_grams && product.weight_grams > 1 && !product.name.toLowerCase().includes('pack'));
+
 
 
   // Limit to 2 key tags for cleaner card
@@ -144,12 +159,34 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
+
+        {isBulkProduct && !isPerUnit && (
+          <div className="flex flex-wrap gap-1.5 pb-2">
+            {[1, 5, 10, 30].map((weight) => (
+              <button
+                key={weight}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedQuantity(Math.min(weight, product.stock_quantity));
+                }}
+                className={`px-2.5 py-1.5 rounded-lg text-[9px] font-black border transition-all ${selectedQuantity === weight
+                  ? 'bg-green-neon border-green-neon text-black shadow-[0_0_10px_rgba(57,255,20,0.3)]'
+                  : 'bg-white/5 border-white/10 text-zinc-500 hover:text-white hover:border-white/20'
+                  }`}
+              >
+                {weight}g
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between gap-4 pt-1">
           <div className="space-y-0.5">
             <span className="text-xl md:text-2xl font-bold font-serif text-white tracking-tight">
-              {product.price.toFixed(2)}<span className="text-green-neon ml-1">€</span>
-              {!isPerUnit && <span className="text-[10px] text-zinc-500 font-sans uppercase tracking-[0.2em] ml-1">/g</span>}
+              {(product.price * selectedQuantity).toFixed(2)}<span className="text-green-neon ml-1">€</span>
+              {!isPerUnit && <span className="text-[9px] text-zinc-500 font-sans uppercase tracking-widest ml-1">/ {selectedQuantity}g</span>}
             </span>
+
             {product.is_bundle && product.original_value && product.original_value > product.price && (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-zinc-500 line-through">

@@ -235,9 +235,16 @@ export default function ProductDetail() {
     setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)));
   }, [product?.stock_quantity]);
 
-  const isBulkProduct = (product?.category?.slug === CATEGORY_SLUGS.FLOWERS || product?.category?.slug === CATEGORY_SLUGS.RESINS);
-  const isPerUnit = !isBulkProduct || product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1);
+  const isBulkProduct = (
+    product?.category?.slug?.includes('fleurs') ||
+    product?.category?.slug?.includes('resines') ||
+    product?.category?.slug === 'nouveautes' ||
+    product?.category?.slug === CATEGORY_SLUGS.FLOWERS ||
+    product?.category?.slug === CATEGORY_SLUGS.RESINS
+  );
+  const isPerUnit = !isBulkProduct || product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1 && !product?.name.toLowerCase().includes('pack'));
   const showWeightSelector = isBulkProduct && !isPerUnit;
+
 
   if (isLoading) {
     return (
