@@ -57,7 +57,7 @@ export default function CSVImporter({ type, onComplete, exampleUrl }: CSVImporte
         // Basic validation & formatting
         const categoriesToUpsert = data.map(row => ({
             name: row.name,
-            slug: row.slug || slugify(row.name),
+            slug: (row.slug || slugify(row.name)).trim().toLowerCase(),
             description: row.description || null,
             is_active: row.is_active === 'true' || row.is_active === true,
             sort_order: parseInt(row.sort_order) || 0,
@@ -69,14 +69,23 @@ export default function CSVImporter({ type, onComplete, exampleUrl }: CSVImporte
 
     const importProducts = async (data: any[]) => {
         // 1. Get all categories for slug matching
-        const { data: categories } = await supabase.from('categories').select('id, slug');
-        const categoryMap = new Map(categories?.map(c => [c.slug, c.id]));
+        const { data: categories, error: catError } = await supabase.from('categories').select('id, slug');
+        if (catError) throw catError;
+
+        // Use trimmed slugs for matching
+        const categoryMap = new Map(categories?.map(c => [c.slug.trim().toLowerCase(), c.id]));
 
         // 2. Format products
-        const productsToUpsert = data.map(row => {
-            const categoryId = categoryMap.get(row.category_slug);
-            if (!categoryId && row.category_slug) {
-                throw new Error(`Catégorie introuvable pour le slug: ${row.category_slug}`);
+        const productsToUpsert = data.map((row, index) => {
+            const rawSlug = (row.category_slug || '').toString().trim().toLowerCase();
+            const categoryId = categoryMap.get(rawSlug);
+
+            if (!categoryId && rawSlug) {
+                throw new Error(`Erreur ligne ${index + 2}: La catégorie avec le slug "${rawSlug}" n'existe pas en base. Veuillez importer les catégories d'abord.`);
+            }
+
+            if (!categoryId) {
+                throw new Error(`Erreur ligne ${index + 2}: Le champ "category_slug" est obligatoire.`);
             }
 
             return {
