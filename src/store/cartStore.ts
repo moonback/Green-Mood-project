@@ -17,6 +17,7 @@ interface CartStore {
   openSidebar: () => void;
   closeSidebar: () => void;
   setDeliveryType: (type: DeliveryType) => void;
+  applyOptimizedCart: (entries: { product: Product; quantity: number }[]) => void;
   // computed helpers
   itemCount: () => number;
   subtotal: () => number;
@@ -72,6 +73,13 @@ export const useCartStore = create<CartStore>()(
       closeSidebar: () => set({ isOpen: false }),
 
       setDeliveryType: (type) => set({ deliveryType: type }),
+
+      applyOptimizedCart: (entries) =>
+        set({
+          items: entries
+            .filter((entry) => entry.quantity > 0)
+            .map((entry) => ({ product: entry.product, quantity: entry.quantity })),
+        }),
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
