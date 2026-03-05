@@ -2428,7 +2428,7 @@ export default function Admin() {
 
                 {/* ══════════════════════════════════ SETTINGS ═══════════════════ */}
                 {tab === 'settings' && (
-                  <div className="max-w-2xl space-y-6 pb-20">
+                  <div className="max-w-12xl space-y-6 pb-20">
                     {/* Delivery */}
                     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
                       <div className="flex items-center gap-2 mb-1">
