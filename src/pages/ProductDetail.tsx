@@ -26,6 +26,9 @@ import StockBadge from '../components/StockBadge';
 import QuantitySelector from '../components/QuantitySelector';
 import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
+import { buildProductSEO } from '../lib/seo/metaBuilder';
+import { breadcrumbSchema, productSchema } from '../lib/seo/schemaBuilder';
+import { buildInternalLinks } from '../lib/seo/internalLinks';
 import RelatedProducts from '../components/RelatedProducts';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import { useSettingsStore } from '../store/settingsStore';
@@ -259,8 +262,22 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
       <SEO
-        title={`${product.name} — Excellence Green Mood`}
-        description={product.description ?? `Découvrez ${product.name} par Green Mood. L'excellence du CBD.`}
+        {...buildProductSEO(product)}
+        schema={[
+          productSchema({ ...product, avg_rating: avgRating || product.avg_rating, review_count: reviews.length || product.review_count }),
+          breadcrumbSchema([
+            { name: 'Accueil', path: '/' },
+            { name: 'Catalogue', path: '/catalogue' },
+            { name: product.name, path: `/catalogue/${product.slug}` },
+          ]),
+        ]}
+        product={{
+          price: product.price,
+          currency: 'EUR',
+          availability: product.is_available ? 'instock' : 'oos',
+          sku: product.sku ?? undefined,
+          brand: 'Green Mood CBD',
+        }}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -316,7 +333,7 @@ export default function ProductDetail() {
                   transition={{ duration: 0.3 }}
                   src={productImages[activeImageIndex] || product.image_url || 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
                   alt={`${product.name} - Image ${activeImageIndex + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
+                  loading="eager" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
                 />
               </AnimatePresence>
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
@@ -334,7 +351,7 @@ export default function ProductDetail() {
                       : 'border-white/[0.08] opacity-60 hover:opacity-100'
                       }`}
                   >
-                    <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img src={img} alt={`Vue ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -593,6 +610,19 @@ export default function ProductDetail() {
               Produit contenant moins de 0,3% de THC. Conforme à la réglementation française (décret n°2021-1282).
               Vente réservée aux personnes âgées de 18 ans et plus.
             </p>
+
+
+        <section className="mt-16 rounded-2xl border border-zinc-800 p-6">
+          <h2 className="text-xl font-semibold mb-4">Ressources & liens utiles</h2>
+          <div className="flex flex-wrap gap-4">
+            {buildInternalLinks(product).map((link) => (
+              <Link key={link.to} to={link.to} className="text-green-neon underline underline-offset-2">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
           </motion.div>
         </div>
 
