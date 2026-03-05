@@ -195,8 +195,8 @@ export default function Catalog() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24 overflow-hidden">
       <SEO
-        title="Archives N10 | Boutique CBD de Haute Précision"
-        description="Explorez l'univers moléculaire du N10 et des meilleurs extraits de CBD. Livraison express 24h à Paris et tests certifiés en laboratoire."
+        title="CBD PREMIUM • ANALYSÉ EN LABORATOIRE | N10 CBD"
+        description="Explorez l'univers moléculaire du CBD Premium et des meilleurs extraits de CBD. Livraison express 24h à Paris et tests certifiés en laboratoire."
       />
 
       {/* ────────── Hero Header ────────── */}
@@ -219,7 +219,7 @@ export default function Catalog() {
             <img
               src="/images/N10.png"
               alt="Archives N10"
-              className="w-full h-full object-cover opacity-30 blur-[2px] scale-110"
+              className="w-full h-full object-cover opacity-100 blur-[1px] scale-110"
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/70 to-zinc-950" />
@@ -232,17 +232,17 @@ export default function Catalog() {
             className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-green-neon/10 border border-green-neon/20 backdrop-blur-xl mb-10"
           >
             <Sparkles className="w-3.5 h-3.5 text-green-neon animate-pulse" />
-            <span className="text-green-neon text-[10px] font-bold uppercase tracking-[0.3em]">Pureté Moléculaire Garantis</span>
+            <span className="text-green-neon text-[10px] font-bold uppercase tracking-[0.3em]">CBD PREMIUM • ANALYSÉ EN LABORATOIRE</span>
           </motion.div>
 
           <div className="space-y-6">
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold tracking-tighter leading-none mb-4"
+              className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold tracking-tighter leading-none mb-4"
             >
-              ARCHIVES <br />
-              <span className="not-italic text-green-neon glow-green-strong filter hue-rotate-[15deg]">N10.</span>
+              CBD PREMIUM <br />
+              <span className="not-italic text-green-neon glow-green-strong filter hue-rotate-[15deg]">EXTRACTIONS.</span>
             </motion.h1>
 
             <motion.p
@@ -251,7 +251,8 @@ export default function Catalog() {
               transition={{ delay: 0.15 }}
               className="text-lg md:text-2xl text-zinc-400 max-w-2xl mx-auto font-light leading-relaxed"
             >
-              Explorez une sélection curatoriale des extractions les plus pures et des molécules de <span className="text-white font-medium">haute précision</span>.
+              Explorez notre sélection de fleurs, résines et extractions CBD rigoureusement sélectionnées pour leur pureté,
+              leurs arômes et leur qualité premium.
             </motion.p>
           </div>
 
@@ -494,18 +495,18 @@ export default function Catalog() {
                   <button onClick={() => setDisplayDensity('compact')} className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${displayDensity === 'compact' ? 'bg-green-neon text-black' : 'text-zinc-500'}`}>Compact</button>
                 </div>
                 <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="appearance-none bg-transparent pl-10 pr-6 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 focus:outline-none cursor-pointer hover:text-white transition-all"
-                >
-                  <option value="featured">Populaires</option>
-                  <option value="price_asc">Prix croissant</option>
-                  <option value="price_desc">Prix décroissant</option>
-                  <option value="rating">Mieux notés</option>
-                  <option value="newest">Nouveautés</option>
-                </select>
-                <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="appearance-none bg-transparent pl-10 pr-6 py-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400 focus:outline-none cursor-pointer hover:text-white transition-all"
+                  >
+                    <option value="featured">Populaires</option>
+                    <option value="price_asc">Prix croissant</option>
+                    <option value="price_desc">Prix décroissant</option>
+                    <option value="rating">Mieux notés</option>
+                    <option value="newest">Nouveautés</option>
+                  </select>
+                  <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
                 </div>
               </div>
             </div>
