@@ -55,6 +55,7 @@ import AdminRecommendationsTab from '../components/admin/AdminRecommendationsTab
 import AdminBudTenderTab from '../components/admin/AdminBudTenderTab';
 import AdminPOSTab from '../components/admin/AdminPOSTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
+import CSVImporter from '../components/admin/CSVImporter';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1338,6 +1339,13 @@ export default function Admin() {
                           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
                         />
                       </div>
+
+                      <CSVImporter
+                        type="products"
+                        onComplete={loadProducts}
+                        exampleUrl="/examples/products_example.csv"
+                      />
+
                       <button
                         onClick={() => openProductModal()}
                         className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
@@ -1513,7 +1521,13 @@ export default function Admin() {
                 {/* ══════════════════════════════════ CATEGORIES ═════════════════ */}
                 {tab === 'categories' && (
                   <div className="space-y-4">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-between gap-4">
+                      <CSVImporter
+                        type="categories"
+                        onComplete={loadCategories}
+                        exampleUrl="/examples/categories_example.csv"
+                      />
+
                       <button
                         onClick={() => openCategoryModal()}
                         className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
