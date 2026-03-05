@@ -14,6 +14,8 @@ const Quality = lazy(() => import("./pages/Quality"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Catalog = lazy(() => import("./pages/Catalog"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Cart = lazy(() => import("./pages/Cart"));
@@ -71,6 +73,8 @@ export default function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="mentions-legales" element={<Legal />} />
             <Route path="connexion" element={<Login />} />
+            <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
+            <Route path="reinitialiser-mot-de-passe" element={<ResetPassword />} />
 
             {/* Catalogue en ligne */}
             <Route path="catalogue" element={<Catalog />} />
