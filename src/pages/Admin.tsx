@@ -59,6 +59,7 @@ import AdminBudTenderTab from '../components/admin/AdminBudTenderTab';
 import AdminPOSTab from '../components/admin/AdminPOSTab';
 import ProductImageUpload from '../components/admin/ProductImageUpload';
 import CSVImporter from '../components/admin/CSVImporter';
+import { generateEmbedding } from '../lib/embeddings';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -181,6 +182,8 @@ export default function Admin() {
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [isSyncingVectors, setIsSyncingVectors] = useState(false);
+  const [vectorSyncProgress, setVectorSyncProgress] = useState<{ done: number; total: number } | null>(null);
 
   // ── Product modal ──
   const [showProductModal, setShowProductModal] = useState(false);
@@ -538,6 +541,103 @@ export default function Admin() {
   const filteredCustomers = customers.filter(
     (c) => !searchQuery || (c.full_name ?? '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const hasEmbedding = (embedding: Product['embedding']) => {
+    if (Array.isArray(embedding)) return embedding.length > 0;
+    if (typeof embedding === 'string') return embedding.trim().length > 0 && embedding.trim() !== '[]';
+    return false;
+  };
+
+  const productsWithoutVectors = products.filter((product) => !hasEmbedding(product.embedding));
+
+  const buildProductEmbeddingText = (product: Product) => {
+    const benefits = Array.isArray(product.attributes?.benefits)
+      ? product.attributes.benefits.join(' ')
+      : '';
+
+    return [
+      product.name,
+      product.description ?? '',
+      product.cbd_percentage ? `CBD ${product.cbd_percentage}%` : '',
+      benefits,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  };
+
+  const isQuotaError = (error: unknown) => {
+    const errorText = `${(error as { message?: string })?.message ?? ''} ${JSON.stringify(error ?? '')}`.toLowerCase();
+    return errorText.includes('quota exceeded')
+      || errorText.includes('resource_exhausted')
+      || errorText.includes('too many requests')
+      || errorText.includes('rate limit')
+      || errorText.includes('code":429');
+  };
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const handleSyncMissingVectors = async () => {
+    if (productsWithoutVectors.length === 0 || isSyncingVectors) return;
+
+    setIsSyncingVectors(true);
+    setVectorSyncProgress({ done: 0, total: productsWithoutVectors.length });
+
+    let successCount = 0;
+    let failedCount = 0;
+    let stoppedByQuota = false;
+
+    for (let i = 0; i < productsWithoutVectors.length; i += 1) {
+      const product = productsWithoutVectors[i];
+      try {
+        const textToEmbed = buildProductEmbeddingText(product);
+        if (!textToEmbed) throw new Error('Texte vide pour la génération du vecteur.');
+
+        const embedding = await generateEmbedding(textToEmbed);
+        if (!embedding.length) throw new Error('Vecteur vide reçu depuis OpenRouter.');
+
+        const { error } = await supabase
+          .from('products')
+          .update({ embedding })
+          .eq('id', product.id);
+
+        if (error) throw error;
+
+        successCount += 1;
+        setProducts((prev) =>
+          prev.map((p) => (p.id === product.id ? { ...p, embedding } : p))
+        );
+      } catch (error) {
+        failedCount += 1;
+
+        if (isQuotaError(error)) {
+          stoppedByQuota = true;
+          console.warn('Sync IA interrompue: quota/rate-limit OpenRouter atteint.', error);
+          break;
+        }
+
+        console.error(`Erreur de vectorisation pour ${product.name}:`, error);
+      } finally {
+        setVectorSyncProgress({ done: i + 1, total: productsWithoutVectors.length });
+      }
+
+      // Limite les appels rapprochés pour réduire les 429.
+      await sleep(700);
+    }
+
+    setIsSyncingVectors(false);
+    setVectorSyncProgress(null);
+
+    if (stoppedByQuota) {
+      alert(
+        `Quota OpenRouter atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
+        + 'Réessayez plus tard ou utilisez un plan avec plus de quota.'
+      );
+      return;
+    }
+
+    alert(`Sync IA terminée: ${successCount}/${productsWithoutVectors.length} produit(s) vectorisé(s). Échecs: ${failedCount}.`);
+  };
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1373,6 +1473,20 @@ export default function Admin() {
                           onComplete={loadProducts}
                           exampleUrl="/examples/products_example.csv"
                         />
+
+                        <button
+                          onClick={handleSyncMissingVectors}
+                          disabled={isSyncingVectors || productsWithoutVectors.length === 0}
+                          className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all border border-zinc-700"
+                          title="Générer les vecteurs IA pour les produits qui n'en ont pas"
+                        >
+                          <Brain className={`w-4 h-4 ${isSyncingVectors ? 'animate-pulse text-green-neon' : 'text-zinc-300'}`} />
+                          <span>
+                            {isSyncingVectors && vectorSyncProgress
+                              ? `Sync IA ${vectorSyncProgress.done}/${vectorSyncProgress.total}`
+                              : `Sync IA manquante (${productsWithoutVectors.length})`}
+                          </span>
+                        </button>
 
                         <button
                           onClick={() => openProductModal()}
