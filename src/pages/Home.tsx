@@ -1,5 +1,6 @@
-import { motion } from "motion/react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import {
   ShieldCheck,
   Leaf,
@@ -23,6 +24,24 @@ import { useSettingsStore } from "../store/settingsStore";
 
 export default function Home() {
   const settings = useSettingsStore((s) => s.settings);
+
+  // Mouse follow effect for Hero glow
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 150 };
+  const springX = useSpring(mouseX, springConfig);
+  const springY = useSpring(mouseY, springConfig);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      mouseX.set(clientX);
+      mouseY.set(clientY);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
 
   const stats = [
     { value: "0,05 €/mg", label: "Prix imbattable", icon: <Zap className="w-4 h-4" /> },
@@ -49,9 +68,9 @@ export default function Home() {
   };
 
   const categories = [
-    { name: "Fleurs", slug: "fleurs", img: "/images/hero-premium.png", count: "18 varietés" },
+    { name: "Fleurs", slug: "fleurs", img: "/images/products-flower.png", count: "18 varietés" },
     { name: "Huiles", slug: "huiles", img: "/images/cbd-oil.png", count: "8 concentrés" },
-    { name: "Résines", slug: "resines", img: "/images/presentation-cbd2.png", count: "12 textures" },
+    { name: "Résines", slug: "resines", img: "/images/products-resin.png", count: "12 textures" },
     { name: "Cosmétiques", slug: "cosmetiques", img: "/images/lifestyle-relax.png", count: "6 produits" },
   ];
 
@@ -68,27 +87,45 @@ export default function Home() {
       <section className="relative min-h-[95vh] flex items-center justify-center pt-20 overflow-hidden">
         <div className="absolute inset-0 z-10 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
+        {/* Floating Mouse-Following Glow */}
+        <motion.div
+          style={{ x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
+          className="absolute z-0 w-[500px] h-[500px] bg-green-neon/10 rounded-full blur-[120px] pointer-events-none opacity-40 mix-blend-screen"
+        />
+
+        {/* Static Background Glows */}
+        <motion.div
+          animate={{ y: [0, -20, 0], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-64 h-64 bg-green-neon/10 rounded-full blur-[100px] pointer-events-none"
+        />
+        <motion.div
+          animate={{ y: [0, 20, 0], opacity: [0.05, 0.15, 0.05] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-green-neon/5 rounded-full blur-[120px] pointer-events-none"
+        />
+
         <div className="absolute inset-0 z-0">
           <img
             src="/images/N10.png"
             className="w-full h-full object-cover opacity-100 scale-105"
             alt="N10 Experience"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/60 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-zinc-950/70 to-zinc-950" />
         </div>
 
         <div className="relative z-20 max-w-6xl mx-auto text-center px-5">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-block py-1.5 px-4 rounded-full border border-green-neon/30 bg-green-neon/10 text-green-neon text-[11px] font-bold tracking-[0.4em] mb-8 uppercase">
+            <span className="inline-block py-1.5 px-4 rounded-full border border-green-neon/30 bg-green-neon/10 text-green-neon text-[11px] font-bold tracking-[0.4em] mb-8 uppercase backdrop-blur-sm">
               Révolution Bien-être
             </span>
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold tracking-tighter leading-none mb-10">
               L'EXPÉRIENCE <br />
-              <span className="text-green-neon italic glow-green">ULTIME.</span>
+              <span className="text-green-neon italic glow-green filter hue-rotate-[15deg] brightness-125">ULTIME.</span>
             </h1>
             <p className="text-zinc-300 text-lg md:text-2xl max-w-3xl mx-auto font-light leading-relaxed mb-12">
               Le N10 n'est pas une simple évolution. C'est une révolution conçue pour surpasser les limites du CBD classique.
@@ -96,7 +133,11 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Link to="/catalogue" className="group relative px-12 py-5 bg-green-neon text-black font-bold rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(57,255,20,0.4)]">
+              <Link
+                to="/catalogue"
+                className="group relative px-12 py-5 bg-green-neon text-black font-bold rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(57,255,20,0.6)] active:scale-95"
+              >
+                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
                 <span className="relative z-10 flex items-center gap-2 text-lg">
                   Découvrez le N10 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </span>
@@ -133,15 +174,20 @@ export default function Home() {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="relative"
+            className="relative group"
           >
             <div className="absolute -top-20 -left-20 w-64 h-64 bg-green-neon/10 blur-[100px] rounded-full" />
-            <img
-              src="/images/presentation-cbd2.png"
-              className="rounded-[2.5rem] border border-white/10 shadow-2xl grayscale hover:grayscale-0 transition-all duration-1000 w-full"
-              alt="Technologie N10"
-            />
-            <div className="absolute -bottom-6 -right-6 bg-zinc-900 border border-white/10 p-6 rounded-3xl shadow-2xl backdrop-blur-xl">
+            <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
+              <img
+                src="/images/presentation-cbd.png"
+                className="w-full grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                alt="Technologie N10"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Scanline effect */}
+              <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[length:100%_2px,3px_100%] opacity-20" />
+            </div>
+            <div className="absolute -bottom-6 -right-6 bg-zinc-900 border border-white/10 p-6 rounded-3xl shadow-2xl backdrop-blur-xl group-hover:border-green-neon/30 transition-colors">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-green-neon/20 rounded-2xl flex items-center justify-center text-green-neon">
                   <Microscope className="w-6 h-6" />
@@ -243,8 +289,8 @@ export default function Home() {
                     <p className="text-green-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-2">{cat.count}</p>
                     <h3 className="text-2xl md:text-3xl font-bold font-serif text-white">{cat.name}</h3>
                   </div>
-                  <div className="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-y-2 group-hover:translate-y-0">
-                    <ArrowRight className="w-5 h-5 text-white" />
+                  <div className="absolute top-6 right-6 w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-y-2 group-hover:translate-y-0 group-hover:bg-green-neon group-hover:border-green-neon">
+                    <ArrowRight className="w-5 h-5 text-white group-hover:text-black" />
                   </div>
                 </Link>
               </motion.div>
@@ -435,7 +481,9 @@ export default function Home() {
 
       {/* ────────── Final CTA ────────── */}
       <section className="py-32 md:py-48 text-center px-5 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-green-neon/5 blur-[160px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 bg-green-neon/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-80 h-80 bg-green-neon/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-green-neon/10 blur-[160px] rounded-full pointer-events-none" />
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
