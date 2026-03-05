@@ -44,6 +44,17 @@ const TERPENE_CHIPS: TerpeneChip[] = [
     { label: 'Anti-stress', emoji: '🧘', group: 'effet' },
 ];
 
+const TERPENE_DEX_BADGES: Record<string, string> = {
+    'Citronné': 'Limonène',
+    'Terreux': 'Myrcène',
+    'Fruité': 'Pinène',
+    'Floral': 'Linalol',
+    'Épicé': 'Caryophyllène',
+    'Boisé': 'Humulène',
+    'Herbacé': 'Terpinolène',
+    'Sucré': 'Ocimène',
+};
+
 // ─── Recommendation logic ───────────────────────────────────────────────────
 
 type Answers = Record<string, string>;
@@ -123,6 +134,31 @@ function generateAdvice(answers: Answers, terpenes: string[] = []): string {
     if (answers.format === 'bundle') lines.push("Les packs découverte sont idéaux pour tester plusieurs formes de CBD à prix réduit.");
     if (terpenes.length > 0) lines.push(`Votre profil terpénique (${terpenes.join(', ')}) guidera notre sélection vers des arômes et effets précis.`);
     return lines.join(' ');
+}
+
+function buildTerpeneDexMessage(selectedTerpenes: string[], unlockedTerpenes: string[] = []): string | null {
+    if (selectedTerpenes.length === 0) return null;
+
+    const unlockedSet = new Set(unlockedTerpenes.map((t) => t.toLowerCase()));
+    const newlyUnlocked = selectedTerpenes.filter((t) => !unlockedSet.has(t.toLowerCase()));
+
+    if (newlyUnlocked.length === 0) {
+        return '🏅 Terpène Dex : superbe régularité ! On peut tenter un nouveau profil pour débloquer un badge inédit à votre prochaine recommandation.';
+    }
+
+    const unlockedBadges = newlyUnlocked
+        .map((terpene) => TERPENE_DEX_BADGES[terpene])
+        .filter(Boolean);
+
+    const badgeText = unlockedBadges.length > 0
+        ? `Nouveau badge débloqué : ${unlockedBadges.join(', ')}.`
+        : `Nouveau profil découvert : ${newlyUnlocked.join(', ')}.`;
+
+    if (selectedTerpenes.some((t) => t.toLowerCase() === 'fruité')) {
+        return `🏅 Terpène Dex : ${badgeText} Vous avez exploré les notes fruitées, envie de viser le badge Terreux ensuite ?`;
+    }
+
+    return `🏅 Terpène Dex : ${badgeText}`;
 }
 
 async function callAI(
@@ -531,8 +567,13 @@ export default function BudTender() {
     const generateRecommendations = async (finalAnswers: Answers) => {
         setIsTyping(true);
 
+        const prefsWithTerpenes: SavedPrefs = {
+            ...(finalAnswers as SavedPrefs),
+            terpenes: terpeneSelection,
+        };
+
         // Persist prefs
-        memory.savePrefs(finalAnswers as unknown as SavedPrefs);
+        memory.savePrefs(prefsWithTerpenes);
 
         // Score locally — with terpene bonus
         const scored = [...products]
@@ -560,7 +601,9 @@ export default function BudTender() {
             }));
 
         const aiText = await callAI(finalAnswers, products, settings, history, geminiContext);
-        const adviceText = aiText ?? generateAdvice(finalAnswers, terpeneSelection);
+        const terpeneDexMessage = buildTerpeneDexMessage(terpeneSelection, memory.savedPrefs?.terpenes ?? []);
+        const baseAdvice = aiText ?? generateAdvice(finalAnswers, terpeneSelection);
+        const adviceText = terpeneDexMessage ? `${baseAdvice}\n\n${terpeneDexMessage}` : baseAdvice;
 
         setMessages((prev) => [...prev, {
             id: Math.random().toString(36).substring(7),
