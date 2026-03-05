@@ -121,6 +121,9 @@ export function useGeminiLiveVoice({
 
   const cleanup = useCallback(() => {
     isManualCloseRef.current = true;
+    sessionRef.current?.close();
+    sessionRef.current = null;
+
     if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
     stopAllPlayback();
     processorRef.current?.disconnect();
@@ -131,14 +134,13 @@ export function useGeminiLiveVoice({
     playbackCtxRef.current = null;
     streamRef.current?.getTracks().forEach(t => t.stop());
     streamRef.current = null;
-    sessionRef.current?.close();
-    sessionRef.current = null;
     scheduledUntilRef.current = 0;
     isMutedRef.current = false;
     startInFlightRef.current = false;
     sessionIdRef.current += 1;
     searchResultsRef.current = [];
   }, [stopAllPlayback]);
+
 
   useEffect(() => cleanup, [cleanup]);
 
@@ -183,15 +185,21 @@ export function useGeminiLiveVoice({
     processorRef.current = worklet;
     worklet.port.onmessage = (e) => {
       if (!sessionRef.current || isMutedRef.current) return;
-      const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
-      const pcm = float32ToInt16(down);
-      sessionRef.current.sendRealtimeInput({
-        media: {
-          mimeType: 'audio/pcm;rate=16000',
-          data: toBase64(new Uint8Array(pcm.buffer))
-        }
-      });
+      try {
+        const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
+        const pcm = float32ToInt16(down);
+        sessionRef.current.sendRealtimeInput({
+          media: {
+            mimeType: 'audio/pcm;rate=16000',
+            data: toBase64(new Uint8Array(pcm.buffer))
+          }
+        });
+      } catch (err) {
+        // Silently catch socket closed errors during teardown
+        console.warn('[Voice] Mic capture error (likely closed):', err);
+      }
     };
+
     const silent = ctx.createGain();
     silent.gain.value = 0;
     source.connect(worklet);
