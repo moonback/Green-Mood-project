@@ -8,7 +8,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 const bytezApiKey = process.env.VITE_BYTEZ_API_KEY;
 const bytezEmbedModel = (process.env.VITE_BYTEZ_EMBED_MODEL ?? 'BAAI/bge-large-en-v1.5').replace(/:free$/i, '');
-const bytezBaseUrl = (process.env.VITE_BYTEZ_BASE_URL ?? 'https://api.bytez.com/v1').replace(/\/$/, '');
+const rawBytezBaseUrl = process.env.VITE_BYTEZ_BASE_URL ?? 'https://api.bytez.com/v1';
 
 if (!supabaseUrl || !supabaseAnonKey || !bytezApiKey) {
     console.error('Missing required environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_BYTEZ_API_KEY)');
@@ -17,11 +17,28 @@ if (!supabaseUrl || !supabaseAnonKey || !bytezApiKey) {
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+function getBaseCandidates(rawBaseUrl: string): string[] {
+    const safe = (rawBaseUrl || '').trim().replace(/\/$/, '');
+    if (!safe) return ['https://api.bytez.com', 'https://api.bytez.com/v1'];
+
+    const withoutSuffix = safe.replace(/\/(v1|run)$/i, '');
+    const candidates = new Set<string>([
+        safe,
+        withoutSuffix,
+        `${withoutSuffix}/v1`,
+        `${withoutSuffix}/run`,
+    ]);
+
+    return [...candidates].filter(Boolean);
+}
+
 async function generateEmbedding(input: string): Promise<number[]> {
-    const routes = [
-        `${bytezBaseUrl}/models/${encodeURIComponent(bytezEmbedModel)}/run`,
-        `${bytezBaseUrl}/run/${encodeURIComponent(bytezEmbedModel)}`,
-    ];
+    const routes = getBaseCandidates(rawBytezBaseUrl)
+        .flatMap(base => [
+            `${base}/models/${encodeURIComponent(bytezEmbedModel)}/run`,
+            `${base}/run/${encodeURIComponent(bytezEmbedModel)}`,
+            `${base}/models/${encodeURIComponent(bytezEmbedModel)}`,
+        ]);
 
     let lastError: any = null;
 

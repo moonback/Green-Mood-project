@@ -16,7 +16,7 @@ interface EmbeddingOptions {
   dimensions?: number;
 }
 
-const BYTEZ_BASE_URL = (import.meta.env.VITE_BYTEZ_BASE_URL ?? 'https://api.bytez.com/v1').replace(/\/$/, '');
+const RAW_BYTEZ_BASE_URL = import.meta.env.VITE_BYTEZ_BASE_URL ?? 'https://api.bytez.com/v1';
 const BYTEZ_CHAT_MODEL = import.meta.env.VITE_BYTEZ_CHAT_MODEL ?? 'Qwen/Qwen2-7B-Instruct';
 const BYTEZ_EMBED_MODEL = import.meta.env.VITE_BYTEZ_EMBED_MODEL ?? 'BAAI/bge-large-en-v1.5';
 
@@ -30,12 +30,33 @@ function sanitizeModelId(model: string): string {
   return model.trim().replace(/:free$/i, '');
 }
 
+function normalizeBaseCandidates(rawBaseUrl: string): string[] {
+  const safe = (rawBaseUrl || '').trim().replace(/\/$/, '');
+  if (!safe) return ['https://api.bytez.com', 'https://api.bytez.com/v1'];
+
+  const withoutSuffix = safe.replace(/\/(v1|run)$/i, '');
+  const candidates = new Set<string>([
+    safe,
+    withoutSuffix,
+    `${withoutSuffix}/v1`,
+    `${withoutSuffix}/run`,
+  ]);
+
+  return [...candidates].filter(Boolean);
+}
+
 function getRunUrls(modelId: string): string[] {
   const encoded = encodeURIComponent(modelId);
-  return [
-    `${BYTEZ_BASE_URL}/models/${encoded}/run`,
-    `${BYTEZ_BASE_URL}/run/${encoded}`,
-  ];
+  const urls: string[] = [];
+
+  for (const base of normalizeBaseCandidates(RAW_BYTEZ_BASE_URL)) {
+    urls.push(`${base}/models/${encoded}/run`);
+    urls.push(`${base}/run/${encoded}`);
+    urls.push(`${base}/models/${encoded}`);
+  }
+
+  // Keep order deterministic, remove duplicates
+  return [...new Set(urls)];
 }
 
 async function postJson(url: string, apiKey: string, body: unknown): Promise<{ ok: boolean; status: number; payload: any }> {
@@ -62,7 +83,6 @@ async function runBytezModel(modelId: string, input: Record<string, unknown>): P
 
     attempted.push({ url, status: result.status, payload: result.payload });
 
-    // Keep probing alternate route for 404s only. For all other HTTP errors, stop early.
     if (result.status !== 404) {
       throw new Error(`Bytez run error ${result.status} on ${url}: ${JSON.stringify(result.payload)}`);
     }
