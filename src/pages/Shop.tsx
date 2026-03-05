@@ -62,9 +62,9 @@ export default function Shop() {
       <section className="relative min-h-[70vh] flex items-center justify-center pt-24 px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2070&auto=format&fit=crop"
+            src="./images/hero-bg-shop.png"
             alt="Intérieur de la boutique Green Mood"
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-100"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/20 via-zinc-950/60 to-zinc-950" />
         </div>
@@ -144,7 +144,7 @@ export default function Shop() {
 
               <div className="relative h-full w-full rounded-[4rem] overflow-hidden border border-white/10 shadow-3xl">
                 <img
-                  src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop"
+                  src="./images/quality-hero-bg.png"
                   alt="Détails de notre boutique"
                   className="w-full h-full object-cover grayscale-[20%] hover:grayscale-0 transition-all duration-1000"
                 />
