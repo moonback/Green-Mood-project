@@ -13,6 +13,7 @@ import { CATEGORY_SLUGS } from '../lib/constants';
 import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderFeedback } from './budtender-ui';
 import VoiceAdvisor from './VoiceAdvisor';
 import { generateEmbedding } from '../lib/embeddings';
+import { runChatModel } from '../lib/bytezClient';
 import { useAuthStore } from '../store/authStore';
 
 // ─── Shared types and logic imported ───
@@ -132,8 +133,7 @@ async function callAI(
     history: { role: string; content: string }[] = [],
     context?: string
 ): Promise<string | null> {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey || !settings.ai_enabled) return null;
+    if (!settings.ai_enabled) return null;
 
     // RAG: Select the most relevant products to send to the AI
     // For the quiz, we send the top scored locally + some featured ones
@@ -165,38 +165,16 @@ async function callAI(
         messages.push({ role: 'user', content: "Basé sur mes réponses et notre échange, donne-moi tes conseils finaux." });
     }
 
-    const modelToUse = settings.ai_model || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+    const modelToUse = settings.ai_model || 'Qwen/Qwen2-7B-Instruct';
 
     console.log('[BudTender callAI] Model:', modelToUse);
 
     try {
-        const res = await fetch(
-            'https://openrouter.ai/api/v1/chat/completions',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                    'X-Title': 'Green Mood BudTender',
-                    'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
-                },
-                body: JSON.stringify({
-                    model: modelToUse,
-                    messages,
-                    temperature: settings.ai_temperature,
-                    max_tokens: settings.ai_max_tokens,
-                }),
-            }
-        );
-
-        const json = await res.json();
-
-        if (!res.ok) {
-            console.error('[BudTender callAI] API Error:', json);
-            return null;
-        }
-
-        return json?.choices?.[0]?.message?.content ?? null;
+        return await runChatModel(messages as any, {
+            model: modelToUse,
+            temperature: settings.ai_temperature,
+            maxTokens: settings.ai_max_tokens,
+        });
     } catch (err) {
         console.error('[BudTender callAI] Fetch Error:', err);
         return null;
@@ -542,7 +520,7 @@ export default function BudTender() {
             .slice(0, settings.recommendations_count)
             .map((x) => x.product);
 
-        // Build context for Gemini
+        // Build AI context
         const ctxParts: string[] = [];
         if (memory.pastProducts.length > 0) {
             ctxParts.push(`Derniers achats : ${memory.pastProducts.slice(0, 3).map(p => p.product_name).join(', ')}.`);
@@ -550,7 +528,7 @@ export default function BudTender() {
         if (terpeneSelection.length > 0) {
             ctxParts.push(`Arômes & effets préférés : ${terpeneSelection.join(', ')}.`);
         }
-        const geminiContext = ctxParts.join(' ') || undefined;
+        const aiContext = ctxParts.join(' ') || undefined;
 
         const history = messages
             .filter(m => m.text && !m.isResult)
@@ -559,7 +537,7 @@ export default function BudTender() {
                 content: m.text || ''
             }));
 
-        const aiText = await callAI(finalAnswers, products, settings, history, geminiContext);
+        const aiText = await callAI(finalAnswers, products, settings, history, aiContext);
         const adviceText = aiText ?? generateAdvice(finalAnswers, terpeneSelection);
 
         setMessages((prev) => [...prev, {
@@ -638,8 +616,7 @@ export default function BudTender() {
         logQuestion(text);
         setIsTyping(true);
 
-        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-        if (!apiKey || !settings.ai_enabled) {
+        if (!settings.ai_enabled) {
             addBotMessage({ text: "Désolé, ma connexion à l'IA n'est pas configurée pour le moment." });
             setIsTyping(false);
             return;
@@ -721,7 +698,7 @@ export default function BudTender() {
 
         const systemPrompt = getChatPrompt(text, catalog, userContext);
 
-        // Build history for OpenRouter (OpenAI format)
+        // Build history for Bytez (OpenAI format)
         // IMPORTANT: Roles must alternate and not be empty
         const history: { role: 'user' | 'assistant'; content: string }[] = [];
         messages
@@ -746,52 +723,16 @@ export default function BudTender() {
             messagesForAI.push({ role: 'user', content: text });
         }
 
-        const modelToUse = settings.ai_model || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+        const modelToUse = settings.ai_model || 'Qwen/Qwen2-7B-Instruct';
 
         console.log('[BudTender Chat] Sending messages to:', modelToUse);
 
         try {
-            const res = await fetch(
-                'https://openrouter.ai/api/v1/chat/completions',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'X-Title': 'Green Mood BudTender',
-                        // OpenRouter suggests including the referrer
-                        'HTTP-Referer': window.location.origin,
-                    },
-                    body: JSON.stringify({
-                        model: modelToUse,
-                        messages: messagesForAI,
-                        temperature: settings.ai_temperature,
-                        max_tokens: settings.ai_max_tokens,
-                    }),
-                }
-            );
-
-            if (res.status === 429) {
-                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite OpenRouter). Pourriez-vous patienter une minute ? 🙏" });
-                return;
-            }
-
-            const json = await res.json();
-
-            if (!res.ok) {
-                const errDetail = json.error?.message || json.error?.code || 'Inconnue';
-                console.error('OpenRouter Detailed Error:', json);
-                addBotMessage({ text: `Erreur OpenRouter (${res.status}) : ${errDetail}` });
-                return;
-            }
-
-            const responseText = json?.choices?.[0]?.message?.content;
-
-            if (!responseText) {
-                console.error("OpenRouter empty response:", json);
-                addBotMessage({ text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?" });
-                return;
-            }
+            const responseText = await runChatModel(messagesForAI as any, {
+                model: modelToUse,
+                temperature: settings.ai_temperature,
+                maxTokens: settings.ai_max_tokens,
+            });
 
             setMessages((prev) => [...prev, {
                 id: Math.random().toString(36).substring(7),
@@ -799,7 +740,7 @@ export default function BudTender() {
                 text: responseText,
             }]);
         } catch (err) {
-            console.error('OpenRouter handleSendMessage error:', err);
+            console.error('Bytez handleSendMessage error:', err);
             addBotMessage({ text: "Oups, j'ai eu une petite déconnexion. Pouvez-vous réessayer ?" });
         } finally {
             setIsTyping(false);
@@ -932,7 +873,7 @@ export default function BudTender() {
 
                                         <HeaderAction
                                             icon={<Mic className="w-5 h-5" />}
-                                            title="Conseiller vocal (Gemini Live)"
+                                            title="Conseiller vocal (Bytez)"
                                             onClick={() => setIsVoiceOpen(true)}
                                             label="Voix"
                                         />

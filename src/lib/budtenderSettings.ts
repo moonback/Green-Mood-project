@@ -105,7 +105,7 @@ export const BUDTENDER_DEFAULT_QUIZ: QuizStep[] = [
 export const BUDTENDER_DEFAULTS: BudTenderSettings = {
     enabled: true,
     ai_enabled: true,
-    ai_model: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+    ai_model: 'Qwen/Qwen2-7B-Instruct',
     ai_temperature: 0.7,
     ai_max_tokens: 1500,
     recommendations_count: 3,
@@ -138,7 +138,7 @@ function migrateSettings(raw: any): BudTenderSettings {
         migrated.ai_max_tokens = raw.gemini_max_tokens;
     }
 
-    // Ensure ai_model is set to a valid OpenRouter default if missing
+    // Ensure ai_model is set to a valid Bytez default if missing
     if (!migrated.ai_model) {
         migrated.ai_model = BUDTENDER_DEFAULTS.ai_model;
     }

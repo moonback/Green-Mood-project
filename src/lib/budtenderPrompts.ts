@@ -112,7 +112,7 @@ Réponds en français.
 };
 
 /**
- * Prompt for Gemini Live Voice (Audio)
+ * Prompt for voice advisor
  */
 export const getVoicePrompt = (
     products: Product[],

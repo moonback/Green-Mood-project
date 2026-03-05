@@ -181,7 +181,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     </motion.span>
                                 </h3>
                                 <p className="text-[10px] text-zinc-600 mt-0.5 font-medium">
-                                    Gemini Live · Audio natif temps réel
+                                    Bytez Voice · mode bêta
                                 </p>
                             </div>
                         </div>

@@ -594,7 +594,7 @@ export default function Admin() {
         if (!textToEmbed) throw new Error('Texte vide pour la génération du vecteur.');
 
         const embedding = await generateEmbedding(textToEmbed);
-        if (!embedding.length) throw new Error('Vecteur vide reçu depuis OpenRouter.');
+        if (!embedding.length) throw new Error('Vecteur vide reçu depuis Bytez.');
 
         const { error } = await supabase
           .from('products')
@@ -612,7 +612,7 @@ export default function Admin() {
 
         if (isQuotaError(error)) {
           stoppedByQuota = true;
-          console.warn('Sync IA interrompue: quota/rate-limit OpenRouter atteint.', error);
+          console.warn('Sync IA interrompue: quota/rate-limit Bytez atteint.', error);
           break;
         }
 
@@ -630,7 +630,7 @@ export default function Admin() {
 
     if (stoppedByQuota) {
       alert(
-        `Quota OpenRouter atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
+        `Quota Bytez atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
         + 'Réessayez plus tard ou utilisez un plan avec plus de quota.'
       );
       return;
