@@ -15,29 +15,61 @@ export default function Login() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const hasMinPasswordLength = password.length >= 8;
+  const hasLetter = /[A-Za-zÀ-ÿ]/.test(password);
+  const hasNumber = /\d/.test(password);
+
+  const resetFeedback = () => {
     setError('');
     setSuccess('');
+  };
+
+  const switchMode = (nextMode: Mode) => {
+    setMode(nextMode);
+    resetFeedback();
+    setPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    resetFeedback();
     setIsLoading(true);
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     try {
       if (mode === 'login') {
-        await signIn(email, password);
+        await signIn(normalizedEmail, password);
         navigate('/compte');
       } else {
         if (!fullName.trim()) {
           setError('Le prénom et nom sont requis.');
           return;
         }
-        await signUp(email, password, fullName);
+
+        if (!hasMinPasswordLength || !hasLetter || !hasNumber) {
+          setError('Le mot de passe doit contenir au moins 8 caractères, une lettre et un chiffre.');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setError('Les mots de passe ne correspondent pas.');
+          return;
+        }
+
+        await signUp(normalizedEmail, password, fullName.trim());
         setSuccess('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
+        setPassword('');
+        setConfirmPassword('');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Une erreur est survenue.';
@@ -72,7 +104,9 @@ export default function Login() {
               {(['login', 'register'] as Mode[]).map((m) => (
                 <button
                   key={m}
-                  onClick={() => { setMode(m); setError(''); setSuccess(''); }}
+                  type="button"
+                  onClick={() => switchMode(m)}
+                  disabled={isLoading}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
                     ? 'bg-green-neon text-white'
                     : 'text-zinc-400 hover:text-white'
@@ -112,6 +146,7 @@ export default function Login() {
                     placeholder="votre@email.fr"
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary transition-colors"
                     required
+                    autoComplete={mode === 'login' ? 'email' : 'username'}
                   />
                 </div>
               </div>
@@ -127,7 +162,8 @@ export default function Login() {
                     placeholder="••••••••"
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-12 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary transition-colors"
                     required
-                    minLength={6}
+                    minLength={mode === 'register' ? 8 : 6}
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   />
                   <button
                     type="button"
@@ -137,7 +173,54 @@ export default function Login() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {mode === 'register' && (
+                  <ul className="mt-2 space-y-1 text-xs">
+                    <li className={hasMinPasswordLength ? 'text-green-400' : 'text-zinc-500'}>
+                      • 8 caractères minimum
+                    </li>
+                    <li className={hasLetter ? 'text-green-400' : 'text-zinc-500'}>
+                      • Au moins une lettre
+                    </li>
+                    <li className={hasNumber ? 'text-green-400' : 'text-zinc-500'}>
+                      • Au moins un chiffre
+                    </li>
+                  </ul>
+                )}
               </div>
+
+              {mode === 'register' && (
+                <div>
+                  <label className="block text-sm text-zinc-400 mb-1">Confirmer le mot de passe</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-12 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary transition-colors"
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {mode === 'login' && (
+                <div className="text-right">
+                  <Link to="/mot-de-passe-oublie" className="text-sm text-zinc-400 hover:text-green-neon transition-colors">
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
+              )}
 
               {error && (
                 <div className="bg-red-900/30 border border-red-700 rounded-xl px-4 py-3 text-red-400 text-sm">
