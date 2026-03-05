@@ -42,6 +42,8 @@ import {
   ShoppingCart,
   Hash,
   Brain,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, OrderItem, StockMovement, Profile } from '../lib/types';
@@ -178,6 +180,7 @@ export default function Admin() {
   const [searchQuery, setSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   // ── Product modal ──
   const [showProductModal, setShowProductModal] = useState(false);
@@ -1333,155 +1336,293 @@ export default function Admin() {
 
                 {/* ══════════════════════════════════ PRODUCTS ═══════════════════ */}
                 {tab === 'products' && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="relative flex-1 min-w-48">
+                  <div className="space-y-6">
+                    {/* Header: Search, Count & Actions */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                          <ShoppingBag className="w-5 h-5 text-green-neon" />
+                          Inventaire des Produits
+                          <span className="ml-2 px-2 py-0.5 bg-green-neon/10 text-green-neon border border-green-neon/20 rounded-full text-xs font-bold leading-none">
+                            {filteredProducts.length}
+                          </span>
+                        </h2>
+                        <p className="text-xs text-zinc-500 mt-1">Gérez votre catalogue et vos niveaux de stock.</p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+                          <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-zinc-800 text-green-neon shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            title="Vue Liste"
+                          >
+                            <List className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-zinc-800 text-green-neon shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                            title="Vue Grille"
+                          >
+                            <LayoutGrid className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <CSVImporter
+                          type="products"
+                          onComplete={loadProducts}
+                          exampleUrl="/examples/products_example.csv"
+                        />
+
+                        <button
+                          onClick={() => openProductModal()}
+                          className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-green-neon/20 active:scale-95"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span className="hidden sm:inline">Nouveau produit</span>
+                          <span className="sm:hidden">Ajouter</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Filters & Search */}
+                    <div className="bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-2xl p-4 flex flex-wrap items-center gap-4">
+                      <div className="relative flex-1 min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Rechercher un produit…"
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-primary"
+                          placeholder="Rechercher par nom, SKU ou description..."
+                          className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-neon transition-all"
                         />
                       </div>
-
-                      <CSVImporter
-                        type="products"
-                        onComplete={loadProducts}
-                        exampleUrl="/examples/products_example.csv"
-                      />
-
-                      <button
-                        onClick={() => openProductModal()}
-                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Nouveau produit
-                      </button>
-
-
                     </div>
 
-                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
-                              <th className="px-4 py-3">Produit</th>
-                              <th className="px-4 py-3">Catégorie</th>
-                              <th className="px-4 py-3">Prix</th>
-                              <th className="px-4 py-3">CBD</th>
-                              <th className="px-4 py-3">Stock</th>
-                              <th className="px-4 py-3">Statut</th>
-                              <th className="px-4 py-3 text-center" title="Statut de vectorisation (IA)">Vecteur</th>
-                              <th className="px-4 py-3">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-zinc-800">
-                            {filteredProducts.map((product) => (
-                              <tr key={product.id} className="hover:bg-zinc-800/30 transition-colors">
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <img
-                                      src={product.image_url ?? ''}
-                                      alt={product.name}
-                                      className="w-10 h-10 object-cover rounded-lg flex-shrink-0 bg-zinc-800"
-                                    />
-                                    <div>
-                                      <p className="font-medium text-white text-sm">{product.name}</p>
-                                      {product.is_featured && (
-                                        <span className="text-xs text-yellow-400 flex items-center gap-1">
-                                          <Star className="w-3 h-3" />Vedette
+                    {/* Views */}
+                    {viewMode === 'list' ? (
+                      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-xl">
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
+                                <th className="px-5 py-4 font-bold">Produit</th>
+                                <th className="px-5 py-4 font-bold">Catégorie</th>
+                                <th className="px-5 py-4 font-bold">Prix</th>
+                                <th className="px-5 py-4 font-bold">CBD</th>
+                                <th className="px-5 py-4 font-bold">Stock</th>
+                                <th className="px-5 py-4 font-bold">Statut</th>
+                                <th className="px-5 py-4 text-center font-bold" title="Statut de vectorisation (IA)">IA</th>
+                                <th className="px-5 py-4 text-right font-bold">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-800/80">
+                              {filteredProducts.map((product) => (
+                                <tr key={product.id} className="hover:bg-zinc-800/40 transition-colors group">
+                                  <td className="px-5 py-4">
+                                    <div className="flex items-center gap-4">
+                                      <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 ring-1 ring-zinc-700/50 group-hover:ring-green-neon/50 transition-all">
+                                        <img
+                                          src={product.image_url ?? ''}
+                                          alt={product.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      <div>
+                                        <p className="font-semibold text-white text-sm group-hover:text-green-neon transition-colors line-clamp-1">{product.name}</p>
+                                        <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{product.sku || 'SANS-SKU'}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4">
+                                    <span className="text-xs px-2 py-1 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                      {(product.category as Category | undefined)?.name ?? 'Divers'}
+                                    </span>
+                                  </td>
+                                  <td className="px-5 py-4 font-bold text-white text-sm">
+                                    {product.price.toFixed(2)} €
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-medium text-zinc-400">
+                                    {product.cbd_percentage != null ? (
+                                      <span className="text-green-neon/80">{product.cbd_percentage}%</span>
+                                    ) : '—'}
+                                  </td>
+                                  <td className="px-5 py-4">
+                                    <div className="flex flex-col gap-1">
+                                      <span
+                                        className={`font-bold text-sm ${product.stock_quantity === 0
+                                          ? 'text-red-400'
+                                          : product.stock_quantity <= 5
+                                            ? 'text-orange-400'
+                                            : 'text-white'
+                                          }`}
+                                      >
+                                        {product.stock_quantity}
+                                      </span>
+                                      <div className="w-12 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full ${product.stock_quantity === 0 ? 'bg-red-500' : product.stock_quantity <= 5 ? 'bg-orange-500' : 'bg-green-500'}`}
+                                          style={{ width: `${Math.min(100, (product.stock_quantity / 50) * 100)}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4">
+                                    <div className="flex gap-1.5 flex-wrap">
+                                      <span
+                                        className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-lg border ${product.is_active
+                                          ? 'text-green-400 bg-green-900/20 border-green-800/50'
+                                          : 'text-zinc-500 bg-zinc-900 border-zinc-800'
+                                          }`}
+                                      >
+                                        {product.is_active ? 'Actif' : 'Masqué'}
+                                      </span>
+                                      {!product.is_available && (
+                                        <span className="text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-lg border text-orange-400 bg-orange-900/20 border-orange-800/50">
+                                          Indispo.
                                         </span>
                                       )}
                                     </div>
+                                  </td>
+                                  <td className="px-5 py-4">
+                                    <div className="flex justify-center">
+                                      {product.embedding ? (
+                                        <div className="w-8 h-8 rounded-full bg-green-neon/10 flex items-center justify-center border border-green-neon/20 shadow-[0_0_10px_rgba(57,255,20,0.1)]" title="Optimisé IA">
+                                          <Brain className="w-4 h-4 text-green-neon" />
+                                        </div>
+                                      ) : (
+                                        <div title="Non vectorisé">
+                                          <Brain className="w-4 h-4 text-zinc-700 opacity-30" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="px-5 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button
+                                        onClick={() => openProductModal(product)}
+                                        className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-all"
+                                        title="Modifier"
+                                      >
+                                        <Edit3 className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
+                                        className="p-2 text-zinc-400 hover:text-green-neon hover:bg-zinc-800 rounded-lg transition-all"
+                                        title="Ajuster le stock"
+                                      >
+                                        <ArrowUpDown className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteProduct(product.id)}
+                                        className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-all"
+                                        title="Désactiver"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                        {filteredProducts.map((product) => (
+                          <motion.div
+                            key={product.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group hover:border-green-neon/30 transition-all flex flex-col shadow-lg hover:shadow-green-neon/5"
+                          >
+                            {/* Image Header */}
+                            <div className="relative aspect-square bg-zinc-800 overflow-hidden">
+                              <img
+                                src={product.image_url ?? ''}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                              <div className="absolute top-2 right-2 flex flex-col gap-2">
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${product.is_active ? 'bg-green-950/40 text-green-400 border-green-800/50' : 'bg-zinc-950/40 text-zinc-400 border-zinc-800'
+                                  }`}>
+                                  {product.is_active ? 'En ligne' : 'Masqué'}
+                                </span>
+                                {product.is_featured && (
+                                  <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-yellow-400 text-black border border-yellow-500 shadow-lg flex items-center gap-1">
+                                    <Star className="w-3 h-3 fill-current" />
+                                    Top
+                                  </span>
+                                )}
+                              </div>
+                              <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
+                                <span className="text-lg font-bold text-white leading-none">{product.price.toFixed(2)} €</span>
+                                {product.embedding && (
+                                  <div className="w-6 h-6 rounded-full bg-green-neon/20 backdrop-blur-sm flex items-center justify-center border border-green-neon/30">
+                                    <Brain className="w-3 h-3 text-green-neon" />
                                   </div>
-                                </td>
-                                <td className="px-4 py-3 text-xs text-zinc-400">
-                                  {(product.category as Category | undefined)?.name ?? '—'}
-                                </td>
-                                <td className="px-4 py-3 text-sm font-semibold text-white">
-                                  {product.price.toFixed(2)} €
-                                </td>
-                                <td className="px-4 py-3 text-sm text-zinc-300">
-                                  {product.cbd_percentage != null ? `${product.cbd_percentage}%` : '—'}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span
-                                    className={`font-semibold text-sm ${product.stock_quantity === 0
-                                      ? 'text-red-400'
-                                      : product.stock_quantity <= 5
-                                        ? 'text-orange-400'
-                                        : 'text-white'
-                                      }`}
-                                  >
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Info */}
+                            <div className="p-4 flex-1 flex flex-col space-y-3">
+                              <div>
+                                <h3 className="font-semibold text-white group-hover:text-green-neon transition-colors line-clamp-1">{product.name}</h3>
+                                <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-0.5">
+                                  {(product.category as Category | undefined)?.name ?? 'Divers'}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center justify-between text-xs py-2 border-y border-zinc-800/50">
+                                <div className="flex flex-col">
+                                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-tighter">Stock</span>
+                                  <span className={`font-bold ${product.stock_quantity <= 5 ? 'text-orange-400' : 'text-white'}`}>
                                     {product.stock_quantity}
                                   </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex gap-1.5 flex-wrap">
-                                    <span
-                                      className={`text-xs px-2 py-0.5 rounded-full border ${product.is_active
-                                        ? 'text-green-400 bg-green-900/30 border-green-800'
-                                        : 'text-red-400 bg-red-900/30 border-red-800'
-                                        }`}
-                                    >
-                                      {product.is_active ? 'Actif' : 'Inactif'}
-                                    </span>
-                                    {!product.is_available && (
-                                      <span className="text-xs px-2 py-0.5 rounded-full border text-orange-400 bg-orange-900/30 border-orange-800">
-                                        Indispo
-                                      </span>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  {product.embedding ? (
-                                    <div className="flex justify-center" title="Ce produit est prêt pour la recherche IA">
-                                      <div className="w-8 h-8 rounded-full bg-green-neon/20 flex items-center justify-center border border-green-neon/30">
-                                        <Brain className="w-4 h-4 text-green-neon" />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex justify-center opacity-20" title="Vecteur manquant — sync nécessaire">
-                                      <Brain className="w-4 h-4 text-zinc-500" />
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => openProductModal(product)}
-                                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
-                                      title="Modifier"
-                                    >
-                                      <Edit3 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
-                                      className="p-1.5 text-zinc-400 hover:text-green-neon hover:bg-zinc-700 rounded-lg transition-colors"
-                                      title="Ajuster le stock"
-                                    >
-                                      <ArrowUpDown className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteProduct(product.id)}
-                                      className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-700 rounded-lg transition-colors"
-                                      title="Désactiver"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                  <span className="text-zinc-500 text-[10px] uppercase font-bold tracking-tighter">Pureté CBD</span>
+                                  <span className="font-bold text-green-neon/80">{product.cbd_percentage ?? 0}%</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                                <button
+                                  onClick={() => openProductModal(product)}
+                                  className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold py-2 rounded-xl transition-all border border-zinc-700"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-zinc-400" />
+                                  Modifier
+                                </button>
+                                <button
+                                  onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
+                                  className="p-2 bg-zinc-800 hover:bg-green-neon/10 hover:text-green-neon text-zinc-400 rounded-xl transition-all border border-zinc-700 hover:border-green-neon/30"
+                                  title="Stock"
+                                >
+                                  <ArrowUpDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                  className="p-2 bg-zinc-800 hover:bg-red-500/10 hover:text-red-500 text-zinc-400 rounded-xl transition-all border border-zinc-700 hover:border-red-500/30"
+                                  title="Désactiver"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
-                      {filteredProducts.length === 0 && (
-                        <p className="text-zinc-500 text-center py-10">Aucun produit trouvé.</p>
-                      )}
-                    </div>
+                    )}
+
+                    {filteredProducts.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-20 bg-zinc-900 rounded-2xl border border-zinc-800">
+                        <ShoppingBag className="w-12 h-12 text-zinc-800 mb-4" />
+                        <p className="text-zinc-500 font-medium text-lg">Aucun produit trouvé</p>
+                        <p className="text-zinc-600 text-sm">Réessayez avec d'autres mots-clés.</p>
+                      </div>
+                    )}
 
                     {/* Stock adjustment inline */}
                     <AnimatePresence>
