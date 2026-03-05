@@ -32,7 +32,10 @@ async function sync() {
         try {
             const response = await genAI.models.embedContent({
                 model: "gemini-embedding-001",
-                contents: [{ parts: [{ text: textToEmbed }] }]
+                contents: [{ parts: [{ text: textToEmbed }] }],
+                config: {
+                    outputDimensionality: 768
+                }
             });
 
             let embedding = response.embeddings?.[0]?.values || [];
@@ -47,7 +50,7 @@ async function sync() {
         } catch (e) {
             console.error(`❌ ${p.name}`, e);
         }
-        await new Promise(r => setTimeout(r, 100)); // Minor delay
+        await new Promise(r => setTimeout(r, 2000)); // Rate limit delay
     }
 
     // Split and Save
