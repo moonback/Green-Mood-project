@@ -12,7 +12,7 @@ const supabase = createClient(supaUrl, supaKey);
 const genAI = new GoogleGenAI({ apiKey });
 
 async function sync() {
-    console.log('--- GENERATING EMBEDDINGS SQL (3072 DIMS) ---');
+    console.log('--- GENERATING EMBEDDINGS SQL (768 DIMS) ---');
 
     const { data: products, error } = await supabase
         .from('products')
@@ -38,11 +38,11 @@ async function sync() {
             let embedding = response.embeddings?.[0]?.values || [];
 
             // Validate dimension
-            if (embedding.length === 3072) {
+            if (embedding.length === 768) {
                 allLines.push(`UPDATE products SET embedding = '${JSON.stringify(embedding)}'::vector WHERE id = '${p.id}';`);
                 console.log(`✅ ${p.name}`);
             } else {
-                console.warn(`⚠️ ${p.name}: Got ${embedding.length} dims, expected 3072`);
+                console.warn(`⚠️ ${p.name}: Got ${embedding.length} dims, expected 768`);
             }
         } catch (e) {
             console.error(`❌ ${p.name}`, e);
@@ -60,7 +60,7 @@ async function sync() {
     fs.writeFileSync('supabase/apply_vectors_part3.sql', part3);
 
     console.log('\n--- FINISHED ---');
-    console.log('3072-dim SQL files regenerated in supabase/ directory.');
+    console.log('768-dim SQL files regenerated in supabase/ directory.');
 }
 
 sync();
