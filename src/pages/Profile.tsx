@@ -14,6 +14,8 @@ export default function Profile() {
 
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [showBudTender, setShowBudTender] = useState(false);
@@ -86,6 +88,14 @@ export default function Profile() {
         setMessage(null);
 
         try {
+            if ((newPassword || confirmNewPassword) && newPassword.length < 8) {
+                throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+            }
+
+            if (newPassword !== confirmNewPassword) {
+                throw new Error('La confirmation du nouveau mot de passe ne correspond pas.');
+            }
+
             // 1. Update Profile (Name & Phone)
             const { error: profileError } = await supabase
                 .from('profiles')
@@ -97,18 +107,33 @@ export default function Profile() {
 
             if (profileError) throw profileError;
 
-            // 2. Update AI Preferences
+            // 2. Update password if requested
+            if (newPassword) {
+                const { error: passwordError } = await supabase.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (passwordError) throw passwordError;
+            }
+
+            // 3. Update AI Preferences
             if (import.meta.env.DEV) console.log('[Profile] Saving prefs:', prefs);
             await savePrefs(prefs as any);
 
             // Update local store
             setProfile({ ...profile!, full_name: fullName, phone: phone });
 
-            setMessage({ type: 'success', text: 'Votre profil et vos préférences ont été mis à jour.' });
+            setNewPassword('');
+            setConfirmNewPassword('');
+            setMessage({ type: 'success', text: 'Votre profil, vos préférences et votre mot de passe ont été mis à jour.' });
             setTimeout(() => setMessage(null), 5000);
         } catch (error) {
             console.error('Save error:', error);
-            setMessage({ type: 'error', text: 'Une erreur est survenue lors de la mise à jour.' });
+            const errorMessage = error instanceof Error
+                ? error.message
+                : 'Une erreur est survenue lors de la mise à jour.';
+
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setIsSaving(false);
         }
@@ -211,6 +236,32 @@ export default function Profile() {
                                     {user?.email}
                                     <Shield className="w-4 h-4" />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2 mt-2">
+                                <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-2">
+                                    Nouveau mot de passe
+                                </label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Minimum 8 caractères"
+                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
+                                />
+                            </div>
+
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-2">
+                                    Confirmer le nouveau mot de passe
+                                </label>
+                                <input
+                                    type="password"
+                                    value={confirmNewPassword}
+                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                    placeholder="Répétez le nouveau mot de passe"
+                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
+                                />
                             </div>
                         </div>
                     </motion.div>
