@@ -6,9 +6,11 @@ import { Category, Product } from '../lib/types';
 import ProductCard from '../components/ProductCard';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { useAuthStore } from '../store/authStore';
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -609,6 +611,7 @@ export default function Catalog() {
 
 
         {/* Improved BudTender CTA */}
+        {user && (
         <div className="mt-40">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -653,6 +656,7 @@ export default function Catalog() {
             </div>
           </motion.div>
         </div>
+        )}
 
         {/* Advanced Compliance Footer */}
         <div className="mt-32 pt-16 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16">

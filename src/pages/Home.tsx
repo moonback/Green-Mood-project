@@ -21,9 +21,11 @@ import {
 import FAQ from "../components/FAQ";
 import SEO from "../components/SEO";
 import { useSettingsStore } from "../store/settingsStore";
+import { useAuthStore } from "../store/authStore";
 
 export default function Home() {
   const settings = useSettingsStore((s) => s.settings);
+  const { user } = useAuthStore();
 
   // Mouse follow effect for Hero glow
   const mouseX = useMotionValue(0);
@@ -383,6 +385,7 @@ export default function Home() {
       </section>
 
       {/* ────────── BudTender CTA : Conseil sur-mesure ────────── */}
+      {user && (
       <section className="py-24 md:py-32 px-5">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -429,6 +432,7 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+      )}
 
       {/* ────────── Testimonials ────────── */}
       <section className="py-24 md:py-32 px-5">
