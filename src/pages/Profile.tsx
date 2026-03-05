@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Mail, Shield, ArrowLeft, Save, Sparkles, Phone, BrainCircuit, Target, Zap, Waves, Coins, Cake, Flame, Leaf, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { User, Mail, Shield, ArrowLeft, Save, Sparkles, Phone, BrainCircuit, Target, Zap, Waves, Coins, Cake, Flame, Leaf, ChevronDown, SlidersHorizontal, LockKeyhole, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
@@ -14,6 +14,12 @@ export default function Profile() {
 
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [showBudTender, setShowBudTender] = useState(false);
@@ -86,6 +92,24 @@ export default function Profile() {
         setMessage(null);
 
         try {
+            const isPasswordChangeRequested = Boolean(currentPassword || newPassword || confirmNewPassword);
+
+            if (isPasswordChangeRequested && (!currentPassword || !newPassword || !confirmNewPassword)) {
+                throw new Error('Veuillez remplir les trois champs mot de passe pour confirmer le changement.');
+            }
+
+            if (isPasswordChangeRequested && newPassword.length < 8) {
+                throw new Error('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+            }
+
+            if (isPasswordChangeRequested && newPassword !== confirmNewPassword) {
+                throw new Error('La confirmation du nouveau mot de passe ne correspond pas.');
+            }
+
+            if (isPasswordChangeRequested && currentPassword === newPassword) {
+                throw new Error('Le nouveau mot de passe doit être différent de l\'ancien.');
+            }
+
             // 1. Update Profile (Name & Phone)
             const { error: profileError } = await supabase
                 .from('profiles')
@@ -97,18 +121,52 @@ export default function Profile() {
 
             if (profileError) throw profileError;
 
-            // 2. Update AI Preferences
+            // 2. Re-authenticate and update password if requested
+            if (isPasswordChangeRequested) {
+                if (!user.email) {
+                    throw new Error('Impossible de valider le mot de passe actuel : e-mail introuvable.');
+                }
+
+                const { error: reauthError } = await supabase.auth.signInWithPassword({
+                    email: user.email,
+                    password: currentPassword
+                });
+
+                if (reauthError) {
+                    throw new Error('Ancien mot de passe incorrect.');
+                }
+
+                const { error: passwordError } = await supabase.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (passwordError) throw passwordError;
+            }
+
+            // 3. Update AI Preferences
             if (import.meta.env.DEV) console.log('[Profile] Saving prefs:', prefs);
             await savePrefs(prefs as any);
 
             // Update local store
             setProfile({ ...profile!, full_name: fullName, phone: phone });
 
-            setMessage({ type: 'success', text: 'Votre profil et vos préférences ont été mis à jour.' });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmNewPassword('');
+            setMessage({
+                type: 'success',
+                text: isPasswordChangeRequested
+                    ? 'Votre profil, vos préférences et votre mot de passe ont été mis à jour.'
+                    : 'Votre profil et vos préférences ont été mis à jour.'
+            });
             setTimeout(() => setMessage(null), 5000);
         } catch (error) {
             console.error('Save error:', error);
-            setMessage({ type: 'error', text: 'Une erreur est survenue lors de la mise à jour.' });
+            const errorMessage = error instanceof Error
+                ? error.message
+                : 'Une erreur est survenue lors de la mise à jour.';
+
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setIsSaving(false);
         }
@@ -210,6 +268,87 @@ export default function Profile() {
                                 <div className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-zinc-500 cursor-not-allowed flex items-center justify-between">
                                     {user?.email}
                                     <Shield className="w-4 h-4" />
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-2 mt-2 rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 space-y-6">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                            <LockKeyhole className="w-3.5 h-3.5 text-green-neon" />
+                                            Sécurité du compte
+                                        </p>
+                                        <p className="text-sm text-zinc-400">Pour changer le mot de passe, renseignez d'abord votre ancien mot de passe.</p>
+                                    </div>
+                                    <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500">Minimum 8 caractères</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Ancien mot de passe</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showCurrentPassword ? 'text' : 'password'}
+                                                value={currentPassword}
+                                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                                placeholder="Votre mot de passe actuel"
+                                                autoComplete="current-password"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrentPassword((v) => !v)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
+                                                aria-label={showCurrentPassword ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'}
+                                            >
+                                                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Nouveau mot de passe</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                placeholder="Minimum 8 caractères"
+                                                autoComplete="new-password"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword((v) => !v)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
+                                                aria-label={showNewPassword ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'}
+                                            >
+                                                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Confirmation</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmNewPassword ? 'text' : 'password'}
+                                                value={confirmNewPassword}
+                                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                                placeholder="Répétez le nouveau mot de passe"
+                                                autoComplete="new-password"
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmNewPassword((v) => !v)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
+                                                aria-label={showConfirmNewPassword ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'}
+                                            >
+                                                {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
