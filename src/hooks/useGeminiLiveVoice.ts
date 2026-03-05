@@ -104,7 +104,15 @@ export function useGeminiLiveVoice({
   const startInFlightRef = useRef(false);
   const sessionIdRef = useRef(0);
   const isManualCloseRef = useRef(false);
+  const canStreamInputRef = useRef(false);
   const searchResultsRef = useRef<Product[]>([]);
+
+  const canSendRealtimeInput = useCallback(() => {
+    if (!sessionRef.current || !canStreamInputRef.current || isManualCloseRef.current) return false;
+    const ws = (sessionRef.current as any)?._ws;
+    if (!ws || typeof ws.readyState !== 'number') return true;
+    return typeof WebSocket === 'undefined' || ws.readyState === WebSocket.OPEN;
+  }, []);
 
   const buildSystemPrompt = useCallback((): string => {
     return getVoicePrompt(productsRef.current, savedPrefs, userName, pastProducts, deliveryFee, deliveryFreeThreshold);
@@ -121,12 +129,14 @@ export function useGeminiLiveVoice({
 
   const cleanup = useCallback(() => {
     isManualCloseRef.current = true;
+    canStreamInputRef.current = false;
     (sessionRef.current as any)?._ws?.close?.(); // Attempt direct WS close if accessible to speed up state change
     sessionRef.current?.close();
     sessionRef.current = null;
 
     if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
     stopAllPlayback();
+    if (processorRef.current) processorRef.current.port.onmessage = null;
     processorRef.current?.disconnect();
     processorRef.current = null;
     captureCtxRef.current?.close().catch(() => { });
@@ -185,16 +195,13 @@ export function useGeminiLiveVoice({
     const worklet = new AudioWorkletNode(ctx, 'mic-processor');
     processorRef.current = worklet;
     worklet.port.onmessage = (e) => {
-      // Robust check: Is the session valid, is it not muted, and is it NOT in the middle of a manual close?
-      if (!sessionRef.current || isMutedRef.current || isManualCloseRef.current) return;
+      if (isMutedRef.current || !canSendRealtimeInput()) return;
 
       try {
         const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
         const pcm = float32ToInt16(down);
 
-        // Additional guard: check if the session is still active using private property check if needed,
-        // or rely on the try/catch plus the explicit isManualCloseRef flag.
-        sessionRef.current.sendRealtimeInput({
+        sessionRef.current?.sendRealtimeInput({
           media: {
             mimeType: 'audio/pcm;rate=16000',
             data: toBase64(new Uint8Array(pcm.buffer))
@@ -214,7 +221,7 @@ export function useGeminiLiveVoice({
     source.connect(worklet);
     worklet.connect(silent);
     silent.connect(ctx.destination);
-  }, []);
+  }, [canSendRealtimeInput]);
 
   const startSession = useCallback(async () => {
     if (startInFlightRef.current) return;
@@ -319,6 +326,7 @@ export function useGeminiLiveVoice({
           onopen: async () => {
             if (sessionIdRef.current !== sid) return;
             if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
+            canStreamInputRef.current = true;
             console.info('Gemini Live: Setup Complete');
             setVoiceState('listening');
             await startMicCapture(stream);
@@ -331,6 +339,7 @@ export function useGeminiLiveVoice({
           },
           onerror: (e: ErrorEvent) => {
             if (sessionIdRef.current !== sid) return;
+            canStreamInputRef.current = false;
             console.error('Live Error:', e);
             setError('Erreur de connexion Live.');
             setVoiceState('error');
@@ -338,6 +347,7 @@ export function useGeminiLiveVoice({
           },
           onclose: (e: CloseEvent) => {
             if (sessionIdRef.current !== sid || isManualCloseRef.current) return;
+            canStreamInputRef.current = false;
             console.log('Live Closed:', e.code, e.reason);
             if (e.code !== 1000) {
               setError(`Session interrompue (${e.code}).`);
