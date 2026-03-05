@@ -1,0 +1,5 @@
+category_slug,name,slug,sku,description,price,original_value,stock_quantity,cbd_percentage,thc_max,weight_grams,is_available,is_active,is_featured,is_subscribable,image_url
+fleurs,Amnesia Haze,amnesia-haze,AMN-001,Une fleur légendaire avec des notes d'agrumes.,12.50,15.00,50,18.5,0.18,5,true,true,true,true,https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400
+fleurs,Orange Bud,orange-bud,ORG-002,Arôme d'orange intense et effet relaxant.,10.00,null,100,15.0,0.20,5,true,true,false,true,https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400
+huiles,Huile 10%,huile-10,OIL-010,Huile de CBD 10% bio en flacon de 10ml.,39.90,49.90,30,null,null,null,true,true,false,true,https://images.unsplash.com/photo-1549419137-77cf84931a2c?auto=format&fit=crop&q=80&w=400
+resines,Afghan Hash,afghan-hash,AFG-003,Texture crémeuse et goût terreux caractéristique.,15.00,null,20,25.0,0.19,3,true,true,true,false,https://images.unsplash.com/photo-1619623164964-f6558231c62f?auto=format&fit=crop&q=80&w=400

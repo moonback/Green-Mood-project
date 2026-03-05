@@ -1,0 +1,5 @@
+name,slug,description,is_active,sort_order
+Fleurs,fleurs,Une sélection des meilleures fleurs CBD de qualité premium.,true,0
+Huiles,huiles,Huiles CBD full spectrum pour votre bien-être quotidien.,true,1
+Résines,resines,Extraits et résines concentrés pour une expérience intense.,true,2
+Accessoires,accessoires,Tout le nécessaire pour profiter de vos produits.,true,3
