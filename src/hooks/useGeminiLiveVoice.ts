@@ -431,7 +431,11 @@ export function useGeminiLiveVoice({
 
               if (c.name === 'search_catalog') {
                 try {
-                  const embedding = await generateEmbedding(args.query);
+                  const query = (args.query || '').trim();
+                  if (!query) {
+                    return { name: c.name, id: c.id, response: { error: 'Recherche impossible : le paramètre "query" est vide.' } };
+                  }
+                  const embedding = await generateEmbedding(query);
                   const { data, error: rpcError } = await supabase.rpc('match_products', {
                     query_embedding: embedding,
                     match_threshold: 0.1,
@@ -446,6 +450,7 @@ export function useGeminiLiveVoice({
                   return { name: c.name, id: c.id, response: { error: 'Erreur technique lors de la recherche' } };
                 }
               }
+
               return null;
             }));
 
