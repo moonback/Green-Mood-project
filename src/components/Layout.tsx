@@ -151,6 +151,24 @@ export default function Layout() {
                   )}
                 </button>
 
+                {/* Loyalty Points (Desktop) */}
+                {user && profile && (
+                  <Link
+                    to="/compte"
+                    className="hidden lg:flex items-center gap-2.5 px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full hover:border-green-neon/30 hover:bg-white/[0.06] transition-all duration-300 group"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-green-neon/10 flex items-center justify-center group-hover:bg-green-neon/20 transition-colors">
+                      <Leaf className="h-2.5 w-2.5 text-green-neon" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-zinc-500 uppercase font-black leading-none tracking-tighter">Points</span>
+                      <span className="text-xs font-black text-white leading-none mt-0.5 group-hover:text-green-neon transition-colors">
+                        {profile.loyalty_points ?? 0}
+                      </span>
+                    </div>
+                  </Link>
+                )}
+
                 {/* Account (Desktop) */}
                 {user ? (
                   <div className="relative hidden md:block">
