@@ -566,6 +566,16 @@ export default function Admin() {
       .trim();
   };
 
+  const isQuotaError = (error: unknown) => {
+    const errorText = `${(error as { message?: string })?.message ?? ''} ${JSON.stringify(error ?? '')}`.toLowerCase();
+    return errorText.includes('quota exceeded')
+      || errorText.includes('resource_exhausted')
+      || errorText.includes('too many requests')
+      || errorText.includes('code":429');
+  };
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const handleSyncMissingVectors = async () => {
     if (productsWithoutVectors.length === 0 || isSyncingVectors) return;
 
@@ -573,6 +583,8 @@ export default function Admin() {
     setVectorSyncProgress({ done: 0, total: productsWithoutVectors.length });
 
     let successCount = 0;
+    let failedCount = 0;
+    let stoppedByQuota = false;
 
     for (let i = 0; i < productsWithoutVectors.length; i += 1) {
       const product = productsWithoutVectors[i];
@@ -595,15 +607,35 @@ export default function Admin() {
           prev.map((p) => (p.id === product.id ? { ...p, embedding } : p))
         );
       } catch (error) {
+        failedCount += 1;
+
+        if (isQuotaError(error)) {
+          stoppedByQuota = true;
+          console.warn('Sync IA interrompue: quota/rate-limit Gemini atteint.', error);
+          break;
+        }
+
         console.error(`Erreur de vectorisation pour ${product.name}:`, error);
       } finally {
         setVectorSyncProgress({ done: i + 1, total: productsWithoutVectors.length });
       }
+
+      // Limite les appels rapprochés pour réduire les 429.
+      await sleep(700);
     }
 
-    alert(`Sync IA terminée: ${successCount}/${productsWithoutVectors.length} produit(s) vectorisé(s).`);
     setIsSyncingVectors(false);
     setVectorSyncProgress(null);
+
+    if (stoppedByQuota) {
+      alert(
+        `Quota Gemini atteint. Sync interrompue après ${successCount} succès et ${failedCount} échec(s). `
+        + 'Réessayez plus tard ou utilisez un plan avec plus de quota.'
+      );
+      return;
+    }
+
+    alert(`Sync IA terminée: ${successCount}/${productsWithoutVectors.length} produit(s) vectorisé(s). Échecs: ${failedCount}.`);
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
