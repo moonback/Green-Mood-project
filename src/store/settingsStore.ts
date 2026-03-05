@@ -17,6 +17,8 @@ export interface StoreSettings {
     referral_reward_points: number;
     referral_welcome_bonus: number;
     referral_program_enabled: boolean;
+    search_enabled: boolean;
+    ticker_messages: string[];
 }
 
 export const DEFAULT_SETTINGS: StoreSettings = {
@@ -35,6 +37,12 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     referral_reward_points: 500,
     referral_welcome_bonus: 0,
     referral_program_enabled: true,
+    search_enabled: true,
+    ticker_messages: [
+        "✦ Livraison offerte dès 50€ d'achat ✦",
+        "✦ Nouveau : Découvrez la gamme N10 ✦",
+        "✦ -10% sur votre première commande avec GREENMOOD ✦"
+    ],
 };
 
 interface SettingsStore {

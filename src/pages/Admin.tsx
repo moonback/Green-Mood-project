@@ -93,6 +93,8 @@ interface StoreSettings {
   referral_reward_points: number;
   referral_welcome_bonus: number;
   referral_program_enabled: boolean;
+  search_enabled: boolean;
+  ticker_messages: string[];
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -113,6 +115,12 @@ const DEFAULT_SETTINGS: StoreSettings = {
   referral_reward_points: 500,
   referral_welcome_bonus: 0,
   referral_program_enabled: true,
+  search_enabled: true,
+  ticker_messages: [
+    "✦ Livraison offerte dès 50€ d'achat ✦",
+    "✦ Nouveau : Découvrez la gamme N10 ✦",
+    "✦ -10% sur votre première commande avec GREENMOOD ✦"
+  ],
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -2567,6 +2575,68 @@ export default function Admin() {
                           Aperçu : {localSettings.banner_text || '…'}
                         </div>
                       )}
+
+                      <div className="pt-4 border-t border-zinc-800">
+                        <label className={LABEL}>Messages additionnels du Ticker</label>
+                        <div className="space-y-2 mb-3">
+                          {(localSettings.ticker_messages || []).map((msg, idx) => (
+                            <div key={idx} className="flex gap-2">
+                              <input
+                                value={msg}
+                                onChange={(e) => {
+                                  const newMsgs = [...localSettings.ticker_messages];
+                                  newMsgs[idx] = e.target.value;
+                                  setLocalSettings({ ...localSettings, ticker_messages: newMsgs });
+                                }}
+                                className={INPUT}
+                              />
+                              <button
+                                onClick={() => {
+                                  const newMsgs = localSettings.ticker_messages.filter((_, i) => i !== idx);
+                                  setLocalSettings({ ...localSettings, ticker_messages: newMsgs });
+                                }}
+                                className="p-2.5 text-zinc-500 hover:text-red-400 bg-zinc-800 rounded-xl"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setLocalSettings({
+                              ...localSettings,
+                              ticker_messages: [...(localSettings.ticker_messages || []), "✦ Message ✦"]
+                            });
+                          }}
+                          className="flex items-center gap-2 text-xs font-bold text-green-neon hover:text-green-400 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Ajouter un message au ticker
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Predictive Search */}
+                    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Search className="w-5 h-5 text-green-neon" />
+                          <h2 className="font-serif font-semibold text-lg">Recherche Prédictive IA</h2>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={localSettings.search_enabled}
+                            onChange={(e) => setLocalSettings({ ...localSettings, search_enabled: e.target.checked })}
+                            className="w-4 h-4 accent-green-600"
+                          />
+                          <span className="text-sm text-zinc-300">Activé</span>
+                        </label>
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        Active la barre de recherche intelligente dans le header avec suggestions automatiques.
+                      </p>
                     </div>
 
                     {/* BudTender IA */}
