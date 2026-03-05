@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingCart, ArrowLeft, Trash2, Package, Truck, ShoppingBag, ShieldCheck, Sparkles } from 'lucide-react';
@@ -6,6 +7,79 @@ import { useSettingsStore } from '../store/settingsStore';
 import QuantitySelector from '../components/QuantitySelector';
 import SEO from '../components/SEO';
 import FreeShippingGauge from '../components/FreeShippingGauge';
+import { Product } from '../lib/types';
+import { supabase } from '../lib/supabase';
+import { useBudgetOptimizer } from '../hooks/useBudgetOptimizer';
+
+function BudgetOptimizerPanel({ products }: { products: Product[] }) {
+  const { settings } = useSettingsStore();
+  const [budgetValue, setBudgetValue] = useState('50');
+
+  const parsedBudget = useMemo(() => {
+    const value = Number.parseFloat(budgetValue);
+    return Number.isFinite(value) ? value : 0;
+  }, [budgetValue]);
+
+  const { optimizedCart, explanation, applyToCart } = useBudgetOptimizer({
+    budget: parsedBudget,
+    shippingThreshold: settings.delivery_free_threshold,
+    products,
+  });
+
+  const productNameById = useMemo(
+    () => new Map(products.map((product) => [product.id, product.name])),
+    [products]
+  );
+
+  const canApply = optimizedCart.items.length > 0 && parsedBudget > 0;
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.08] rounded-3xl p-6 space-y-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-green-neon" />
+        Optimiseur de Budget Intelligent
+      </h3>
+
+      <label className="block">
+        <span className="text-sm text-zinc-400">Budget mensuel (€)</span>
+        <input
+          type="number"
+          min={1}
+          step="1"
+          value={budgetValue}
+          onChange={(event) => setBudgetValue(event.target.value)}
+          className="mt-2 w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-white"
+        />
+      </label>
+
+      <p className="text-sm text-zinc-300 leading-relaxed">{explanation}</p>
+
+      {optimizedCart.items.length > 0 && (
+        <div className="rounded-2xl border border-white/10 p-4 space-y-2 text-sm">
+          {optimizedCart.items.map((item) => (
+            <div key={item.productId} className="flex justify-between text-zinc-300">
+              <span>{productNameById.get(item.productId) ?? item.productId}</span>
+              <span>x{item.quantity}</span>
+            </div>
+          ))}
+          <div className="pt-2 border-t border-white/10 text-zinc-200 flex justify-between">
+            <span>Total estimé</span>
+            <span>{optimizedCart.totalPrice.toFixed(2)} €</span>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={applyToCart}
+        disabled={!canApply}
+        className="w-full bg-green-neon text-black font-semibold py-3 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Générer ce panier dans mon panier
+      </button>
+    </div>
+  );
+}
 
 export default function Cart() {
   const {
@@ -19,6 +93,23 @@ export default function Cart() {
     total,
   } = useCartStore();
   const { settings } = useSettingsStore();
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_available', true)
+        .gt('stock_quantity', 0)
+        .order('price', { ascending: true });
+
+      setAvailableProducts(data ?? []);
+    };
+
+    fetchProducts();
+  }, []);
 
   const sub = subtotal();
   const fee = deliveryFee();
@@ -47,6 +138,11 @@ export default function Cart() {
               Explorez nos collections d'exception pour commencer votre voyage sensoriel.
             </p>
           </div>
+          {availableProducts.length > 0 && (
+            <div className="max-w-xl mx-auto text-left">
+              <BudgetOptimizerPanel products={availableProducts} />
+            </div>
+          )}
           <Link
             to="/catalogue"
             className="inline-flex items-center gap-3 bg-green-neon text-black font-semibold px-8 py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] transition-all shadow-2xl"
@@ -158,6 +254,7 @@ export default function Cart() {
 
           {/* Checkout Panel */}
           <div className="lg:col-span-5 space-y-6">
+            {availableProducts.length > 0 && <BudgetOptimizerPanel products={availableProducts} />}
 
             {/* Delivery Methods Card */}
             <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-3xl p-6 space-y-6 relative overflow-hidden group">
