@@ -161,7 +161,7 @@ export default function Admin() {
         await loadDashboard();
         break;
       case 'products':
-        await loadProducts();
+        await Promise.all([loadProducts(), loadCategories()]);
         break;
       case 'categories':
         await loadCategories();

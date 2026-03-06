@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import FAQ from "../components/FAQ";
 import SEO from "../components/SEO";
+import ReviewCarousel from "../components/ReviewCarousel";
+import BestSellers from "../components/BestSellers";
 import { useSettingsStore } from "../store/settingsStore";
 import { useAuthStore } from "../store/authStore";
 
@@ -185,6 +187,9 @@ export default function Home() {
 
         </div>
       </div>
+
+      {/* ────────── Top Ventes ────────── */}
+      {settings.home_best_sellers_enabled && <BestSellers />}
 
       {/* ────────── N10 Deep Dive : Pourquoi choisir ────────── */}
       <section className="py-24 md:py-32 px-5">
@@ -386,90 +391,56 @@ export default function Home() {
 
       {/* ────────── BudTender CTA : Conseil sur-mesure ────────── */}
       {user && (
-      <section className="py-24 md:py-32 px-5">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-6xl mx-auto bg-zinc-900 border border-white/[0.05] rounded-[3rem] p-8 md:p-20 relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-green-neon/5 blur-[120px] rounded-full translate-x-1/2" />
+        <section className="py-24 md:py-32 px-5">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-6xl mx-auto bg-zinc-900 border border-white/[0.05] rounded-[3rem] p-8 md:p-20 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-green-neon/5 blur-[120px] rounded-full translate-x-1/2" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-green-neon/10 text-green-neon font-bold text-[10px] uppercase tracking-[0.2em]">
-                <Sparkles className="w-4 h-4" />
-                Conseil personnalisé
+            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
+              <div className="flex-1 space-y-8 text-center lg:text-left">
+                <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-green-neon/10 text-green-neon font-bold text-[10px] uppercase tracking-[0.2em]">
+                  <Sparkles className="w-4 h-4" />
+                  Conseil personnalisé
+                </div>
+                <h2 className="text-4xl md:text-6xl font-serif font-bold text-white leading-tight">
+                  Besoin de conseils <br />
+                  <span className="text-green-neon italic">sur-mesure ?</span>
+                </h2>
+                <p className="text-lg md:text-xl text-zinc-400 font-light max-w-2xl mx-auto lg:mx-0">
+                  Notre équipe est à votre écoute pour vous guider vers le produit le mieux adapté à vos attentes.
+                  Contactez-nous dès maintenant pour une consultation personnalisée.
+                </p>
+                <div className="pt-4 flex flex-wrap gap-5 justify-center lg:justify-start">
+                  <button
+                    onClick={() => {
+                      const btn = document.querySelector('[aria-label="Toggle BudTender"]') as HTMLButtonElement;
+                      if (btn) btn.click();
+                    }}
+                    className="bg-green-neon text-black px-10 py-5 rounded-2xl font-bold text-lg hover:scale-105 transition-all shadow-xl"
+                  >
+                    Démarrer la consultation
+                  </button>
+                </div>
               </div>
-              <h2 className="text-4xl md:text-6xl font-serif font-bold text-white leading-tight">
-                Besoin de conseils <br />
-                <span className="text-green-neon italic">sur-mesure ?</span>
-              </h2>
-              <p className="text-lg md:text-xl text-zinc-400 font-light max-w-2xl mx-auto lg:mx-0">
-                Notre équipe est à votre écoute pour vous guider vers le produit le mieux adapté à vos attentes.
-                Contactez-nous dès maintenant pour une consultation personnalisée.
-              </p>
-              <div className="pt-4 flex flex-wrap gap-5 justify-center lg:justify-start">
-                <button
-                  onClick={() => {
-                    const btn = document.querySelector('[aria-label="Toggle BudTender"]') as HTMLButtonElement;
-                    if (btn) btn.click();
-                  }}
-                  className="bg-green-neon text-black px-10 py-5 rounded-2xl font-bold text-lg hover:scale-105 transition-all shadow-xl"
-                >
-                  Démarrer la consultation
-                </button>
+
+              <div className="hidden lg:flex w-64 h-64 relative shrink-0">
+                <div className="absolute inset-0 bg-green-neon opacity-20 blur-[60px] animate-pulse" />
+                <div className="relative w-full h-full bg-zinc-800 rounded-full border border-white/10 flex items-center justify-center">
+                  <div className="w-[80%] h-[80%] rounded-full border border-green-neon/20 animate-[spin_15s_linear_infinite]" />
+                  <MessageCircle className="absolute w-20 h-20 text-green-neon" />
+                </div>
               </div>
             </div>
-
-            <div className="hidden lg:flex w-64 h-64 relative shrink-0">
-              <div className="absolute inset-0 bg-green-neon opacity-20 blur-[60px] animate-pulse" />
-              <div className="relative w-full h-full bg-zinc-800 rounded-full border border-white/10 flex items-center justify-center">
-                <div className="w-[80%] h-[80%] rounded-full border border-green-neon/20 animate-[spin_15s_linear_infinite]" />
-                <MessageCircle className="absolute w-20 h-20 text-green-neon" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
+          </motion.div>
+        </section>
       )}
 
-      {/* ────────── Testimonials ────────── */}
-      <section className="py-24 md:py-32 px-5">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 space-y-4">
-            <h2 className="text-4xl md:text-6xl font-serif font-bold text-white">Témoignages & <br /><span className="text-green-neon italic">expériences</span></h2>
-            <p className="text-zinc-500 text-lg md:text-xl font-light max-w-2xl mx-auto">
-              Découvrez ce que nos clients disent de leurs expériences avec le N10 et comment il a amélioré leur bien-être au quotidien.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { name: "Sébastien L.", text: "Le N10 a radicalement changé ma routine de sommeil. Une pureté exemplaire.", rating: 5 },
-              { name: "Marie-Sophie T.", text: "Enfin un CBD qui tient ses promesses sur la durée. Effet relaxant profond.", rating: 5 },
-              { name: "Julien R.", text: "La livraison en 24h à Paris est un vrai plus. Service client ultra réactif.", rating: 5 }
-            ].map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="p-10 rounded-[2rem] bg-zinc-900/40 border border-white/[0.05] hover:border-green-neon/20 transition-all"
-              >
-                <div className="flex gap-1 mb-8">
-                  {[...Array(t.rating)].map((_, idx) => (
-                    <Star key={idx} className="w-5 h-5 text-green-neon fill-green-neon" />
-                  ))}
-                </div>
-                <p className="text-xl text-zinc-300 font-light leading-relaxed italic mb-8">"{t.text}"</p>
-                <div className="pt-6 border-t border-white/5 font-bold text-white uppercase tracking-widest text-xs">{t.name}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ────────── Testimonials & Reviews ────────── */}
+      {settings.home_reviews_enabled && <ReviewCarousel />}
 
       {/* ────────── Latest News ────────── */}
       <section className="py-24 md:py-32 px-5 bg-zinc-900/10 border-y border-white/[0.05]">

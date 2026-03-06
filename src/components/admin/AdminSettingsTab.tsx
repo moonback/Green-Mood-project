@@ -10,7 +10,9 @@ import {
     Search,
     Leaf,
     RefreshCw,
-    Save
+    Save,
+    Star,
+    TrendingUp
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useSettingsStore } from '../../store/settingsStore';
@@ -305,6 +307,46 @@ export default function AdminSettingsTab() {
                         <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">Système</p>
                     </div>
                     <p className="text-xs text-zinc-400 mt-4">Permet aux clients de s'abonner aux produits pour recevoir des livraisons récurrentes.</p>
+                </div>
+
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <Star className="w-5 h-5 text-green-neon" />
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={localSettings.home_reviews_enabled}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, home_reviews_enabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 peer-checked:after:bg-white"></div>
+                            </label>
+                        </div>
+                        <h3 className="font-serif font-bold text-white">Carrousel Avis</h3>
+                        <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">Page d'accueil</p>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-4">Affiche la section des avis clients avec produits sur la home page.</p>
+                </div>
+
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-5 h-5 text-green-neon" />
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={localSettings.home_best_sellers_enabled}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, home_best_sellers_enabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 peer-checked:after:bg-white"></div>
+                            </label>
+                        </div>
+                        <h3 className="font-serif font-bold text-white">Top Ventes</h3>
+                        <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">Page d'accueil</p>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-4">Affiche la section "Meilleures Ventes" sur la home page.</p>
                 </div>
             </div>
 

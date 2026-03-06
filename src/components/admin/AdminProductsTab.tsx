@@ -823,6 +823,76 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                     </div>
                                 </div>
 
+                                <div className="space-y-4 pt-4 border-t border-zinc-800">
+                                    <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Options & Visibilité</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <label className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-green-neon transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={productForm.is_active}
+                                                onChange={(e) => setProductForm({ ...productForm, is_active: e.target.checked })}
+                                                className="w-5 h-5 accent-green-neon"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white">Actif</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase">Visible en ligne</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-green-neon transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={productForm.is_featured}
+                                                onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })}
+                                                className="w-5 h-5 accent-green-neon"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white">Produit Phare</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase">Top Ventes / Accueil</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-green-neon transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={productForm.is_available}
+                                                onChange={(e) => setProductForm({ ...productForm, is_available: e.target.checked })}
+                                                className="w-5 h-5 accent-green-neon"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white">Disponible</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase">Achat activé</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-green-neon transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={productForm.is_subscribable}
+                                                onChange={(e) => setProductForm({ ...productForm, is_subscribable: e.target.checked })}
+                                                className="w-5 h-5 accent-green-neon"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white">Abonnement</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase">Livraison récurrente</span>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-700/50 cursor-pointer hover:border-green-neon transition-colors col-span-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={productForm.is_bundle}
+                                                onChange={(e) => setProductForm({ ...productForm, is_bundle: e.target.checked })}
+                                                className="w-5 h-5 accent-green-neon"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-white">Est un Pack (Bundle)</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase">Composé de plusieurs produits</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div className="pt-4 flex gap-3">
                                     <button
                                         type="submit"
