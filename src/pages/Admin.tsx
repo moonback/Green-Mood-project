@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Menu,
   X,
+  ExternalLink,
+  Home,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Category, Order, StockMovement, Profile } from '../lib/types';
@@ -241,7 +243,15 @@ export default function Admin() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t border-zinc-800 space-y-2">
+          <a
+            href="/"
+            className="w-full flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
+          >
+            <Home className="w-5 h-5 shrink-0" />
+            {isSidebarOpen && <span className="text-sm font-medium">Voir le site</span>}
+            {isSidebarOpen && <ExternalLink className="w-3 h-3 ml-auto opacity-50" />}
+          </a>
           <button className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all">
             <LogOut className="w-5 h-5 shrink-0" />
             {isSidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
@@ -295,6 +305,17 @@ export default function Admin() {
                   </button>
                 ))}
               </nav>
+
+              <div className="p-4 border-t border-zinc-800 space-y-2">
+                <a
+                  href="/"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
+                >
+                  <Home className="w-5 h-5" />
+                  <span className="text-sm font-medium">Voir le site</span>
+                  <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+                </a>
+              </div>
             </motion.div>
           </>
         )}
