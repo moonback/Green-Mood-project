@@ -276,6 +276,7 @@ export default function BudTender() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     const addItem = useCartStore((s) => s.addItem);
+    const cartItems = useCartStore((s) => s.items);
     const openSidebar = useCartStore((s) => s.openSidebar);
     const scrollRef = useRef<HTMLDivElement>(null);
     const hasTriedLoad = useRef(false);
@@ -916,6 +917,7 @@ export default function BudTender() {
                 savedPrefs={memory.savedPrefs}
                 userName={memory.userName}
                 isOpen={isVoiceOpen}
+                cartItems={cartItems}
                 onClose={() => {
                     setIsVoiceOpen(false);
                     setIsShrink(false);

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { getVoicePrompt } from '../lib/budtenderPrompts';
 
-const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+const LIVE_MODEL = 'models/gemini-live-2.5-flash-preview';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const CONNECTION_TIMEOUT_MS = 10000;
@@ -19,6 +19,7 @@ interface Options {
   pastProducts?: PastProduct[];
   savedPrefs?: SavedPrefs | null;
   userName?: string | null;
+  cartItems?: any[];
   onAddItem?: (product: Product, quantity: number) => void;
   deliveryFee?: number;
   deliveryFreeThreshold?: number;
@@ -62,6 +63,7 @@ export function useGeminiLiveVoice({
   pastProducts = [],
   savedPrefs,
   userName,
+  cartItems = [],
   onAddItem,
   deliveryFee = 5.9,
   deliveryFreeThreshold = 50,
@@ -115,8 +117,8 @@ export function useGeminiLiveVoice({
   }, []);
 
   const buildSystemPrompt = useCallback((): string => {
-    return getVoicePrompt(productsRef.current, savedPrefs, userName, pastProducts, deliveryFee, deliveryFreeThreshold);
-  }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs, pastProducts]);
+    return getVoicePrompt(productsRef.current, savedPrefs, userName, pastProducts, deliveryFee, deliveryFreeThreshold, cartItems);
+  }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs, pastProducts, cartItems]);
 
   const stopAllPlayback = useCallback(() => {
     activeSourcesRef.current.forEach(s => {
