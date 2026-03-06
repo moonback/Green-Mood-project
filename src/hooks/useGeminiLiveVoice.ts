@@ -102,6 +102,7 @@ export function useGeminiLiveVoice({
   const scheduledUntilRef = useRef<number>(0);
   const isMutedRef = useRef(false);
   const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const interruptedRef = useRef(false);
   const setupTimeoutRef = useRef<number | null>(null);
   const startInFlightRef = useRef(false);
   const sessionIdRef = useRef(0);
@@ -121,12 +122,16 @@ export function useGeminiLiveVoice({
   }, [userName, deliveryFee, deliveryFreeThreshold, savedPrefs, pastProducts, cartItems]);
 
   const stopAllPlayback = useCallback(() => {
+    interruptedRef.current = true;
     activeSourcesRef.current.forEach(s => {
       try {
+        s.disconnect();
         s.stop(0);
       } catch { }
     });
     activeSourcesRef.current.clear();
+    // Reset the scheduling timeline so future chunks don't play at stale offsets
+    scheduledUntilRef.current = 0;
   }, []);
 
   const cleanup = useCallback(() => {
@@ -149,6 +154,7 @@ export function useGeminiLiveVoice({
     streamRef.current = null;
     scheduledUntilRef.current = 0;
     isMutedRef.current = false;
+    interruptedRef.current = false;
     startInFlightRef.current = false;
     sessionIdRef.current += 1;
     searchResultsRef.current = [];
@@ -164,6 +170,9 @@ export function useGeminiLiveVoice({
   }, [cleanup]);
 
   const playPcmChunk = useCallback((base64: string) => {
+    // Guard: discard any audio chunks that arrive after an interruption
+    // These are in-flight chunks sent before the server acknowledged the barge-in
+    if (interruptedRef.current) return;
     if (!playbackCtxRef.current) return;
     const ctx = playbackCtxRef.current;
     const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
@@ -183,7 +192,7 @@ export function useGeminiLiveVoice({
     setVoiceState('speaking');
     source.onended = () => {
       activeSourcesRef.current.delete(source);
-      if (ctx.currentTime >= scheduledUntilRef.current - 0.05) {
+      if (!interruptedRef.current && ctx.currentTime >= scheduledUntilRef.current - 0.05) {
         setVoiceState('listening');
       }
     };
@@ -377,6 +386,12 @@ export function useGeminiLiveVoice({
               if (msg.serverContent.turnComplete) {
                 setupTurn();
                 return;
+              }
+
+              // A new model turn with audio data means the server is speaking fresh content;
+              // clear the interrupted flag so these new chunks are allowed to play.
+              if (msg.serverContent.modelTurn?.parts?.length) {
+                interruptedRef.current = false;
               }
 
               for (const p of msg.serverContent.modelTurn?.parts || []) {
