@@ -122,9 +122,15 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             onNavigate
         });
 
-    // Auto-start when opened
+    // Auto-start when opened — fires only once per open to avoid reconnect loops
+    const autoStartedRef = useRef(false);
     useEffect(() => {
-        if (isOpen && voiceState === 'idle' && isSupported) {
+        if (!isOpen) {
+            autoStartedRef.current = false;
+            return;
+        }
+        if (voiceState === 'idle' && isSupported && !autoStartedRef.current) {
+            autoStartedRef.current = true;
             const timer = setTimeout(() => {
                 startSession();
             }, 600); // Small delay for smooth transition
