@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-react';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from '../hooks/useBudTenderMemory';
-import { useGeminiLiveVoice, VoiceState } from '../hooks/useGeminiLiveVoice';
+import { useElevenLabsVoice as useGeminiLiveVoice, VoiceState } from '../hooks/useElevenLabsVoice';
 import { useSettingsStore } from '../store/settingsStore';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
