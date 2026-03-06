@@ -58,7 +58,7 @@ export default function Referrals() {
 
     if (!settings.referral_program_enabled) {
         return (
-            <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 flex flex-col items-center justify-center px-4">
+            <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans flex flex-col items-center justify-center px-4">
                 <SEO title="Parrainage — Green Mood Privilège" description="Le programme de parrainage est temporairement désactivé." />
                 <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-[10px] font-black uppercase tracking-widest mb-12">
                     <ArrowLeft className="w-4 h-4" />
@@ -76,10 +76,10 @@ export default function Referrals() {
     const welcomeBonus = settings.referral_welcome_bonus || 0;
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
             <SEO title="Parrainage — Green Mood Privilège" description="Parrainez vos amis et gagnez des Carats." />
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
                 <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-12">
                     <ArrowLeft className="w-4 h-4" />
                     Retour au Compte

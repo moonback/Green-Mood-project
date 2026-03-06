@@ -88,7 +88,9 @@ export default function Subscriptions() {
     <>
       <SEO title="Mes abonnements — Green Mood CBD" description="Gérez vos livraisons automatiques." />
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
         <div className="flex items-center gap-3 mb-8">
           <Link
             to="/compte"
@@ -99,7 +101,7 @@ export default function Subscriptions() {
           </Link>
         </div>
 
-        <h1 className="font-serif text-3xl font-bold mb-2">Mes abonnements</h1>
+        <h1 className="text-4xl font-semibold mb-2">Abonnements Maîtrisés</h1>
         <p className="text-zinc-400 text-sm mb-8">
           Gérez vos livraisons automatiques. Modifiables ou résiliables à tout moment.
         </p>
@@ -107,7 +109,7 @@ export default function Subscriptions() {
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-pulse h-32" />
+              <div key={i} className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 animate-pulse h-32" />
             ))}
           </div>
         ) : subscriptions.length === 0 ? (
@@ -117,7 +119,7 @@ export default function Subscriptions() {
             <p className="text-sm mt-1 mb-6">Abonnez-vous à vos produits CBD préférés pour des livraisons automatiques.</p>
             <Link
               to="/catalogue"
-              className="inline-flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#00ff88] to-[#00c853] text-black px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:-translate-y-0.5"
             >
               <ShoppingBag className="w-4 h-4" />
               Découvrir les produits
@@ -133,7 +135,7 @@ export default function Subscriptions() {
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
+                  className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1cff6b] hover:shadow-[0_10px_30px_rgba(0,255,120,0.08)]"
                 >
                   <div className="flex gap-4">
                     {/* Product image */}
@@ -246,6 +248,8 @@ export default function Subscriptions() {
             })}
           </div>
         )}
+        </div>
+      </div>
       </div>
     </>
   );
