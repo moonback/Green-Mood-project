@@ -12,6 +12,7 @@ import {
 import { supabase } from '../../lib/supabase';
 
 import { BudTenderSettings, BUDTENDER_DEFAULTS, BUDTENDER_LS_KEY } from '../../lib/budtenderSettings';
+import { useSettingsStore } from '../../store/settingsStore';
 
 const INPUT =
     'w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-green-neon/50 transition-colors';
@@ -117,6 +118,7 @@ function SliderField({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function AdminBudTenderTab() {
+    const { settings: globalSettings, updateSettingsInStore } = useSettingsStore();
     const [settings, setSettings] = useState<BudTenderSettings>(BUDTENDER_DEFAULTS);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -256,16 +258,14 @@ export default function AdminBudTenderTab() {
             localStorage.setItem(BUDTENDER_LS_KEY, JSON.stringify(settings));
 
             // Sync the entire configuration to Supabase
-            // We use two keys: one for quick check (enabled) and one for full config
+            // We use multiple keys: visibility flags and full config
             await Promise.all([
-                supabase.from('store_settings').upsert(
-                    [{ key: 'budtender_enabled', value: settings.enabled, updated_at: new Date().toISOString() }],
-                    { onConflict: 'key' }
-                ),
-                supabase.from('store_settings').upsert(
-                    [{ key: 'budtender_config', value: settings, updated_at: new Date().toISOString() }],
-                    { onConflict: 'key' }
-                )
+                supabase.from('store_settings').upsert([
+                    { key: 'budtender_chat_enabled', value: globalSettings.budtender_chat_enabled, updated_at: new Date().toISOString() },
+                    { key: 'budtender_voice_enabled', value: globalSettings.budtender_voice_enabled, updated_at: new Date().toISOString() },
+                    { key: 'budtender_enabled', value: globalSettings.budtender_chat_enabled || globalSettings.budtender_voice_enabled, updated_at: new Date().toISOString() },
+                    { key: 'budtender_config', value: settings, updated_at: new Date().toISOString() }
+                ], { onConflict: 'key' })
             ]);
 
             setSaved(true);
@@ -349,16 +349,32 @@ export default function AdminBudTenderTab() {
                     {/* ── GÉNÉRAL ── */}
                     {activeTab === 'general' && (
                         <>
-                            <Section icon={Leaf} title="Activation Globale" description="Contrôlez la visibilité de BudTender sur le site">
-                                <div className="flex items-center justify-between py-2">
+                            <Section icon={Leaf} title="Activation par Canal" description="Distinguez le chat écrit du conseiller vocal">
+                                <div className="flex items-center justify-between py-2 border-b border-zinc-800/50 pb-4">
                                     <div>
-                                        <p className="text-sm font-medium text-white">Afficher le bouton BudTender</p>
-                                        <p className="text-xs text-zinc-500 mt-0.5">Si désactivé, le widget est complètement masqué pour les clients.</p>
+                                        <p className="text-sm font-medium text-white">BudTender Chat (écrit)</p>
+                                        <p className="text-xs text-zinc-500 mt-0.5">Active la bulle de discussion et le quiz interactif.</p>
                                     </div>
-                                    <Toggle enabled={settings.enabled} onChange={(v) => update({ enabled: v })} />
+                                    <Toggle
+                                        enabled={globalSettings.budtender_chat_enabled}
+                                        onChange={(v) => updateSettingsInStore({ budtender_chat_enabled: v })}
+                                    />
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="flex items-center justify-between py-2 pt-2">
+                                    <div>
+                                        <p className="text-sm font-medium text-white">BudTender Vocal (IA Live)</p>
+                                        <p className="text-xs text-zinc-500 mt-0.5">Active l'accès au conseiller vocal temps réel (Gemini Live).</p>
+                                    </div>
+                                    <Toggle
+                                        enabled={globalSettings.budtender_voice_enabled}
+                                        onChange={(v) => updateSettingsInStore({ budtender_voice_enabled: v })}
+                                    />
+                                </div>
+                            </Section>
+
+                            <Section icon={Sliders} title="Comportement" description="Paramètres d'affichage du widget">
+                                <div className="space-y-4">
                                     <SliderField
                                         label="Délai avant pulsation du bouton"
                                         value={settings.pulse_delay}
@@ -825,6 +841,6 @@ export default function AdminBudTenderTab() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

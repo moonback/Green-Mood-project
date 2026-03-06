@@ -14,6 +14,7 @@ import { BudTenderWidget, BudTenderMessage, BudTenderTypingIndicator, BudTenderF
 import VoiceAdvisor from './VoiceAdvisor';
 import { generateEmbedding } from '../lib/embeddings';
 import { useAuthStore } from '../store/authStore';
+import { useSettingsStore } from '../store/settingsStore';
 
 // ─── Shared types and logic imported ───
 
@@ -252,6 +253,7 @@ function HeaderAction({ icon, title, onClick, isActive, label }: { icon: React.R
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function BudTender() {
+    const globalSettings = useSettingsStore((s) => s.settings);
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -886,23 +888,27 @@ export default function BudTender() {
         <>
             {/* ── Floating button / Expand button ── */}
             <AnimatePresence>
-                {isOpen && !isShrink ? null : settings.enabled && (
+                {isOpen && !isShrink ? null : ((globalSettings?.budtender_chat_enabled ?? true) || (globalSettings?.budtender_voice_enabled ?? true)) && (
                     <BudTenderWidget
                         onClick={() => {
                             if (isShrink) {
                                 setIsShrink(false);
-                            } else {
+                            } else if (globalSettings?.budtender_chat_enabled !== false) {
                                 setIsOpen(true);
+                            } else if (globalSettings?.budtender_voice_enabled !== false) {
+                                // If chat disabled but voice enabled, click opens voice
+                                setIsVoiceOpen(true);
                             }
                         }}
-                        onVoiceClick={() => {
+                        isChatEnabled={globalSettings?.budtender_chat_enabled ?? true}
+                        onVoiceClick={(globalSettings?.budtender_voice_enabled ?? true) ? () => {
                             if (isVoiceOpen) {
                                 setIsVoiceOpen(false);
                             } else {
                                 setIsVoiceOpen(true);
                                 // Start in background
                             }
-                        }}
+                        } : undefined}
                         isVoiceActive={isVoiceOpen}
                         pulse={pulse}
                         mode={isShrink ? 'expand' : 'default'}
@@ -936,7 +942,7 @@ export default function BudTender() {
                     navigate(path);
                     setIsShrink(false); // Reset shrink when changing page
                 }}
-                showUI={isOpen}
+                showUI={isOpen || isVoiceOpen}
             />
 
             <AnimatePresence>
@@ -995,12 +1001,14 @@ export default function BudTender() {
                                     <div className="flex items-center gap-1.5 sm:gap-2">
                                         <div className="h-10 w-[1px] bg-white/5 mx-2 hidden sm:block" />
 
-                                        <HeaderAction
-                                            icon={<Mic className="w-5 h-5" />}
-                                            title="Conseiller vocal (Gemini Live)"
-                                            onClick={() => setIsVoiceOpen(true)}
-                                            label="Voix"
-                                        />
+                                        {(globalSettings?.budtender_voice_enabled ?? true) && (
+                                            <HeaderAction
+                                                icon={<Mic className="w-5 h-5" />}
+                                                title="Conseiller vocal (Gemini Live)"
+                                                onClick={() => setIsVoiceOpen(true)}
+                                                label="Voix"
+                                            />
+                                        )}
 
                                         <HeaderAction
                                             icon={<History className="w-5 h-5" />}
@@ -1416,7 +1424,7 @@ export default function BudTender() {
                                     {isTyping && <BudTenderTypingIndicator />}
 
                                     {/* ── Welcome CTA ── */}
-                                    {showStartButton && (
+                                    {showStartButton && (globalSettings?.budtender_chat_enabled ?? true) && (
                                         <div className="flex justify-center py-10">
                                             <motion.button
                                                 whileHover={{ scale: 1.05 }}
@@ -1477,39 +1485,41 @@ export default function BudTender() {
                             </div>
 
                             {/* ── Chat Input Bar ── */}
-                            <div className="p-6 sm:p-10 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-3xl shrink-0">
-                                <div className="max-w-7xl mx-auto w-full space-y-4">
-                                    <form
-                                        onSubmit={handleSendMessage}
-                                        className="flex items-center gap-3 bg-zinc-900 border-2 border-zinc-700 rounded-[2rem] p-2 focus-within:border-green-neon transition-all shadow-2xl"
-                                    >
-                                        <input
-                                            type="text"
-                                            value={chatInput}
-                                            onChange={(e) => setChatInput(e.target.value)}
-                                            placeholder="Posez votre question à l'IA ou décrivez vos besoins..."
-                                            className="flex-1 bg-transparent border-none text-base text-white px-5 py-3 focus:outline-none placeholder:text-zinc-500"
-                                        />
-                                        <button
-                                            type="submit"
-                                            disabled={!chatInput.trim() || isTyping}
-                                            className="w-12 h-12 flex items-center justify-center rounded-full bg-green-neon text-black disabled:opacity-20 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-neon/40"
+                            {(globalSettings?.budtender_chat_enabled ?? true) && (
+                                <div className="p-6 sm:p-10 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-3xl shrink-0">
+                                    <div className="max-w-7xl mx-auto w-full space-y-4">
+                                        <form
+                                            onSubmit={handleSendMessage}
+                                            className="flex items-center gap-3 bg-zinc-900 border-2 border-zinc-700 rounded-[2rem] p-2 focus-within:border-green-neon transition-all shadow-2xl"
                                         >
-                                            <SendHorizontal className="w-6 h-6" />
-                                        </button>
-                                    </form>
-                                    <div className="flex flex-col items-center gap-1.5 px-1">
-                                        <p className="text-[10px] text-zinc-500 text-center leading-relaxed max-w-2xl">
-                                            <span className="text-amber-500/80 font-bold uppercase tracking-widest mr-1">Avis important :</span>
-                                            BudTender est une IA de conseil. Les informations fournies ne constituent pas un avis médical.
-                                            Consultez un médecin avant toute consommation, surtout en cas de traitement ou de grossesse.
-                                        </p>
-                                        <p className="text-[9px] text-green-neon font-black uppercase tracking-[0.4em] opacity-50 mt-1">
-                                            BudTender IA Expérience
-                                        </p>
+                                            <input
+                                                type="text"
+                                                value={chatInput}
+                                                onChange={(e) => setChatInput(e.target.value)}
+                                                placeholder="Posez votre question à l'IA ou décrivez vos besoins..."
+                                                className="flex-1 bg-transparent border-none text-base text-white px-5 py-3 focus:outline-none placeholder:text-zinc-500"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={!chatInput.trim() || isTyping}
+                                                className="w-12 h-12 flex items-center justify-center rounded-full bg-green-neon text-black disabled:opacity-20 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-neon/40"
+                                            >
+                                                <SendHorizontal className="w-6 h-6" />
+                                            </button>
+                                        </form>
+                                        <div className="flex flex-col items-center gap-1.5 px-1">
+                                            <p className="text-[10px] text-zinc-500 text-center leading-relaxed max-w-2xl">
+                                                <span className="text-amber-500/80 font-bold uppercase tracking-widest mr-1">Avis important :</span>
+                                                BudTender est une IA de conseil. Les informations fournies ne constituent pas un avis médical.
+                                                Consultez un médecin avant toute consommation, surtout en cas de traitement ou de grossesse.
+                                            </p>
+                                            <p className="text-[9px] text-green-neon font-black uppercase tracking-[0.4em] opacity-50 mt-1">
+                                                BudTender IA Expérience
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </motion.div>
                     </>
                 )}

@@ -192,7 +192,8 @@ export default function Layout() {
       <CartSidebar />
 
       {/* BudTender IA Widget */}
-      {user && settings.budtender_enabled && <BudTender />}
+      {/* BudTender IA Widget - Visible for all, respects toggles if they exist */}
+      {((!settings) || (settings.budtender_chat_enabled !== false) || (settings.budtender_voice_enabled !== false)) && <BudTender />}
 
       {/* Toast Notifications */}
       <ToastContainer />
