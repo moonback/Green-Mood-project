@@ -23,7 +23,8 @@ export function usePredictiveSearch(
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    if (!query.trim() || query.length < minQueryLength) {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery || normalizedQuery.length < minQueryLength) {
       setSearchResults({ products: [], categories: [] });
       return;
     }
@@ -31,7 +32,7 @@ export function usePredictiveSearch(
     const timer = window.setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await searchCatalogPreview(query);
+        const results = await searchCatalogPreview(normalizedQuery);
         setSearchResults(results);
       } catch (error) {
         console.error('Search error:', error);
