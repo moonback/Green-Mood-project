@@ -123,7 +123,7 @@ export default function Admin() {
   };
 
   const loadCategories = async () => {
-    const { data } = await supabase.from('categories').select('*').order('sort_order');
+    const { data } = await supabase.from('categories').select('*, products(count)').order('sort_order');
     setCategories((data as Category[]) ?? []);
   };
 
