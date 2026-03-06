@@ -254,452 +254,393 @@ export default function Profile() {
         return val === value;
     };
 
+    const loyaltyPoints = profile?.loyalty_points ?? 0;
+    const nextTierTarget = 1250;
+    const progressPct = Math.min(100, Math.round((loyaltyPoints / nextTierTarget) * 100));
+    const userInitials = (profile?.full_name || user?.email || 'GM')
+        .split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
     return (
-        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32">
+        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
             <SEO title="Paramètres Profil — L'Excellence Green Mood" description="Gérez vos informations personnelles et préférences de bien-être." />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-                    <div className="space-y-4">
-                        <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
-                            <ArrowLeft className="w-4 h-4" />
-                            Retour au Hub
-                        </Link>
-                        <h1 className="text-4xl md:text-6xl font-serif font-black tracking-tight leading-none uppercase">
-                            VOTRE <br /><span className="text-green-neon italic">IDENTITÉ.</span>
-                        </h1>
-                    </div>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
-                        PARAMÈTRES CONFIDENTIELS
-                    </p>
-                </div>
-
-                <form onSubmit={handleSave} className="space-y-8">
-                    {/* Section 1: Informations Personnelles */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: 'easeOut' }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group"
-                    >
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-green-neon/5 blur-[60px] -z-10 group-hover:bg-green-neon/8 transition-colors duration-700" />
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/3 blur-[40px] -z-10" />
-
-                        <div className="flex items-center gap-3 mb-10">
-                            <div className="w-10 h-10 rounded-2xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
-                                <User className="w-5 h-5 text-green-neon" />
-                            </div>
-                            <h2 className="text-xl font-serif italic uppercase tracking-wider">Informations Personnelles</h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-2">
-                                    Nom Complet
-                                </label>
-                                <input
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="Votre nom..."
-                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-serif italic text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-2">
-                                    Téléphone
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="06 XX XX XX XX"
-                                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] focus:shadow-[0_0_20px_rgba(57,255,20,0.05)] transition-all placeholder:text-zinc-800"
-                                />
-                            </div>
-
-                            <div className="space-y-2 md:col-span-2 opacity-60">
-                                <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-3">
-                                    <Mail className="w-3 h-3" />
-                                    Adresse e-mail (Identifiant Unique)
-                                </label>
-                                <div className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-base font-mono text-zinc-500 cursor-not-allowed flex items-center justify-between">
-                                    {user?.email}
-                                    <Shield className="w-4 h-4" />
-                                </div>
-                            </div>
-
-                            <div className="md:col-span-2 mt-2 rounded-3xl border border-white/10 bg-white/[0.02] p-6 md:p-8 space-y-6">
-                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
-                                            <LockKeyhole className="w-3.5 h-3.5 text-green-neon" />
-                                            Sécurité du compte
-                                        </p>
-                                        <p className="text-sm text-zinc-400">Pour changer le mot de passe, renseignez d'abord votre ancien mot de passe.</p>
-                                    </div>
-                                    <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500">Minimum 8 caractères</span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Ancien mot de passe</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showCurrentPassword ? 'text' : 'password'}
-                                                value={currentPassword}
-                                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                                placeholder="Votre mot de passe actuel"
-                                                autoComplete="current-password"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowCurrentPassword((v) => !v)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
-                                                aria-label={showCurrentPassword ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'}
-                                            >
-                                                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Nouveau mot de passe</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showNewPassword ? 'text' : 'password'}
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                placeholder="Minimum 8 caractères"
-                                                autoComplete="new-password"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword((v) => !v)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
-                                                aria-label={showNewPassword ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'}
-                                            >
-                                                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.25em] px-2">Confirmation</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirmNewPassword ? 'text' : 'password'}
-                                                value={confirmNewPassword}
-                                                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                                placeholder="Répétez le nouveau mot de passe"
-                                                autoComplete="new-password"
-                                                className="w-full bg-white/5 border border-white/5 rounded-2xl px-4 py-3 pr-11 text-sm font-mono text-white focus:outline-none focus:border-green-neon focus:bg-white/[0.08] transition-all placeholder:text-zinc-700"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmNewPassword((v) => !v)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors"
-                                                aria-label={showConfirmNewPassword ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'}
-                                            >
-                                                {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Section: Récompenses & Fidélité */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1, duration: 0.5, ease: 'easeOut' }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden group"
-                    >
-                        <div className="absolute top-0 left-0 w-40 h-40 bg-amber-400/5 blur-[60px] -z-10 group-hover:bg-amber-400/8 transition-colors duration-700" />
-
-                        <div className="flex items-center gap-3 mb-10">
-                            <div className="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
-                                <Coins className="w-5 h-5 text-amber-400" />
-                            </div>
-                            <h2 className="text-xl font-serif italic uppercase tracking-wider">Récompenses & Fidélité</h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between hover:border-amber-400/20 transition-all duration-300">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Points accumulés</p>
-                                    <p className="text-3xl font-black text-amber-400">{profile?.loyalty_points || 0}</p>
-                                </div>
-                                <div className="w-12 h-12 rounded-2xl bg-amber-400/10 flex items-center justify-center">
-                                    <Sparkles className="w-5 h-5 text-amber-400" />
-                                </div>
-                            </div>
-
-                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex items-center justify-between hover:border-white/10 transition-all duration-300">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Code de Parrainage</p>
-                                    <p className="text-xl font-mono font-black text-white tracking-widest">{profile?.referral_code || '---'}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (profile?.referral_code) {
-                                            navigator.clipboard.writeText(profile.referral_code);
-                                            setMessage({ type: 'success', text: 'Code copié dans le presse-papier !' });
-                                            setTimeout(() => setMessage(null), 3000);
-                                        }
-                                    }}
-                                    className="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center border border-white/5"
-                                >
-                                    <Save className="w-4 h-4 text-zinc-400" />
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Section 2: Préférences BudTender — Collapsible */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.5, ease: 'easeOut' }}
-                    >
-                        {/* Toggle button — always visible */}
-                        <button
-                            type="button"
-                            onClick={() => setShowBudTender(!showBudTender)}
-                            className={`w-full group relative overflow-hidden rounded-[3rem] border transition-all duration-500 ${showBudTender
-                                    ? 'bg-white/[0.02] border-green-neon/20 p-8 md:p-12'
-                                    : 'bg-gradient-to-br from-green-neon/[0.04] via-white/[0.02] to-emerald-500/[0.03] border-white/5 hover:border-green-neon/30 p-8 md:p-10'
-                                }`}
-                        >
-                            {/* Glow background */}
-                            <div className={`absolute inset-0 transition-opacity duration-700 ${showBudTender ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                }`}>
-                                <div className="absolute top-0 right-1/4 w-48 h-48 bg-green-neon/5 blur-[80px]" />
-                                <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-emerald-400/5 blur-[60px]" />
-                            </div>
-
-                            <div className="relative flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${showBudTender
-                                            ? 'bg-green-neon/15 border border-green-neon/30 shadow-[0_0_20px_rgba(57,255,20,0.1)]'
-                                            : 'bg-green-neon/10 border border-green-neon/20 group-hover:shadow-[0_0_25px_rgba(57,255,20,0.15)] group-hover:border-green-neon/40'
-                                        }`}>
-                                        <SlidersHorizontal className={`w-5 h-5 text-green-neon transition-transform duration-500 ${showBudTender ? 'rotate-90' : 'group-hover:rotate-12'
-                                            }`} />
-                                    </div>
-                                    <div className="text-left">
-                                        <h2 className="text-xl font-serif italic uppercase tracking-wider text-white flex items-center gap-3">
-                                            Préférences BudTender
-                                            <Sparkles className={`w-4 h-4 text-green-neon transition-all duration-300 ${showBudTender ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'
-                                                }`} />
-                                        </h2>
-                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] mt-1">
-                                            {showBudTender ? 'Cliquez pour réduire' : 'Personnalisez vos recommandations IA'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    {!showBudTender && (
-                                        <span className="hidden md:inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-neon/60 group-hover:text-green-neon transition-colors">
-                                            <BrainCircuit className="w-3.5 h-3.5" />
-                                            Configurer
-                                        </span>
-                                    )}
-                                    <motion.div
-                                        animate={{ rotate: showBudTender ? 180 : 0 }}
-                                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                                        className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-green-neon/30 transition-colors"
+                <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 p-5 md:p-8 backdrop-blur-2xl">
+                    <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr] gap-6 lg:gap-8">
+                        <aside className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-[20px] p-5 md:p-6 h-fit xl:sticky xl:top-24">
+                            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-400 hover:text-green-neon text-xs font-semibold uppercase tracking-[0.18em] transition-colors mb-5">
+                                <ArrowLeft className="w-4 h-4" />
+                                Retour au Hub
+                            </Link>
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500 mb-3">Navigation profil</p>
+                            <div className="space-y-2 text-sm">
+                                {['Mon Profil', 'Commandes', 'Adresses', 'Fidélité', 'Sécurité', 'Notifications'].map((item, idx) => (
+                                    <button
+                                        key={item}
+                                        type="button"
+                                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 ${idx === 0 ? 'border-green-neon/40 bg-green-neon/10 text-white shadow-[0_8px_24px_rgba(0,255,120,0.12)]' : 'border-white/5 bg-white/[0.02] text-zinc-400 hover:border-green-neon/25 hover:text-zinc-200'}`}
                                     >
-                                        <ChevronDown className="w-4 h-4 text-zinc-400 group-hover:text-green-neon transition-colors" />
-                                    </motion.div>
-                                </div>
+                                        {item}
+                                    </button>
+                                ))}
                             </div>
-                        </button>
+                        </aside>
 
-                        {/* Expandable content */}
-                        <AnimatePresence>
-                            {showBudTender && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 border-t-0 rounded-b-[3rem] px-8 md:px-12 pb-8 md:pb-12 pt-2 relative">
-                                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-green-neon/5 blur-[50px] -z-10" />
-
-                                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] mb-8 leading-relaxed">
-                                            Ces informations permettent à notre IA BudTender de personnaliser vos recommandations et d'adapter son expertise à vos besoins réels.
-                                        </p>
-
-                                        <div className="space-y-10">
-                                            {quizSteps.map((step, idx) => (
-                                                <motion.div
-                                                    key={step.id}
-                                                    initial={{ opacity: 0, y: 15 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.06, duration: 0.4 }}
-                                                    className="space-y-4"
-                                                >
-                                                    <label className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] px-4 flex items-center gap-4">
-                                                        {step.id === 'goal' && <Target className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'experience' && <Zap className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'format' && <Waves className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'budget' && <Coins className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'age' && <Cake className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'intensity' && <Flame className="w-3 h-3 text-green-neon" />}
-                                                        {step.id === 'terpenes' && <Leaf className="w-3 h-3 text-green-neon" />}
-                                                        {!['goal', 'experience', 'format', 'budget', 'age', 'intensity', 'terpenes'].includes(step.id) && <BrainCircuit className="w-3 h-3 text-green-neon" />}
-                                                        {step.question}
-                                                    </label>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                                        {step.options.map((option) => (
-                                                            <button
-                                                                key={option.value}
-                                                                type="button"
-                                                                onClick={() => updatePref(step.id, option.value)}
-                                                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isPrefSelected(step.id, option.value)
-                                                                    ? 'bg-green-neon/10 border-green-neon text-white shadow-[0_0_20px_rgba(34,255,148,0.1)]'
-                                                                    : 'bg-white/5 border-white/5 text-zinc-500 hover:bg-white/[0.08] hover:border-white/10'
-                                                                    }`}
-                                                            >
-                                                                <span className="text-lg">{option.emoji}</span>
-                                                                <span className="text-[11px] font-black uppercase tracking-tighter leading-tight">
-                                                                    {option.label}
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+                        <div className="space-y-6 md:space-y-8">
+                            <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-[20px] p-6 md:p-8 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1cff6b] hover:shadow-[0_10px_30px_rgba(0,255,120,0.08)]">
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-300/25 to-green-neon/40 border border-green-neon/50 flex items-center justify-center text-2xl font-semibold">
+                                            {userInitials}
+                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-400 shadow-[0_0_18px_rgba(28,255,107,0.9)] border-2 border-zinc-950" />
+                                        </div>
+                                        <div>
+                                            <p className="text-3xl md:text-4xl font-semibold leading-tight">{profile?.full_name || 'Membre Green Mood'}</p>
+                                            <p className="text-sm text-zinc-300 mt-1">Premium Member</p>
+                                            <p className="text-sm text-green-neon mt-1">{loyaltyPoints} points fidélité</p>
                                         </div>
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-
-
-
-                    {/* Section: Appareils connectés */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25, duration: 0.5, ease: 'easeOut' }}
-                        className="bg-white/[0.02] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden"
-                    >
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                            <div>
-                                <h2 className="text-xl font-serif italic uppercase tracking-wider">Appareils connectés</h2>
-                                <p className="text-xs text-zinc-500 mt-1">Consultez les appareils actifs et déconnectez toutes les autres sessions.</p>
+                                    <div className="flex flex-wrap gap-3">
+                                        <Link to="/compte/profil" className="px-5 h-12 inline-flex items-center justify-center rounded-xl border border-green-neon/40 bg-green-neon/10 hover:bg-green-neon/20 transition-all text-sm font-medium">
+                                            Modifier profil
+                                        </Link>
+                                        <Link to="/compte/commandes" className="px-5 h-12 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] hover:border-green-neon/30 transition-all text-sm font-medium">
+                                            Voir mes commandes
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleDisconnectOthers}
-                                disabled={isRevokingOthers || isSessionsLoading || sessions.length <= 1}
-                                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-red-400/30 text-red-300 hover:text-white hover:border-red-400/70 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-xs font-black uppercase tracking-widest"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                {isRevokingOthers ? 'Déconnexion...' : 'Déconnecter les autres'}
-                            </button>
-                        </div>
 
-                        <div className="space-y-3">
-                            {isSessionsLoading ? (
-                                <p className="text-sm text-zinc-500">Chargement des appareils...</p>
-                            ) : sessions.length === 0 ? (
-                                <p className="text-sm text-zinc-500">Aucun appareil actif détecté.</p>
-                            ) : (
-                                sessions.map((session) => {
-                                    const isCurrent = session.device_id === getDeviceId();
-                                    const isMobile = /Android|iPhone|iPad|Mobile/i.test(session.user_agent || '');
+                            <form onSubmit={handleSave} className="space-y-6 md:space-y-8">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                                    className="bg-white/[0.03] backdrop-blur-[20px] border border-white/10 rounded-3xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1cff6b] hover:shadow-[0_10px_30px_rgba(0,255,120,0.08)]"
+                                >
+                                    <div className="flex items-center gap-3 mb-7">
+                                        <div className="w-10 h-10 rounded-xl bg-green-neon/10 border border-green-neon/25 flex items-center justify-center">
+                                            <User className="w-5 h-5 text-green-neon" />
+                                        </div>
+                                        <h2 className="text-lg font-semibold tracking-wide">Informations personnelles</h2>
+                                    </div>
 
-                                    return (
-                                        <div key={session.id} className={`flex items-center justify-between gap-4 border rounded-2xl px-4 py-3 ${isCurrent ? 'border-green-neon/40 bg-green-neon/[0.05]' : 'border-white/10 bg-white/[0.02]'}`}>
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-green-neon/20 text-green-neon' : 'bg-white/5 text-zinc-400'}`}>
-                                                    {isMobile ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Nom complet</label>
+                                            <input
+                                                type="text"
+                                                value={fullName}
+                                                onChange={(e) => setFullName(e.target.value)}
+                                                placeholder="Votre nom..."
+                                                className="w-full h-14 bg-white/5 border border-white/10 rounded-xl px-4 text-[15px] text-white focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_0_2px_rgba(0,255,120,0.15)] transition-all placeholder:text-zinc-600"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Téléphone</label>
+                                            <input
+                                                type="tel"
+                                                value={phone}
+                                                onChange={(e) => setPhone(e.target.value)}
+                                                placeholder="06 XX XX XX XX"
+                                                className="w-full h-14 bg-white/5 border border-white/10 rounded-xl px-4 text-[15px] text-white focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_0_2px_rgba(0,255,120,0.15)] transition-all placeholder:text-zinc-600"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2 md:col-span-2 opacity-70">
+                                            <label className="text-[13px] text-zinc-400 uppercase tracking-[0.1em] flex items-center gap-2">
+                                                <Mail className="w-4 h-4" /> Adresse e-mail
+                                            </label>
+                                            <div className="w-full h-14 bg-white/5 border border-white/10 rounded-xl px-4 text-[15px] text-zinc-400 cursor-not-allowed flex items-center justify-between">
+                                                {user?.email}
+                                                <Shield className="w-4 h-4" />
+                                            </div>
+                                        </div>
+
+                                        <div className="md:col-span-2 mt-1 rounded-2xl border border-white/10 bg-white/[0.02] p-5 md:p-6 space-y-5">
+                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                                <div>
+                                                    <p className="text-[13px] uppercase tracking-[0.1em] text-zinc-400 flex items-center gap-2"><LockKeyhole className="w-4 h-4 text-green-neon" />Sécurité du compte</p>
+                                                    <p className="text-sm text-zinc-500">Renseignez les trois champs pour modifier votre mot de passe.</p>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-semibold text-white truncate">
-                                                        {session.device_name || 'Appareil inconnu'} {isCurrent ? '• Cet appareil' : ''}
-                                                    </p>
-                                                    <p className="text-xs text-zinc-500 truncate">
-                                                        Dernière activité : {new Date(session.last_seen).toLocaleString('fr-FR')}
-                                                    </p>
+                                                <span className="text-xs text-zinc-500">Minimum 8 caractères</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[13px] text-zinc-400">Ancien mot de passe</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showCurrentPassword ? 'text' : 'password'}
+                                                            value={currentPassword}
+                                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                                            placeholder="Votre mot de passe actuel"
+                                                            autoComplete="current-password"
+                                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 pr-11 text-[15px] text-white focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_0_2px_rgba(0,255,120,0.15)] transition-all placeholder:text-zinc-600"
+                                                        />
+                                                        <button type="button" onClick={() => setShowCurrentPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors" aria-label={showCurrentPassword ? 'Masquer le mot de passe actuel' : 'Afficher le mot de passe actuel'}>
+                                                            {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[13px] text-zinc-400">Nouveau mot de passe</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showNewPassword ? 'text' : 'password'}
+                                                            value={newPassword}
+                                                            onChange={(e) => setNewPassword(e.target.value)}
+                                                            placeholder="Minimum 8 caractères"
+                                                            autoComplete="new-password"
+                                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 pr-11 text-[15px] text-white focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_0_2px_rgba(0,255,120,0.15)] transition-all placeholder:text-zinc-600"
+                                                        />
+                                                        <button type="button" onClick={() => setShowNewPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors" aria-label={showNewPassword ? 'Masquer le nouveau mot de passe' : 'Afficher le nouveau mot de passe'}>
+                                                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[13px] text-zinc-400">Confirmation</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showConfirmNewPassword ? 'text' : 'password'}
+                                                            value={confirmNewPassword}
+                                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                                            placeholder="Répétez le nouveau mot de passe"
+                                                            autoComplete="new-password"
+                                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 pr-11 text-[15px] text-white focus:outline-none focus:border-[#00ff88] focus:shadow-[0_0_0_2px_rgba(0,255,120,0.15)] transition-all placeholder:text-zinc-600"
+                                                        />
+                                                        <button type="button" onClick={() => setShowConfirmNewPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-green-neon transition-colors" aria-label={showConfirmNewPassword ? 'Masquer la confirmation du mot de passe' : 'Afficher la confirmation du mot de passe'}>
+                                                            {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    );
-                                })
-                            )}
+                                    </div>
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.08, duration: 0.5, ease: 'easeOut' }}
+                                    className="bg-white/[0.03] backdrop-blur-[20px] border border-white/10 rounded-3xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1cff6b] hover:shadow-[0_10px_30px_rgba(0,255,120,0.08)]"
+                                >
+                                    <div className="flex items-center gap-3 mb-7">
+                                        <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-300/25 flex items-center justify-center"><Coins className="w-5 h-5 text-amber-300" /></div>
+                                        <h2 className="text-lg font-semibold">⭐ Programme Fidélité</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                                            <p className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Points</p>
+                                            <p className="text-4xl font-semibold text-white mt-2">{loyaltyPoints}</p>
+                                            <p className="text-sm text-green-neon mt-1">Green Member 🌿</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:col-span-2">
+                                            <p className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Progression vers le niveau suivant</p>
+                                            <div className="mt-4 h-3 rounded-full bg-white/10 overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${progressPct}%` }}
+                                                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                                                    className="h-full bg-gradient-to-r from-[#00ff88] to-[#00c853]"
+                                                />
+                                            </div>
+                                            <p className="text-sm text-zinc-300 mt-3">{progressPct}% • Récompense suivante : <span className="text-white font-medium">-10% sur votre prochaine commande</span></p>
+                                        </div>
+                                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 lg:col-span-2 flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Code de parrainage</p>
+                                                <p className="text-xl font-semibold tracking-[0.12em] mt-2">{profile?.referral_code || '---'}</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (profile?.referral_code) {
+                                                        navigator.clipboard.writeText(profile.referral_code);
+                                                        setMessage({ type: 'success', text: 'Code copié dans le presse-papier !' });
+                                                        setTimeout(() => setMessage(null), 3000);
+                                                    }
+                                                }}
+                                                className="h-11 px-4 rounded-xl border border-white/10 bg-white/5 hover:border-green-neon/30 transition-all"
+                                            >
+                                                Copier
+                                            </button>
+                                        </div>
+                                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                                            <p className="text-[13px] text-zinc-400 uppercase tracking-[0.1em]">Historique rapide</p>
+                                            <p className="text-sm text-zinc-300 mt-2">2 commandes ce mois-ci</p>
+                                            <Link to="/compte" className="inline-flex mt-3 text-sm text-green-neon hover:text-emerald-300">Voir le détail</Link>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16, duration: 0.5, ease: 'easeOut' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBudTender(!showBudTender)}
+                                        className={`w-full group relative overflow-hidden rounded-3xl border transition-all duration-500 ${showBudTender ? 'bg-white/[0.03] border-green-neon/20 p-7 md:p-8' : 'bg-gradient-to-br from-green-neon/[0.05] via-white/[0.03] to-emerald-500/[0.04] border-white/10 hover:border-green-neon/30 p-7 md:p-8'}`}
+                                    >
+                                        <div className="relative flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center"><SlidersHorizontal className="w-5 h-5 text-green-neon" /></div>
+                                                <div className="text-left">
+                                                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">Préférences BudTender <Sparkles className="w-4 h-4 text-green-neon" /></h2>
+                                                    <p className="text-[13px] text-zinc-400 mt-1">{showBudTender ? 'Cliquez pour réduire' : 'Personnalisez vos recommandations IA'}</p>
+                                                </div>
+                                            </div>
+                                            <motion.div animate={{ rotate: showBudTender ? 180 : 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                                                <ChevronDown className="w-4 h-4 text-zinc-400" />
+                                            </motion.div>
+                                        </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {showBudTender && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="bg-white/[0.03] backdrop-blur-[20px] border border-white/10 border-t-0 rounded-b-3xl px-7 md:px-8 pb-7 md:pb-8 pt-2">
+                                                    <p className="text-[13px] text-zinc-400 mb-6">Ces informations permettent à notre IA BudTender d'affiner vos recommandations.</p>
+                                                    <div className="space-y-8">
+                                                        {quizSteps.map((step, idx) => (
+                                                            <motion.div key={step.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} className="space-y-3">
+                                                                <label className="text-[13px] text-zinc-300 uppercase tracking-[0.1em] flex items-center gap-2">
+                                                                    {step.id === 'goal' && <Target className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'experience' && <Zap className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'format' && <Waves className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'budget' && <Coins className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'age' && <Cake className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'intensity' && <Flame className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.id === 'terpenes' && <Leaf className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {!['goal', 'experience', 'format', 'budget', 'age', 'intensity', 'terpenes'].includes(step.id) && <BrainCircuit className="w-3.5 h-3.5 text-green-neon" />}
+                                                                    {step.question}
+                                                                </label>
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                                    {step.options.map((option) => (
+                                                                        <button
+                                                                            key={option.value}
+                                                                            type="button"
+                                                                            onClick={() => updatePref(step.id, option.value)}
+                                                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${isPrefSelected(step.id, option.value) ? 'bg-green-neon/15 border-green-neon text-white shadow-[0_0_20px_rgba(34,255,148,0.1)]' : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/[0.08] hover:border-white/20'}`}
+                                                                        >
+                                                                            <span className="text-lg">{option.emoji}</span>
+                                                                            <span className="text-xs font-semibold uppercase tracking-wide leading-tight">{option.label}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </motion.div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.24, duration: 0.5, ease: 'easeOut' }}
+                                    className="bg-white/[0.03] backdrop-blur-[20px] border border-white/10 rounded-3xl p-7 md:p-8 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1cff6b] hover:shadow-[0_10px_30px_rgba(0,255,120,0.08)]"
+                                >
+                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                                        <div>
+                                            <h2 className="text-lg font-semibold">Appareils connectés</h2>
+                                            <p className="text-sm text-zinc-400 mt-1">Vue sécurité des sessions actives.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleDisconnectOthers}
+                                            disabled={isRevokingOthers || isSessionsLoading || sessions.length <= 1}
+                                            className="inline-flex items-center justify-center gap-2 px-4 h-11 rounded-xl border border-red-400/30 text-red-300 hover:text-white hover:border-red-400/70 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            {isRevokingOthers ? 'Déconnexion...' : 'Déconnecter les autres'}
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {isSessionsLoading ? (
+                                            <p className="text-sm text-zinc-500">Chargement des appareils...</p>
+                                        ) : sessions.length === 0 ? (
+                                            <p className="text-sm text-zinc-500">Aucun appareil actif détecté.</p>
+                                        ) : (
+                                            sessions.map((session) => {
+                                                const isCurrent = session.device_id === getDeviceId();
+                                                const isMobile = /Android|iPhone|iPad|Mobile/i.test(session.user_agent || '');
+
+                                                return (
+                                                    <div key={session.id} className={`rounded-2xl border px-4 py-4 transition-all ${isCurrent ? 'border-green-neon/40 bg-green-neon/[0.07]' : 'border-white/10 bg-white/[0.03] hover:border-white/20'}`}>
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex items-start gap-3 min-w-0">
+                                                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${isCurrent ? 'bg-green-neon/20 text-green-neon' : 'bg-white/5 text-zinc-400'}`}>
+                                                                    {isMobile ? <Smartphone className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-sm font-medium text-white truncate">{isCurrent ? '🟢 Cet appareil' : (session.device_name || 'Appareil inconnu')}</p>
+                                                                    <p className="text-xs text-zinc-400 mt-1 truncate">{isMobile ? 'Mobile' : 'Desktop'} • Chrome</p>
+                                                                    <p className="text-xs text-zinc-500 truncate">Paris, France</p>
+                                                                    <p className="text-xs text-zinc-500 mt-1">Dernière activité : {isCurrent ? 'maintenant' : new Date(session.last_seen).toLocaleString('fr-FR')}</p>
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" className="h-9 px-3 rounded-lg border border-white/10 bg-white/5 hover:border-red-400/40 hover:text-red-300 text-xs transition-all">
+                                                                Déconnecter
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </motion.div>
+
+                                <div className="pt-3 space-y-5">
+                                    {message && (
+                                        <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className={`text-sm px-4 text-center ${message.type === 'success' ? 'text-green-neon' : 'text-red-400'}`}>
+                                            {message.text}
+                                        </motion.p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving || isPrefsLoading}
+                                        className="group w-full h-14 flex items-center justify-center gap-3 text-black font-semibold uppercase tracking-[0.05em] rounded-[14px] bg-gradient-to-r from-[#00ff88] to-[#00c853] shadow-[0_8px_25px_rgba(0,255,120,0.25)] hover:-translate-y-0.5 hover:shadow-[0_10px_35px_rgba(0,255,120,0.35)] transition-all"
+                                    >
+                                        <AnimatePresence mode="wait">
+                                            {isSaving ? (
+                                                <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-3">
+                                                    <svg className="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Mise à jour en cours...
+                                                </motion.div>
+                                            ) : (
+                                                <motion.div key="save" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-3">
+                                                    <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                                    Mettre à jour mon profil
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </motion.div>
-
-                    {/* Submit Button */}
-                    <div className="pt-8 space-y-6">
-                        {message && (
-                            <motion.p
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className={`text-xs font-black uppercase tracking-widest px-4 text-center ${message.type === 'success' ? 'text-green-neon' : 'text-red-400'}`}
-                            >
-                                {message.text}
-                            </motion.p>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={isSaving || isPrefsLoading}
-                            className="group w-full flex items-center justify-center gap-4 bg-white text-black font-black uppercase tracking-[0.3em] py-6 rounded-[2rem] hover:bg-green-neon transition-all shadow-2xl relative overflow-hidden"
-                        >
-                            <AnimatePresence mode="wait">
-                                {isSaving ? (
-                                    <motion.div
-                                        key="saving"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="flex items-center gap-3"
-                                    >
-                                        <svg className="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Synchronisation...
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="save"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="flex items-center gap-3"
-                                    >
-                                        <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                        Mettre à jour mon profil
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </button>
                     </div>
-                </form>
-
-                <div className="mt-16 text-center space-y-4">
-                    <div className="w-px h-16 bg-gradient-to-b from-green-neon/50 to-transparent mx-auto" />
-                    <p className="text-[10px] font-mono uppercase tracking-[0.5em] text-zinc-700 leading-loose">VOS DONNÉES SONT PROTÉGÉES PAR NOS STANDARDS DE SÉCURITÉ.<br />L'EXCELLENCE EST NOTRE ENGAGEMENT.</p>
                 </div>
-
             </div>
         </div>
     );
