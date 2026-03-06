@@ -178,7 +178,7 @@ export function useElevenLabsVoice({
       clearTimeout(setupTimeoutRef.current);
       setupTimeoutRef.current = null;
     }
-    conversationRef.current?.endSession().catch(() => {});
+    conversationRef.current?.endSession().catch(() => { });
     conversationRef.current = null;
     startInFlightRef.current = false;
     searchResultsRef.current = [];
@@ -217,9 +217,21 @@ export function useElevenLabsVoice({
     }, CONNECTION_TIMEOUT_MS);
 
     try {
+      const ctx = buildSessionContext(
+        productsRef.current,
+        savedPrefsRef.current,
+        userNameRef.current,
+        pastProductsRef.current,
+        deliveryFeeRef.current,
+        deliveryFreeThresholdRef.current,
+      );
+
       const conversation = await Conversation.startSession({
         agentId,
         connectionType: 'websocket' as const,
+        dynamicVariables: {
+          user_context: ctx,
+        } as any,
         overrides: {
           agent: {
             language: 'fr',
@@ -281,20 +293,6 @@ export function useElevenLabsVoice({
 
       conversationRef.current = conversation;
 
-      // Inject dynamic user/session context (name, prefs, past orders, delivery)
-      // This is sent as a background context update — keeps the init message small
-      const ctx = buildSessionContext(
-        productsRef.current,
-        savedPrefsRef.current,
-        userNameRef.current,
-        pastProductsRef.current,
-        deliveryFeeRef.current,
-        deliveryFreeThresholdRef.current,
-      );
-      if (ctx) {
-        try { conversation.sendContextualUpdate(ctx); } catch { /* ignore if not ready */ }
-      }
-
       // Apply initial mute state if toggled before session started
       if (isMutedRef.current) {
         try { conversation.setMicMuted(true); } catch { /* ignore */ }
@@ -326,7 +324,7 @@ export function useElevenLabsVoice({
   // Cleanup on unmount
   useEffect(() => () => {
     if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
-    conversationRef.current?.endSession().catch(() => {});
+    conversationRef.current?.endSession().catch(() => { });
   }, []);
 
   const isSupported = useMemo(() => !compatibilityError, [compatibilityError]);
