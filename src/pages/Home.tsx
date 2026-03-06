@@ -286,7 +286,7 @@ export default function Home() {
               </p>
             </div>
             <Link to="/catalogue" className="group inline-flex items-center gap-3 bg-white/[0.03] border border-white/10 px-8 py-4 rounded-2xl text-white font-semibold hover:bg-green-neon hover:text-black transition-all">
-              Boutique complète <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              Boutique <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 

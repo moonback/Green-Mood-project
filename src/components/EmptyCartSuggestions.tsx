@@ -7,6 +7,7 @@ import { Product } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { CATEGORY_SLUGS } from '../lib/constants';
+import { useAuthStore } from '../store/authStore';
 
 interface ProductWithScore extends Product {
     score?: number;
@@ -18,6 +19,7 @@ export default function EmptyCartSuggestions() {
     const addItem = useCartStore((s) => s.addItem);
     const closeSidebar = useCartStore((s) => s.closeSidebar);
     const { savedPrefs } = useBudTenderMemory();
+    const user = useAuthStore((s) => s.user);
 
     useEffect(() => {
         fetchSuggestions();
@@ -95,6 +97,8 @@ export default function EmptyCartSuggestions() {
             </div>
         );
     }
+
+    if (!user) return null;
 
     if (products.length === 0) return null;
 

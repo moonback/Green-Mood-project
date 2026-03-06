@@ -93,14 +93,14 @@ export default function CartSidebar() {
                     </div>
                   )}
 
-                  <div className="pt-4 shrink-0 px-4 w-full">
+                  {/* <div className="pt-4 shrink-0 px-4 w-full">
                     <button
                       onClick={closeSidebar}
                       className="w-full bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.12] text-zinc-400 hover:text-white font-bold text-[10px] py-4 rounded-xl uppercase tracking-[0.3em] transition-all hover:shadow-lg active:scale-[0.98]"
                     >
                       Boutique Complète
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               ) : (
                 <>
