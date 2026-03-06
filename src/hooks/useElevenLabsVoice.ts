@@ -5,7 +5,7 @@ import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from './useBudTenderMemory';
 import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
-import { getVoicePrompt } from '../lib/budtenderPrompts';
+import { buildSessionContext } from '../lib/budtenderPrompts';
 
 const CONNECTION_TIMEOUT_MS = 10000;
 
@@ -222,16 +222,6 @@ export function useElevenLabsVoice({
         connectionType: 'websocket' as const,
         overrides: {
           agent: {
-            prompt: {
-              prompt: getVoicePrompt(
-                productsRef.current,
-                savedPrefsRef.current,
-                userNameRef.current,
-                pastProductsRef.current,
-                deliveryFeeRef.current,
-                deliveryFreeThresholdRef.current,
-              ),
-            },
             language: 'fr',
           },
         },
@@ -290,6 +280,20 @@ export function useElevenLabsVoice({
       });
 
       conversationRef.current = conversation;
+
+      // Inject dynamic user/session context (name, prefs, past orders, delivery)
+      // This is sent as a background context update — keeps the init message small
+      const ctx = buildSessionContext(
+        productsRef.current,
+        savedPrefsRef.current,
+        userNameRef.current,
+        pastProductsRef.current,
+        deliveryFeeRef.current,
+        deliveryFreeThresholdRef.current,
+      );
+      if (ctx) {
+        try { conversation.sendContextualUpdate(ctx); } catch { /* ignore if not ready */ }
+      }
 
       // Apply initial mute state if toggled before session started
       if (isMutedRef.current) {

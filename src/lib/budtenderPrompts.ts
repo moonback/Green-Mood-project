@@ -113,6 +113,46 @@ Réponds en français.
 };
 
 /**
+ * Builds a compact dynamic context string sent via sendContextualUpdate() after
+ * the ElevenLabs session connects. Keeps the WebSocket init message small while
+ * still injecting user-specific data (name, history, prefs, catalog, delivery).
+ */
+export const buildSessionContext = (
+    products: Product[],
+    savedPrefs: any,
+    userName?: string | null,
+    pastProducts: any[] = [],
+    deliveryFee: number = 5.9,
+    deliveryFreeThreshold: number = 50
+): string => {
+    const lines: string[] = [];
+
+    if (userName) lines.push(`CLIENT : ${userName}`);
+
+    if (pastProducts && pastProducts.length > 0) {
+        const lastProds = pastProducts.slice(0, 3).map((p: any) => p.name).join(', ');
+        lines.push(`CLIENT FIDÈLE — derniers achats : ${lastProds}. Accueille-le chaleureusement en le reconnaissant.`);
+    }
+
+    if (savedPrefs) {
+        const { goal, experience, format, budget, terpenes } = savedPrefs;
+        const parts = [goal, experience, format, budget, terpenes?.join('/')].filter(Boolean);
+        lines.push(`PROFIL CONNU : ${parts.join(' | ')}. Ne repose pas les questions de base.`);
+    }
+
+    const catalogAnchor = products.length > 0
+        ? products.map(p => `${p.name} (${p.price}€, CBD ${p.cbd_percentage}%)`).join(', ')
+        : null;
+    if (catalogAnchor) {
+        lines.push(`CATALOGUE BOUTIQUE (noms exacts autorisés — appelle search_catalog avant toute recommandation) : ${catalogAnchor}`);
+    }
+
+    lines.push(`LIVRAISON : ${deliveryFee}€, gratuite dès ${deliveryFreeThreshold}€.`);
+
+    return lines.join('\n');
+};
+
+/**
  * Prompt for Gemini Live Voice (Audio)
  * - 100% en français
  * - Persona adaptatif : Débutant / Connaisseur / Expert
