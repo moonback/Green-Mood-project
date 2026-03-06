@@ -10,6 +10,7 @@ export const getQuizPrompt = (
     answers: QuizAnswers,
     quizSteps: QuizStep[],
     catalog: string,
+    totalCount: number,
     context?: string
 ) => {
     const contextBlock = context
@@ -58,6 +59,7 @@ ${contextBlock}
 - Va droit au but, logique de performance
 
 📦 CATALOGUE DISPONIBLE  
+Il y a actuellement **${totalCount} produits** au total dans notre catalogue complet.
 ⚠️ Tu dois proposer UNIQUEMENT des produits présents dans cette liste, avec leur nom EXACT :
 ${catalog}
 
@@ -77,7 +79,7 @@ Réponds en français.
 /**
  * Prompt for free conversation (direct chat)
  */
-export const getChatPrompt = (userMessage: string, catalog: string, prefs?: string) => {
+export const getChatPrompt = (userMessage: string, catalog: string, totalCount: number, prefs?: string) => {
     const prefsBlock = prefs
         ? `\n🧠 PROFIL ET PRÉFÉRENCES DU CLIENT (MAINTENIR DANS TOUTE LA DISCUSSION) :\n${prefs}\n`
         : '';
@@ -101,7 +103,9 @@ ${prefsBlock}
 - Aucune mention légale
 - Si hors-sujet → redirection polie vers ton rôle de conseiller Green Mood
 
-📦 CATALOGUE AUTORISÉ :
+📦 INFORMATION CATALOGUE :
+Il y a actuellement **${totalCount} produits** au total dans notre catalogue complet.
+Les plus pertinents pour cette demande sont :
 ${catalog}
 
 💬 MESSAGE CLIENT :
@@ -141,6 +145,7 @@ export const getVoicePrompt = (
     }
 
     const catalogStr = products.slice(0, 10).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}%`).join('\n');
+    const totalCount = products.length;
 
 
     return `
@@ -192,7 +197,9 @@ DELIVERY RULES:
 Delivery fee: ${deliveryFee}€
 Free delivery above: ${deliveryFreeThreshold}€
 
-CATALOG SAMPLE:
+CATALOG INFORMATION:
+Total number of products in store: ${totalCount}
+SAMPLE CATALOG:
 ${catalogStr}
 
 CUSTOMER CONTEXT:

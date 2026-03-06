@@ -420,7 +420,7 @@ export default function AdminBudTenderTab() {
                                             placeholder="Ex: google/gemini-2.0-flash-lite-preview-02-05:free"
                                         />
                                         <p className="text-[10px] text-zinc-600 italic">
-                                            Identifiant du modèle (ex: google/gemini-2.5-flash:free, anthropic/claude-3.5-sonnet, etc.)
+                                            Identifiant du modèle (ex: google/gemini-2.0-flash:free, anthropic/claude-3.5-sonnet, etc.)
                                         </p>
                                     </div>
 

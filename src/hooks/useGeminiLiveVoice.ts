@@ -350,7 +350,10 @@ export function useGeminiLiveVoice({
             canStreamInputRef.current = false;
             console.log('Live Closed:', e.code, e.reason);
             if (e.code !== 1000) {
-              setError(`Session interrompue (${e.code}).`);
+              const msg = e.code === 1008
+                ? "Modèle indisponible ou non autorisé dans cette région."
+                : `Session interrompue (${e.code}).`;
+              setError(msg);
               setVoiceState('error');
             } else {
               stopSession();

@@ -152,7 +152,7 @@ async function callAI(
 
     const systemPromptMessage = {
         role: 'system',
-        content: getQuizPrompt(answers, settings.quiz_steps, catalog, context)
+        content: getQuizPrompt(answers, settings.quiz_steps, catalog, products.length, context)
     };
 
     const messages = [
@@ -719,7 +719,7 @@ export default function BudTender() {
             userContext += `Préférences: ${entries.join(' | ')}`;
         }
 
-        const systemPrompt = getChatPrompt(text, catalog, userContext);
+        const systemPrompt = getChatPrompt(text, catalog, products.length, userContext);
 
         // Build history for OpenRouter (OpenAI format)
         // IMPORTANT: Roles must alternate and not be empty
