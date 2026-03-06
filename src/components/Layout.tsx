@@ -25,6 +25,7 @@ import { useAuthStore } from "../store/authStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { supabase } from "../lib/supabase";
 import { Product, Category } from "../lib/types";
+import StarRating from "./StarRating";
 
 function BannerTicker({ messages }: { messages: string[] }) {
   const [index, setIndex] = useState(0);
@@ -103,10 +104,38 @@ export default function Layout() {
             .limit(3),
         ]);
 
-        setSearchResults({
-          products: (products as Product[]) || [],
-          categories: (categories as Category[]) || [],
-        });
+        const searchProducts = (products as Product[]) || [];
+        const searchCategories = (categories as Category[]) || [];
+
+        // Fetch ratings for the found products
+        if (searchProducts.length > 0) {
+          const { data: ratingsData } = await supabase
+            .from("reviews")
+            .select("product_id, rating")
+            .in("product_id", searchProducts.map(p => p.id))
+            .eq("is_published", true);
+
+          const ratingMap = new Map<string, { sum: number; count: number }>();
+          (ratingsData || []).forEach((r) => {
+            const cur = ratingMap.get(r.product_id) ?? { sum: 0, count: 0 };
+            ratingMap.set(r.product_id, { sum: cur.sum + r.rating, count: cur.count + 1 });
+          });
+
+          const withRatings = searchProducts.map((p) => {
+            const r = ratingMap.get(p.id);
+            return r ? { ...p, avg_rating: r.sum / r.count, review_count: r.count } : p;
+          });
+
+          setSearchResults({
+            products: withRatings,
+            categories: searchCategories,
+          });
+        } else {
+          setSearchResults({
+            products: [],
+            categories: searchCategories,
+          });
+        }
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -659,7 +688,7 @@ export default function Layout() {
                             {searchResults.products.map((prod) => (
                               <Link
                                 key={prod.id}
-                                to={`/produit/${prod.slug}`}
+                                to={`/catalogue/${prod.slug}`}
                                 onClick={() => setIsSearchOpen(false)}
                                 className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] hover:border-white/10 transition-all group"
                               >
@@ -669,12 +698,24 @@ export default function Layout() {
                                   </div>
                                   <div>
                                     <p className="text-sm font-bold text-white group-hover:text-green-neon transition-colors">{prod.name}</p>
-                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{prod.category?.name}</p>
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{prod.category?.name}</p>
+                                      {prod.avg_rating && prod.avg_rating > 0 && (
+                                        <>
+                                          <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                          <StarRating rating={prod.avg_rating} size="sm" showCount={false} />
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="text-right">
+                                <div className="text-right shrink-0">
                                   <p className="text-sm font-black text-white">{prod.price.toFixed(2)}€</p>
-                                  <p className="text-[10px] text-zinc-500 line-through">{(prod.price * 1.2).toFixed(2)}€</p>
+                                  {prod.original_value && prod.original_value > prod.price ? (
+                                    <p className="text-[10px] text-zinc-500 line-through">{prod.original_value.toFixed(2)}€</p>
+                                  ) : (
+                                    <p className="text-[10px] text-zinc-600 font-medium uppercase tracking-tighter italic opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Voir détail</p>
+                                  )}
                                 </div>
                               </Link>
                             ))}
