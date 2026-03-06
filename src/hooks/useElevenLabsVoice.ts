@@ -219,7 +219,7 @@ export function useElevenLabsVoice({
     try {
       const conversation = await Conversation.startSession({
         agentId,
-        connectionType: 'webrtc' as const,
+        connectionType: 'websocket' as const,
         overrides: {
           agent: {
             prompt: {
