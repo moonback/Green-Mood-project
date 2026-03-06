@@ -1,13 +1,12 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { Conversation } from '@elevenlabs/client';
-import type { MessagePayload } from '@elevenlabs/types';
 import { Product } from '../lib/types';
 import { PastProduct, SavedPrefs } from './useBudTenderMemory';
 import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { buildSessionContext } from '../lib/budtenderPrompts';
 
-const CONNECTION_TIMEOUT_MS = 10000;
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
@@ -23,6 +22,21 @@ interface Options {
   onViewProduct?: (product: Product) => void;
   onNavigate?: (path: string) => void;
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PAGE_MAP: Record<string, string> = {
+  home: '/',
+  shop: '/boutique',
+  products: '/produits',
+  quality: '/qualite',
+  contact: '/contact',
+  account: '/compte',
+  cart: '/panier',
+  catalog: '/catalogue',
+};
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useElevenLabsVoice({
   products,
@@ -42,12 +56,12 @@ export function useElevenLabsVoice({
 
   const [compatibilityError] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    if (!window.isSecureContext) return 'Connexion sécurisée (HTTPS) requise.';
-    if (!navigator.mediaDevices?.getUserMedia) return 'Microphone non supporté par ce navigateur.';
+    if (!window.isSecureContext) return 'Sécurisé (HTTPS) requis.';
+    if (!navigator.mediaDevices?.getUserMedia) return 'Microphone non supporté.';
     return null;
   });
 
-  // Keep latest callbacks + data in refs to avoid stale closures inside clientTools
+  // ── Stable refs so callbacks always see the latest values ──────────────────
   const productsRef = useRef(products);
   productsRef.current = products;
   const onAddItemRef = useRef(onAddItem);
@@ -58,137 +72,82 @@ export function useElevenLabsVoice({
   onViewProductRef.current = onViewProduct;
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
-  const savedPrefsRef = useRef(savedPrefs);
-  savedPrefsRef.current = savedPrefs;
-  const pastProductsRef = useRef(pastProducts);
-  pastProductsRef.current = pastProducts;
-  const deliveryFeeRef = useRef(deliveryFee);
-  deliveryFeeRef.current = deliveryFee;
-  const deliveryFreeThresholdRef = useRef(deliveryFreeThreshold);
-  deliveryFreeThresholdRef.current = deliveryFreeThreshold;
-  const userNameRef = useRef(userName);
-  userNameRef.current = userName;
 
+  // ── Session bookkeeping ────────────────────────────────────────────────────
+  // conversationRef is nulled BEFORE endSession() so all callbacks can bail early,
+  // which eliminates the "WebSocket already CLOSING or CLOSED" console error that
+  // appears when the SDK's internal audio worklet fires one last message during teardown.
   const conversationRef = useRef<Conversation | null>(null);
-  const setupTimeoutRef = useRef<number | null>(null);
+  const isManualCloseRef = useRef(false);
   const startInFlightRef = useRef(false);
   const isMutedRef = useRef(false);
+  const sessionIdRef = useRef(0);
   const searchResultsRef = useRef<Product[]>([]);
 
-  // ─── Tool handlers (same logic as useGeminiLiveVoice) ────────────────────────
+  // ── Product lookup helper ──────────────────────────────────────────────────
 
-  const handleSearchCatalog = useCallback(async (params: { query: string }): Promise<string> => {
-    const query = (params.query || '').trim();
-    if (!query) return 'Erreur : paramètre "query" vide.';
-    try {
-      const embedding = await generateEmbedding(query);
-      const { data, error: rpcError } = await supabase.rpc('match_products', {
-        query_embedding: embedding,
-        match_threshold: 0.1,
-        match_count: 10,
-      });
-      if (rpcError) throw rpcError;
-      if (data && data.length > 0) searchResultsRef.current = data as Product[];
-      const results = (data as any[])
-        .map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}% | ${p.description}`)
-        .join('\n');
-      return results || 'Aucun produit trouvé pour cette recherche.';
-    } catch (e) {
-      console.error('[ElevenLabs] search_catalog error:', e);
-      return 'Erreur technique lors de la recherche catalogue.';
-    }
+  const findProduct = useCallback((name: string): Product | undefined => {
+    const lower = name.toLowerCase().trim();
+    const all = [...productsRef.current, ...searchResultsRef.current];
+    return (
+      all.find((p) => p.name.toLowerCase() === lower) ||
+      all.find(
+        (p) =>
+          p.name.toLowerCase().includes(lower) ||
+          lower.includes(p.name.toLowerCase()),
+      ) ||
+      (() => {
+        const words = lower.split(/\s+/).filter((w) => w.length > 2);
+        return words.length > 0
+          ? all.find((p) =>
+            words.every((w) => p.name.toLowerCase().includes(w)),
+          )
+          : undefined;
+      })()
+    );
   }, []);
 
-  const handleAddToCart = useCallback(async (params: {
-    product_name: string;
-    quantity?: number;
-    weight_grams?: number;
-  }): Promise<string> => {
-    const prodName = (params.product_name || '').trim();
-    const weightGrams = Number(params.weight_grams) || 0;
-    let qty = Number(params.quantity) || 0;
+  // ── Cleanup ────────────────────────────────────────────────────────────────
 
-    const prodNameLower = prodName.toLowerCase();
-    const allKnown = [...productsRef.current, ...searchResultsRef.current];
-
-    let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-      || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-
-    if (!p) {
-      const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-      p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-    }
-
-    if (!p) return `Produit "${prodName}" non trouvé. Appelle search_catalog d'abord.`;
-
-    if (weightGrams > 0) {
-      const unitWeight = p.weight_grams || 1;
-      qty = Math.max(1, Math.round(weightGrams / unitWeight));
-    } else if (qty <= 0) {
-      qty = 1;
-    }
-
-    if (onAddItemRef.current) {
-      onAddItemRef.current(p, qty);
-      return weightGrams > 0
-        ? `OK — ${p.name} (${weightGrams}g, soit x${qty}) ajouté au panier.`
-        : `OK — ${p.name} x${qty} ajouté au panier.`;
-    }
-    return 'Erreur : panier non disponible.';
-  }, []);
-
-  const handleViewProduct = useCallback(async (params: { product_name: string }): Promise<string> => {
-    const prodName = (params.product_name || '').trim();
-    const prodNameLower = prodName.toLowerCase();
-    const allKnown = [...productsRef.current, ...searchResultsRef.current];
-
-    let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-      || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-
-    if (!p) {
-      const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-      p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-    }
-
-    if (p && onViewProductRef.current) {
-      onViewProductRef.current(p);
-      return `OK — Fiche de "${p.name}" affichée.`;
-    }
-    return `Produit "${prodName}" non trouvé.`;
-  }, []);
-
-  const handleNavigateTo = useCallback(async (params: { page: string }): Promise<string> => {
-    const page = (params.page || '').toLowerCase();
-    const mapping: Record<string, string> = {
-      home: '/', shop: '/boutique', products: '/produits', quality: '/qualite',
-      contact: '/contact', account: '/compte', cart: '/panier', catalog: '/catalogue',
-    };
-    const path = mapping[page];
-    if (path && onNavigateRef.current) {
-      onNavigateRef.current(path);
-      return `Navigation vers ${page} effectuée.`;
-    }
-    return `La page "${page}" n'existe pas.`;
-  }, []);
-
-  // ─── Session lifecycle ────────────────────────────────────────────────────────
-
-  const stopSession = useCallback(() => {
-    if (setupTimeoutRef.current) {
-      clearTimeout(setupTimeoutRef.current);
-      setupTimeoutRef.current = null;
-    }
-    conversationRef.current?.endSession().catch(() => { });
-    conversationRef.current = null;
+  const cleanup = useCallback(async () => {
+    isManualCloseRef.current = true;
     startInFlightRef.current = false;
+    isMutedRef.current = false;
     searchResultsRef.current = [];
-    setVoiceState('idle');
-    setError(null);
+    sessionIdRef.current += 1;
+
+    // Null the ref first — any SDK callback still in flight will see null and skip.
+    const conv = conversationRef.current;
+    conversationRef.current = null;
+
+    if (conv) {
+      try {
+        await conv.endSession();
+      } catch {
+        // Silently ignore; the session may already be closed.
+      }
+    }
   }, []);
+
+  useEffect(() => () => { cleanup(); }, [cleanup]);
+
+  // ── stopSession ────────────────────────────────────────────────────────────
+
+  const stopSession = useCallback(async () => {
+    await cleanup();
+    setVoiceState('idle');
+    setIsMuted(false);
+    setError(null);
+  }, [cleanup]);
+
+  // ── startSession ───────────────────────────────────────────────────────────
 
   const startSession = useCallback(async () => {
     if (startInFlightRef.current) return;
-    stopSession();
+
+    await cleanup();
+    isManualCloseRef.current = false;
+    const sid = ++sessionIdRef.current;
 
     if (compatibilityError) {
       setError(compatibilityError);
@@ -196,9 +155,9 @@ export function useElevenLabsVoice({
       return;
     }
 
-    const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID;
+    const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined;
     if (!agentId) {
-      setError('VITE_ELEVENLABS_AGENT_ID manquant dans .env');
+      setError('VITE_ELEVENLABS_AGENT_ID manquant.');
       setVoiceState('error');
       return;
     }
@@ -206,125 +165,222 @@ export function useElevenLabsVoice({
     startInFlightRef.current = true;
     setVoiceState('connecting');
     setError(null);
-    searchResultsRef.current = [];
-
-    // Connection timeout
-    setupTimeoutRef.current = window.setTimeout(() => {
-      if (startInFlightRef.current) {
-        setError('Délai de connexion dépassé. Vérifiez votre connexion.');
-        stopSession();
-      }
-    }, CONNECTION_TIMEOUT_MS);
 
     try {
       const ctx = buildSessionContext(
         productsRef.current,
-        savedPrefsRef.current,
-        userNameRef.current,
-        pastProductsRef.current,
-        deliveryFeeRef.current,
-        deliveryFreeThresholdRef.current,
+        savedPrefs,
+        userName,
+        pastProducts,
+        deliveryFee,
+        deliveryFreeThreshold,
       );
 
       const conversation = await Conversation.startSession({
         agentId,
-        connectionType: 'websocket' as const,
-        dynamicVariables: {
-          user_context: ctx,
-        } as any,
+
+        // Only override the first message to inject user context — 
+        // the system prompt is managed on the ElevenLabs dashboard
         overrides: {
           agent: {
             language: 'fr',
+            firstMessage: ctx
+              ? `Bonjour${userName ? ` ${userName}` : ''} ! Je suis votre BudTender Green Mood. Comment puis-je vous aider aujourd'hui ?`
+              : undefined,
           },
         },
 
+        // ── Client-side tool handlers ─────────────────────────────────────
         clientTools: {
-          search_catalog: handleSearchCatalog,
-          add_to_cart: handleAddToCart,
-          view_product: handleViewProduct,
-          navigate_to: handleNavigateTo,
+          add_to_cart: async ({
+            product_name,
+            quantity,
+            weight_grams,
+          }: {
+            product_name: string;
+            quantity?: number;
+            weight_grams?: number;
+          }) => {
+            if (sessionIdRef.current !== sid) return 'Session expirée.';
+            console.info('[ElevenLabs] Tool: add_to_cart', { product_name, quantity, weight_grams });
+
+            let product = findProduct(product_name);
+            if (!product) {
+              try {
+                const { data } = await supabase
+                  .from('products')
+                  .select('*, category:categories(slug, name)')
+                  .ilike('name', `%${product_name}%`)
+                  .eq('is_active', true)
+                  .limit(1)
+                  .maybeSingle();
+                if (data) product = data as Product;
+              } catch { /* ignore */ }
+            }
+
+            if (product) {
+              let qty = Number(quantity) || 0;
+              const weightG = Number(weight_grams) || 0;
+              if (weightG > 0) {
+                const unitWeight = product.weight_grams || 1;
+                qty = Math.max(1, Math.round(weightG / unitWeight));
+              } else if (qty <= 0) {
+                qty = 1;
+              }
+              onAddItemRef.current?.(product, qty);
+              return `${product.name} x${qty} ajouté au panier.`;
+            }
+            return `Produit "${product_name}" non trouvé.`;
+          },
+
+          search_catalog: async ({ query }: { query: string }) => {
+            if (sessionIdRef.current !== sid) return 'Session expirée.';
+            console.info('[ElevenLabs] Tool: search_catalog', { query });
+            try {
+              const embedding = await generateEmbedding((query || '').trim());
+              const { data, error: rpcError } = await supabase.rpc(
+                'match_products',
+                { query_embedding: embedding, match_threshold: 0.1, match_count: 10 },
+              );
+              if (rpcError) throw rpcError;
+              if (data?.length) searchResultsRef.current = data as Product[];
+              return (
+                (data as Product[])
+                  .map((p) => `• ${p.name} (${p.price}€, CBD ${p.cbd_percentage}%) : ${p.description}`)
+                  .join('\n') || 'Aucun résultat trouvé.'
+              );
+            } catch (e) {
+              console.error('[ElevenLabs] Tool error:', e);
+              return 'Erreur lors de la recherche.';
+            }
+          },
+
+          view_product: async ({ product_name }: { product_name: string }) => {
+            if (sessionIdRef.current !== sid) return 'Session expirée.';
+            console.info('[ElevenLabs] Tool: view_product', { product_name });
+            const p = findProduct(product_name);
+            if (p && onViewProductRef.current) {
+              onViewProductRef.current(p);
+              return `Fiche de "${p.name}" affichée.`;
+            }
+            return `Produit "${product_name}" introuvable.`;
+          },
+
+          navigate_to: async ({ page }: { page: string }) => {
+            if (sessionIdRef.current !== sid) return 'Session expirée.';
+            console.info('[ElevenLabs] Tool: navigate_to', { page });
+            const path = PAGE_MAP[(page || '').toLowerCase()];
+            if (path && onNavigateRef.current) {
+              onNavigateRef.current(path);
+              return `Navigation vers ${page} effectuée.`;
+            }
+            return `Page "${page}" non reconnue.`;
+          },
+
           close_session: async () => {
-            setTimeout(() => {
-              stopSession();
-              onCloseSessionRef.current?.();
-            }, 3500);
-            return 'OK — Session en cours de fermeture.';
+            console.info('[ElevenLabs] Tool: close_session');
+            setTimeout(() => { stopSession(); onCloseSessionRef.current?.(); }, 3500);
+            return 'Fermeture en cours...';
           },
         },
+
+        // ── Lifecycle callbacks ───────────────────────────────────────────
 
         onConnect: ({ conversationId }: { conversationId: string }) => {
-          console.log('[ElevenLabs] Connecté — ID:', conversationId);
-          if (setupTimeoutRef.current) {
-            clearTimeout(setupTimeoutRef.current);
-            setupTimeoutRef.current = null;
-          }
+          if (sessionIdRef.current !== sid) return;
+          console.info(`[ElevenLabs] Connecté — ID: ${conversationId}`);
           startInFlightRef.current = false;
         },
 
-        onDisconnect: (_details: unknown) => {
-          console.log('[ElevenLabs] Déconnecté');
-          startInFlightRef.current = false;
+        onDisconnect: () => {
+          console.info('[ElevenLabs] Déconnecté');
           conversationRef.current = null;
-          setVoiceState('idle');
+          startInFlightRef.current = false;
+          if (sessionIdRef.current === sid) {
+            setVoiceState('idle');
+          }
         },
 
-        onError: (message: string) => {
-          console.error('[ElevenLabs] Erreur:', message);
-          setError(message || 'Erreur de connexion ElevenLabs.');
+        onError: (error: string | Error) => {
+          if (sessionIdRef.current !== sid) return;
+          console.error('[ElevenLabs] Erreur:', error);
+          setError(typeof error === 'string' ? error : error.message);
           setVoiceState('error');
           startInFlightRef.current = false;
         },
 
         onStatusChange: ({ status }: { status: string }) => {
-          console.log('[ElevenLabs] Status:', status);
-          if (status === 'connecting') setVoiceState('connecting');
-          else if (status === 'connected') setVoiceState('listening');
-          else if (status === 'disconnecting' || status === 'disconnected') setVoiceState('idle');
+          if (sessionIdRef.current !== sid) return;
+          console.info(`[ElevenLabs] Status: ${status}`);
+          switch (status) {
+            case 'connected':
+              setVoiceState('listening');
+              break;
+            case 'connecting':
+              setVoiceState('connecting');
+              break;
+            case 'disconnecting':
+            case 'disconnected':
+              setVoiceState('idle');
+              break;
+          }
         },
 
-        onMessage: (_msg: MessagePayload) => {
-          // Mode changes are handled via onModeChange below
+        onMessage: (message: any) => {
+          if (sessionIdRef.current !== sid) return;
+          if (message.type === 'agent_response' || message.type === 'user_transcript') {
+            console.debug('[ElevenLabs] Msg:', message);
+          }
         },
 
         onModeChange: ({ mode }: { mode: 'speaking' | 'listening' }) => {
+          if (sessionIdRef.current !== sid) return;
           setVoiceState(mode === 'speaking' ? 'speaking' : 'listening');
         },
-      });
+      } as any);
+
+      // Guard: if the session was superseded while awaiting startSession()
+      if (sessionIdRef.current !== sid) {
+        try { await conversation.endSession(); } catch { /* ignore */ }
+        return;
+      }
 
       conversationRef.current = conversation;
-
-      // Apply initial mute state if toggled before session started
-      if (isMutedRef.current) {
-        try { conversation.setMicMuted(true); } catch { /* ignore */ }
-      }
-    } catch (err: any) {
-      console.error('[ElevenLabs] startSession failed:', err);
-      if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
-      setError(err?.message || 'Impossible de démarrer la session vocale.');
+    } catch (err) {
+      if (sessionIdRef.current !== sid) return;
+      console.error('[ElevenLabs] Session start failed:', err);
+      setError('Impossible de démarrer la session vocale.');
       setVoiceState('error');
       startInFlightRef.current = false;
     }
   }, [
+    cleanup,
     compatibilityError,
+    deliveryFee,
+    deliveryFreeThreshold,
+    findProduct,
+    products.length,
     stopSession,
-    handleSearchCatalog,
-    handleAddToCart,
-    handleViewProduct,
-    handleNavigateTo,
+    userName,
   ]);
+
+  // ── toggleMute ─────────────────────────────────────────────────────────────
 
   const toggleMute = useCallback(() => {
     isMutedRef.current = !isMutedRef.current;
     setIsMuted(isMutedRef.current);
+    const conv = conversationRef.current;
+    if (!conv) return;
     try {
-      conversationRef.current?.setMicMuted(isMutedRef.current);
-    } catch { /* ignore if session not active */ }
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => () => {
-    if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
-    conversationRef.current?.endSession().catch(() => { });
+      // setVolume controls the agent's output volume (speaker-side mute).
+      // Microphone muting is handled internally by the ElevenLabs SDK in v0.12+
+      // via setInputMuted if the method is available.
+      if (typeof (conv as any).setInputMuted === 'function') {
+        (conv as any).setInputMuted(isMutedRef.current);
+      } else {
+        conv.setVolume({ volume: isMutedRef.current ? 0 : 1 });
+      }
+    } catch { /* ignore */ }
   }, []);
 
   const isSupported = useMemo(() => !compatibilityError, [compatibilityError]);
