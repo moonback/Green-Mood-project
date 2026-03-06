@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { getVoicePrompt } from '../lib/budtenderPrompts';
 
-const LIVE_MODEL = 'models/gemini-live-2.5-flash-preview';
+const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const CONNECTION_TIMEOUT_MS = 10000;
@@ -205,7 +205,7 @@ export function useGeminiLiveVoice({
 
         sessionRef.current?.sendRealtimeInput({
           media: {
-            mimeType: 'audio/pcm;rate=16000',
+            mimeType: 'audio/pcm',
             data: toBase64(new Uint8Array(pcm.buffer))
           }
         });
