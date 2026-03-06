@@ -732,6 +732,17 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                     </div>
 
                                     <div>
+                                        <label className={LABEL}>URL de l'image</label>
+                                        <input
+                                            type="url"
+                                            value={productForm.image_url ?? ''}
+                                            onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value || null })}
+                                            className={INPUT}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+
+                                    <div>
                                         <label className={LABEL}>Catégorie *</label>
                                         <select
                                             required
@@ -819,6 +830,62 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                                 setProductForm({ ...productForm, thc_max: e.target.value ? parseFloat(e.target.value) : null })
                                             }
                                             className={INPUT}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={LABEL}>Ancien Prix (€)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={productForm.original_value ?? ''}
+                                            onChange={(e) => setProductForm({ ...productForm, original_value: e.target.value ? parseFloat(e.target.value) : null })}
+                                            className={INPUT}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={LABEL}>Poids (g)</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            value={productForm.weight_grams ?? ''}
+                                            onChange={(e) => setProductForm({ ...productForm, weight_grams: e.target.value ? parseFloat(e.target.value) : null })}
+                                            className={INPUT}
+                                        />
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <label className={LABEL}>Bénéfices / Effets (séparés par des virgules)</label>
+                                        <input
+                                            value={productForm.attributes?.benefits?.join(', ') ?? ''}
+                                            onChange={(e) => setProductForm({
+                                                ...productForm,
+                                                attributes: {
+                                                    ...productForm.attributes,
+                                                    benefits: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                                                }
+                                            })}
+                                            className={INPUT}
+                                            placeholder="Relaxation, Énergie, Sommeil..."
+                                        />
+                                    </div>
+
+                                    <div className="col-span-2">
+                                        <label className={LABEL}>Arômes / Saveurs (séparés par des virgules)</label>
+                                        <input
+                                            value={productForm.attributes?.aromas?.join(', ') ?? ''}
+                                            onChange={(e) => setProductForm({
+                                                ...productForm,
+                                                attributes: {
+                                                    ...productForm.attributes,
+                                                    aromas: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                                                }
+                                            })}
+                                            className={INPUT}
+                                            placeholder="Citron, Terreux, Pin..."
                                         />
                                     </div>
                                 </div>

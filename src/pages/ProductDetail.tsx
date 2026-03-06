@@ -16,6 +16,8 @@ import {
   Package,
   Tag,
   Shield,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product, Review, SubscriptionFrequency, BundleItem } from '../lib/types';
@@ -357,15 +359,6 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Specifications Overlay (Desktop Only) */}
-            <div className="hidden md:flex absolute -bottom-6 -right-6 gap-3 z-30">
-              {product.cbd_percentage != null && (
-                <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
-                  <p className="text-xs text-zinc-500 font-medium uppercase mb-1">Concentration</p>
-                  <p className="text-3xl font-serif font-bold text-green-neon leading-none">{product.cbd_percentage}% <span className="text-xs uppercase font-sans tracking-tight">CBD</span></p>
-                </div>
-              )}
-            </div>
           </motion.div>
 
           <motion.div
@@ -399,22 +392,73 @@ export default function ProductDetail() {
                 {product.description || "Une création singulière, élaborée avec la plus grande exigence pour une expérience sensorielle hors du temps."}
               </p>
 
-              <div className="flex flex-wrap gap-8">
+              <div className="flex flex-wrap gap-10">
                 {(product.attributes?.benefits || []).length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-zinc-500 font-medium flex items-center gap-2">
-                      <span className="w-1 h-1 bg-green-neon rounded-full" /> EFFETS RECHERCHÉS
+                  <div className="space-y-4">
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Zap className="w-3 h-3 text-green-neon" /> Effets
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {product.attributes.benefits!.map(b => (
-                        <span key={b} className="text-xs font-semibold uppercase tracking-wider text-zinc-400 border border-white/10 px-3 py-1.5 rounded-full hover:border-green-neon/50 transition-colors">
+                        <span key={b} className="text-[11px] font-bold uppercase tracking-wider text-green-neon/80 bg-green-neon/5 border border-green-neon/10 px-4 py-2 rounded-xl hover:border-green-neon/30 transition-all cursor-default">
                           {b}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
+                {(product.attributes?.aromas || []).length > 0 && (
+                  <div className="space-y-4">
+                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Sparkles className="w-3 h-3 text-green-neon" /> Arômes
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {product.attributes.aromas!.map(a => (
+                        <span key={a} className="text-[11px] font-bold uppercase tracking-wider text-white/60 bg-white/5 border border-white/10 px-4 py-2 rounded-xl hover:border-white/20 transition-all cursor-default">
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Compact Specifications Bar - Above Price */}
+            <div className="flex items-center flex-wrap gap-8 py-2 border-y border-white/[0.04]">
+              {product.cbd_percentage != null && (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-neon/5 border border-green-neon/10 flex items-center justify-center">
+                    <Leaf className="w-4 h-4 text-green-neon" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.1em] leading-tight">CBD Pureté</span>
+                    <span className="text-lg font-serif font-bold text-white leading-tight">{product.cbd_percentage}%</span>
+                  </div>
+                </div>
+              )}
+              {product.thc_max != null && (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <FlaskConical className="w-4 h-4 text-zinc-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.1em] leading-tight">THC Légal</span>
+                    <span className="text-lg font-serif font-bold text-white leading-tight">&lt; {product.thc_max}%</span>
+                  </div>
+                </div>
+              )}
+              {product.weight_grams != null && product.weight_grams > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Weight className="w-4 h-4 text-zinc-400" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.1em] leading-tight">Poids Net</span>
+                    <span className="text-lg font-serif font-bold text-white leading-tight">{product.weight_grams}g</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 md:p-8 space-y-10 relative overflow-hidden group/panel">
@@ -424,9 +468,16 @@ export default function ProductDetail() {
                 <div className="flex flex-wrap gap-8">
                   <div className="space-y-1">
                     <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{isPerUnit ? 'Prix Unitaire' : 'Prix au gramme'}</p>
-                    <p className="text-2xl font-serif font-bold text-green-neon leading-none">
-                      {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€{isPerUnit ? '' : '/g'}</span>
-                    </p>
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-2xl font-serif font-bold text-green-neon leading-none">
+                        {product.price.toFixed(2)}<span className="text-sm ml-1 italic font-sans uppercase tracking-widest text-zinc-500">€{isPerUnit ? '' : '/g'}</span>
+                      </p>
+                      {product.original_value && product.original_value > product.price && (
+                        <p className="text-sm font-medium text-zinc-600 line-through decoration-red-500/100">
+                          {product.original_value.toFixed(2)} €
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="w-px h-10 bg-white/10 hidden sm:block" />
                   <div className="space-y-1">
@@ -612,16 +663,16 @@ export default function ProductDetail() {
             </p>
 
 
-        <section className="mt-16 rounded-2xl border border-zinc-800 p-6">
-          <h2 className="text-xl font-semibold mb-4">Ressources & liens utiles</h2>
-          <div className="flex flex-wrap gap-4">
-            {buildInternalLinks(product).map((link) => (
-              <Link key={link.to} to={link.to} className="text-green-neon underline underline-offset-2">
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </section>
+            <section className="mt-16 rounded-2xl border border-zinc-800 p-6">
+              <h2 className="text-xl font-semibold mb-4">Ressources & liens utiles</h2>
+              <div className="flex flex-wrap gap-4">
+                {buildInternalLinks(product).map((link) => (
+                  <Link key={link.to} to={link.to} className="text-green-neon underline underline-offset-2">
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </section>
 
           </motion.div>
         </div>
@@ -751,7 +802,7 @@ export default function ProductDetail() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-8">
+            <div className="grid gap-10">
               {reviews.map((review, i) => {
                 const initials = (review.profile?.full_name ?? 'C L')
                   .split(' ')
@@ -762,39 +813,65 @@ export default function ProductDetail() {
                 return (
                   <motion.div
                     key={review.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 md:p-8 hover:bg-white/[0.04] transition-all group"
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1, duration: 0.8, ease: "easeOut" }}
+                    className="relative group lg:pl-12"
                   >
-                    <div className="flex flex-col md:flex-row gap-8">
-                      <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-bold text-xs tracking-wider shrink-0">
-                        {initials}
-                      </div>
-                      <div className="flex-1 space-y-6">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="space-y-1">
-                            <p className="text-sm font-bold uppercase tracking-wider text-white">{review.profile?.full_name ?? 'Membre Anonyme'}</p>
-                            <div className="flex items-center gap-4">
-                              <StarRating rating={review.rating} size="sm" />
-                              {review.is_verified && (
-                                <span className="text-xs font-semibold uppercase tracking-wider text-green-neon px-2 py-1 bg-green-neon/5 rounded-full">ACHAT CERTIFIÉ</span>
-                              )}
+                    {/* Artistic Line & Initials */}
+                    <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-green-neon/20 via-white/5 to-transparent" />
+
+                    <div className="bg-zinc-900/40 backdrop-blur-md border border-white/[0.06] rounded-[2.5rem] p-8 md:p-10 hover:border-green-neon/20 transition-all duration-700 relative overflow-hidden group-hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                      {/* Subtle Pattern Background */}
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-green-neon/[0.02] blur-[100px] pointer-events-none" />
+
+                      <div className="flex flex-col md:flex-row gap-8 relative z-10">
+                        <div className="flex flex-col items-center md:items-start gap-4 shrink-0">
+                          <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-serif text-2xl font-bold shadow-xl group-hover:scale-110 transition-transform duration-700">
+                            {initials}
+                          </div>
+                          {review.is_verified && (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-neon/10 border border-green-neon/20 rounded-full">
+                              <CheckCircle className="w-3 h-3 text-green-neon" />
+                              <span className="text-[9px] font-black text-green-neon uppercase tracking-widest">Certifié</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-6 text-center md:text-left">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                              <h4 className="text-xl font-serif font-bold text-white tracking-tight">
+                                {review.profile?.full_name ?? 'Membre Anonyme'}
+                              </h4>
+                              <div className="flex justify-center md:justify-start">
+                                <StarRating rating={review.rating} size="sm" />
+                              </div>
+                            </div>
+                            <div className="flex flex-col md:items-end gap-1">
+                              <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">
+                                Impression No. {review.id.slice(0, 4).toUpperCase()}
+                              </span>
+                              <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">
+                                {new Date(review.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                }).toUpperCase()}
+                              </p>
                             </div>
                           </div>
-                          <p className="text-xs text-zinc-500 font-medium uppercase">
-                            ARCHIVÉ LE {new Date(review.created_at).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                            }).toUpperCase()}
-                          </p>
+
+                          {review.comment && (
+                            <div className="relative pt-4">
+                              <span className="absolute -top-4 -left-4 text-6xl font-serif text-white/5 pointer-events-none group-hover:text-green-neon/5 transition-colors duration-700">“</span>
+                              <p className="text-zinc-400 font-serif italic text-xl md:text-2xl leading-relaxed max-w-3xl">
+                                {review.comment}
+                              </p>
+                            </div>
+                          )}
                         </div>
-                        {review.comment && (
-                          <p className="text-zinc-400 font-serif italic text-lg leading-relaxed border-l border-white/10 pl-8">
-                            "{review.comment}"
-                          </p>
-                        )}
                       </div>
                     </div>
                   </motion.div>

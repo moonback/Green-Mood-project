@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit3, Trash2, X, List, LayoutGrid, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, List, LayoutGrid, ChevronLeft, ChevronRight, Eye, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Category } from '../../lib/types';
 import CSVImporter from './CSVImporter';
@@ -113,8 +113,8 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                     <button
                         onClick={() => setShowInactive(!showInactive)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${showInactive
-                                ? 'bg-zinc-800 border-zinc-700 text-white'
-                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-zinc-800 border-zinc-700 text-white'
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
                             }`}
                     >
                         <Eye className="w-4 h-4" />
@@ -198,6 +198,15 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                                 >
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
+                                                <a
+                                                    href={`/catalogue?category=${cat.slug}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-zinc-400 hover:text-green-neon hover:bg-zinc-800 rounded-lg transition-all"
+                                                    title="Voir sur le site"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
                                                 <button
                                                     onClick={() => handleDeleteCategory(cat)}
                                                     className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-all"
@@ -258,6 +267,15 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                         <Edit3 className="w-3 h-3" />
                                         Modifier
                                     </button>
+                                    <a
+                                        href={`/catalogue?category=${cat.slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center p-2 text-zinc-500 hover:text-green-neon hover:bg-zinc-800 rounded-lg transition-colors"
+                                        title="Voir sur le site"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </a>
                                     <button
                                         onClick={() => handleDeleteCategory(cat)}
                                         className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
