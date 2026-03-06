@@ -1,96 +1,294 @@
-# ARCHITECTURE
+# 🏗 Architecture Technique — Green Mood CBD
 
-## System Overview
+## Vue d'ensemble
 
-Green Mood V2 est une application **SPA React + Vite** qui s’appuie sur **Supabase** comme backend managé (authentification, base PostgreSQL, stockage d’images, RPC SQL). Le front interagit directement avec Supabase via `@supabase/supabase-js` (pas de couche API Express active dans `src/`). Les pages publiques (catalogue, contenu SEO) et privées (compte, commandes, abonnements) cohabitent dans un routage React Router avec gardes d’accès (`ProtectedRoute`, `AdminRoute`).
+Green Mood est une **Single Page Application (SPA)** React avec un backend entièrement managé par **Supabase** (BaaS). Il n'y a pas de serveur Node.js/API intermédiaire : toutes les interactions avec la base de données, l'authentification et le stockage se font directement via le SDK client Supabase, protégées par **Row Level Security (RLS)**.
 
-Le domaine e-commerce est centralisé dans PostgreSQL (produits, commandes, stock, fidélité, promo, bundles, recommandations, POS). La logique métier critique est partagée entre le front (workflows UI, calculs panier, UX checkout, console admin) et des fonctions SQL côté Supabase (ex: `sync_bundle_stock`, `increment_promo_uses`, `get_product_recommendations`, `match_products`, `create_pos_customer`).
+L'intelligence artificielle repose sur deux services externes : **OpenRouter** (chat texte et embeddings vectoriels) et **Google Gemini** (conseiller vocal temps réel via WebSocket).
 
-L’IA est intégrée en deux canaux: (1) **chat BudTender** avec OpenRouter (LLM + embeddings) et recherche vectorielle Supabase, (2) **voix temps réel** avec Gemini Live (`wss://generativelanguage.googleapis.com/ws/...`) pour le conseiller vocal. Les préférences et interactions IA sont persistées en base (`user_ai_preferences`, `budtender_interactions`) et exploitées dans l’expérience personnalisée.
+---
+
+## Diagramme Global
 
 ```mermaid
-graph TD
-  Client[Navigateur utilisateur] --> Frontend[React 19 + Vite SPA]
-  Frontend --> SupabaseAPI[Supabase API / RPC]
-  SupabaseAPI --> Postgres[(PostgreSQL + pgvector)]
-  Frontend --> OpenRouter[OpenRouter Chat + Embeddings]
-  Frontend --> Gemini[Gemini Live WebSocket]
-  Frontend --> Storage[Supabase Storage: product-images]
+flowchart LR
+    subgraph Client["🖥 Client (Browser)"]
+        SPA["React 19 SPA<br/>Vite + TypeScript"]
+        SW["Service Worker<br/>(Cache Offline)"]
+        PWA["PWA Manifest"]
+    end
+
+    subgraph Supabase["☁️ Supabase"]
+        Auth["GoTrue Auth<br/>(Email/Password)"]
+        DB["PostgreSQL<br/>+ pgvector"]
+        Storage["Storage<br/>(product-images)"]
+        RLS["Row Level Security"]
+        RPC["RPC Functions"]
+    end
+
+    subgraph AI["🤖 Services IA"]
+        OpenRouter["OpenRouter API<br/>(Chat LLM + Embeddings)"]
+        Gemini["Google Gemini<br/>Live Audio API<br/>(WebSocket)"]
+    end
+
+    subgraph Payment["💳 Paiement"]
+        Viva["Viva Wallet API"]
+    end
+
+    SPA --> Auth
+    SPA --> DB
+    SPA --> Storage
+    SPA --> OpenRouter
+    SPA --> Gemini
+    SPA --> Viva
+    DB --> RLS
+    DB --> RPC
+    SW -.-> SPA
 ```
 
-## Frontend Architecture
+---
 
-### Routing
-- Entrée: `src/App.tsx` avec lazy loading des pages.
-- Routes publiques: accueil, boutique, catalogue, guides, pages légales.
-- Routes protégées: checkout, espace compte, commandes, adresses, abonnements, fidélité, avis, favoris, parrainage.
-- Routes admin: `/admin` et `/pos` hors layout standard (header/footer public).
+## Architecture Applicative
 
-### State Management (Zustand)
-- `authStore`: session Supabase Auth, profil utilisateur, login/signup/reset password.
-- `cartStore`: panier persistant (`persist`), type de livraison, totaux dépendants des settings.
-- `settingsStore`: paramètres dynamiques de boutique depuis `store_settings`.
-- Stores complémentaires: wishlist, notifications toast, préférences UI.
+### Pattern : SPA avec BaaS (Backend-as-a-Service)
 
-### Domain UI
-- Parcours catalogue/produit: `Catalog`, `ProductDetail`, `RelatedProducts`, `FrequentlyBoughtTogether`.
-- Parcours transactionnel: `Cart`, `Checkout`, `OrderConfirmation`.
-- Espace client: adresses, profil, commandes, abonnements, reviews, referrals, fidélité.
-- Back-office: tabs admin (analytics, POS, BudTender, subscriptions, promo codes, recommandations, reviews).
+L'application suit un pattern **monolithique côté client** avec un BaaS :
 
-## Backend / API Architecture
+- **Pas de backend Node.js** — Supabase sert de backend complet
+- **Pas d'API intermédiaire** — Les appels DB, auth, et storage sont effectués directement depuis le client via le SDK `@supabase/supabase-js`
+- **Sécurité** — Assurée intégralement par les politiques RLS de PostgreSQL
+- **Calculs lourds** — Délégués à des fonctions RPC PostgreSQL (`match_products`, `sync_bundle_stock`, `get_product_recommendations`, etc.)
 
-## Execution model
-- **Pas de backend Node/Express actif** malgré dépendance `express` présente dans `package.json`.
-- Le frontend appelle directement Supabase (tables + RPC + storage + auth).
+### Flux de données
 
-## Data access patterns
-- CRUD direct sur les tables via `supabase.from(...)`.
-- RPC SQL utilisées pour logique métier spécifique:
-  - `get_product_recommendations`
-  - `sync_bundle_stock`
-  - `increment_promo_uses`
-  - `match_products`
-  - `create_pos_customer`
+```mermaid
+flowchart TD
+    subgraph Frontend
+        Pages["Pages<br/>(useEffect → fetch)"]
+        Stores["Zustand Stores<br/>(authStore, cartStore,<br/>settingsStore, wishlistStore,<br/>toastStore)"]
+        Components["Composants de présentation"]
+    end
 
-## Authentication & Authorization
-- Authentification: Supabase Auth (`signInWithPassword`, `signUp`, reset/update password).
-- Autorisation: RLS généralisée sur tables métier (owner policies, admin policies, lecture publique catalogue).
-- Contrôle d’accès UI: composants `ProtectedRoute` et `AdminRoute`.
+    subgraph Backend["Supabase (BaaS)"]
+        SupabaseSDK["@supabase/supabase-js"]
+        PG["PostgreSQL + RLS"]
+    end
 
-## Database Architecture
+    Pages -->|"appels directs"| SupabaseSDK
+    Stores -->|"actions asynchrones"| SupabaseSDK
+    SupabaseSDK --> PG
+    Pages -->|"state local"| Components
+    Stores -->|"state global"| Components
+```
 
-- Migrations SQL versionnées dans `supabase/`.
-- Noyau e-commerce: `categories`, `products`, `orders`, `order_items`, `addresses`, `profiles`.
-- Extensions métier:
-  - Fidélité: `loyalty_transactions`
-  - Abonnements: `subscriptions`, `subscription_orders`
-  - Avis: `reviews`
-  - Promotions: `promo_codes`
-  - Bundles/recommandations: `bundle_items`, `product_recommendations`
-  - IA: `user_ai_preferences`, `budtender_interactions`
-  - Social commerce: `wishlists`, `referrals`
-  - POS: `pos_reports`
-- Recherche vectorielle: `products.embedding` + fonction `match_products` (pgvector).
+---
 
-## AI & Integrations
+## Organisation des dossiers
 
-- **OpenRouter**
-  - Chat completions depuis le widget BudTender.
-  - Embeddings (`/api/v1/embeddings`) via front et scripts de sync.
-- **Gemini**
-  - Voix temps réel via WebSocket Live API.
-  - Scripts utilitaires de test/sync autour de `@google/genai`.
-- **Supabase Storage**
-  - Upload/suppression d’images produit via bucket `product-images`.
-- **Viva Wallet**
-  - Variables présentes et hooks côté checkout/POS.
-  - ⚠️ À compléter : implémentation serveur de paiement non exposée dans ce repository (appel backend commenté).
+```
+src/
+├── App.tsx                    # Routeur principal (BrowserRouter + Routes)
+├── main.tsx                   # Point d'entrée (StrictMode + ErrorBoundary + SEO)
+├── index.css                  # Design system (theme, fonts, glow effects, glassmorphism)
+│
+├── components/                # Composants réutilisables
+│   ├── Layout.tsx             # Shell principal (Header, Footer, Cart Sidebar, Search, BudTender)
+│   ├── ProtectedRoute.tsx     # Guard route : utilisateur connecté requis
+│   ├── AdminRoute.tsx         # Guard route : rôle admin requis (profil.is_admin)
+│   ├── BudTender.tsx          # Composant IA principal (91KB — quiz, chat, embedding search)
+│   ├── VoiceAdvisor.tsx       # Interface du conseiller vocal Gemini
+│   ├── CartSidebar.tsx        # Sidebar panier glissant
+│   ├── ProductCard.tsx        # Carte produit réutilisable
+│   ├── SEO.tsx                # Composant Head SEO dynamique
+│   ├── admin/                 # 19 onglets du back-office admin
+│   │   ├── AdminDashboardTab    # KPIs temps réel
+│   │   ├── AdminProductsTab     # CRUD produits + import CSV + IA description
+│   │   ├── AdminCategoriesTab   # CRUD catégories
+│   │   ├── AdminOrdersTab       # Gestion commandes
+│   │   ├── AdminStockTab        # Mouvements de stock
+│   │   ├── AdminPOSTab          # Caisse enregistreuse (132KB)
+│   │   ├── AdminAnalyticsTab    # Graphiques / Charts
+│   │   ├── AdminBudTenderTab    # Configuration IA
+│   │   ├── AdminPromoCodesTab   # Codes promotion
+│   │   ├── AdminRecommendationsTab  # Cross-selling
+│   │   ├── AdminCustomersTab    # Gestion clients
+│   │   ├── AdminReviewsTab      # Modération avis
+│   │   ├── AdminSubscriptionsTab # Gestion abonnements
+│   │   ├── AdminReferralsTab    # Programme parrainage
+│   │   ├── AdminSettingsTab     # Paramètres boutique
+│   │   ├── CSVImporter.tsx      # Import CSV de produits
+│   │   ├── MassModifyModal.tsx  # Modification en masse
+│   │   └── ProductImageUpload   # Upload image Supabase Storage
+│   └── budtender-ui/          # Sous-composants UI du chat IA
+│       ├── BudTenderWidget      # FAB flottant avec pulse
+│       ├── BudTenderMessage     # Bulle message (Markdown)
+│       ├── BudTenderTypingIndicator  # Indicateur de saisie
+│       └── BudTenderFeedback    # Feedback positif/négatif
+│
+├── pages/                     # Vues complètes (lazy-loaded)
+│   ├── Home.tsx               # Page d'accueil (hero, best-sellers, reviews, FAQ)
+│   ├── Catalog.tsx            # Catalogue produits (filtres, tri, search sémantique)
+│   ├── ProductDetail.tsx      # Fiche produit détaillée (46KB)
+│   ├── Shop.tsx               # Page boutique physique
+│   ├── Cart.tsx / Checkout.tsx  # Panier et paiement
+│   ├── Login.tsx              # Connexion (email/password + inscription avec parrainage)
+│   ├── Account.tsx            # Tableau de bord compte
+│   ├── Profile.tsx            # Profil utilisateur (sessions actives, 2FA)
+│   ├── Orders.tsx             # Historique commandes
+│   ├── LoyaltyHistory.tsx     # Historique fidélité
+│   ├── Referrals.tsx          # Programme parrainage
+│   ├── Subscriptions.tsx      # Abonnements récurrents
+│   ├── Admin.tsx              # Container du back-office admin
+│   ├── POSPage.tsx            # Wrapper POS
+│   └── guides/GuidePage.tsx   # Pages guides CBD (SEO)
+│
+├── store/                     # Stores Zustand
+│   ├── authStore.ts           # Authentification, session, profil
+│   ├── cartStore.ts           # Panier (persist localStorage)
+│   ├── settingsStore.ts       # Configuration boutique (Supabase)
+│   ├── wishlistStore.ts       # Favoris (persist localStorage)
+│   └── toastStore.ts          # Notifications toast
+│
+├── hooks/                     # Hooks personnalisés
+│   ├── useBudTenderMemory.ts  # Mémoire client IA (préférences, historique)
+│   └── useGeminiLiveVoice.ts  # Session vocale WebSocket Gemini Live
+│
+├── lib/                       # Utilitaires et logique métier
+│   ├── supabase.ts            # Client Supabase singleton
+│   ├── types.ts               # Types TypeScript (Product, Order, Profile, etc.)
+│   ├── constants.ts           # Slugs catégories (source unique de vérité)
+│   ├── embeddings.ts          # Génération d'embeddings (OpenRouter API)
+│   ├── productAI.ts           # Génération IA de descriptions produit
+│   ├── budtenderPrompts.ts    # Prompts système (quiz, chat, voix)
+│   ├── budtenderSettings.ts   # Configuration BudTender (quiz, modèle IA)
+│   ├── budtenderCache.ts      # Cache TTL + LRU (produits, settings, embeddings)
+│   ├── utils.ts               # Utilitaires (slugify, sleep, isQuotaError)
+│   └── seo/                   # SEO helpers
+│       ├── metaBuilder.ts     # Génération meta tags
+│       ├── schemaBuilder.ts   # Génération JSON-LD (schema.org)
+│       └── internalLinks.ts   # Maillage interne
+│
+└── seo/
+    └── SEOProvider.tsx        # Provider React pour les meta globaux
+```
 
-## Configuration & Deployment
+---
 
-- Build tooling: Vite 6 + React 19 + Tailwind 4.
-- TypeScript en mode `noEmit`.
-- Variables d’environnement documentées dans `.env.example`.
-- Script de génération sitemap (`scripts/generate-sitemap.ts`).
-- ⚠️ À compléter : pipeline CI/CD (aucun workflow visible dans le repository).
+## Gestion d'état
+
+| Store | Persistance | Responsabilité |
+|---|---|---|
+| `authStore` | Session Supabase | User, session, profil, inscription, login/logout, reset password |
+| `cartStore` | `localStorage` (`greenMood-cart`) | Articles panier, quantités, type livraison, calcul sous-total/total |
+| `settingsStore` | Mémoire (fetch Supabase) | Paramètres boutique (bannière, frais, horaires, toggles fonctionnalités) |
+| `wishlistStore` | `localStorage` (`greenMood-wishlist`) | IDs produits favoris |
+| `toastStore` | Mémoire | File de notifications toast (success/error/info) |
+
+---
+
+## Sécurité
+
+### Authentification
+- **Supabase GoTrue** — Email/Password, gestion de session JWT
+- **Trigger DB** — Création automatique du profil à l'inscription (`handle_new_user`)
+- **Guards React** — `ProtectedRoute` (user connecté) et `AdminRoute` (is_admin = true)
+
+### Autorisation (RLS)
+Chaque table utilise des politiques Row Level Security :
+
+| Table | Lecture | Écriture |
+|---|---|---|
+| `categories` | Publique | Admin uniquement |
+| `products` | Publique | Admin uniquement |
+| `profiles` | Owner + Admin | Owner (update) / Admin (all) |
+| `addresses` | Owner | Owner |
+| `orders` | Owner + Admin | Auth (insert) / Admin (update) |
+| `order_items` | Owner + Admin | Auth (insert) |
+| `reviews` | Publiée ou Owner ou Admin | Owner (insert/update) / Admin (all) |
+| `store_settings` | Publique | Admin uniquement |
+| `promo_codes` | Authentifié | Admin uniquement |
+| `pos_reports` | Admin | Admin |
+| `user_active_sessions` | Owner | Owner |
+
+---
+
+## Intelligence Artificielle
+
+### BudTender (Chat Texte)
+
+```mermaid
+flowchart LR
+    User["💬 Message client"]
+    UI["BudTender.tsx"]
+    Embed["Embedding<br/>(OpenRouter)"]
+    Match["match_products<br/>(pgvector RPC)"]
+    LLM["LLM Chat<br/>(OpenRouter)"]
+    Reply["🤖 Réponse"]
+
+    User --> UI
+    UI --> Embed
+    Embed --> Match
+    Match --> UI
+    UI --> LLM
+    LLM --> Reply
+```
+
+- **Quiz guidé** — 5 étapes (besoin, expérience, format, budget, âge)
+- **Chat libre** — Conversation naturelle avec contexte catalogue
+- **Recherche sémantique** — Embedding de la requête → cosine similarity via `match_products` (pgvector)
+- **Mémoire** — Préférences persistées dans `user_ai_preferences` (Supabase)
+- **Cache** — Embeddings LRU (50 entrées, TTL 10 min), produits TTL 5 min
+
+### BudTender (Voix)
+
+```mermaid
+flowchart LR
+    Micro["🎤 Microphone"]
+    WS["WebSocket<br/>Gemini Live API"]
+    Gemini["Gemini 2.5 Flash<br/>Native Audio"]
+    Tools["Function Calling<br/>(search_catalog,<br/>add_to_cart,<br/>view_product,<br/>navigate_to,<br/>close_session)"]
+    Speaker["🔊 Audio output"]
+
+    Micro --> WS
+    WS --> Gemini
+    Gemini --> Tools
+    Tools --> WS
+    Gemini --> Speaker
+```
+
+- **Modèle** — `gemini-2.5-flash-native-audio-preview`
+- **Input** — PCM 16-bit 16kHz (AudioWorklet)
+- **Output** — PCM 24kHz → WebAudio API
+- **Function Calling** — `search_catalog`, `add_to_cart`, `view_product`, `navigate_to`, `close_session`
+
+---
+
+## Performance
+
+### Code Splitting
+Toutes les pages sont chargées en **lazy loading** via `React.lazy()` + `Suspense`.
+
+### Caching
+- **Service Worker** — Stale-While-Revalidate (exclut Supabase & OpenRouter)
+- **TTL Cache** — Produits (5 min), Settings BudTender (2 min)
+- **LRU Cache** — Embeddings (50 entrées, 10 min)
+- **Panier & Favoris** — Persistés via Zustand `persist` middleware
+
+### Optimisations Vite
+- Déduplication React (`resolve.dedupe`)
+- Pré-bundling ESM (`optimizeDeps.include`)
+- HMR conditionnel (désactivé en AI Studio)
+
+---
+
+## SEO
+
+| Mécanisme | Implémentation |
+|---|---|
+| Meta tags dynamiques | `SEO.tsx` + `metaBuilder.ts` |
+| JSON-LD (schema.org) | `schemaBuilder.ts` (Product, Organization, BreadcrumbList) |
+| Sitemaps | `sitemap.xml` (index) → `sitemap-pages.xml`, `sitemap-products.xml`, `sitemap-blog.xml` |
+| robots.txt | AI-friendly (GPTBot, ClaudeBot, PerplexityBot autorisés) |
+| llms.txt / ai.txt | Contexte pour crawlers IA |
+| PWA | `manifest.webmanifest`, Service Worker, icônes |
+| Maillage interne | `internalLinks.ts` |

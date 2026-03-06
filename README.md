@@ -1,422 +1,229 @@
-# Green Mood CBD (V2)
+<p align="center">
+  <img src="public/logo.png" alt="Green Mood CBD" width="140" />
+</p>
 
-Plateforme e-commerce CBD complète avec assistant IA BudTender.
+<h1 align="center">🌿 Green Mood CBD — Boutique Premium & Innovation N10</h1>
 
-Green Mood CBD est une application e-commerce moderne conçue pour les boutiques CBD souhaitant centraliser **vente en ligne, gestion client et outils internes** dans une seule plateforme.
-Elle combine une **expérience d’achat premium**, un **back-office complet** et un **assistant IA conversationnel (BudTender)** connecté au catalogue réel.
+<p align="center">
+  <strong>Plateforme e-commerce premium de CBD avec conseiller IA intégré (BudTender).</strong><br/>
+  Conçue pour les boutiques physiques souhaitant digitaliser leur activité via Click & Collect, livraison et point de vente (POS).<br/>
+  L'application offre une expérience immersive avec recherche sémantique vectorielle, chat IA et conseiller vocal en temps réel.
+</p>
 
----
-
-# Table of Contents
-
-* Overview
-* Tech Stack
-* Key Features
-* Architecture
-* Prerequisites
-* Installation
-* Configuration
-* Running the Project
-* Scripts
-* Project Structure
-* API / Backend
-* Database
-* Authentication
-* Third-Party Services
-* Deployment
-* Contributing
-* License
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-blue?logo=react" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-6-purple?logo=vite" alt="Vite 6" />
+  <img src="https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-v4-blue?logo=tailwindcss" alt="Tailwind v4" />
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License" />
+</p>
 
 ---
 
-# Overview
+## 📖 Présentation
 
-Green Mood CBD fournit une infrastructure complète pour les boutiques CBD :
-
-* e-commerce moderne
-* gestion client
-* analytics
-* POS magasin
-* assistant IA vendeur
-
-L’objectif est de proposer une **plateforme omnicanale** reliant boutique physique, e-commerce et recommandation intelligente.
+**Green Mood CBD** est une application e-commerce SPA (Single Page Application) conçue pour une boutique physique de CBD premium. Elle permet aux clients de parcourir le catalogue, recevoir des conseils personnalisés de l'IA BudTender (chat texte et voix), passer commande en Click & Collect ou en livraison, et gérer leur compte fidélité. Les administrateurs disposent d'un back-office complet avec POS intégré, analytics et gestion avancée des produits, stocks et commandes.
 
 ---
 
-# Badges
+## 🛠 Stack Technique
 
-![Build](https://img.shields.io/badge/build-%C3%A0%20compl%C3%A9ter-lightgrey)
-![Version](https://img.shields.io/badge/version-0.0.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
----
-
-# Tech Stack
-
-| Technology           | Role                        | Version   |
-| -------------------- | --------------------------- | --------- |
-| React                | Frontend framework          | ^19.0.0   |
-| TypeScript           | Static typing               | ~5.8.2    |
-| Vite                 | Build tool & dev server     | ^6.2.0    |
-| @vitejs/plugin-react | React integration for Vite  | ^5.0.4    |
-| Tailwind CSS         | UI styling                  | ^4.1.14   |
-| React Router DOM     | SPA routing                 | ^7.13.1   |
-| Zustand              | Global state management     | ^5.0.11   |
-| Supabase JS          | Backend client (Auth + DB)  | ^2.98.0   |
-| Gemini AI            | Conversational AI assistant | ^1.29.0   |
-| OpenRouter           | Embeddings & AI routing     | —         |
-| Recharts             | Analytics visualisation     | ^3.7.0    |
-| Lucide React         | Icons                       | ^0.546.0  |
-| PapaParse            | CSV import & parsing        | ^5.5.3    |
-| motion               | UI animations               | ^12.23.24 |
-| tsx                  | Execute TypeScript scripts  | ^4.21.0   |
+| Technologie | Rôle | Version |
+|---|---|---|
+| **React** | Framework frontend (SPA) | 19.0.0 |
+| **TypeScript** | Langage principal | ~5.8.2 |
+| **Vite** | Build tool & dev server | ^6.2.0 |
+| **Tailwind CSS** | Framework CSS utilitaire | v4.1.14 |
+| **Zustand** | Gestion d'état global | ^5.0.11 |
+| **React Router DOM** | Routage client-side | ^7.13.1 |
+| **Supabase** | Backend-as-a-Service (PostgreSQL, Auth, Storage, RLS) | ^2.98.0 |
+| **Google Gemini** | IA générative — voix temps réel (Live API) | ^1.29.0 |
+| **OpenRouter** | LLM chat (BudTender), embeddings vectoriels | API REST |
+| **Framer Motion** | Animations & transitions | ^12.23.24 |
+| **Lucide React** | Bibliothèque d'icônes | ^0.546.0 |
+| **Recharts** | Graphiques analytics admin | ^3.7.0 |
+| **React Markdown** | Rendu Markdown dans le chat | ^10.1.0 |
+| **PapaParse** | Import CSV de produits | ^5.5.3 |
+| **Viva Wallet** | Passerelle de paiement | API REST |
+| **pgvector** | Recherche sémantique vectorielle (PostgreSQL) | Extension |
 
 ---
 
-# Key Features
+## ✨ Fonctionnalités
 
-## E-commerce Core
+### 👤 Utilisateurs (Client)
 
-* Catalogue produits CBD avec pages détaillées
-* Navigation catalogue (`/catalogue`)
-* Pages produit SEO (`/catalogue/:slug`)
-* Panier
-* Checkout
-* Confirmation de commande
+- **Catalogue en ligne** — parcours par catégories (Fleurs, Résines, Huiles, Infusions), filtres, tri, recherche sémantique
+- **Fiches produit détaillées** — CBD %, arômes, bénéfices, avis vérifiés, produits complémentaires
+- **Panier persistant** — avec jauges de livraison gratuite, suggestions panier vide, codes promo
+- **Checkout complet** — Click & Collect ou livraison, intégration Viva Wallet
+- **Compte utilisateur** — profil, commandes, adresses, favoris
+- **Programme fidélité** — points gagnés/dépensés, historique des transactions
+- **Programme parrainage** — codes uniques `GRN-XXXXXX`, bonus bienvenue, suivi
+- **Abonnements** — livraisons récurrentes (hebdo / bi-mensuel / mensuel)
+- **Avis produits** — notation 5 étoiles, commentaires, modération admin
+- **🤖 BudTender IA (chat texte)** — quiz guidé + conversation libre, mémoire client
+- **🎙 BudTender IA (voix)** — conseiller vocal temps réel via Gemini Live Audio API
+- **Guides CBD** — articles SEO (huile, dosage, sommeil, anxiété, légalité)
+- **PWA** — installable, Service Worker, mode offline partiel
+- **SEO avancé** — sitemaps, schema.org, meta tags dynamiques, robots.txt AI-friendly
 
-## Customer Account
+### 🔒 Administrateurs
 
-Espace client complet :
+- **Dashboard** — KPIs temps réel (revenue, commandes, clients)
+- **Gestion produits** — CRUD complet, import CSV, upload images, génération IA des descriptions
+- **Gestion catégories** — CRUD, réorganisation, icônes
+- **Gestion commandes** — suivi statuts, mise à jour, détail
+- **Gestion stocks** — mouvements, alertes de réapprovisionnement
+- **POS (Point de Vente)** — caisse enregistreuse intégrée, scan code-barres, création client walk-in, rapports de clôture Z (avec réconciliation caisse)
+- **Codes promo** — création, limites d'usage, expiration
+- **Bundles / Packs** — création de packs avec synchronisation automatique du stock
+- **Cross-selling** — recommandations manuelles + fallback automatique par catégorie
+- **Analytics** — graphiques revenus, top produits, statuts commandes, acquisition clients
+- **Gestion avis** — modération, publication/suppression
+- **Gestion abonnements** — vue d'ensemble, pause/annulation
+- **Gestion parrainages** — suivi, validation des récompenses
+- **Configuration BudTender** — modèle IA, température, quiz customisable, seuils restock
+- **Paramètres boutique** — bannière, horaires, frais livraison, activations fonctionnalités
 
-* profil utilisateur
-* adresses
-* historique de commandes
-* abonnements
-* favoris
-* avis produits
-* programme de fidélité
-* système de parrainage
+### ⚙️ Système / Backend
 
-## AI BudTender Assistant
-
-Assistant conversationnel spécialisé CBD :
-
-* interaction texte
-* interaction vocale temps réel
-* accès direct au catalogue produit
-* recommandations personnalisées
-* mémoire utilisateur
-
-## Admin Backoffice
-
-Interface d’administration multi-modules :
-
-* gestion produits
-* catégories
-* commandes
-* stock
-* clients
-* analytics
-* promotions
-* recommandations IA
-* abonnements
-* avis
-* parrainages
-* configuration BudTender
-
-## POS (Point of Sale)
-
-Route dédiée :
-
-```
-/pos
-```
-
-Permet l’utilisation en boutique physique pour :
-
-* vente directe
-* gestion caisse
-* synchronisation commandes
+- **Authentification Supabase** — email/password avec GoTrue, auto-création profil via trigger
+- **Row Level Security (RLS)** — politiques granulaires sur toutes les tables
+- **Recherche vectorielle** — pgvector (3072 dims), embeddings via OpenRouter / Gemini
+- **Fonctions RPC PostgreSQL** — `match_products`, `sync_bundle_stock`, `create_pos_customer`, `increment_promo_uses`, `get_product_recommendations`
+- **Triggers BD** — auto-sync stocks bundles, auto-génération codes parrainage
+- **Storage Supabase** — bucket `product-images` avec upload admin
+- **Caching multi-niveaux** — TTL cache produits (5 min), settings (2 min), LRU embeddings (50 entrées)
+- **Service Worker** — stratégie Stale-While-Revalidate, exclusion appels API
 
 ---
 
-# Architecture
+## 🚀 Installation
 
-```mermaid
-graph TD
+### Prérequis
 
-Client --> ReactApp
-ReactApp --> SupabaseAuth
-ReactApp --> SupabaseDB
-ReactApp --> GeminiAI
-ReactApp --> OpenRouter
+- **Node.js** ≥ 18
+- **npm** ≥ 9
+- Un projet **Supabase** configuré (avec pgvector activé)
+- Clés API : **Gemini**, **OpenRouter**, **Viva Wallet** (optionnel)
 
-SupabaseDB --> PostgreSQL
-```
-
-Architecture globale :
-
-* **Frontend** : React SPA
-* **Backend** : Supabase (serverless)
-* **Database** : PostgreSQL
-* **IA** : Gemini + OpenRouter
-* **State management** : Zustand
-
----
-
-# Prerequisites
-
-Minimum requirements :
-
-* Node.js >= 18 (Node 20 LTS recommandé)
-* npm
-* projet Supabase configuré
-
-Clés API nécessaires :
-
-* Gemini API
-* OpenRouter API
-
-Optionnel :
-
-* credentials Viva Wallet
-
----
-
-# Installation
-
-### 1. Cloner le repository
+### Étapes
 
 ```bash
-git clone <repository-url>
-cd Green-Mood-project
-```
+# 1. Cloner le dépôt
+git clone https://github.com/votre-org/Green-Moon-project.git
+cd Green-Moon-project
 
-### 2. Installer les dépendances
-
-```bash
+# 2. Installer les dépendances
 npm install
-```
 
-### 3. Créer le fichier d'environnement
-
-```bash
+# 3. Configurer les variables d'environnement
 cp .env.example .env
-```
+# Éditer .env avec vos clés API
 
-### 4. Configurer les variables d'environnement
+# 4. Initialiser la base de données
+# Exécuter supabase/migration.sql dans Supabase SQL Editor
+# Puis exécuter les migrations incrémentales (v3 à v9) dans l'ordre
 
-Voir la section **Configuration**.
+# 5. (Optionnel) Synchroniser les embeddings vectoriels
+npx tsx scripts/sync-embeddings.ts
 
-### 5. Lancer le serveur de développement
-
-```bash
-npm run dev
+# 6. (Optionnel) Générer les sitemaps
+npx tsx scripts/generate-sitemap.ts
 ```
 
 ---
 
-# Configuration
+## ▶️ Lancement
 
-Variables d’environnement principales :
-
-| Variable                         | Description                                        | Required |
-| -------------------------------- | -------------------------------------------------- | -------- |
-| VITE_SUPABASE_URL                | URL du projet Supabase                             | Yes      |
-| VITE_SUPABASE_ANON_KEY           | Clé publique Supabase                              | Yes      |
-| VITE_GEMINI_API_KEY              | Clé API Gemini utilisée pour l’assistant BudTender | Yes      |
-| VITE_OPENROUTER_API_KEY          | Clé API OpenRouter pour embeddings et LLM          | Yes      |
-| VITE_OPENROUTER_EMBED_MODEL      | Modèle d'embedding OpenRouter                      | No       |
-| VITE_OPENROUTER_EMBED_DIMENSIONS | Dimensions embeddings                              | No       |
-| VITE_VIVA_CLIENT_ID              | Identifiant Viva Wallet                            | Optional |
-| VITE_VIVA_CLIENT_SECRET          | Secret Viva Wallet                                 | Optional |
-| VITE_VIVA_WALLET_BASE_URL        | URL API Viva Wallet                                | Optional |
-| DISABLE_HMR                      | Désactive le HMR Vite si `true`                    | No       |
-
-⚠️ Certaines variables présentes dans `.env.example` ne sont pas entièrement documentées dans le code frontend.
-
----
-
-# Running the Project
-
-### Development
+### Développement
 
 ```bash
 npm run dev
+# → http://localhost:3000
 ```
 
-Serveur Vite disponible sur :
-
-```
-http://localhost:3000
-```
-
-### Production build
+### Production
 
 ```bash
 npm run build
-```
-
-Build généré dans :
-
-```
-/dist
-```
-
-### Preview du build
-
-```bash
 npm run preview
 ```
 
----
+### Autres commandes
 
-# Scripts
-
-| Script  | Description              |
-| ------- | ------------------------ |
-| dev     | Lance le serveur Vite    |
-| build   | Build production         |
-| preview | Prévisualise le build    |
-| lint    | Type check TypeScript    |
-| clean   | Supprime le dossier dist |
+| Commande | Description |
+|---|---|
+| `npm run dev` | Serveur Vite en mode développement (port 3000) |
+| `npm run build` | Build de production (`dist/`) |
+| `npm run preview` | Preview du build de production |
+| `npm run clean` | Supprime le dossier `dist/` |
+| `npm run lint` | Vérification TypeScript sans émission |
 
 ---
 
-# Project Structure
+## 🔑 Variables d'environnement
+
+| Variable | Rôle | Obligatoire |
+|---|---|---|
+| `VITE_SUPABASE_URL` | URL du projet Supabase | ✅ |
+| `VITE_SUPABASE_ANON_KEY` | Clé anonyme Supabase | ✅ |
+| `VITE_GEMINI_API_KEY` | Clé API Gemini (voix temps réel) | ✅ |
+| `VITE_OPENROUTER_API_KEY` | Clé API OpenRouter (chat + embeddings) | ✅ |
+| `VITE_OPENROUTER_EMBED_MODEL` | Modèle d'embedding (défaut: `openai/text-embedding-3-small`) | ❌ |
+| `VITE_OPENROUTER_EMBED_DIMENSIONS` | Dimensions embeddings (défaut: `768`) | ❌ |
+| `VITE_VIVA_WALLET_BASE_URL` | URL base Viva Wallet | ❌ |
+| `VITE_VIVA_CLIENT_ID` | Client ID Viva Wallet | ❌ |
+| `VITE_VIVA_CLIENT_SECRET` | Client Secret Viva Wallet | ❌ |
+| `VIVA_MERCHANT_ID` | Merchant ID Viva Wallet | ❌ |
+| `VIVA_API_KEY` | Clé API Viva Wallet | ❌ |
+| `GEMINI_API_KEY` | Clé Gemini (server-side / AI Studio) | ❌ |
+| `APP_URL` | URL de l'application déployée | ❌ |
+
+---
+
+## 📂 Structure du projet
 
 ```
-.
-├── public/                  # Assets statiques, sitemap, PWA
-├── scripts/                 # Scripts utilitaires (embeddings, sitemap)
+Green-Moon-project/
+├── public/                  # Assets statiques, PWA, sitemaps, CSV
+├── scripts/                 # Scripts utilitaires (sitemap, embeddings)
 ├── src/
-│   ├── components/          # UI partagée + modules admin + BudTender
-│   ├── hooks/               # Hooks React custom
-│   ├── lib/                 # Clients, utilitaires, embeddings, types
-│   ├── pages/               # Pages applicatives (shop, admin, account)
-│   ├── store/               # Stores Zustand
-│   ├── seo/                 # Provider SEO
-│   ├── App.tsx              # Définition des routes
-│   └── main.tsx             # Bootstrap React
-└── supabase/                # Migrations SQL et scripts base de données
+│   ├── components/          # Composants React réutilisables
+│   │   ├── admin/           # 19 onglets du back-office admin
+│   │   └── budtender-ui/    # Composants UI du BudTender
+│   ├── hooks/               # Hooks personnalisés (mémoire IA, voix)
+│   ├── lib/                 # Types, utilitaires, Supabase, IA, SEO
+│   │   └── seo/             # Builders meta, schema.org, links internes
+│   ├── pages/               # Pages de l'application (27+)
+│   │   └── guides/          # Pages guides CBD
+│   ├── seo/                 # Provider SEO global
+│   ├── store/               # Stores Zustand (auth, cart, settings, wishlist, toast)
+│   ├── App.tsx              # Routage principal
+│   ├── main.tsx             # Point d'entrée React
+│   └── index.css            # Design system (thème, fonts, glow, glassmorphism)
+├── supabase/                # Migrations SQL (v1 → v9)
+├── docs/                    # Documentation fonctionnelle, PRD, audits
+├── .cursorrules             # Règles de développement IA
+├── vite.config.ts           # Configuration Vite
+├── tsconfig.json            # Configuration TypeScript
+└── package.json             # Dépendances & scripts
 ```
 
 ---
 
-# API / Backend
+## 📄 Licence
 
-L’application communique directement avec **Supabase** via le client officiel :
-
-```
-@supabase/supabase-js
-```
-
-La logique métier backend est partiellement implémentée via :
-
-* fonctions SQL
-* RPC Supabase
-* recherche vectorielle
-* triggers base de données
-
-⚠️ Aucun backend Node.js ou Express dédié n’est présent dans ce dépôt.
+Ce projet est distribué sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ---
 
-# Database
+## 📚 Documentation complémentaire
 
-Technologie :
-
-**PostgreSQL via Supabase**
-
-Entités principales :
-
-* products
-* categories
-* profiles
-* orders
-* order_items
-* addresses
-* store_settings
-* loyalty_transactions
-* subscriptions
-* subscription_orders
-* reviews
-* promo_codes
-* bundle_items
-* product_recommendations
-* referrals
-* wishlists
-* product_images
-* user_ai_preferences
-* budtender_interactions
-* pos_reports
-
-Les migrations sont versionnées dans :
-
-```
-/supabase
-```
-
----
-
-# Authentication
-
-Authentification gérée par **Supabase Auth** :
-
-* inscription
-* connexion
-* reset password
-* gestion de session
-
-Protection des routes via :
-
-* `ProtectedRoute`
-* `AdminRoute`
-
----
-
-# Third-Party Services
-
-| Service       | Purpose                            |
-| ------------- | ---------------------------------- |
-| Supabase      | Authentification + base de données |
-| Google Gemini | Assistant IA BudTender             |
-| OpenRouter    | Embeddings et routing LLM          |
-| Viva Wallet   | Paiements                          |
-
----
-
-# Deployment
-
-⚠️ Aucun pipeline CI/CD détecté dans ce repository.
-
-Déploiement possible sur :
-
-* Vercel
-* Netlify
-* Docker
-* VPS / cloud
-
----
-
-# Contributing
-
-Conventions de branches :
-
-```
-feat/*
-fix/*
-docs/*
-```
-
-Chaque Pull Request doit inclure :
-
-* description claire
-* validation `npm run lint`
-* captures si modification UI
-
----
-
-# License
-
-MIT License
+- [ARCHITECTURE.md](ARCHITECTURE.md) — Architecture technique détaillée
+- [API_DOCS.md](API_DOCS.md) — Documentation des endpoints et RPC
+- [DB_SCHEMA.md](DB_SCHEMA.md) — Schéma de base de données complet
+- [ROADMAP.md](ROADMAP.md) — Roadmap fonctionnelle
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Guide de contribution
