@@ -1496,8 +1496,13 @@ export default function BudTender() {
                                             <SendHorizontal className="w-6 h-6" />
                                         </button>
                                     </form>
-                                    <div className="flex justify-center items-center px-1">
-                                        <p className="text-[10px] text-green-neon font-black uppercase tracking-[0.4em] opacity-80">
+                                    <div className="flex flex-col items-center gap-1.5 px-1">
+                                        <p className="text-[10px] text-zinc-500 text-center leading-relaxed max-w-2xl">
+                                            <span className="text-amber-500/80 font-bold uppercase tracking-widest mr-1">Avis important :</span>
+                                            BudTender est une IA de conseil. Les informations fournies ne constituent pas un avis médical.
+                                            Consultez un médecin avant toute consommation, surtout en cas de traitement ou de grossesse.
+                                        </p>
+                                        <p className="text-[9px] text-green-neon font-black uppercase tracking-[0.4em] opacity-50 mt-1">
                                             BudTender IA Expérience
                                         </p>
                                     </div>
