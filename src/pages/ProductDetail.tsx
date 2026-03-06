@@ -282,7 +282,7 @@ export default function ProductDetail() {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-4 text-xs uppercase tracking-wider text-zinc-600 mb-12">
           <Link to="/catalogue" className="flex items-center gap-2 hover:text-green-neon transition-colors">

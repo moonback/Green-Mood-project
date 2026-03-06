@@ -26,6 +26,7 @@ import { useSettingsStore } from "../store/settingsStore";
 import { supabase } from "../lib/supabase";
 import { Product, Category } from "../lib/types";
 import StarRating from "./StarRating";
+import { generateEmbedding } from "../lib/embeddings";
 
 function BannerTicker({ messages }: { messages: string[] }) {
   const [index, setIndex] = useState(0);
@@ -89,59 +90,74 @@ export default function Layout() {
     const delayDebounceFn = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const [{ data: products }, { data: categories }] = await Promise.all([
-          supabase
-            .from("products")
-            .select("*, category:categories(*)")
-            .ilike("name", `%${searchQuery}%`)
-            .eq("is_active", true)
-            .limit(5),
-          supabase
-            .from("categories")
-            .select("*")
-            .ilike("name", `%${searchQuery}%`)
-            .eq("is_active", true)
-            .limit(3),
+        const text = searchQuery.trim();
+        console.log('[Search] Début de recherche pour:', text);
+
+        // 1. Recherche classique (Mots-clés & Catégories) - RAPIDE & FIABLE
+        const [kwRes, catRes] = await Promise.all([
+          supabase.from("products").select("*, category:categories(*)").ilike("name", `%${text}%`).eq("is_active", true).limit(10),
+          supabase.from("categories").select("*").ilike("name", `%${text}%`).eq("is_active", true).limit(3)
         ]);
 
-        const searchProducts = (products as Product[]) || [];
-        const searchCategories = (categories as Category[]) || [];
+        const keywordProducts = kwRes.data || [];
+        const searchCategories = catRes.data || [];
 
-        // Fetch ratings for the found products
-        if (searchProducts.length > 0) {
-          const { data: ratingsData } = await supabase
-            .from("reviews")
-            .select("product_id, rating")
-            .in("product_id", searchProducts.map(p => p.id))
-            .eq("is_published", true);
+        // Affichage immédiat des résultats par mots-clés
+        setSearchResults({ products: keywordProducts, categories: searchCategories });
 
-          const ratingMap = new Map<string, { sum: number; count: number }>();
-          (ratingsData || []).forEach((r) => {
-            const cur = ratingMap.get(r.product_id) ?? { sum: 0, count: 0 };
-            ratingMap.set(r.product_id, { sum: cur.sum + r.rating, count: cur.count + 1 });
+        // 2. Recherche Vectorielle (IA) - EN OPTION
+        try {
+          const embedding = await generateEmbedding(text).catch((e) => {
+            console.warn('[Search] Erreur embedding (ignorée):', e);
+            return null;
           });
 
-          const withRatings = searchProducts.map((p) => {
-            const r = ratingMap.get(p.id);
-            return r ? { ...p, avg_rating: r.sum / r.count, review_count: r.count } : p;
-          });
+          if (embedding) {
+            const { data: vectorProducts } = await supabase.rpc('match_products', {
+              query_embedding: embedding,
+              match_threshold: 0.1,
+              match_count: 10
+            });
 
-          setSearchResults({
-            products: withRatings,
-            categories: searchCategories,
-          });
-        } else {
-          setSearchResults({
-            products: [],
-            categories: searchCategories,
-          });
+            if (vectorProducts && vectorProducts.length > 0) {
+              const mergedMap = new Map<string, Product>();
+              keywordProducts.forEach(p => mergedMap.set(p.id, p));
+              (vectorProducts as Product[]).forEach(pv => {
+                if (!mergedMap.has(pv.id)) mergedMap.set(pv.id, pv);
+              });
+
+              const mergedProducts = Array.from(mergedMap.values()).slice(0, 10);
+
+              // 3. Récupération des notes pour les produits fusionnés
+              const { data: ratingsData } = await supabase
+                .from("reviews")
+                .select("product_id, rating")
+                .in("product_id", mergedProducts.map(p => p.id))
+                .eq("is_published", true);
+
+              const ratingMap = new Map<string, { sum: number; count: number }>();
+              (ratingsData || []).forEach((r) => {
+                const cur = ratingMap.get(r.product_id) ?? { sum: 0, count: 0 };
+                ratingMap.set(r.product_id, { sum: cur.sum + r.rating, count: cur.count + 1 });
+              });
+
+              const finalProducts = mergedProducts.map((p) => {
+                const r = ratingMap.get(p.id);
+                return r ? { ...p, avg_rating: r.sum / r.count, review_count: r.count } : p;
+              });
+
+              setSearchResults({ products: finalProducts, categories: searchCategories });
+            }
+          }
+        } catch (vErr) {
+          console.warn('[Search] Erreur recherche vectorielle (douce):', vErr);
         }
       } catch (error) {
-        console.error("Search error:", error);
+        console.error("[Search] Erreur fatale:", error);
       } finally {
         setIsSearching(false);
       }
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
