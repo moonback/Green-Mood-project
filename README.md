@@ -123,7 +123,10 @@ npm install
 cp .env.example .env
 # Éditer .env avec vos clés API
 
-# 4. Initialiser la base de données
+# 4. Lancer le serveur Proxy API (SÉCURITÉ REQUISE)
+npm run proxy
+
+# 5. Initialiser la base de données
 # Exécuter supabase/migration.sql dans Supabase SQL Editor
 # Puis exécuter les migrations incrémentales (v3 à v9) dans l'ordre
 
@@ -141,6 +144,10 @@ npx tsx scripts/generate-sitemap.ts
 ### Développement
 
 ```bash
+# 1. Lancer le proxy (Terminal A)
+npm run proxy
+
+# 2. Lancer le frontend (Terminal B)
 npm run dev
 # → http://localhost:3000
 ```
@@ -157,6 +164,7 @@ npm run preview
 | Commande | Description |
 |---|---|
 | `npm run dev` | Serveur Vite en mode développement (port 3000) |
+| `npm run proxy` | Serveur Proxy API sécurisé (port 3001) - REQUIS POUR IA |
 | `npm run build` | Build de production (`dist/`) |
 | `npm run preview` | Preview du build de production |
 | `npm run clean` | Supprime le dossier `dist/` |
@@ -170,8 +178,8 @@ npm run preview
 |---|---|---|
 | `VITE_SUPABASE_URL` | URL du projet Supabase | ✅ |
 | `VITE_SUPABASE_ANON_KEY` | Clé anonyme Supabase | ✅ |
-| `VITE_GEMINI_API_KEY` | Clé API Gemini (voix temps réel) | ✅ |
-| `VITE_OPENROUTER_API_KEY` | Clé API OpenRouter (chat + embeddings) | ✅ |
+| `GEMINI_API_KEY` | Clé API Gemini (Sécurisée - Server only) | ✅ |
+| `OPENROUTER_API_KEY` | Clé API OpenRouter (Sécurisée - Server only) | ✅ |
 | `VITE_OPENROUTER_EMBED_MODEL` | Modèle d'embedding (défaut: `openai/text-embedding-3-small`) | ❌ |
 | `VITE_OPENROUTER_EMBED_DIMENSIONS` | Dimensions embeddings (défaut: `768`) | ❌ |
 | `VITE_VIVA_WALLET_BASE_URL` | URL base Viva Wallet | ❌ |

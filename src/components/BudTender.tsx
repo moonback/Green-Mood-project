@@ -132,8 +132,7 @@ async function callAI(
     history: { role: string; content: string }[] = [],
     context?: string
 ): Promise<string | null> {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey || !settings.ai_enabled) return null;
+    if (!settings.ai_enabled) return null;
 
     // RAG: Select the most relevant products to send to the AI
     // For the quiz, we send the top scored locally + some featured ones
@@ -171,14 +170,11 @@ async function callAI(
 
     try {
         const res = await fetch(
-            'https://openrouter.ai/api/v1/chat/completions',
+            'http://localhost:3001/api/ai/chat',
             {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                    'X-Title': 'Green Mood BudTender',
-                    'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
                 },
                 body: JSON.stringify({
                     model: modelToUse,
@@ -639,8 +635,7 @@ export default function BudTender() {
         logQuestion(text);
         setIsTyping(true);
 
-        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-        if (!apiKey || !settings.ai_enabled) {
+        if (!settings.ai_enabled) {
             addBotMessage({ text: "Désolé, ma connexion à l'IA n'est pas configurée pour le moment." });
             setIsTyping(false);
             return;
@@ -772,14 +767,11 @@ export default function BudTender() {
 
         try {
             const res = await fetch(
-                'https://openrouter.ai/api/v1/chat/completions',
+                'http://localhost:3001/api/ai/chat',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'X-Title': 'Green Mood BudTender',
-                        'HTTP-Referer': window.location.origin,
                     },
                     body: JSON.stringify({
                         model: modelToUse,

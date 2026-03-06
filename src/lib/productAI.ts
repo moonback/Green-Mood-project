@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { Product } from './types';
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const PROXY_URL = 'http://localhost:3001/api/ai/chat';
 const AI_MODEL = 'liquid/lfm-2-24b-a2b:latest';
 
 export interface GeneratedProductData {
@@ -15,15 +15,9 @@ export interface GeneratedProductData {
 }
 
 /**
- * Uses OpenRouter to generate missing product information based on the name.
+ * Uses OpenRouter via secure proxy to generate missing product information based on the name.
  */
 export async function generateProductInfo(productName: string, categoryName?: string): Promise<GeneratedProductData | null> {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey) {
-        console.error('[AI] OpenRouter API key missing');
-        return null;
-    }
-
     const prompt = `
     Tu es un expert en CBD et cannabis légal. 
     Génère des informations précises pour un produit nommé : "${productName}" ${categoryName ? `dans la catégorie "${categoryName}"` : ''}.
@@ -46,13 +40,10 @@ export async function generateProductInfo(productName: string, categoryName?: st
     `;
 
     try {
-        const response = await fetch(OPENROUTER_API_URL, {
+        const response = await fetch(PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${apiKey}`,
-                'X-Title': 'Green Mood Admin AI',
-                'HTTP-Referer': window.location.origin,
             },
             body: JSON.stringify({
                 model: AI_MODEL,

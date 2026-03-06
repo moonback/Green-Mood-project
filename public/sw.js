@@ -35,8 +35,16 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event: Stale-While-Revalidate Strategy for most things
 self.addEventListener('fetch', (event) => {
-    // Ignorer les requêtes vers Supabase ou les APIs externes pour éviter les conflits RLS de cache
-    if (event.request.url.includes('supabase') || event.request.url.includes('openrouter')) {
+    // Ignorer les requêtes de développement (Vite, Proxy) et APIs externes
+    const url = event.request.url;
+    if (
+        url.includes('supabase') ||
+        url.includes('openrouter') ||
+        url.includes('localhost:3001') || // Notre Proxy
+        url.includes('@vite') ||           // Vite HMR
+        url.includes('node_modules') ||    // Dépendances dev
+        url.includes('?t=')                // Vite cache busting
+    ) {
         return;
     }
 

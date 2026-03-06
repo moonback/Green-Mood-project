@@ -1,11 +1,11 @@
 import { getCachedEmbedding, setCachedEmbedding } from './budtenderCache';
 
-const OPENROUTER_EMBED_URL = 'https://openrouter.ai/api/v1/embeddings';
+const PROXY_URL = 'http://localhost:3001/api/ai/embeddings';
 const OPENROUTER_EMBED_MODEL = import.meta.env.VITE_OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-small';
 const OPENROUTER_EMBED_DIMENSIONS = Number(import.meta.env.VITE_OPENROUTER_EMBED_DIMENSIONS ?? 768);
 
 /**
- * Generate embeddings with LRU cache.
+ * Generate embeddings with LRU cache via secure proxy.
  * Identical queries hit the cache instead of calling the API again.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
@@ -15,16 +15,10 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const cached = getCachedEmbedding(normalized);
     if (cached) return cached;
 
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-    if (!apiKey) throw new Error('VITE_OPENROUTER_API_KEY not found in environment');
-
-    const response = await fetch(OPENROUTER_EMBED_URL, {
+    const response = await fetch(PROXY_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-            'X-Title': 'Green Mood Vector Sync',
         },
         body: JSON.stringify({
             model: OPENROUTER_EMBED_MODEL,

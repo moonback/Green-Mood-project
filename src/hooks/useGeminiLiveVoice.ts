@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { generateEmbedding } from '../lib/embeddings';
 import { getVoicePrompt } from '../lib/budtenderPrompts';
 
-const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+const LIVE_MODEL = 'models/gemini-2.0-flash-exp';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const CONNECTION_TIMEOUT_MS = 10000;
@@ -246,21 +246,15 @@ export function useGeminiLiveVoice({
       return;
     }
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      setError('Missing API Key.');
-      setVoiceState('error');
-      return;
-    }
-
     startInFlightRef.current = true;
     setVoiceState('connecting');
     setError(null);
 
+    const PROXY_WS_URL = 'ws://localhost:3001/api/gemini-live';
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      const ai = new GoogleGenAI({ apiKey });
 
       setupTimeoutRef.current = window.setTimeout(() => {
         if (sessionIdRef.current === sid && startInFlightRef.current) {
@@ -269,260 +263,305 @@ export function useGeminiLiveVoice({
         }
       }, CONNECTION_TIMEOUT_MS);
 
-      const session = await ai.live.connect({
-        model: LIVE_MODEL,
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } } },
-          systemInstruction: { parts: [{ text: buildSystemPrompt() }] },
-          tools: [{
-            functionDeclarations: [
-              {
-                name: 'add_to_cart',
-                description: 'Ajouter un ou plusieurs produits au panier. Précisez soit la quantité d\'unités (ex: 4 fois), soit le poids total en grammes (ex: 10 grammes).',
-                parametersJsonSchema: {
-                  type: 'object',
-                  properties: {
-                    product_name: { type: 'string', description: 'Le nom du produit à ajouter.' },
-                    quantity: { type: 'number', description: 'Nombre d\'unités (ex: 4 pour quatre fois).' },
-                    weight_grams: { type: 'number', description: 'Poids total en grammes souhaité (ex: 10 pour 10 grammes).' }
-                  },
-                  required: ['product_name']
-                }
-              },
-              {
-                name: 'search_catalog',
-                description: 'Rechercher des produits dans l\'intégralité du catalogue par mots-clés, effets ou arômes.',
-                parametersJsonSchema: {
-                  type: 'object',
-                  properties: {
-                    query: { type: 'string', description: 'Le besoin du client (ex: "sommeil profond", "fleur fruitée", "budget serré")' }
-                  },
-                  required: ['query']
-                }
-              },
-              {
-                name: 'close_session',
-                description: 'Terminer la discussion et fermer la fenêtre vocale (à utiliser après avoir dit au revoir).',
-                parametersJsonSchema: { type: 'object', properties: {} }
-              },
-              {
-                name: 'view_product',
-                description: 'Ouvrir la fiche détaillée d\'un produit pour que le client puisse voir les images et détails.',
-                parametersJsonSchema: {
-                  type: 'object',
-                  properties: {
-                    product_name: { type: 'string', description: 'Le nom du produit à afficher' }
-                  },
-                  required: ['product_name']
-                }
-              },
-              {
-                name: 'navigate_to',
-                description: 'Naviguer vers une page spécifique du site.',
-                parametersJsonSchema: {
-                  type: 'object',
-                  properties: {
-                    page: {
-                      type: 'string',
-                      description: 'La destination (home, shop, products, quality, contact, account, cart, catalog)'
-                    }
-                  },
-                  required: ['page']
-                }
+      // Create a manual WebSocket connection to the proxy
+      const ws = new WebSocket(PROXY_WS_URL);
+
+      const sessionMock: any = {
+        _ws: ws,
+        sendRealtimeInput: (data: any) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+              realtime_input: {
+                media_chunks: [{
+                  data: data.media.data,
+                  mime_type: 'audio/pcm;rate=16000'
+                }]
               }
-            ]
-          }]
-        },
-        callbacks: {
-          onopen: async () => {
-            if (sessionIdRef.current !== sid) return;
-            if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
-            canStreamInputRef.current = true;
-            console.info('Gemini Live: Setup Complete');
-            setVoiceState('listening');
-            await startMicCapture(stream);
-            startInFlightRef.current = false;
-            playbackCtxRef.current = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
-            sessionRef.current?.sendClientContent({
-              turns: [{ role: 'user', parts: [{ text: 'Bonjour' }] }],
-              turnComplete: true
-            });
-          },
-          onerror: (e: ErrorEvent) => {
-            if (sessionIdRef.current !== sid) return;
-            canStreamInputRef.current = false;
-            console.error('Live Error:', e);
-            setError('Erreur de connexion Live.');
-            setVoiceState('error');
-            startInFlightRef.current = false;
-          },
-          onclose: (e: CloseEvent) => {
-            if (sessionIdRef.current !== sid || isManualCloseRef.current) return;
-            canStreamInputRef.current = false;
-            console.log('Live Closed:', e.code, e.reason);
-            if (e.code !== 1000) {
-              setError(`Session interrompue (${e.code}).`);
-              setVoiceState('error');
-            } else {
-              stopSession();
-            }
-            startInFlightRef.current = false;
-          },
-          onmessage: async (msg: LiveServerMessage) => {
-            if (sessionIdRef.current !== sid) return;
-
-            const setupTurn = () => {
-              scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
-              setVoiceState('listening');
-            };
-
-            if (msg.serverContent) {
-              if (msg.serverContent.interrupted) {
-                stopAllPlayback();
-                setupTurn();
-                return;
-              }
-              if (msg.serverContent.turnComplete) {
-                setupTurn();
-                return;
-              }
-
-              // A new model turn with audio data means the server is speaking fresh content;
-              // clear the interrupted flag so these new chunks are allowed to play.
-              if (msg.serverContent.modelTurn?.parts?.length) {
-                interruptedRef.current = false;
-              }
-
-              for (const p of msg.serverContent.modelTurn?.parts || []) {
-                if (p.inlineData?.mimeType?.startsWith('audio/pcm') && p.inlineData.data) {
-                  playPcmChunk(p.inlineData.data);
-                }
-              }
-            }
-
-            const calls = msg.toolCall?.functionCalls;
-            if (!calls) return;
-
-            const responses = await Promise.all(calls.map(async c => {
-              const args = (c.args || {}) as Record<string, any>;
-              if (c.name === 'add_to_cart') {
-                const prodName = (args.product_name || '').trim();
-                const weightGrams = Number(args.weight_grams) || 0;
-                let qty = Number(args.quantity) || 0;
-
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
-
-                if (!p) {
-                  try {
-                    const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
-                    if (data) p = data as Product;
-                  } catch (e) {
-                    console.error('[Voice] Supabase fallback failed:', e);
-                  }
-                }
-
-                if (p) {
-                  // Logic for weight vs quantity
-                  if (weightGrams > 0) {
-                    const unitWeight = p.weight_grams || 1; // Fallback to 1g if not specified
-                    qty = Math.max(1, Math.round(weightGrams / unitWeight));
-                  } else if (qty <= 0) {
-                    qty = 1; // Default
-                  }
-
-                  if (onAddItemRef.current) {
-                    onAddItemRef.current(p, qty);
-                    const msg = weightGrams > 0
-                      ? `OK — ${p.name} (${weightGrams}g, soit x${qty}) ajouté au panier`
-                      : `OK — ${p.name} x${qty} ajouté au panier`;
-                    return { name: c.name, id: c.id, response: { result: msg } };
-                  }
-                }
-                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue.` } };
-              }
-
-              if (c.name === 'close_session') {
-                setTimeout(() => {
-                  stopSession();
-                  onCloseSessionRef.current?.();
-                }, 3500);
-                return { name: c.name, id: c.id, response: { result: 'OK — Session en cours de fermeture' } };
-              }
-
-              if (c.name === 'view_product') {
-                const prodName = (args.product_name || '').trim();
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
-                if (p && onViewProductRef.current) {
-                  onViewProductRef.current(p);
-                  return { name: c.name, id: c.id, response: { result: `OK — Fiche de "${p.name}" affichée` } };
-                }
-                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
-              }
-
-              if (c.name === 'navigate_to') {
-                const page = (args.page || '').toLowerCase();
-                const mapping: Record<string, string> = {
-                  home: '/', shop: '/boutique', products: '/produits', quality: '/qualite',
-                  contact: '/contact', account: '/compte', cart: '/panier', catalog: '/catalogue'
-                };
-                const path = mapping[page];
-                if (path && onNavigateRef.current) {
-                  onNavigateRef.current(path);
-                  return { name: c.name, id: c.id, response: { result: `Navigation vers ${page} effectuée.` } };
-                }
-                return { name: c.name, id: c.id, response: { error: `La page "${page}" n'existe pas.` } };
-              }
-
-              if (c.name === 'search_catalog') {
-                try {
-                  const query = (args.query || '').trim();
-                  if (!query) {
-                    return { name: c.name, id: c.id, response: { error: 'Recherche impossible : le paramètre "query" est vide.' } };
-                  }
-                  const embedding = await generateEmbedding(query);
-                  const { data, error: rpcError } = await supabase.rpc('match_products', {
-                    query_embedding: embedding,
-                    match_threshold: 0.1,
-                    match_count: 10
-                  });
-                  if (rpcError) throw rpcError;
-                  if (data && data.length > 0) searchResultsRef.current = data as Product[];
-                  const results = (data as any[]).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}% | ${p.description}`).join('\n');
-                  return { name: c.name, id: c.id, response: { results, note: 'Ce sont les produits les plus pertinents du catalogue complet.' } };
-                } catch (e) {
-                  console.error('[Voice] Search Tool Error:', e);
-                  return { name: c.name, id: c.id, response: { error: 'Erreur technique lors de la recherche' } };
-                }
-              }
-
-              return null;
             }));
+          }
+        },
+        sendClientContent: (data: any) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            // Convert SDK format to wire format if needed
+            const wireData = {
+              turns: data.turns,
+              turn_complete: data.turnComplete ?? data.turn_complete ?? true
+            };
+            ws.send(JSON.stringify({ client_content: wireData }));
+          }
+        },
+        sendToolResponse: (data: any) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            const wireData = {
+              function_responses: data.functionResponses || data.function_responses
+            };
+            ws.send(JSON.stringify({ tool_response: wireData }));
+          }
+        },
+        close: () => ws.close()
+      };
 
-            const filteredResponses = responses.filter(Boolean) as FunctionResponse[];
-            if (filteredResponses.length > 0) {
-              sessionRef.current?.sendToolResponse({ functionResponses: filteredResponses });
+      ws.onopen = () => {
+        if (sessionIdRef.current !== sid) return;
+
+        // Initial setup message for the proxy to forward to Gemini
+        ws.send(JSON.stringify({
+          setup: {
+            model: LIVE_MODEL,
+            generation_config: {
+              response_modalities: ['audio'],
+              speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Puck' } } },
+            },
+            system_instruction: { parts: [{ text: buildSystemPrompt() }] },
+            tools: [{
+              function_declarations: [
+                {
+                  name: 'add_to_cart',
+                  description: 'Ajouter un ou plusieurs produits au panier. Précisez soit la quantité d\'unités (ex: 4 fois), soit le poids total en grammes (ex: 10 grammes).',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      product_name: { type: 'string', description: 'Le nom du produit à ajouter.' },
+                      quantity: { type: 'number', description: 'Nombre d\'unités (ex: 4 pour quatre fois).' },
+                      weight_grams: { type: 'number', description: 'Poids total en grammes souhaité (ex: 10 pour 10 grammes).' }
+                    },
+                    required: ['product_name']
+                  }
+                },
+                {
+                  name: 'search_catalog',
+                  description: 'Rechercher des produits dans l\'intégralité du catalogue par mots-clés, effets ou arômes.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      query: { type: 'string', description: 'Le besoin du client (ex: "sommeil profond", "fleur fruitée", "budget serré")' }
+                    },
+                    required: ['query']
+                  }
+                },
+                {
+                  name: 'close_session',
+                  description: 'Terminer la discussion et fermer la fenêtre vocale (à utiliser après avoir dit au revoir).',
+                  parameters: { type: 'object', properties: {} }
+                },
+                {
+                  name: 'view_product',
+                  description: 'Ouvrir la fiche détaillée d\'un produit pour que le client puisse voir les images et détails.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      product_name: { type: 'string', description: 'Le nom du produit à afficher' }
+                    },
+                    required: ['product_name']
+                  }
+                },
+                {
+                  name: 'navigate_to',
+                  description: 'Naviguer vers une page spécifique du site.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      page: {
+                        type: 'string',
+                        description: 'La destination (home, shop, products, quality, contact, account, cart, catalog)'
+                      }
+                    },
+                    required: ['page']
+                  }
+                }
+              ]
+            }]
+          }
+        }));
+
+        if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
+        canStreamInputRef.current = true;
+        console.info('Gemini Live: Proxy Connection Open');
+        setVoiceState('listening');
+        startMicCapture(stream);
+        startInFlightRef.current = false;
+        playbackCtxRef.current = new AudioContext({ sampleRate: OUTPUT_SAMPLE_RATE });
+
+        // Initial greeting
+        sessionMock.sendClientContent({
+          turns: [{ role: 'user', parts: [{ text: 'Bonjour' }] }],
+          turn_complete: true
+        });
+      };
+
+      ws.onmessage = async (event) => {
+        if (sessionIdRef.current !== sid) return;
+        const msg = JSON.parse(event.data);
+
+        const setupTurn = () => {
+          scheduledUntilRef.current = playbackCtxRef.current?.currentTime ?? 0;
+          setVoiceState('listening');
+        };
+
+        if (msg.serverContent) {
+          if (msg.serverContent.interrupted) {
+            stopAllPlayback();
+            setupTurn();
+            return;
+          }
+          if (msg.serverContent.turnComplete) {
+            setupTurn();
+            return;
+          }
+
+          if (msg.serverContent.modelTurn?.parts?.length) {
+            interruptedRef.current = false;
+          }
+
+          for (const p of msg.serverContent.modelTurn?.parts || []) {
+            if (p.inlineData?.mimeType?.startsWith('audio/pcm') && p.inlineData.data) {
+              playPcmChunk(p.inlineData.data);
             }
           }
         }
-      });
 
-      sessionRef.current = session;
+        const calls = msg.toolCall?.functionCalls;
+        if (!calls) return;
+
+        const responses = await Promise.all(calls.map(async c => {
+          const args = (c.args || {}) as Record<string, any>;
+          if (c.name === 'add_to_cart') {
+            const prodName = (args.product_name || '').trim();
+            const weightGrams = Number(args.weight_grams) || 0;
+            let qty = Number(args.quantity) || 0;
+
+            const prodNameLower = prodName.toLowerCase();
+            const allKnown = [...productsRef.current, ...searchResultsRef.current];
+            let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
+              || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
+
+            if (!p) {
+              const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
+              p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
+            }
+
+            if (!p) {
+              try {
+                const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
+                if (data) p = data as Product;
+              } catch (e) {
+                console.error('[Voice] Supabase fallback failed:', e);
+              }
+            }
+
+            if (p) {
+              // Logic for weight vs quantity
+              if (weightGrams > 0) {
+                const unitWeight = p.weight_grams || 1; // Fallback to 1g if not specified
+                qty = Math.max(1, Math.round(weightGrams / unitWeight));
+              } else if (qty <= 0) {
+                qty = 1; // Default
+              }
+
+              if (onAddItemRef.current) {
+                onAddItemRef.current(p, qty);
+                const msg = weightGrams > 0
+                  ? `OK — ${p.name} (${weightGrams}g, soit x${qty}) ajouté au panier`
+                  : `OK — ${p.name} x${qty} ajouté au panier`;
+                return { name: c.name, id: c.id, response: { result: msg } };
+              }
+            }
+            return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue.` } };
+          }
+
+          if (c.name === 'close_session') {
+            setTimeout(() => {
+              stopSession();
+              onCloseSessionRef.current?.();
+            }, 3500);
+            return { name: c.name, id: c.id, response: { result: 'OK — Session en cours de fermeture' } };
+          }
+
+          if (c.name === 'view_product') {
+            const prodName = (args.product_name || '').trim();
+            const prodNameLower = prodName.toLowerCase();
+            const allKnown = [...productsRef.current, ...searchResultsRef.current];
+            let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
+              || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
+            if (!p) {
+              const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
+              p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
+            }
+            if (p && onViewProductRef.current) {
+              onViewProductRef.current(p);
+              return { name: c.name, id: c.id, response: { result: `OK — Fiche de "${p.name}" affichée` } };
+            }
+            return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
+          }
+
+          if (c.name === 'navigate_to') {
+            const page = (args.page || '').toLowerCase();
+            const mapping: Record<string, string> = {
+              home: '/', shop: '/boutique', products: '/produits', quality: '/qualite',
+              contact: '/contact', account: '/compte', cart: '/panier', catalog: '/catalogue'
+            };
+            const path = mapping[page];
+            if (path && onNavigateRef.current) {
+              onNavigateRef.current(path);
+              return { name: c.name, id: c.id, response: { result: `Navigation vers ${page} effectuée.` } };
+            }
+            return { name: c.name, id: c.id, response: { error: `La page "${page}" n'existe pas.` } };
+          }
+
+          if (c.name === 'search_catalog') {
+            try {
+              const query = (args.query || '').trim();
+              if (!query) {
+                return { name: c.name, id: c.id, response: { error: 'Recherche impossible : le paramètre "query" est vide.' } };
+              }
+              const embedding = await generateEmbedding(query);
+              const { data, error: rpcError } = await supabase.rpc('match_products', {
+                query_embedding: embedding,
+                match_threshold: 0.1,
+                match_count: 10
+              });
+              if (rpcError) throw rpcError;
+              if (data && data.length > 0) searchResultsRef.current = data as Product[];
+              const results = (data as any[]).map(p => `• ${p.name} | ${p.price}€ | CBD ${p.cbd_percentage}% | ${p.description}`).join('\n');
+              return { name: c.name, id: c.id, response: { results, note: 'Ce sont les produits les plus pertinents du catalogue complet.' } };
+            } catch (e) {
+              console.error('[Voice] Search Tool Error:', e);
+              return { name: c.name, id: c.id, response: { error: 'Erreur technique lors de la recherche' } };
+            }
+          }
+
+          return null;
+        }));
+
+        const filteredResponses = responses.filter(Boolean) as FunctionResponse[];
+        if (filteredResponses.length > 0) {
+          sessionMock.sendToolResponse({ functionResponses: filteredResponses });
+        }
+      };
+
+      ws.onerror = (e) => {
+        if (sessionIdRef.current !== sid) return;
+        canStreamInputRef.current = false;
+        console.error('Live Error:', e);
+        setError('Erreur de connexion Live.');
+        setVoiceState('error');
+        startInFlightRef.current = false;
+      };
+
+      ws.onclose = (e) => {
+        if (sessionIdRef.current !== sid || isManualCloseRef.current) return;
+        canStreamInputRef.current = false;
+        console.log('Live Closed:', e.code, e.reason);
+        if (e.code !== 1000) {
+          setError(`Session interrompue (${e.code}).`);
+          setVoiceState('error');
+        } else {
+          stopSession();
+        }
+        startInFlightRef.current = false;
+      };
+
+      sessionRef.current = sessionMock;
     } catch (err) {
       console.error('Live session setup failed:', err);
       if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
