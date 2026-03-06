@@ -396,7 +396,7 @@ export default function ProductDetail() {
                 {(product.attributes?.benefits || []).length > 0 && (
                   <div className="space-y-4">
                     <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Zap className="w-3 h-3 text-green-neon" /> Effets
+                      <Sparkles className="w-3 h-3 text-green-neon" /> Effets
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {product.attributes.benefits!.map(b => (
@@ -410,7 +410,7 @@ export default function ProductDetail() {
                 {(product.attributes?.aromas || []).length > 0 && (
                   <div className="space-y-4">
                     <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Sparkles className="w-3 h-3 text-green-neon" /> Arômes
+                      <Leaf className="w-3 h-3 text-green-neon" /> Arômes
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {product.attributes.aromas!.map(a => (

@@ -15,7 +15,10 @@ import {
     Star,
     Eye,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Sparkles,
+    Zap,
+    Leaf
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Product, Category } from '../../lib/types';
@@ -23,6 +26,7 @@ import CSVImporter from './CSVImporter';
 import MassModifyModal from './MassModifyModal';
 import AdminProductPreviewModal from './AdminProductPreviewModal';
 import { generateEmbedding } from '../../lib/embeddings';
+import { generateProductInfo } from '../../lib/productAI';
 import { slugify, sleep, isQuotaError } from '../../lib/utils';
 
 interface AdminProductsTabProps {
@@ -65,6 +69,8 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncingVectors, setIsSyncingVectors] = useState(false);
     const [vectorSyncProgress, setVectorSyncProgress] = useState<{ done: number; total: number } | null>(null);
+    const [isSyncingAI, setIsSyncingAI] = useState(false);
+    const [aiSyncProgress, setAiSyncProgress] = useState<{ done: number; total: number } | null>(null);
 
     const ITEMS_PER_PAGE = 20;
     const [currentPage, setCurrentPage] = useState(1);
@@ -84,6 +90,7 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
 
     // ── Stock adjustment ──
     const [stockAdjust, setStockAdjust] = useState<{ id: string; qty: string; note: string } | null>(null);
+    const [isGeneratingAI, setIsGeneratingAI] = useState<string | null>(null); // Product ID or 'modal'
 
     const openProductModal = (product?: Product) => {
         if (product) {
@@ -182,10 +189,73 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
         setIsSaving(false);
     };
 
+    const handleAIFillInModal = async () => {
+        if (!productForm.name) return;
+        setIsGeneratingAI('modal');
+        try {
+            const cat = categories.find(c => c.id === productForm.category_id);
+            const data = await generateProductInfo(productForm.name, cat?.name);
+            if (data) {
+                setProductForm(prev => ({
+                    ...prev,
+                    description: prev.description || data.description || null,
+                    cbd_percentage: prev.cbd_percentage ?? data.cbd_percentage ?? null,
+                    thc_max: prev.thc_max ?? data.thc_max ?? 0.2,
+                    attributes: {
+                        benefits: (prev.attributes?.benefits?.length ?? 0) > 0 ? prev.attributes.benefits : data.attributes?.benefits || [],
+                        aromas: (prev.attributes?.aromas?.length ?? 0) > 0 ? prev.attributes.aromas : data.attributes?.aromas || [],
+                    }
+                }));
+            }
+        } finally {
+            setIsGeneratingAI(null);
+        }
+    };
+
+    const handleSingleAIFillSync = async (product: Product) => {
+        setIsGeneratingAI(product.id);
+        try {
+            const data = await generateProductInfo(product.name, (product.category as any)?.name);
+            if (!data) return;
+
+            const updates: any = {};
+            if (!product.description && data.description) updates.description = data.description;
+            if (product.cbd_percentage == null && data.cbd_percentage != null) updates.cbd_percentage = data.cbd_percentage;
+            if (product.thc_max == null && data.thc_max != null) updates.thc_max = data.thc_max;
+
+            const currentAttrs = product.attributes || {};
+            const hasBenefits = currentAttrs.benefits && currentAttrs.benefits.length > 0;
+            const hasAromas = currentAttrs.aromas && currentAttrs.aromas.length > 0;
+
+            if (!hasBenefits || !hasAromas) {
+                updates.attributes = {
+                    ...currentAttrs,
+                    benefits: hasBenefits ? currentAttrs.benefits : data.attributes?.benefits || [],
+                    aromas: hasAromas ? currentAttrs.aromas : data.attributes?.aromas || [],
+                };
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await supabase.from('products').update(updates).eq('id', product.id);
+                onRefresh();
+            }
+        } finally {
+            setIsGeneratingAI(null);
+        }
+    };
+
     const hasEmbedding = (embedding: Product['embedding']) => {
         if (Array.isArray(embedding)) return embedding.length > 0;
         if (typeof embedding === 'string') return embedding.trim().length > 0 && embedding.trim() !== '[]';
         return false;
+    };
+
+    const isAIComplete = (product: Product) => {
+        return !!product.description &&
+            !!product.cbd_percentage &&
+            (product.attributes?.benefits?.length ?? 0) > 0 &&
+            (product.attributes?.aromas?.length ?? 0) > 0 &&
+            hasEmbedding(product.embedding);
     };
 
     const buildProductEmbeddingText = (product: Product) => {
@@ -255,6 +325,47 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
         } else {
             alert(`Sync IA terminée: ${successCount}/${productsWithoutVectors.length} produit(s) vectorisé(s). Échecs: ${failedCount}.`);
         }
+    };
+
+    const productsNeedingEnrichment = products.filter(p =>
+        !p.description ||
+        !p.cbd_percentage ||
+        (p.attributes?.benefits?.length ?? 0) === 0 ||
+        (p.attributes?.aromas?.length ?? 0) === 0
+    );
+
+    const handleMassAIFill = async () => {
+        if (productsNeedingEnrichment.length === 0 || isSyncingAI) return;
+
+        if (!confirm(`Voulez-vous enrichir ${productsNeedingEnrichment.length} produit(s) via l'IA ? Cette opération peut prendre du temps.`)) return;
+
+        setIsSyncingAI(true);
+        setAiSyncProgress({ done: 0, total: productsNeedingEnrichment.length });
+
+        let successCount = 0;
+        let failedCount = 0;
+
+        for (let i = 0; i < productsNeedingEnrichment.length; i++) {
+            const product = productsNeedingEnrichment[i];
+            try {
+                const { autoFillProductSync } = await import('../../lib/productAI');
+                const success = await autoFillProductSync(product);
+                if (success) successCount++;
+                else failedCount++;
+            } catch (err) {
+                console.error('[AI] Mass Fill Error:', err);
+                failedCount++;
+            } finally {
+                setAiSyncProgress({ done: i + 1, total: productsNeedingEnrichment.length });
+            }
+            await sleep(300);
+        }
+
+        setIsSyncingAI(false);
+        setAiSyncProgress(null);
+        onRefresh();
+
+        alert(`Enrichissement IA terminé: ${successCount} succès, ${failedCount} échecs.`);
     };
 
     const filteredProducts = products.filter(
@@ -331,6 +442,20 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                             <span className="hidden sm:inline">Modif. massive ({selectedProductIds.length})</span>
                         </button>
                     )}
+
+                    <button
+                        onClick={handleMassAIFill}
+                        disabled={isSyncingAI || productsNeedingEnrichment.length === 0}
+                        className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all border border-zinc-700"
+                        title="Enrichir les descriptions et attributs via IA"
+                    >
+                        <Sparkles className={`w-4 h-4 ${isSyncingAI ? 'animate-pulse text-green-neon' : 'text-zinc-300'}`} />
+                        <span>
+                            {isSyncingAI && aiSyncProgress
+                                ? `Enrich. IA ${aiSyncProgress.done}/${aiSyncProgress.total}`
+                                : `Enrich. IA (${productsNeedingEnrichment.length})`}
+                        </span>
+                    </button>
 
                     <button
                         onClick={handleSyncMissingVectors}
@@ -470,9 +595,27 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                             </div>
                                         </td>
                                         <td className="px-5 py-4">
-                                            <div className="flex justify-center">
+                                            <div className="flex justify-center gap-2">
+                                                {isAIComplete(product) ? (
+                                                    <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20" title="Fiche technique complète (IA + Vecteur)">
+                                                        <Sparkles className="w-4 h-4 text-green-500" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-1 items-center">
+                                                        {(product.attributes?.aromas?.length ?? 0) > 0 && (
+                                                            <span title="Arômes présents">
+                                                                <Leaf className="w-3 h-3 text-zinc-500" />
+                                                            </span>
+                                                        )}
+                                                        {(product.attributes?.benefits?.length ?? 0) > 0 && (
+                                                            <span title="Bénéfices présents">
+                                                                <Zap className="w-3 h-3 text-zinc-500" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 {product.embedding ? (
-                                                    <div className="w-8 h-8 rounded-full bg-green-neon/10 flex items-center justify-center border border-green-neon/20" title="Optimisé IA">
+                                                    <div className="w-8 h-8 rounded-full bg-green-neon/10 flex items-center justify-center border border-green-neon/20" title="Optimisé pour la recherche IA">
                                                         <Brain className="w-4 h-4 text-green-neon" />
                                                     </div>
                                                 ) : (
@@ -495,6 +638,14 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                                     title="Modifier"
                                                 >
                                                     <Edit3 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleSingleAIFillSync(product)}
+                                                    disabled={isGeneratingAI === product.id}
+                                                    className={`p-2 rounded-lg transition-all ${isGeneratingAI === product.id ? 'text-green-neon animate-pulse bg-white/5' : 'text-zinc-400 hover:text-green-neon hover:bg-zinc-800'}`}
+                                                    title="Remplir via IA"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
@@ -545,11 +696,30 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border ${product.is_active ? 'bg-green-950/40 text-green-400 border-green-800/50' : 'bg-zinc-950/40 text-zinc-400 border-zinc-800'}`}>
                                         {product.is_active ? 'En ligne' : 'Masqué'}
                                     </span>
-                                    {product.is_featured && (
+                                    {product.is_featured && !product.is_bundle && (
                                         <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-yellow-400 text-black border border-yellow-500 flex items-center gap-1">
                                             <Star className="w-3 h-3 fill-current" />
                                             Top
                                         </span>
+                                    )}
+                                    {isAIComplete(product) ? (
+                                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase bg-green-500 text-white border border-green-600 flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" />
+                                            IA OK
+                                        </span>
+                                    ) : (
+                                        <div className="flex gap-1">
+                                            {(product.attributes?.aromas?.length ?? 0) > 0 && (
+                                                <span className="bg-zinc-800/80 backdrop-blur-md p-1 rounded-md border border-zinc-700" title="Arômes">
+                                                    <Leaf className="w-3 h-3 text-zinc-400" />
+                                                </span>
+                                            )}
+                                            {(product.attributes?.benefits?.length ?? 0) > 0 && (
+                                                <span className="bg-zinc-800/80 backdrop-blur-md p-1 rounded-md border border-zinc-700" title="Bénéfices">
+                                                    <Zap className="w-3 h-3 text-zinc-400" />
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                                 <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-end">
@@ -592,6 +762,14 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                                     >
                                         <Edit3 className="w-3.5 h-3.5" />
                                         Modifier
+                                    </button>
+                                    <button
+                                        onClick={() => handleSingleAIFillSync(product)}
+                                        disabled={isGeneratingAI === product.id}
+                                        className={`p-2 bg-zinc-800 rounded-xl border border-zinc-700 transition-all ${isGeneratingAI === product.id ? 'text-green-neon animate-pulse bg-zinc-700' : 'text-zinc-400 hover:text-green-neon hover:bg-white/10'}`}
+                                        title="Remplir via IA"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         onClick={() => setStockAdjust({ id: product.id, qty: '', note: '' })}
@@ -711,7 +889,18 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                             <form onSubmit={handleSaveProduct} className="flex-1 overflow-y-auto p-6 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="col-span-2">
-                                        <label className={LABEL}>Nom du produit *</label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className={LABEL}>Nom du produit *</label>
+                                            <button
+                                                type="button"
+                                                onClick={handleAIFillInModal}
+                                                disabled={isGeneratingAI === 'modal' || !productForm.name}
+                                                className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-green-neon hover:bg-green-neon/10 px-2 py-1 rounded-lg transition-all border border-green-neon/20 hover:border-green-neon/40 disabled:opacity-50"
+                                            >
+                                                <Sparkles className={`w-3 h-3 ${isGeneratingAI === 'modal' ? 'animate-pulse' : ''}`} />
+                                                {isGeneratingAI === 'modal' ? 'Génération...' : 'Générer via IA'}
+                                            </button>
+                                        </div>
                                         <input
                                             required
                                             value={productForm.name}
