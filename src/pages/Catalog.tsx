@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
 import { Search, SlidersHorizontal, X, Sparkles, Filter, LayoutGrid, CalendarCheck, Info, ShieldCheck, ArrowUpDown, ChevronLeft, ChevronRight, Microscope, Zap, ArrowLeft, Link2, PackageCheck, BadgeCheck, Repeat } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { Category, Product } from '../lib/types';
+import { fetchActiveCatalog } from '../services/catalogService';
 import ProductCard from '../components/ProductCard';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
@@ -49,49 +49,15 @@ export default function Catalog() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: cats }, { data: prods }] = await Promise.all([
-        supabase.from('categories').select('*').eq('is_active', true).order('sort_order'),
-        supabase
-          .from('products')
-          .select('*, category:categories(*)')
-          .eq('is_active', true)
-          .order('is_featured', { ascending: false })
-          .order('name'),
-      ]);
-      const categoryList = (cats as Category[]) ?? [];
-      const productList = (prods as Product[]) ?? [];
-
-      // Only show categories that have at least one product
-      const nonemptyCategoryIds = new Set(productList.map(p => p.category_id));
-      const filteredCategories = categoryList.filter(c => nonemptyCategoryIds.has(c.id));
-
-      setCategories(filteredCategories);
-
-
-      if (productList.length > 0) {
-        const productIds = productList.map((p) => p.id);
-        const { data: ratingsData } = await supabase
-          .from('reviews')
-          .select('product_id, rating')
-          .in('product_id', productIds)
-          .eq('is_published', true);
-
-        const ratingMap = new Map<string, { sum: number; count: number }>();
-        (ratingsData ?? []).forEach((r: { product_id: string; rating: number }) => {
-          const cur = ratingMap.get(r.product_id) ?? { sum: 0, count: 0 };
-          ratingMap.set(r.product_id, { sum: cur.sum + r.rating, count: cur.count + 1 });
-        });
-
-        const withRatings = productList.map((p) => {
-          const r = ratingMap.get(p.id);
-          return r ? { ...p, avg_rating: r.sum / r.count, review_count: r.count } : p;
-        });
-        setProducts(withRatings);
-      } else {
-        setProducts(productList);
+      try {
+        const payload = await fetchActiveCatalog();
+        setCategories(payload.categories as Category[]);
+        setProducts(payload.products as Product[]);
+      } catch (error) {
+        console.error('Catalog loading error:', error);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     }
     load();
   }, []);

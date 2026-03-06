@@ -23,8 +23,7 @@ import ToastContainer from "./Toast";
 import { useCartStore } from "../store/cartStore";
 import { useAuthStore } from "../store/authStore";
 import { useSettingsStore } from "../store/settingsStore";
-import { supabase } from "../lib/supabase";
-import { Product, Category } from "../lib/types";
+import { usePredictiveSearch } from "../hooks/usePredictiveSearch";
 
 function BannerTicker({ messages }: { messages: string[] }) {
   const [index, setIndex] = useState(0);
@@ -61,8 +60,6 @@ export default function Layout() {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<{ products: Product[]; categories: Category[] }>({ products: [], categories: [] });
-  const [isSearching, setIsSearching] = useState(false);
   const location = useLocation();
 
   const itemCount = useCartStore((s) => s.itemCount());
@@ -78,44 +75,10 @@ export default function Layout() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Predictive search logic
-  useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.length < 2) {
-      setSearchResults({ products: [], categories: [] });
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const [{ data: products }, { data: categories }] = await Promise.all([
-          supabase
-            .from("products")
-            .select("*, category:categories(*)")
-            .ilike("name", `%${searchQuery}%`)
-            .eq("is_active", true)
-            .limit(5),
-          supabase
-            .from("categories")
-            .select("*")
-            .ilike("name", `%${searchQuery}%`)
-            .eq("is_active", true)
-            .limit(3),
-        ]);
-
-        setSearchResults({
-          products: (products as Product[]) || [],
-          categories: (categories as Category[]) || [],
-        });
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  const { isSearching, searchResults } = usePredictiveSearch(searchQuery, {
+    minQueryLength: 2,
+    debounceMs: 300,
+  });
 
   // Close search on escape
   useEffect(() => {
