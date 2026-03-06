@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import SEO from '../components/SEO';
+import ReviewModal from '../components/ReviewModal';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: 'EN ATTENTE', color: 'text-yellow-400 bg-yellow-400/5 border-yellow-400/20' },
@@ -27,6 +28,7 @@ export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
 
   const handleReorder = async (order: Order) => {
     const items = order.order_items as OrderItem[] | undefined;
@@ -70,7 +72,7 @@ export default function Orders() {
     if (!user) return;
     supabase
       .from('orders')
-      .select('*, order_items(*)')
+      .select('*, order_items(*, product:products(image_url))')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -229,6 +231,17 @@ export default function Orders() {
                             RECOMMANDER
                           </button>
 
+                          {/* Review Button - Only for delivered/ready orders */}
+                          {(order.status === 'delivered' || order.status === 'ready') && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setReviewOrder(order); }}
+                              className="w-full flex items-center justify-center gap-3 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest py-4 rounded-2xl hover:bg-white/10 hover:border-white/20 active:scale-[0.98] transition-all"
+                            >
+                              <Star className="w-4 h-4 text-yellow-400" />
+                              LAISSER UN AVIS
+                            </button>
+                          )}
+
                           {order.delivery_type === 'click_collect' && (
                             <div className="bg-zinc-900/50 rounded-[2rem] p-6 border border-white/5 flex items-center gap-6">
                               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
@@ -250,6 +263,14 @@ export default function Orders() {
           </div>
         )}
       </div>
+
+      {reviewOrder && (
+        <ReviewModal
+          order={reviewOrder}
+          isOpen={!!reviewOrder}
+          onClose={() => setReviewOrder(null)}
+        />
+      )}
     </div>
   );
 }
