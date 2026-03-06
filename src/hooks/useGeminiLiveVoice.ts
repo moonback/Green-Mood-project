@@ -268,14 +268,15 @@ export function useGeminiLiveVoice({
             functionDeclarations: [
               {
                 name: 'add_to_cart',
-                description: 'Ajouter au panier.',
+                description: 'Ajouter un ou plusieurs produits au panier. Précisez soit la quantité d\'unités (ex: 4 fois), soit le poids total en grammes (ex: 10 grammes).',
                 parametersJsonSchema: {
                   type: 'object',
                   properties: {
-                    product_name: { type: 'string' },
-                    quantity: { type: 'number' }
+                    product_name: { type: 'string', description: 'Le nom du produit à ajouter.' },
+                    quantity: { type: 'number', description: 'Nombre d\'unités (ex: 4 pour quatre fois).' },
+                    weight_grams: { type: 'number', description: 'Poids total en grammes souhaité (ex: 10 pour 10 grammes).' }
                   },
-                  required: ['product_name', 'quantity']
+                  required: ['product_name']
                 }
               },
               {
@@ -390,7 +391,9 @@ export function useGeminiLiveVoice({
               const args = (c.args || {}) as Record<string, any>;
               if (c.name === 'add_to_cart') {
                 const prodName = (args.product_name || '').trim();
-                const qty = Number(args.quantity) || 1;
+                const weightGrams = Number(args.weight_grams) || 0;
+                let qty = Number(args.quantity) || 0;
+
                 const prodNameLower = prodName.toLowerCase();
                 const allKnown = [...productsRef.current, ...searchResultsRef.current];
                 let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
@@ -410,11 +413,24 @@ export function useGeminiLiveVoice({
                   }
                 }
 
-                if (p && onAddItemRef.current) {
-                  onAddItemRef.current(p, qty);
-                  return { name: c.name, id: c.id, response: { result: `OK — ${p.name} x${qty} ajouté au panier` } };
+                if (p) {
+                  // Logic for weight vs quantity
+                  if (weightGrams > 0) {
+                    const unitWeight = p.weight_grams || 1; // Fallback to 1g if not specified
+                    qty = Math.max(1, Math.round(weightGrams / unitWeight));
+                  } else if (qty <= 0) {
+                    qty = 1; // Default
+                  }
+
+                  if (onAddItemRef.current) {
+                    onAddItemRef.current(p, qty);
+                    const msg = weightGrams > 0
+                      ? `OK — ${p.name} (${weightGrams}g, soit x${qty}) ajouté au panier`
+                      : `OK — ${p.name} x${qty} ajouté au panier`;
+                    return { name: c.name, id: c.id, response: { result: msg } };
+                  }
                 }
-                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue. Vérifie le nom exact.` } };
+                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue.` } };
               }
 
               if (c.name === 'close_session') {

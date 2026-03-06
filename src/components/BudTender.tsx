@@ -750,6 +750,25 @@ export default function BudTender() {
 
         console.log('[BudTender Chat] Sending messages to:', modelToUse);
 
+        const tools = [
+            {
+                type: 'function',
+                function: {
+                    name: 'add_to_cart',
+                    description: 'Ajouter un ou plusieurs produits au panier. Précisez soit la quantité d\'unités (ex: 4 fois), soit le poids total en grammes (ex: 10 grammes).',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            product_name: { type: 'string', description: 'Le nom du produit à ajouter.' },
+                            quantity: { type: 'number', description: 'Nombre d\'unités (ex: 4).' },
+                            weight_grams: { type: 'number', description: 'Poids total en grammes (ex: 10).' }
+                        },
+                        required: ['product_name']
+                    }
+                }
+            }
+        ];
+
         try {
             const res = await fetch(
                 'https://openrouter.ai/api/v1/chat/completions',
@@ -759,22 +778,18 @@ export default function BudTender() {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`,
                         'X-Title': 'Green Mood BudTender',
-                        // OpenRouter suggests including the referrer
                         'HTTP-Referer': window.location.origin,
                     },
                     body: JSON.stringify({
                         model: modelToUse,
                         messages: messagesForAI,
+                        tools,
+                        tool_choice: 'auto',
                         temperature: settings.ai_temperature,
                         max_tokens: settings.ai_max_tokens,
                     }),
                 }
             );
-
-            if (res.status === 429) {
-                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite OpenRouter). Pourriez-vous patienter une minute ? 🙏" });
-                return;
-            }
 
             const json = await res.json();
 
@@ -785,19 +800,67 @@ export default function BudTender() {
                 return;
             }
 
-            const responseText = json?.choices?.[0]?.message?.content;
-
-            if (!responseText) {
-                console.error("OpenRouter empty response:", json);
-                addBotMessage({ text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?" });
+            if (res.status === 429) {
+                addBotMessage({ text: "Désolé, je reçois trop de messages en ce moment (limite OpenRouter). Pourriez-vous patienter une minute ? 🙏" });
                 return;
             }
 
-            setMessages((prev) => [...prev, {
-                id: Math.random().toString(36).substring(7),
-                sender: 'bot',
-                text: responseText,
-            }]);
+            const choice = json?.choices?.[0];
+            const responseMessage = choice?.message;
+            const responseText = responseMessage?.content;
+            const toolCalls = responseMessage?.tool_calls;
+
+            if (toolCalls && toolCalls.length > 0) {
+                for (const toolCall of toolCalls) {
+                    if (toolCall.function.name === 'add_to_cart') {
+                        const args = JSON.parse(toolCall.function.arguments);
+                        const prodName = (args.product_name || '').trim();
+                        const weightGrams = Number(args.weight_grams) || 0;
+                        let qty = Number(args.quantity) || 0;
+
+                        const prodNameLower = prodName.toLowerCase();
+                        let p = relevantProducts.find(i => i.name.toLowerCase() === prodNameLower)
+                            || products.find(i => i.name.toLowerCase() === prodNameLower)
+                            || relevantProducts.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
+
+                        if (!p) {
+                            try {
+                                const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
+                                if (data) p = data as Product;
+                            } catch (e) { console.error('[BudTender Chat] Supabase fallback failed:', e); }
+                        }
+
+                        if (p) {
+                            if (weightGrams > 0) {
+                                const unitWeight = p.weight_grams || 1;
+                                qty = Math.max(1, Math.round(weightGrams / unitWeight));
+                            } else if (qty <= 0) {
+                                qty = 1;
+                            }
+                            addItem(p, qty);
+                            openSidebar();
+                            addBotMessage({
+                                text: weightGrams > 0
+                                    ? `🛒 J'ai ajouté **${weightGrams}g** de **${p.name}** (équivalent à x${qty}) à votre panier.`
+                                    : `🛒 J'ai ajouté **${qty}x ${p.name}** à votre panier.`
+                            }, 400);
+                        } else {
+                            addBotMessage({ text: `Désolé, je n'ai pas trouvé le produit "${prodName}" dans notre catalogue.` }, 400);
+                        }
+                    }
+                }
+            }
+
+            if (responseText) {
+                setMessages((prev) => [...prev, {
+                    id: Math.random().toString(36).substring(7),
+                    sender: 'bot',
+                    text: responseText,
+                }]);
+            } else if (!toolCalls) {
+                console.error("OpenRouter empty response:", json);
+                addBotMessage({ text: "Je n'ai pas pu analyser votre message correctement. Pouvez-vous reformuler ?" });
+            }
         } catch (err) {
             console.error('OpenRouter handleSendMessage error:', err);
             addBotMessage({ text: "Oups, j'ai eu une petite déconnexion. Pouvez-vous réessayer ?" });
