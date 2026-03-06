@@ -12,7 +12,8 @@ export interface StoreSettings {
     banner_enabled: boolean;
     social_instagram: string;
     social_facebook: string;
-    budtender_enabled: boolean;
+    budtender_chat_enabled: boolean;
+    budtender_voice_enabled: boolean;
     subscriptions_enabled: boolean;
     referral_reward_points: number;
     referral_welcome_bonus: number;
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     banner_enabled: true,
     social_instagram: 'https://instagram.com/greenMood_cbd',
     social_facebook: 'https://facebook.com/greenMood_cbd',
-    budtender_enabled: true,
+    budtender_chat_enabled: true,
+    budtender_voice_enabled: true,
     subscriptions_enabled: true,
     referral_reward_points: 500,
     referral_welcome_bonus: 0,
@@ -71,6 +73,13 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
                     acc[row.key] = row.value;
                     return acc;
                 }, {});
+
+                // Migration: if old budtender_enabled exists but new ones don't, copy its value
+                if (obj.budtender_enabled !== undefined && obj.budtender_chat_enabled === undefined) {
+                    obj.budtender_chat_enabled = obj.budtender_enabled;
+                    obj.budtender_voice_enabled = obj.budtender_enabled;
+                }
+
                 set({ settings: { ...DEFAULT_SETTINGS, ...obj }, isLoading: false });
             } else {
                 set({ isLoading: false });
