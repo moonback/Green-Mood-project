@@ -112,9 +112,16 @@ export function useGeminiLiveVoice({
 
   const canSendRealtimeInput = useCallback(() => {
     if (!sessionRef.current || !canStreamInputRef.current || isManualCloseRef.current) return false;
-    const ws = (sessionRef.current as any)?._ws;
-    if (!ws || typeof ws.readyState !== 'number') return true;
-    return typeof WebSocket === 'undefined' || ws.readyState === WebSocket.OPEN;
+
+    // Defensive check of the internal WebSocket state
+    const session = sessionRef.current as any;
+    const ws = session._ws || session.ws || session.messenger?.ws;
+
+    if (ws && typeof ws.readyState === 'number') {
+      return ws.readyState === 1; // 1 = OPEN
+    }
+
+    return canStreamInputRef.current;
   }, []);
 
   const buildSystemPrompt = useCallback((): string => {
