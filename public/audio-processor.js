@@ -1,20 +1,43 @@
 /**
  * AudioWorklet processor — runs on the audio rendering thread (separate from the main JS thread).
- * Receives raw mic samples from the browser engine and forwards them to the main thread via MessagePort.
+ * Receives raw mic samples, downsamples them to the target rate (default 16kHz for Gemini),
+ * and forwards the already-resampled Float32 chunks to the main thread via MessagePort.
  *
- * Registered as 'mic-processor'. The main thread creates an AudioWorkletNode with this name,
- * calls node.port.onmessage to receive Float32 chunks, and then downsamples + converts to PCM16
- * before sending over the WebSocket.
+ * Downsampling is done here (in the worklet thread) instead of the main JS thread to avoid
+ * saturating the main thread and causing UI micro-stutters.
  *
- * Buffer size equivalent: The Web Audio engine calls process() every 128 samples (fixed).
- * At 48kHz that's ~2.67ms per call — far lower latency than ScriptProcessorNode (which needed
- * at least 256 samples and typically 4096 to avoid glitches).
+ * Registered as 'mic-processor'. Pass `processorOptions: { targetRate: 16000 }` when creating
+ * the AudioWorkletNode. The main thread only needs to do float32→PCM16 + Base64 encode.
  */
 class MicProcessor extends AudioWorkletProcessor {
-    constructor() {
+    constructor(options) {
         super();
-        this.buffer = new Float32Array(2048);
+        // sampleRate is a global in the AudioWorklet scope (the browser's capture sample rate)
+        this.targetRate = options?.processorOptions?.targetRate ?? 16000;
+        this.ratio = sampleRate / this.targetRate;
+
+        // Accumulate enough input samples to produce a meaningful downsampled chunk
+        // 2048 input samples → ~683 output samples at 3:1 ratio (48kHz→16kHz)
+        this.inputBuffer = new Float32Array(2048);
         this.writeIdx = 0;
+    }
+
+    /**
+     * Downsample a Float32Array from the capture rate to targetRate using averaging.
+     * @param {Float32Array} buf - Input samples at capture rate
+     * @returns {Float32Array} - Downsampled samples at targetRate
+     */
+    _downsample(buf) {
+        const outLen = Math.floor(buf.length / this.ratio);
+        const out = new Float32Array(outLen);
+        for (let i = 0; i < outLen; i++) {
+            const start = Math.floor(i * this.ratio);
+            const end = Math.min(Math.floor((i + 1) * this.ratio), buf.length);
+            let sum = 0;
+            for (let j = start; j < end; j++) sum += buf[j];
+            out[i] = sum / (end - start);
+        }
+        return out;
     }
 
     process(inputs) {
@@ -22,12 +45,12 @@ class MicProcessor extends AudioWorkletProcessor {
         if (!input) return true;
 
         for (let i = 0; i < input.length; i++) {
-            this.buffer[this.writeIdx++] = input[i];
+            this.inputBuffer[this.writeIdx++] = input[i];
 
-            if (this.writeIdx >= this.buffer.length) {
-                // Send a copy to the main thread
-                const copy = this.buffer.slice();
-                this.port.postMessage(copy, [copy.buffer]);
+            if (this.writeIdx >= this.inputBuffer.length) {
+                // Downsample on the worklet thread, send resampled chunk to main thread
+                const downsampled = this._downsample(this.inputBuffer);
+                this.port.postMessage(downsampled, [downsampled.buffer]);
                 this.writeIdx = 0;
             }
         }

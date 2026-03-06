@@ -10,7 +10,7 @@ const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const CONNECTION_TIMEOUT_MS = 10000;
-const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
+const AUDIO_SCHEDULE_AHEAD_SEC = 0.05;
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
@@ -27,20 +27,6 @@ interface Options {
   onNavigate?: (path: string) => void;
 }
 
-function downsampleBuffer(buf: Float32Array, fromRate: number, toRate: number): Float32Array {
-  if (fromRate === toRate) return buf;
-  const ratio = fromRate / toRate;
-  const outLen = Math.floor(buf.length / ratio);
-  const out = new Float32Array(outLen);
-  for (let i = 0; i < outLen; i++) {
-    const start = Math.floor(i * ratio);
-    const end = Math.min(Math.floor((i + 1) * ratio), buf.length);
-    let sum = 0;
-    for (let j = start; j < end; j++) sum += buf[j];
-    out[i] = sum / (end - start);
-  }
-  return out;
-}
 
 function float32ToInt16(buf: Float32Array): Int16Array {
   const out = new Int16Array(buf.length);
@@ -192,14 +178,17 @@ export function useGeminiLiveVoice({
     captureCtxRef.current = ctx;
     await ctx.audioWorklet.addModule('/audio-processor.js');
     const source = ctx.createMediaStreamSource(stream);
-    const worklet = new AudioWorkletNode(ctx, 'mic-processor');
+    // Pass targetRate so the worklet downsamples on the audio thread (off main thread)
+    const worklet = new AudioWorkletNode(ctx, 'mic-processor', {
+      processorOptions: { targetRate: INPUT_SAMPLE_RATE }
+    });
     processorRef.current = worklet;
     worklet.port.onmessage = (e) => {
       if (isMutedRef.current || !canSendRealtimeInput()) return;
 
       try {
-        const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
-        const pcm = float32ToInt16(down);
+        // e.data is already downsampled to INPUT_SAMPLE_RATE by the worklet
+        const pcm = float32ToInt16(e.data as Float32Array);
 
         sessionRef.current?.sendRealtimeInput({
           media: {
@@ -404,14 +393,8 @@ export function useGeminiLiveVoice({
                   p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
                 }
 
-                if (!p) {
-                  try {
-                    const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
-                    if (data) p = data as Product;
-                  } catch (e) {
-                    console.error('[Voice] Supabase fallback failed:', e);
-                  }
-                }
+                // No ilike fallback: the prompt enforces search_catalog before add_to_cart.
+                // If not found in allKnown at this point, return an error so the AI can search first.
 
                 if (p) {
                   // Logic for weight vs quantity
