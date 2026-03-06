@@ -348,6 +348,26 @@ export default function AdminSettingsTab() {
                     </div>
                     <p className="text-xs text-zinc-400 mt-4">Affiche la section "Meilleures Ventes" sur la home page.</p>
                 </div>
+
+                <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <Plus className="w-5 h-5 text-green-neon" />
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={localSettings.empty_cart_suggestions_enabled}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, empty_cart_suggestions_enabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 peer-checked:after:bg-white"></div>
+                            </label>
+                        </div>
+                        <h3 className="font-serif font-bold text-white">Suggestions Panier</h3>
+                        <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">Panier Vide</p>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-4">Affiche des recommandations personnalisées quand le panier est vide.</p>
+                </div>
             </div>
 
             <div className="flex items-center gap-4 pt-4">

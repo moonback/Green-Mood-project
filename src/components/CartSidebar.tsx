@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import { X, ShoppingCart, Trash2, Package, Truck, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCartStore } from '../store/cartStore';
+import { useSettingsStore } from '../store/settingsStore';
 import FreeShippingGauge from './FreeShippingGauge';
+import EmptyCartSuggestions from './EmptyCartSuggestions';
 import { CATEGORY_SLUGS } from '../lib/constants';
 
 
@@ -20,6 +22,8 @@ export default function CartSidebar() {
     deliveryFee,
     total,
   } = useCartStore();
+
+  const settings = useSettingsStore((s) => s.settings);
 
   const sub = subtotal();
   const fee = deliveryFee();
@@ -68,22 +72,35 @@ export default function CartSidebar() {
 
             <div className="flex-1 flex flex-col min-h-0 ">
               {items.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center px-8 text-center space-y-6 z-[9999]">
-                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                    <ShoppingBag className="w-6 h-6 text-zinc-700" />
+                <div className="flex-1 flex flex-col items-center justify-start py-12 px-8 text-center space-y-12 overflow-y-auto scrollbar-thin">
+                  <div className="space-y-6 shrink-0">
+                    <div className="w-16 h-16 mx-auto rounded-3xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-neon/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ShoppingBag className="w-6 h-6 text-zinc-700 group-hover:text-green-neon transition-colors relative z-10" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-serif text-2xl font-black text-white italic">Panier Vide</p>
+                      <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] leading-relaxed max-w-[200px] mx-auto opacity-60">
+                        Explorez notre sélection premium
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="font-serif text-xl font-bold text-white">Panier Vide</p>
-                    <p className="text-zinc-500 text-xs leading-relaxed max-w-[200px] mx-auto">
-                      Votre sélection est actuellement vide.
-                    </p>
+
+                  {/* Suggestions Section */}
+                  {settings.empty_cart_suggestions_enabled && (
+                    <div className="w-full shrink-0">
+                      <EmptyCartSuggestions />
+                    </div>
+                  )}
+
+                  <div className="pt-4 shrink-0 px-4 w-full">
+                    <button
+                      onClick={closeSidebar}
+                      className="w-full bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.12] text-zinc-400 hover:text-white font-bold text-[10px] py-4 rounded-xl uppercase tracking-[0.3em] transition-all hover:shadow-lg active:scale-[0.98]"
+                    >
+                      Boutique Complète
+                    </button>
                   </div>
-                  <button
-                    onClick={closeSidebar}
-                    className="bg-green-neon text-black font-semibold text-xs px-6 py-3 rounded-xl uppercase tracking-wider transition-all"
-                  >
-                    Découvrir
-                  </button>
                 </div>
               ) : (
                 <>

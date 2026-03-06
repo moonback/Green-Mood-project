@@ -20,6 +20,7 @@ export interface StoreSettings {
     search_enabled: boolean;
     home_reviews_enabled: boolean;
     home_best_sellers_enabled: boolean;
+    empty_cart_suggestions_enabled: boolean;
     ticker_messages: string[];
 }
 
@@ -42,6 +43,7 @@ export const DEFAULT_SETTINGS: StoreSettings = {
     search_enabled: true,
     home_reviews_enabled: true,
     home_best_sellers_enabled: true,
+    empty_cart_suggestions_enabled: true,
     ticker_messages: [
         "✦ Livraison offerte dès 50€ d'achat ✦",
         "✦ Nouveau : Découvrez la gamme N10 ✦",
