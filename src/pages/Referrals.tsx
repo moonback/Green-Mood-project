@@ -18,6 +18,7 @@ import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { Referral } from '../lib/types';
 import SEO from '../components/SEO';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 export default function Referrals() {
     const { profile } = useAuthStore();
@@ -76,18 +77,17 @@ export default function Referrals() {
     const welcomeBonus = settings.referral_welcome_bonus || 0;
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+        <DashboardLayout
+            title="Parrainage & Carats"
+            subtitle="Invitez vos amis et débloquez vos bonus fidélité automatiquement."
+            statText={`${completedCount} parrainages validés`}
+            maxWidthClass="max-w-5xl"
+        >
             <SEO title="Parrainage — Green Mood Privilège" description="Parrainez vos amis et gagnez des Carats." />
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-                <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-12">
-                    <ArrowLeft className="w-4 h-4" />
-                    Retour au Compte
-                </Link>
-
-                <div className="space-y-12">
-                    {/* Header */}
-                    <div className="space-y-4">
+            <div className="space-y-12">
+                {/* Header */}
+                <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">
                             <Gift className="w-3 h-3" />
                             Programme Ambassadeur
@@ -231,7 +231,6 @@ export default function Referrals() {
                         </ul>
                     </div>
                 </div>
-            </div>
-        </div>
+    </DashboardLayout>
     );
 }

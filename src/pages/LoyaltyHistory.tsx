@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Coins, ArrowLeft, TrendingUp, TrendingDown, Settings2, Sparkles, Star, Award, Crown, Gift, Zap } from 'lucide-react';
+import { Coins, TrendingUp, TrendingDown, Settings2, Sparkles, Star, Award, Crown, Gift, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import type { LoyaltyTransaction } from '../lib/types';
 import SEO from '../components/SEO';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 /* ── Tier definitions ─────────────────────────────────────────────── */
 
@@ -136,26 +136,13 @@ export default function LoyaltyHistory() {
   const TierIcon = currentTier.icon;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+    <DashboardLayout
+      title="Programme privilège"
+      subtitle="Suivez vos points, votre niveau et les avantages débloqués."
+      statText={`${points} points`}
+      maxWidthClass="max-w-5xl"
+    >
       <SEO title="Programme Privilège — L'Excellence Green Mood" description="Consultez l'historique de vos points de fidélité." />
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="space-y-4">
-            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
-              <ArrowLeft className="w-4 h-4" />
-              Retour au Hub
-            </Link>
-            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none uppercase">
-              PROGRAMME <br /><span className="text-yellow-500 italic">PRIVILÈGE.</span>
-            </h1>
-          </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
-            STATUT : MEMBRE MASTER — {points} CARATS
-          </p>
-        </div>
 
         {/* ════════════════════════════════════════════════════════════
             GAMIFIED TIER CARD
@@ -445,7 +432,6 @@ export default function LoyaltyHistory() {
             Cultivons ensemble l'exception.
           </p>
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

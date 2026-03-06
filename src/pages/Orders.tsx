@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Package, Truck, Clock, ChevronDown, ArrowLeft, ShoppingBag, RotateCcw } from 'lucide-react';
+import { Package, Truck, Clock, ChevronDown, ShoppingBag, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Order, OrderItem } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useToastStore } from '../store/toastStore';
 import SEO from '../components/SEO';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: 'EN ATTENTE', color: 'text-yellow-400 bg-yellow-400/5 border-yellow-400/20' },
@@ -80,26 +81,12 @@ export default function Orders() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+    <DashboardLayout
+      title="Historique des commandes"
+      subtitle="Suivez vos commandes, leurs statuts et recommandez vos produits en un clic."
+      statText={`${orders.length} commandes`}
+    >
       <SEO title="Mes Commandes — L'Excellence Green Mood" description="Historique de vos commandes." />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="space-y-4">
-            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
-              <ArrowLeft className="w-4 h-4" />
-              Retour au Hub
-            </Link>
-            <h1 className="text-4xl md:text-4xl font-serif font-black tracking-tight leading-none">
-              HISTORIQUE <br /><span className="text-green-neon italic">SÉLECT.</span>
-            </h1>
-          </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
-            ARCHIVES PERSONNELLES — {orders.length} ITEMS
-          </p>
-        </div>
 
         {isLoading ? (
           <div className="space-y-6">
@@ -249,7 +236,6 @@ export default function Orders() {
             })}
           </div>
         )}
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

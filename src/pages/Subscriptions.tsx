@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, RefreshCw, Pause, Play, X, ChevronDown, ShoppingBag } from 'lucide-react';
+import { RefreshCw, Pause, Play, X, ChevronDown, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import type { Subscription, SubscriptionFrequency } from '../lib/types';
 import SEO from '../components/SEO';
 import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -87,24 +88,12 @@ export default function Subscriptions() {
   return (
     <>
       <SEO title="Mes abonnements — Green Mood CBD" description="Gérez vos livraisons automatiques." />
-
-      <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Link
-            to="/compte"
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Mon compte
-          </Link>
-        </div>
-
-        <h1 className="text-4xl font-semibold mb-2">Abonnements Maîtrisés</h1>
-        <p className="text-zinc-400 text-sm mb-8">
-          Gérez vos livraisons automatiques. Modifiables ou résiliables à tout moment.
-        </p>
+      <DashboardLayout
+        title="Abonnements maîtrisés"
+        subtitle="Pilotez vos livraisons récurrentes, fréquence et statut en toute autonomie."
+        statText={`${subscriptions.length} abonnements`}
+        maxWidthClass="max-w-6xl"
+      >
 
         {isLoading ? (
           <div className="space-y-4">
@@ -248,9 +237,7 @@ export default function Subscriptions() {
             })}
           </div>
         )}
-        </div>
-      </div>
-      </div>
+      </DashboardLayout>
     </>
   );
 }

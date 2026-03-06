@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, ArrowLeft, ShoppingBag, Search } from 'lucide-react';
+import { Heart, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Product } from '../lib/types';
 import { useWishlistStore } from '../store/wishlistStore';
 import ProductCard from '../components/ProductCard';
 import SEO from '../components/SEO';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 export default function Favorites() {
     const { items: wishlistIds } = useWishlistStore();
@@ -65,25 +66,12 @@ export default function Favorites() {
     }, [wishlistIds]);
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+        <DashboardLayout
+            title="Mes favoris"
+            subtitle="Retrouvez instantanément vos produits coup de cœur."
+            statText={`${wishlistIds.length} favoris`}
+        >
             <SEO title="Mes Favoris — L'Excellence Green Mood" description="Retrouvez vos sélections préférées." />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-                    <div className="space-y-4">
-                        <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
-                            <ArrowLeft className="w-4 h-4" />
-                            Retour au Hub
-                        </Link>
-                        <h1 className="text-4xl md:text-4xl font-serif font-black tracking-tight leading-none">
-                            MES <br /><span className="text-green-neon italic">FAVORIS.</span>
-                        </h1>
-                    </div>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-zinc-600 md:text-right">
-                        SÉLECTIONS PRÉVENTIVES — {wishlistIds.length} ITEMS
-                    </p>
-                </div>
 
                 {isLoading ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -138,7 +126,6 @@ export default function Favorites() {
                         </AnimatePresence>
                     </div>
                 )}
-            </div>
-        </div>
+        </DashboardLayout>
     );
 }

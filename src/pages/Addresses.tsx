@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Plus, Trash2, Star, ArrowLeft, Home, Building2, Compass } from 'lucide-react';
+import { MapPin, Plus, Trash2, Star, Home, Building2, Compass } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Address } from '../lib/types';
 import { useAuthStore } from '../store/authStore';
 import SEO from '../components/SEO';
+import DashboardLayout from '../components/account/DashboardLayout';
 
 export default function Addresses() {
   const { user } = useAuthStore();
@@ -59,35 +59,21 @@ export default function Addresses() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pt-24 pb-32 font-sans">
+    <DashboardLayout
+      title="Carnet d'adresses"
+      subtitle="Gérez vos lieux de destination et définissez votre adresse par défaut."
+      statText={`${addresses.length} adresses`}
+      rightAction={
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="group flex items-center gap-2 bg-gradient-to-r from-[#00ff88] to-[#00c853] text-black font-semibold px-5 h-11 rounded-xl transition-all hover:-translate-y-0.5"
+        >
+          <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+          {showForm ? 'Masquer' : 'Nouvelle adresse'}
+        </button>
+      }
+    >
       <SEO title="Mes Adresses — L'Excellence Green Mood" description="Gérez vos adresses de livraison." />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,120,0.08),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(0,255,120,0.05),transparent_40%)] bg-zinc-950/80 backdrop-blur-2xl p-5 md:p-8">
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
-          <div className="space-y-4">
-            <Link to="/compte" className="inline-flex items-center gap-2 text-zinc-500 hover:text-green-neon text-xs font-black uppercase tracking-widest transition-colors mb-2">
-              <ArrowLeft className="w-4 h-4" />
-              Retour au Hub
-            </Link>
-            <h1 className="text-5xl md:text-7xl font-serif font-black tracking-tight leading-none">
-              MES <br /><span className="text-green-neon italic">DESTINATIONS.</span>
-            </h1>
-          </div>
-
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="group flex items-center gap-3 bg-white text-black font-black uppercase tracking-widest px-8 py-4 rounded-2xl hover:bg-green-neon transition-all shadow-xl"
-          >
-            {showForm ? 'Masquer le Formulaire' : (
-              <>
-                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
-                Nouvelle Destination
-              </>
-            )}
-          </button>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
@@ -251,7 +237,6 @@ export default function Addresses() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
