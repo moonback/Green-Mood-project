@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit3, Trash2, X, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit3, Trash2, X, List, LayoutGrid, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Category } from '../../lib/types';
 import CSVImporter from './CSVImporter';
@@ -21,11 +21,13 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+    const [showInactive, setShowInactive] = useState(false);
 
+    const filteredCategories = categories.filter(cat => showInactive || cat.is_active);
     const ITEMS_PER_PAGE = 10;
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
-    const paginatedCategories = categories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
+    const paginatedCategories = filteredCategories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const openCategoryModal = (cat?: Category) => {
         if (cat) {
@@ -52,10 +54,33 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
         setIsSaving(false);
     };
 
-    const handleDeleteCategory = async (id: string) => {
-        if (!confirm('Désactiver cette catégorie ?')) return;
-        await supabase.from('categories').update({ is_active: false }).eq('id', id);
+    const handleToggleActive = async (id: string, currentStatus: boolean) => {
+        setIsSaving(true);
+        await supabase.from('categories').update({ is_active: !currentStatus }).eq('id', id);
         onRefresh();
+        setIsSaving(false);
+    };
+
+    const handleDeleteCategory = async (category: Category) => {
+        const productCount = Array.isArray(category.products) ? category.products[0]?.count ?? 0 : (category.products as any)?.count ?? 0;
+
+        if (productCount > 0) {
+            alert(`Impossible de supprimer cette catégorie car elle contient ${productCount} produit(s). Déplacez les produits vers une autre catégorie avant de supprimer.`);
+            return;
+        }
+
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT la catégorie "${category.name}" ? Cette action est irréversible.`)) return;
+
+        setIsSaving(true);
+        const { error } = await supabase.from('categories').delete().eq('id', category.id);
+
+        if (error) {
+            console.error('Error deleting category:', error);
+            alert('Erreur lors de la suppression de la catégorie.');
+        } else {
+            onRefresh();
+        }
+        setIsSaving(false);
     };
 
     return (
@@ -86,8 +111,19 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                     </div>
 
                     <button
+                        onClick={() => setShowInactive(!showInactive)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${showInactive
+                                ? 'bg-zinc-800 border-zinc-700 text-white'
+                                : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        <Eye className="w-4 h-4" />
+                        {showInactive ? 'Masquer inactives' : 'Voir inactives'}
+                    </button>
+
+                    <button
                         onClick={() => openCategoryModal()}
-                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                        className="flex items-center gap-2 bg-green-neon hover:bg-green-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-lg shadow-green-neon/20 active:scale-95"
                     >
                         <Plus className="w-4 h-4" />
                         Nouvelle catégorie
@@ -142,14 +178,16 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                             {cat.sort_order}
                                         </td>
                                         <td className="px-5 py-4">
-                                            <span
-                                                className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-lg border ${cat.is_active
-                                                    ? 'text-green-400 bg-green-900/20 border-green-800/50'
-                                                    : 'text-red-400 bg-red-900/20 border-red-800/50'
+                                            <button
+                                                onClick={() => handleToggleActive(cat.id, cat.is_active)}
+                                                className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-lg border transition-all hover:scale-105 active:scale-95 ${cat.is_active
+                                                    ? 'text-green-400 bg-green-900/20 border-green-800/50 hover:bg-green-900/40'
+                                                    : 'text-red-400 bg-red-900/20 border-red-800/50 hover:bg-red-900/40'
                                                     }`}
+                                                title={cat.is_active ? 'Désactiver' : 'Activer'}
                                             >
                                                 {cat.is_active ? 'Active' : 'Inactive'}
-                                            </span>
+                                            </button>
                                         </td>
                                         <td className="px-5 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -161,9 +199,9 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                                     <Edit3 className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDeleteCategory(cat.id)}
+                                                    onClick={() => handleDeleteCategory(cat)}
                                                     className="p-2 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-all"
-                                                    title="Désactiver"
+                                                    title="Supprimer définitivement"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -198,14 +236,16 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                             /{cat.slug} · ordre {cat.sort_order} · {Array.isArray(cat.products) ? cat.products[0]?.count ?? 0 : (cat.products as any)?.count ?? 0} produit{(Array.isArray(cat.products) ? cat.products[0]?.count ?? 0 : (cat.products as any)?.count ?? 0) > 1 ? 's' : ''}
                                         </p>
                                     </div>
-                                    <span
-                                        className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${cat.is_active
+                                    <button
+                                        onClick={() => handleToggleActive(cat.id, cat.is_active)}
+                                        className={`text-xs px-2 py-0.5 rounded-full border flex-shrink-0 transition-all hover:scale-105 active:scale-95 ${cat.is_active
                                             ? 'text-green-400 bg-green-900/30 border-green-800'
                                             : 'text-red-400 bg-red-900/30 border-red-800'
                                             }`}
+                                        title={cat.is_active ? 'Désactiver' : 'Activer'}
                                     >
                                         {cat.is_active ? 'Active' : 'Inactive'}
-                                    </span>
+                                    </button>
                                 </div>
                                 {cat.description && (
                                     <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{cat.description}</p>
@@ -219,8 +259,9 @@ export default function AdminCategoriesTab({ categories, onRefresh }: AdminCateg
                                         Modifier
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteCategory(cat.id)}
+                                        onClick={() => handleDeleteCategory(cat)}
                                         className="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition-colors"
+                                        title="Supprimer définitivement"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
