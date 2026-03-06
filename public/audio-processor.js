@@ -1,36 +1,94 @@
 /**
  * AudioWorklet processor — runs on the audio rendering thread (separate from the main JS thread).
- * Receives raw mic samples from the browser engine and forwards them to the main thread via MessagePort.
  *
- * Registered as 'mic-processor'. The main thread creates an AudioWorkletNode with this name,
- * calls node.port.onmessage to receive Float32 chunks, and then downsamples + converts to PCM16
- * before sending over the WebSocket.
- *
- * Buffer size equivalent: The Web Audio engine calls process() every 128 samples (fixed).
- * At 48kHz that's ~2.67ms per call — far lower latency than ScriptProcessorNode (which needed
- * at least 256 samples and typically 4096 to avoid glitches).
+ * Responsibilities moved from main thread:
+ * 1) Downsample mic input to 16kHz
+ * 2) Convert Float32 -> PCM16
+ * 3) Basic VAD gating (skip pure-silence frames)
  */
 class MicProcessor extends AudioWorkletProcessor {
-    constructor() {
+    constructor(options) {
         super();
-        this.buffer = new Float32Array(2048);
-        this.writeIdx = 0;
+
+        const processorOptions = options?.processorOptions ?? {};
+        this.targetSampleRate = processorOptions.targetSampleRate ?? 16000;
+        this.frameSize = processorOptions.frameSize ?? 320; // 20ms @ 16kHz
+        this.vadThreshold = processorOptions.vadThreshold ?? 0.008;
+        this.vadHangoverFrames = processorOptions.vadHangoverFrames ?? 12;
+
+        this.sourceSampleRate = sampleRate;
+        this.resampleRatio = this.sourceSampleRate / this.targetSampleRate;
+        this.resampleCursor = 0;
+
+        this.frameBuffer = new Float32Array(this.frameSize);
+        this.frameWrite = 0;
+        this.silentFrames = this.vadHangoverFrames;
+
+        this.port.onmessage = (event) => {
+            const data = event.data ?? {};
+            if (data.type !== 'configure') return;
+            this.targetSampleRate = data.targetSampleRate ?? this.targetSampleRate;
+            this.frameSize = data.frameSize ?? this.frameSize;
+            this.vadThreshold = data.vadThreshold ?? this.vadThreshold;
+            this.vadHangoverFrames = data.vadHangoverFrames ?? this.vadHangoverFrames;
+            this.resampleRatio = this.sourceSampleRate / this.targetSampleRate;
+            this.resampleCursor = 0;
+            this.frameBuffer = new Float32Array(this.frameSize);
+            this.frameWrite = 0;
+            this.silentFrames = this.vadHangoverFrames;
+        };
+    }
+
+    flushFrame() {
+        if (this.frameWrite < this.frameSize) return;
+
+        let sumSquares = 0;
+        for (let i = 0; i < this.frameSize; i++) {
+            const sample = this.frameBuffer[i];
+            sumSquares += sample * sample;
+        }
+        const rms = Math.sqrt(sumSquares / this.frameSize);
+        const hasVoice = rms >= this.vadThreshold;
+
+        if (hasVoice) {
+            this.silentFrames = 0;
+        } else {
+            this.silentFrames += 1;
+        }
+
+        if (hasVoice || this.silentFrames <= this.vadHangoverFrames) {
+            const pcm16 = new Int16Array(this.frameSize);
+            for (let i = 0; i < this.frameSize; i++) {
+                const s = Math.max(-1, Math.min(1, this.frameBuffer[i]));
+                pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            }
+            this.port.postMessage({ type: 'pcm16', payload: pcm16.buffer }, [pcm16.buffer]);
+        }
+
+        this.frameWrite = 0;
     }
 
     process(inputs) {
         const input = inputs[0]?.[0];
-        if (!input) return true;
+        if (!input || input.length === 0) return true;
 
-        for (let i = 0; i < input.length; i++) {
-            this.buffer[this.writeIdx++] = input[i];
+        if (!isFinite(this.resampleRatio) || this.resampleRatio <= 0) return true;
 
-            if (this.writeIdx >= this.buffer.length) {
-                // Send a copy to the main thread
-                const copy = this.buffer.slice();
-                this.port.postMessage(copy, [copy.buffer]);
-                this.writeIdx = 0;
+        while (this.resampleCursor < input.length) {
+            const idx = Math.floor(this.resampleCursor);
+            const nextIdx = Math.min(idx + 1, input.length - 1);
+            const frac = this.resampleCursor - idx;
+            const sample = input[idx] + (input[nextIdx] - input[idx]) * frac;
+
+            this.frameBuffer[this.frameWrite++] = sample;
+            this.resampleCursor += this.resampleRatio;
+
+            if (this.frameWrite >= this.frameSize) {
+                this.flushFrame();
             }
         }
+
+        this.resampleCursor -= input.length;
         return true;
     }
 }

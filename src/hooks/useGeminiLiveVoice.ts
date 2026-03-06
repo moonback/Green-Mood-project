@@ -10,7 +10,7 @@ const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
 const CONNECTION_TIMEOUT_MS = 10000;
-const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
+const AUDIO_SCHEDULE_AHEAD_SEC = 0.03;
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
@@ -25,30 +25,6 @@ interface Options {
   onCloseSession?: () => void;
   onViewProduct?: (product: Product) => void;
   onNavigate?: (path: string) => void;
-}
-
-function downsampleBuffer(buf: Float32Array, fromRate: number, toRate: number): Float32Array {
-  if (fromRate === toRate) return buf;
-  const ratio = fromRate / toRate;
-  const outLen = Math.floor(buf.length / ratio);
-  const out = new Float32Array(outLen);
-  for (let i = 0; i < outLen; i++) {
-    const start = Math.floor(i * ratio);
-    const end = Math.min(Math.floor((i + 1) * ratio), buf.length);
-    let sum = 0;
-    for (let j = start; j < end; j++) sum += buf[j];
-    out[i] = sum / (end - start);
-  }
-  return out;
-}
-
-function float32ToInt16(buf: Float32Array): Int16Array {
-  const out = new Int16Array(buf.length);
-  for (let i = 0; i < buf.length; i++) {
-    const s = Math.max(-1, Math.min(1, buf[i]));
-    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-  }
-  return out;
 }
 
 function toBase64(bytes: Uint8Array): string {
@@ -188,23 +164,43 @@ export function useGeminiLiveVoice({
   }, []);
 
   const startMicCapture = useCallback(async (stream: MediaStream) => {
-    const ctx = new AudioContext();
+    let ctx: AudioContext;
+    try {
+      ctx = new AudioContext({ sampleRate: INPUT_SAMPLE_RATE });
+    } catch {
+      ctx = new AudioContext();
+    }
     captureCtxRef.current = ctx;
     await ctx.audioWorklet.addModule('/audio-processor.js');
     const source = ctx.createMediaStreamSource(stream);
-    const worklet = new AudioWorkletNode(ctx, 'mic-processor');
+    const worklet = new AudioWorkletNode(ctx, 'mic-processor', {
+      processorOptions: {
+        targetSampleRate: INPUT_SAMPLE_RATE,
+        frameSize: 320,
+        vadThreshold: 0.008,
+        vadHangoverFrames: 12
+      }
+    });
     processorRef.current = worklet;
+    worklet.port.postMessage({
+      type: 'configure',
+      targetSampleRate: INPUT_SAMPLE_RATE,
+      frameSize: 320,
+      vadThreshold: 0.008,
+      vadHangoverFrames: 12
+    });
+
     worklet.port.onmessage = (e) => {
       if (isMutedRef.current || !canSendRealtimeInput()) return;
+      if (e.data?.type !== 'pcm16' || !e.data?.payload) return;
 
       try {
-        const down = downsampleBuffer(e.data, ctx.sampleRate, INPUT_SAMPLE_RATE);
-        const pcm = float32ToInt16(down);
+        const pcmBytes = new Uint8Array(e.data.payload);
 
         sessionRef.current?.sendRealtimeInput({
           media: {
             mimeType: 'audio/pcm;rate=16000',
-            data: toBase64(new Uint8Array(pcm.buffer))
+            data: toBase64(pcmBytes)
           }
         });
       } catch (err: any) {
@@ -268,7 +264,7 @@ export function useGeminiLiveVoice({
             functionDeclarations: [
               {
                 name: 'add_to_cart',
-                description: 'Ajouter un ou plusieurs produits au panier. Précisez soit la quantité d\'unités (ex: 4 fois), soit le poids total en grammes (ex: 10 grammes).',
+                description: "Ajouter un ou plusieurs produits au panier. Appelle d'abord search_catalog pour identifier le bon produit, puis précise la quantité d'unités (ex: 4 fois) ou le poids total en grammes (ex: 10 grammes).",
                 parametersJsonSchema: {
                   type: 'object',
                   properties: {
@@ -281,7 +277,7 @@ export function useGeminiLiveVoice({
               },
               {
                 name: 'search_catalog',
-                description: 'Rechercher des produits dans l\'intégralité du catalogue par mots-clés, effets ou arômes.',
+                description: "Rechercher des produits dans l'intégralité du catalogue par mots-clés, effets ou arômes. Cet outil doit être appelé avant add_to_cart et view_product.",
                 parametersJsonSchema: {
                   type: 'object',
                   properties: {
@@ -297,7 +293,7 @@ export function useGeminiLiveVoice({
               },
               {
                 name: 'view_product',
-                description: 'Ouvrir la fiche détaillée d\'un produit pour que le client puisse voir les images et détails.',
+                description: "Ouvrir la fiche détaillée d'un produit pour que le client puisse voir les images et détails. Utilise search_catalog juste avant pour résoudre le produit.",
                 parametersJsonSchema: {
                   type: 'object',
                   properties: {
