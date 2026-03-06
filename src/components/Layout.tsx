@@ -13,6 +13,7 @@ import {
   LogOut,
   ShieldCheck,
   Search,
+  Sparkles,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -714,14 +715,32 @@ export default function Layout() {
                                   </div>
                                   <div>
                                     <p className="text-sm font-bold text-white group-hover:text-green-neon transition-colors">{prod.name}</p>
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{prod.category?.name}</p>
-                                      {prod.avg_rating && prod.avg_rating > 0 && (
-                                        <>
-                                          <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                                          <StarRating rating={prod.avg_rating} size="sm" showCount={false} />
-                                        </>
-                                      )}
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">{prod.category?.name}</p>
+                                        {prod.avg_rating && prod.avg_rating > 0 && (
+                                          <>
+                                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                            <StarRating rating={prod.avg_rating} size="sm" showCount={false} />
+                                          </>
+                                        )}
+                                      </div>
+
+                                      {/* Attributes: Aromas & Benefits */}
+                                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                        {prod.attributes?.aromas?.slice(0, 2).map((aroma: string, i: number) => (
+                                          <div key={i} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[8px] text-zinc-400 font-bold uppercase tracking-tighter">
+                                            <Leaf className="w-2 h-2 text-green-neon/50 shrink-0" />
+                                            <span className="truncate max-w-[60px]">{aroma}</span>
+                                          </div>
+                                        ))}
+                                        {prod.attributes?.benefits?.slice(0, 2).map((benefit: string, i: number) => (
+                                          <div key={i} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-green-neon/[0.03] border border-green-neon/10 text-[8px] text-green-neon font-bold uppercase tracking-tighter">
+                                            <Sparkles className="w-2 h-2 shrink-0" />
+                                            <span className="truncate max-w-[60px]">{benefit}</span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
