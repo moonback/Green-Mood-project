@@ -1,15 +1,21 @@
--- ─── Vector Search Migration ───
+-- ─── Unified Vector Search Setup (3072 Dims) ───
 
--- Enable pgvector (Supabase supports this)
+-- 1. Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Add embedding column to products table
--- We'll use 768 dimensions for Gemini text-embedding-004
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS embedding vector(768);
+-- 2. Consolidate Products Table Vector Column
+-- Using 3072 dimensions for OpenAI text-embedding-3-large or Gemini 1.5
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'embedding') THEN
+        ALTER TABLE public.products DROP COLUMN embedding;
+    END IF;
+    ALTER TABLE public.products ADD COLUMN embedding vector(3072);
+END $$;
 
--- Create a function to match products using vector similarity
+-- 3. Unified Match Products Function
 CREATE OR REPLACE FUNCTION match_products (
-  query_embedding vector(768),
+  query_embedding vector(3072),
   match_threshold float,
   match_count int
 )
@@ -61,6 +67,7 @@ BEGIN
   FROM products p
   WHERE p.is_active = true
     AND p.is_available = true
+    AND p.embedding IS NOT NULL
     AND 1 - (p.embedding <=> query_embedding) > match_threshold
   ORDER BY p.embedding <=> query_embedding
   LIMIT match_count;

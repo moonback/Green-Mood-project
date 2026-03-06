@@ -9,17 +9,17 @@ Ce guide explique comment générer les vecteurs (embeddings) pour vos produits 
     *   `VITE_SUPABASE_URL`
     *   `VITE_SUPABASE_ANON_KEY` (ou Service Role Key pour plus de puissance)
 
-2.  Le modèle utilisé est **Gemini embedding-001** (768 dimensions).
+1.  Le modèle recommandé est **OpenAI text-embedding-3-large** (3072 dimensions).
 
 ---
 
 ## 🛠️ Étape 1 : Préparer la Base de Données
 
-Avant d'envoyer des vecteurs, la base de données doit être configurée pour accepter exactement **768** dimensions.
+Avant d'envoyer des vecteurs, la base de données doit être configurée pour accepter exactement **3072** dimensions.
 
 1.  Ouvrez l'**Éditeur SQL** de Supabase.
 2.  Copiez et exécutez le contenu de :
-    `supabase/fix_vectors_768.sql`
+    `supabase/unify_vectors_3072.sql`
     *(Cela réinitialise la colonne et la fonction de recherche).*
 
 ---

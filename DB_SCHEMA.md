@@ -100,5 +100,5 @@ Base: PostgreSQL (Supabase), avec RLS et extension `vector` pour la recherche s�
 
 ## Points à valider
 
-- ⚠️ À compléter : état final cible de dimension vectorielle (768 et 3072 coexistent dans les migrations).
+- ✅ Validé : état final cible de dimension vectorielle fixé à 3072 (OpenAI text-embedding-3-large).
 - ⚠️ À compléter : dictionnaire exhaustif des colonnes avec types/contraintes par table (possible, mais non maintenu dans un fichier de référence unique dans le repo).

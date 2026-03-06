@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const openRouterApiKey = process.env.OPENROUTER_API_KEY!;
-const openRouterModel = process.env.OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-small';
+const openRouterModel = process.env.VITE_OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-large';
 const supaUrl = process.env.VITE_SUPABASE_URL!;
 const supaKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
@@ -22,7 +22,7 @@ async function embedText(text: string): Promise<number[]> {
         body: JSON.stringify({
             model: openRouterModel,
             input: text,
-            dimensions: 768
+            dimensions: 3072
         })
     });
 
@@ -40,7 +40,7 @@ async function sync() {
         throw new Error('OPENROUTER_API_KEY is required.');
     }
 
-    console.log(`--- GENERATING EMBEDDINGS SQL (768 DIMS) VIA ${openRouterModel} ---`);
+    console.log(`--- GENERATING EMBEDDINGS SQL (3072 DIMS) VIA ${openRouterModel} ---`);
 
     const { data: products, error } = await supabase
         .from('products')
@@ -61,11 +61,11 @@ async function sync() {
             const embedding = await embedText(textToEmbed);
 
             // Validate dimension
-            if (embedding.length === 768) {
+            if (embedding.length === 3072) {
                 allLines.push(`UPDATE products SET embedding = '${JSON.stringify(embedding)}'::vector WHERE id = '${p.id}';`);
                 console.log(`✅ ${p.name}`);
             } else {
-                console.warn(`⚠️ ${p.name}: Got ${embedding.length} dims, expected 768`);
+                console.warn(`⚠️ ${p.name}: Got ${embedding.length} dims, expected 3072`);
             }
         } catch (e) {
             console.error(`❌ ${p.name}`, e);
@@ -83,7 +83,7 @@ async function sync() {
     fs.writeFileSync('supabase/apply_vectors_part3.sql', part3);
 
     console.log('\n--- FINISHED ---');
-    console.log('768-dim SQL files regenerated in supabase/ directory.');
+    console.log('3072-dim SQL files regenerated in supabase/ directory.');
 }
 
 sync();
