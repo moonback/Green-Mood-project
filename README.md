@@ -1,10 +1,10 @@
 <p align="center">
+  <img src="public/logo.png" alt="Green Mood CBD" width="140" />
+</p>
+<p align="center">
   <img src="public/header.png" alt="Green Mood CBD Header" width="100%" />
 </p>
 
-<p align="center">
-  <img src="public/logo.png" alt="Green Mood CBD" width="140" />
-</p>
 
 <h1 align="center">🌿 Green Mood CBD — Boutique Premium & Innovation N10</h1>
 
