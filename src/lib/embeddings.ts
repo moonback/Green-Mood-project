@@ -1,12 +1,17 @@
 import { getCachedEmbedding, setCachedEmbedding } from './budtenderCache';
 
 const OPENROUTER_EMBED_URL = 'https://openrouter.ai/api/v1/embeddings';
-const OPENROUTER_EMBED_MODEL = import.meta.env.VITE_OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-small';
-const OPENROUTER_EMBED_DIMENSIONS = Number(import.meta.env.VITE_OPENROUTER_EMBED_DIMENSIONS ?? 768);
+const OPENROUTER_EMBED_MODEL = import.meta.env.VITE_OPENROUTER_EMBED_MODEL ?? 'openai/text-embedding-3-large';
+
+// CRITICAL: This MUST match the vector(N) column dimension in Supabase.
+// Default is 3072 (openai/text-embedding-3-large). Changing the model
+// without re-running a full vector sync will break match_products.
+export const EXPECTED_EMBED_DIMENSIONS = Number(import.meta.env.VITE_OPENROUTER_EMBED_DIMENSIONS ?? 3072);
 
 /**
  * Generate embeddings with LRU cache.
  * Identical queries hit the cache instead of calling the API again.
+ * Validates that the returned vector dimension matches the DB schema.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
     const normalized = text.trim();
@@ -29,7 +34,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         body: JSON.stringify({
             model: OPENROUTER_EMBED_MODEL,
             input: normalized,
-            dimensions: OPENROUTER_EMBED_DIMENSIONS,
+            dimensions: EXPECTED_EMBED_DIMENSIONS,
         }),
     });
 
@@ -42,6 +47,14 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const embedding = payload?.data?.[0]?.embedding;
     if (!Array.isArray(embedding) || embedding.length === 0) {
         throw new Error('OpenRouter returned an empty embedding vector.');
+    }
+
+    // Guard against dimension mismatch that would silently break match_products
+    if (embedding.length !== EXPECTED_EMBED_DIMENSIONS) {
+        throw new Error(
+            `Embedding dimension mismatch: got ${embedding.length}, expected ${EXPECTED_EMBED_DIMENSIONS}. ` +
+            `Check VITE_OPENROUTER_EMBED_MODEL and VITE_OPENROUTER_EMBED_DIMENSIONS in .env.`
+        );
     }
 
     setCachedEmbedding(normalized, embedding);
