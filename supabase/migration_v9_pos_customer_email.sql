@@ -1,0 +1,66 @@
+-- ═══════════════════════════════════════════════════════════════════
+-- Green Mood CBD — Migration V9 (POS Customer Email)
+-- Updates create_pos_customer RPC to support custom email
+-- ═══════════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE FUNCTION public.create_pos_customer(
+  p_full_name text,
+  p_phone     text DEFAULT NULL,
+  p_email     text DEFAULT NULL
+)
+RETURNS uuid AS $$
+DECLARE
+  v_user_id uuid := gen_random_uuid();
+  v_email   text;
+BEGIN
+  -- Admin-only guard
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true
+  ) THEN
+    RAISE EXCEPTION 'Unauthorized: admin access required';
+  END IF;
+
+  -- Use provided email or generate a placeholder
+  v_email := COALESCE(p_email, 'pos_' || replace(v_user_id::text, '-', '') || '@greenmoon.internal');
+
+  -- Create a minimal auth user; the handle_new_user trigger will insert the profile row
+  INSERT INTO auth.users (
+    id,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    role,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    aud,
+    confirmation_token
+  )
+  VALUES (
+    v_user_id,
+    v_email,
+    '',
+    now(),
+    'authenticated',
+    jsonb_build_object('full_name', p_full_name),
+    now(),
+    now(),
+    'authenticated',
+    ''
+  );
+
+  -- Update profile with phone if provided
+  IF p_phone IS NOT NULL AND p_phone <> '' THEN
+    UPDATE public.profiles SET phone = p_phone WHERE id = v_user_id;
+  END IF;
+
+  RETURN v_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Re-grant execute permissions (function signature changed if parameter was added, but here we used DEFAULT NULL so it might be fine, but good to be explicit)
+GRANT EXECUTE ON FUNCTION public.create_pos_customer(text, text, text) TO authenticated;
+
+COMMENT ON FUNCTION public.create_pos_customer IS
+  'Creates a walk-in customer profile from the POS terminal. Admin-only. '
+  'Now supports an optional custom email address.';

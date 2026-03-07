@@ -22,6 +22,7 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
     const [showCreateCustomer, setShowCreateCustomer] = useState(false);
     const [newCustomerName, setNewCustomerName] = useState('');
     const [newCustomerPhone, setNewCustomerPhone] = useState('');
+    const [newCustomerEmail, setNewCustomerEmail] = useState('');
     const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
 
     const performSearch = async (query: string, full = false) => {
@@ -59,6 +60,7 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                 .rpc('create_pos_customer', {
                     p_full_name: newCustomerName.trim(),
                     p_phone: newCustomerPhone.trim() || null,
+                    p_email: newCustomerEmail.trim() || null,
                 });
             if (error || !userId) throw error ?? new Error('Création échouée');
 
@@ -189,7 +191,15 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                     <UserPlus className="w-7 h-7 text-green-500" />
                                     Nouveau Client
                                 </h3>
-                                <button onClick={() => setShowCreateCustomer(false)} className={`p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}>
+                                <button
+                                    onClick={() => {
+                                        setShowCreateCustomer(false);
+                                        setNewCustomerName('');
+                                        setNewCustomerPhone('');
+                                        setNewCustomerEmail('');
+                                    }}
+                                    className={`p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                                >
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -213,6 +223,17 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                         onChange={(e) => setNewCustomerPhone(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
                                         placeholder="Ex: 06..."
+                                        className={`w-full border rounded-2xl px-6 py-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-950 placeholder-emerald-300' : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-700'}`}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`block text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Email</label>
+                                    <input
+                                        type="email"
+                                        value={newCustomerEmail}
+                                        onChange={(e) => setNewCustomerEmail(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
+                                        placeholder="Ex: client@email.com"
                                         className={`w-full border rounded-2xl px-6 py-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-950 placeholder-emerald-300' : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-700'}`}
                                     />
                                 </div>
@@ -359,7 +380,15 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                 <UserPlus className="w-7 h-7 text-green-500" />
                                 Nouveau Client
                             </h3>
-                            <button onClick={() => setShowCreateCustomer(false)} className={`p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}>
+                            <button
+                                onClick={() => {
+                                    setShowCreateCustomer(false);
+                                    setNewCustomerName('');
+                                    setNewCustomerPhone('');
+                                    setNewCustomerEmail('');
+                                }}
+                                className={`p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                            >
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
@@ -383,6 +412,17 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                     onChange={(e) => setNewCustomerPhone(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
                                     placeholder="Ex: 06..."
+                                    className={`w-full border rounded-2xl px-6 py-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-950 placeholder-emerald-300' : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-700'}`}
+                                />
+                            </div>
+                            <div>
+                                <label className={`block text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Email</label>
+                                <input
+                                    type="email"
+                                    value={newCustomerEmail}
+                                    onChange={(e) => setNewCustomerEmail(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
+                                    placeholder="Ex: client@email.com"
                                     className={`w-full border rounded-2xl px-6 py-4 text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-950 placeholder-emerald-300' : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-700'}`}
                                 />
                             </div>

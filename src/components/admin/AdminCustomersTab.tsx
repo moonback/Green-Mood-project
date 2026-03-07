@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Coins, ShieldOff, ShieldCheck } from 'lucide-react';
+import { Search, Coins, ShieldOff, ShieldCheck, Send, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Profile } from '../../lib/types';
 
@@ -10,6 +10,33 @@ interface AdminCustomersTabProps {
 
 export default function AdminCustomersTab({ customers, onRefresh }: AdminCustomersTabProps) {
     const [searchQuery, setSearchQuery] = useState('');
+    const [sendingAccessId, setSendingAccessId] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const handleSendAccess = async (email: string | null, id: string) => {
+        if (!email) {
+            alert("Ce client n'a pas d'adresse email enregistrée.");
+            return;
+        }
+
+        if (!confirm(`Envoyer un lien d'accès (réinitialisation de mot de passe) à ${email} ?`)) return;
+
+        setSendingAccessId(id);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
+            });
+
+            if (error) throw error;
+
+            setSuccessMessage(`Lien envoyé à ${email}`);
+            setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (err: any) {
+            alert("Erreur lors de l'envoi : " + err.message);
+        } finally {
+            setSendingAccessId(null);
+        }
+    };
 
     const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
         if (!confirm(currentStatus ? 'Retirer les droits admin ?' : 'Donner les droits admin ?')) return;
@@ -21,6 +48,7 @@ export default function AdminCustomersTab({ customers, onRefresh }: AdminCustome
         (c) =>
             !searchQuery ||
             (c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 c.phone?.includes(searchQuery) ||
                 c.id.includes(searchQuery))
     );
@@ -40,6 +68,12 @@ export default function AdminCustomersTab({ customers, onRefresh }: AdminCustome
                 <span className="text-sm text-zinc-500">
                     {filteredCustomers.length} client{filteredCustomers.length !== 1 ? 's' : ''}
                 </span>
+                {successMessage && (
+                    <div className="flex items-center gap-2 bg-green-500/10 text-green-400 px-4 py-2 rounded-xl border border-green-500/20 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {successMessage}
+                    </div>
+                )}
             </div>
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden shadow-xl">
@@ -48,7 +82,7 @@ export default function AdminCustomersTab({ customers, onRefresh }: AdminCustome
                         <thead>
                             <tr className="text-left text-xs text-zinc-500 uppercase tracking-wider border-b border-zinc-800 bg-zinc-800/50">
                                 <th className="px-5 py-3">Client</th>
-                                <th className="px-5 py-3">Téléphone</th>
+                                <th className="px-5 py-3">Contact</th>
                                 <th className="px-5 py-3">Inscrit le</th>
                                 <th className="px-5 py-3">Points fidélité</th>
                                 <th className="px-5 py-3">Rôle</th>
@@ -67,13 +101,15 @@ export default function AdminCustomersTab({ customers, onRefresh }: AdminCustome
                                                 <p className="font-medium text-white text-sm">
                                                     {customer.full_name ?? 'Utilisateur'}
                                                 </p>
-                                                <p className="text-xs text-zinc-600 font-mono">
-                                                    {customer.id.slice(0, 12)}…
+                                                <p className="text-[10px] text-zinc-600 font-medium truncate max-w-[150px]">
+                                                    {customer.email ?? "Pas d'email"}
                                                 </p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-3.5 text-sm text-zinc-400">{customer.phone ?? '—'}</td>
+                                    <td className="px-5 py-3.5">
+                                        <p className="text-sm text-zinc-400">{customer.phone ?? '—'}</p>
+                                    </td>
                                     <td className="px-5 py-3.5 text-sm text-zinc-400">
                                         {new Date(customer.created_at).toLocaleDateString('fr-FR')}
                                     </td>
@@ -110,19 +146,32 @@ export default function AdminCustomersTab({ customers, onRefresh }: AdminCustome
                                         </span>
                                     </td>
                                     <td className="px-5 py-3.5">
-                                        <button
-                                            onClick={() => handleToggleAdmin(customer.id, customer.is_admin)}
-                                            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${customer.is_admin
-                                                ? 'text-red-400 border-red-800 hover:bg-red-900/20'
-                                                : 'text-green-400 border-green-800 hover:bg-green-900/20'
-                                                }`}
-                                        >
-                                            {customer.is_admin ? (
-                                                <><ShieldOff className="w-3 h-3" />Retirer admin</>
-                                            ) : (
-                                                <><ShieldCheck className="w-3 h-3" />Passer admin</>
-                                            )}
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleSendAccess(customer.email, customer.id)}
+                                                disabled={sendingAccessId === customer.id || !customer.email}
+                                                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                                title="Envoyer lien d'accès par email"
+                                            >
+                                                {sendingAccessId === customer.id ? (
+                                                    <span className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                                                ) : <Send className="w-3 h-3" />}
+                                                Accès
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleAdmin(customer.id, customer.is_admin)}
+                                                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${customer.is_admin
+                                                    ? 'text-red-400 border-red-800 hover:bg-red-900/20'
+                                                    : 'text-green-400 border-green-800 hover:bg-green-900/20'
+                                                    }`}
+                                            >
+                                                {customer.is_admin ? (
+                                                    <ShieldOff className="w-3 h-3" />
+                                                ) : (
+                                                    <ShieldCheck className="w-3 h-3" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

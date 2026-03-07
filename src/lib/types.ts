@@ -60,6 +60,7 @@ export interface BundleItem {
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
   phone: string | null;
   loyalty_points: number;
   referral_code: string | null;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Package, X, Star, Calendar, ChevronDown, ChevronUp, Tag, QrCode } from 'lucide-react';
+import { User, Package, X, Star, Calendar, ChevronDown, ChevronUp, Tag, QrCode, Send, Mail, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../../lib/supabase';
 import { Profile, Order } from '../../../lib/types';
@@ -16,6 +16,8 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'card' | 'orders'>('card');
+    const [isSendingAccess, setIsSendingAccess] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -33,6 +35,24 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
 
         fetchOrders();
     }, [customer.id]);
+
+    const handleSendAccess = async () => {
+        if (!customer.email) return;
+        setIsSendingAccess(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(customer.email, {
+                redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
+            });
+            if (error) throw error;
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+        } catch (err) {
+            console.error('Error sending access link:', err);
+            alert("Erreur lors de l'envoi du lien.");
+        } finally {
+            setIsSendingAccess(false);
+        }
+    };
 
     const tabs = [
         { id: 'card' as const, label: 'Carte Fidélité', icon: QrCode },
@@ -55,7 +75,10 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                         </div>
                         <div>
                             <h2 className={`text-lg sm:text-xl font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{customer.full_name}</h2>
-                            <p className={`text-xs sm:text-sm transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{customer.phone || 'Aucun numéro'}</p>
+                            <div className="flex flex-col">
+                                <p className={`text-xs sm:text-sm font-medium transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{customer.phone || 'Aucun numéro'}</p>
+                                {customer.email && <p className={`text-[10px] sm:text-xs opacity-50 transition-colors ${isLightTheme ? 'text-emerald-900' : 'text-zinc-400'}`}>{customer.email}</p>}
+                            </div>
                         </div>
                     </div>
                     <button
@@ -117,6 +140,41 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Account Access Utility */}
+                                {customer.email && (
+                                    <div className={`p-4 rounded-2xl border transition-all ${isLightTheme ? 'bg-blue-50/50 border-blue-100' : 'bg-blue-500/5 border-blue-500/20'}`}>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isLightTheme ? 'bg-blue-100 text-blue-600' : 'bg-blue-500/20 text-blue-400'}`}>
+                                                    <Mail className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className={`text-[10px] font-black uppercase tracking-widest ${isLightTheme ? 'text-blue-700/60' : 'text-blue-400/60'}`}>Accès au compte</p>
+                                                    <p className={`text-xs font-bold ${isLightTheme ? 'text-blue-950' : 'text-blue-100'}`}>Envoyer le lien de connexion</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleSendAccess}
+                                                disabled={isSendingAccess || showSuccess}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${showSuccess
+                                                        ? 'bg-green-500 text-white'
+                                                        : isLightTheme
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                                                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                                                    } disabled:opacity-50`}
+                                            >
+                                                {isSendingAccess ? (
+                                                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                ) : showSuccess ? (
+                                                    <><CheckCircle2 className="w-3 h-3" /> Envoyé</>
+                                                ) : (
+                                                    <><Send className="w-3 h-3" /> Envoyer</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Loyalty Card with QR */}
                                 <div className={`rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all ${isLightTheme ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-zinc-950/50 border border-zinc-800'}`}>
