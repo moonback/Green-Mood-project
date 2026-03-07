@@ -104,33 +104,40 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                         ) : (
                             <div className="space-y-3">
                                 {recentOrders.map((order) => (
-                                    <div key={order.id} className="bg-zinc-800/30 border border-zinc-800 rounded-xl overflow-hidden">
+                                    <div key={order.id} className={`rounded-xl overflow-hidden border transition-all ${isLightTheme ? 'bg-white border-emerald-100 shadow-sm' : 'bg-zinc-800/30 border-zinc-800'
+                                        }`}>
                                         <button
                                             onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
-                                            className="w-full flex items-center justify-between p-4 hover:bg-zinc-800/50 transition-colors text-left"
+                                            className={`w-full flex items-center justify-between p-4 transition-colors text-left ${isLightTheme ? 'hover:bg-emerald-50/50' : 'hover:bg-zinc-800/50'
+                                                }`}
                                         >
                                             <div>
-                                                <p className="text-sm font-bold text-white flex items-center gap-2">
+                                                <p className={`text-sm font-bold flex items-center gap-2 ${isLightTheme ? 'text-emerald-950' : 'text-white'
+                                                    }`}>
                                                     {new Date(order.created_at).toLocaleDateString('fr-FR')}
-                                                    <span className="text-[10px] text-zinc-500 font-normal">
+                                                    <span className={`text-[10px] font-normal px-1.5 py-0.5 rounded-full ${isLightTheme ? 'bg-emerald-50 text-emerald-600' : 'bg-zinc-700 text-zinc-400'
+                                                        }`}>
                                                         {new Date(order.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </p>
-                                                <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1">
+                                                <p className={`text-xs mt-1 flex items-center gap-1 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'
+                                                    }`}>
                                                     {order.order_items?.length || 0} article(s) • {order.delivery_type === 'in_store' ? 'Retrait/Sur place' : 'Livraison'}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="font-black text-green-400">{order.total.toFixed(2)} €</p>
+                                                    <p className={`font-black ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`}>
+                                                        {order.total.toFixed(2)} €
+                                                    </p>
                                                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${order.status === 'delivered'
-                                                        ? 'bg-green-500/10 text-green-400'
-                                                        : 'bg-zinc-700 text-zinc-400'
+                                                            ? (isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400')
+                                                            : (isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-700 text-zinc-400')
                                                         }`}>
                                                         {order.status}
                                                     </span>
                                                 </div>
-                                                {expandedOrderId === order.id ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                                {expandedOrderId === order.id ? <ChevronUp className={`w-4 h-4 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} /> : <ChevronDown className={`w-4 h-4 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} />}
                                             </div>
                                         </button>
 
@@ -140,21 +147,24 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                                     initial={{ height: 0, opacity: 0 }}
                                                     animate={{ height: 'auto', opacity: 1 }}
                                                     exit={{ height: 0, opacity: 0 }}
-                                                    className="border-t border-zinc-800 bg-zinc-900/50"
+                                                    className={`border-t transition-colors ${isLightTheme ? 'border-emerald-100 bg-emerald-50/50' : 'border-zinc-800 bg-zinc-900/50'
+                                                        }`}
                                                 >
                                                     <div className="p-4 space-y-2">
                                                         {order.order_items?.map(item => (
-                                                            <div key={item.id} className="flex items-center justify-between text-xs p-2 bg-zinc-800/30 rounded-lg">
+                                                            <div key={item.id} className={`flex items-center justify-between text-xs p-2 rounded-lg transition-colors ${isLightTheme ? 'bg-emerald-50/50 text-emerald-900' : 'bg-zinc-800/30 text-zinc-300'
+                                                                }`}>
                                                                 <div className="flex items-center gap-2">
-                                                                    <Tag className="w-3 h-3 text-zinc-500" />
-                                                                    <span className="text-zinc-300 font-bold">{item.quantity}x</span>
-                                                                    <span className="text-white">{item.product_name}</span>
+                                                                    <Tag className={`w-3 h-3 ${isLightTheme ? 'text-emerald-500' : 'text-green-400'}`} />
+                                                                    <span className={`font-bold ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{item.quantity}x</span>
+                                                                    <span className={`${isLightTheme ? 'text-emerald-900' : 'text-white'}`}>{item.product_name}</span>
                                                                 </div>
-                                                                <span className="text-zinc-400 font-bold">{item.total_price.toFixed(2)} €</span>
+                                                                <span className={`font-bold ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`}>{item.total_price.toFixed(2)} €</span>
                                                             </div>
                                                         ))}
                                                         {order.notes && (
-                                                            <div className="mt-2 text-[10px] text-zinc-500 italic p-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
+                                                            <div className={`mt-2 text-[10px] italic p-2 rounded-lg border transition-colors ${isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-zinc-800/30 border-zinc-700/50 text-zinc-500'
+                                                                }`}>
                                                                 Note : {order.notes}
                                                             </div>
                                                         )}
