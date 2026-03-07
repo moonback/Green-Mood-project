@@ -62,40 +62,40 @@ export default function POSAIPreferencesModal({
     isLightTheme,
 }: POSAIPreferencesModalProps) {
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xl">
             <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 30 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className={`w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col md:flex-row transition-all duration-500 border ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-[#0a0a0b]/90 border-zinc-800'
+                className={`w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col md:flex-row transition-all duration-500 border overflow-y-auto md:overflow-visible ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-[#0a0a0b]/90 border-zinc-800'
                     }`}
             >
                 {/* ── Left Sidebar: Profile Summary ── */}
-                <div className={`w-full md:w-80 p-8 flex flex-col transition-all ${isLightTheme ? 'bg-emerald-50/50 border-r border-emerald-100' : 'bg-gradient-to-b from-zinc-900/50 to-transparent border-r border-zinc-800/50'
+                <div className={`w-full md:w-80 p-6 sm:p-8 flex flex-col transition-all shrink-0 md:overflow-y-auto ${isLightTheme ? 'bg-emerald-50/50 border-b md:border-b-0 md:border-r border-emerald-100' : 'bg-gradient-to-b from-zinc-900/50 to-transparent border-b md:border-b-0 md:border-r border-zinc-800/50'
                     }`}>
                     <div className="flex flex-col items-center text-center">
                         <motion.div
                             initial={{ rotate: -20, scale: 0.8 }}
                             animate={{ rotate: 0, scale: 1 }}
-                            className={`relative w-24 h-24 rounded-[2rem] flex items-center justify-center mb-6 overflow-hidden group transition-all ${isLightTheme ? 'bg-white shadow-xl shadow-emerald-200/50' : 'bg-zinc-950 shadow-2xl shadow-black'}`}
+                            className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-[2rem] flex items-center justify-center mb-4 sm:mb-6 overflow-hidden group transition-all ${isLightTheme ? 'bg-white shadow-xl shadow-emerald-200/50' : 'bg-zinc-950 shadow-2xl shadow-black'}`}
                         >
                             <div className="absolute inset-0 bg-gradient-to-tr from-green-500/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <UserIcon className={`w-10 h-10 ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`} />
+                            <UserIcon className={`w-8 h-8 sm:w-10 sm:h-10 ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`} />
                         </motion.div>
 
-                        <h2 className={`text-2xl font-black tracking-tight mb-2 ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                        <h2 className={`text-xl sm:text-2xl font-black tracking-tight mb-2 ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                             {customer.full_name || 'Client'}
                         </h2>
 
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 ${isLightTheme ? 'bg-emerald-100/50 text-emerald-700' : 'bg-green-500/10 text-green-400'}`}>
+                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 sm:mb-6 ${isLightTheme ? 'bg-emerald-100/50 text-emerald-700' : 'bg-green-500/10 text-green-400'}`}>
                             <Sparkles className="w-3 h-3" />
                             Client Premium
                         </div>
 
-                        <div className="w-full space-y-4 text-left">
+                        <div className="w-full space-y-3 sm:space-y-4 text-left">
                             {customer.phone && (
                                 <div className="space-y-1">
                                     <p className={`text-[9px] font-black uppercase tracking-widest ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-600'}`}>Contact</p>
-                                    <div className={`flex items-center gap-2 p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-white border border-emerald-50' : 'bg-zinc-900/50 border border-zinc-800'}`}>
+                                    <div className={`flex items-center gap-2 p-3 rounded-xl sm:rounded-2xl transition-all ${isLightTheme ? 'bg-white border border-emerald-50' : 'bg-zinc-900/50 border border-zinc-800'}`}>
                                         <Phone className={`w-3.5 h-3.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} />
                                         <span className={`text-xs font-mono font-bold ${isLightTheme ? 'text-emerald-950' : 'text-zinc-300'}`}>{customer.phone}</span>
                                     </div>
@@ -105,7 +105,7 @@ export default function POSAIPreferencesModal({
                             {defaultAddress && (
                                 <div className="space-y-1">
                                     <p className={`text-[9px] font-black uppercase tracking-widest ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-600'}`}>Adresse principale</p>
-                                    <div className={`flex items-start gap-3 p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-white border border-emerald-50' : 'bg-zinc-900/50 border border-zinc-800'}`}>
+                                    <div className={`flex items-start gap-3 p-3 rounded-xl sm:rounded-2xl transition-all ${isLightTheme ? 'bg-white border border-emerald-50' : 'bg-zinc-900/50 border border-zinc-800'}`}>
                                         <MapPin className={`w-3.5 h-3.5 mt-0.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} />
                                         <p className={`text-[10px] font-bold leading-relaxed ${isLightTheme ? 'text-emerald-950' : 'text-zinc-300'}`}>
                                             {defaultAddress.street}<br />
@@ -117,7 +117,7 @@ export default function POSAIPreferencesModal({
 
                             <div className="space-y-1">
                                 <p className={`text-[9px] font-black uppercase tracking-widest ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-600'}`}>Loyauté</p>
-                                <div className={`flex items-center justify-between p-3 rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-600 text-white' : 'bg-green-500 text-black'}`}>
+                                <div className={`flex items-center justify-between p-3 rounded-xl sm:rounded-2xl transition-all ${isLightTheme ? 'bg-emerald-600 text-white' : 'bg-green-500 text-black'}`}>
                                     <div className="flex items-center gap-2">
                                         <Package className="w-3.5 h-3.5" />
                                         <span className="text-[10px] font-black uppercase tracking-tight">Total Commandes</span>
@@ -128,10 +128,10 @@ export default function POSAIPreferencesModal({
                         </div>
                     </div>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-6 md:mt-auto pt-4 md:pt-8 mb-4 md:mb-0">
                         <button
                             onClick={onViewOrders}
-                            className={`w-full group flex items-center justify-between p-4 rounded-2xl transition-all ${isLightTheme ? 'bg-white hover:bg-emerald-50 border border-emerald-100' : 'bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800'}`}
+                            className={`w-full group flex items-center justify-between p-4 rounded-xl sm:rounded-2xl transition-all ${isLightTheme ? 'bg-white hover:bg-emerald-50 border border-emerald-100 shadow-sm' : 'bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-800'}`}
                         >
                             <span className={`text-[10px] font-black uppercase tracking-widest ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Historique complet</span>
                             <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
@@ -140,30 +140,30 @@ export default function POSAIPreferencesModal({
                 </div>
 
                 {/* ── Main Area: AI Preferences ── */}
-                <div className="flex-1 p-8 flex flex-col relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-10">
+                <div className="flex-1 p-6 sm:p-8 flex flex-col relative overflow-hidden min-h-0 md:h-[90vh]">
+                    <div className="flex items-center justify-between mb-8 sm:mb-10">
                         <div className="flex items-center gap-4">
                             <motion.div
                                 animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
                                 transition={{ duration: 4, repeat: Infinity }}
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-all ${isLightTheme ? 'bg-emerald-600 text-white shadow-emerald-200' : 'bg-green-500 text-black shadow-green-500/20'}`}
+                                className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-2xl transition-all ${isLightTheme ? 'bg-emerald-600 text-white shadow-emerald-200' : 'bg-green-500 text-black shadow-green-500/20'}`}
                             >
-                                <Brain className="w-7 h-7" />
+                                <Brain className="w-5 h-5 sm:w-7 sm:h-7" />
                             </motion.div>
                             <div>
-                                <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Analyse Cognitive</p>
-                                <h3 className={`text-2xl font-black uppercase tracking-tight ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Préférences Client</h3>
+                                <p className={`text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] mb-1 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Analyse Cognitive</p>
+                                <h3 className={`text-xl sm:text-2xl font-black uppercase tracking-tight ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Préférences Client</h3>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className={`p-3 rounded-2xl transition-all hover:scale-105 active:scale-95 ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                            className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all hover:scale-105 active:scale-95 ${isLightTheme ? 'bg-emerald-50 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
                         >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
                         <IconCard icon={Target} label="Objectif" value={t(preferences.goal)} isLightTheme={isLightTheme} color="text-emerald-500" />
                         <IconCard icon={Zap} label="Expérience" value={t(preferences.experience_level)} isLightTheme={isLightTheme} color="text-amber-500" />
                         <IconCard icon={Waves} label="Intensité" value={t(preferences.intensity_preference)} isLightTheme={isLightTheme} color="text-blue-500" />
@@ -174,16 +174,16 @@ export default function POSAIPreferencesModal({
 
                     {/* Terpenes Bar */}
                     {(preferences.terpene_preferences?.length || 0) > 0 && (
-                        <div className={`mt-8 p-6 rounded-[2rem] border transition-all ${isLightTheme ? 'bg-white border-emerald-100 shadow-sm shadow-emerald-100/50' : 'bg-zinc-950/50 border-zinc-800/50'}`}>
-                            <div className="flex items-center gap-3 mb-4">
+                        <div className={`mt-6 sm:mt-8 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border transition-all ${isLightTheme ? 'bg-white border-emerald-100 shadow-sm shadow-emerald-100/50' : 'bg-zinc-950/50 border-zinc-800/50'}`}>
+                            <div className="flex items-center gap-3 mb-3 sm:mb-4">
                                 <Sparkles className={`w-4 h-4 ${isLightTheme ? 'text-emerald-500' : 'text-green-400'}`} />
-                                <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-950' : 'text-zinc-400'}`}>Terpènes Préférés</span>
+                                <span className={`text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-950' : 'text-zinc-400'}`}>Terpènes Préférés</span>
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {preferences.terpene_preferences?.map((terpene) => (
                                     <span
                                         key={terpene}
-                                        className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-wide transition-all ${isLightTheme ? 'bg-emerald-100/50 text-emerald-700 hover:bg-emerald-100' : 'bg-zinc-900 text-green-400 hover:text-green-300 border border-zinc-800 hover:border-green-500/30'}`}
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-wide transition-all ${isLightTheme ? 'bg-emerald-100/50 text-emerald-700 hover:bg-emerald-100' : 'bg-zinc-900 text-green-400 hover:text-green-300 border border-zinc-800 hover:border-green-500/30'}`}
                                     >
                                         {t(terpene)}
                                     </span>
@@ -192,11 +192,11 @@ export default function POSAIPreferencesModal({
                         </div>
                     )}
 
-                    <div className="mt-8 flex items-center justify-between px-2 opacity-50">
-                        <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
+                    <div className="mt-6 sm:mt-8 flex items-center justify-between px-2 opacity-50">
+                        <p className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
                             BudTender AI Analysis v2.0
                         </p>
-                        <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
+                        <p className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
                             {preferences.updated_at ? new Date(preferences.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : ''}
                         </p>
                     </div>
