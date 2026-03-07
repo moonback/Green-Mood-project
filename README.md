@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="public/header.png" alt="Green Mood CBD Header" width="100%" />
+</p>
+
+<p align="center">
   <img src="public/logo.png" alt="Green Mood CBD" width="140" />
 </p>
 
