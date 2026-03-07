@@ -33,12 +33,12 @@ const STATUS: Record<VoiceState, string> = {
     error: 'Erreur de connexion',
 };
 
-const STATUS_SUB: Record<VoiceState, string> = {
+const STATUS_SUB_DEFAULT: Record<VoiceState, string> = {
     idle: 'Votre conseiller vocal IA est prêt',
-    connecting: 'Établissement de la connexion sécurisée',
+    connecting: 'Établissement de la connexion sécurisée…',
     listening: 'Parlez naturellement, je vous comprends',
     speaking: 'Analyse et réponse en cours…',
-    error: 'Vérifiez votre connexion et réessayez',
+    error: 'Appuyez sur "Réessayer" pour relancer la connexion',
 };
 
 // ─── Animated ring component ─────────────────────────────────────────────────
@@ -310,7 +310,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 {STATUS[voiceState]}
                             </motion.p>
                             <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed" aria-live="polite" aria-atomic="true">
-                                {error || compatibilityError || STATUS_SUB[voiceState]}
+                                {compatibilityError || error || STATUS_SUB_DEFAULT[voiceState]}
                             </p>
                         </div>
 
