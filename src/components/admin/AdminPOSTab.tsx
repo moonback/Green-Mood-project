@@ -52,6 +52,7 @@ import POSCustomerDetailModal from './pos/POSCustomerDetailModal';
 import POSAIPreferencesModal from './pos/POSAIPreferencesModal';
 import { CartLine, PaymentMethod, AppliedPromo, CompletedSale, DailyReport } from './pos/types';
 import { UserAIPreferences, Address } from '../../lib/types';
+import { CATEGORY_SLUGS } from '../../lib/constants';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -1403,100 +1404,114 @@ function AdminPOSTab({
                                         <p className={`text-[10px] mt-1 ${isLightTheme ? 'text-emerald-100' : 'text-zinc-700'}`}>Cliquez sur un produit pour ajouter</p>
                                     </div>
                                 ) : (
-                                    cart.map((line) => (
-                                        <motion.div
-                                            key={line.product.id}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: 20 }}
-                                            className={`rounded-xl p-2.5 transition-all ${isLightTheme ? 'bg-white border border-emerald-100 shadow-sm' : 'bg-zinc-800'}`}
-                                        >
-                                            <div className="flex items-start justify-between gap-2 mb-2">
-                                                <div>
-                                                    <p className={`text-xs font-bold leading-tight transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
-                                                        {line.product.name}
-                                                    </p>
-                                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                                        {[1, 5, 10, 30, 50, 100].map(weight => (
-                                                            <button
-                                                                key={weight}
-                                                                onClick={() => {
-                                                                    const val = Math.min(weight, line.product.stock_quantity);
-                                                                    setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: val } : l));
-                                                                }}
-                                                                className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border transition-all ${line.quantity === weight
-                                                                    ? (isLightTheme ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-green-500 border-green-400 text-black')
-                                                                    : (isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-400 hover:border-emerald-300' : 'bg-zinc-700/50 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500')
-                                                                    }`}
-                                                            >
-                                                                {weight}g
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => removeLine(line.product.id)}
-                                                    className={`transition-colors shrink-0 mt-0.5 ${isLightTheme ? 'text-emerald-200 hover:text-red-500' : 'text-zinc-600 hover:text-red-400'}`}
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </button>
-                                            </div>
+                                    cart.map((line) => {
+                                        const productCategory = categories.find(c => c.id === line.product.category_id);
+                                        const isBulkProduct = (
+                                            productCategory?.slug?.includes('fleurs') ||
+                                            productCategory?.slug?.includes('resines') ||
+                                            productCategory?.slug === 'nouveautes' ||
+                                            productCategory?.slug === CATEGORY_SLUGS.FLOWERS ||
+                                            productCategory?.slug === CATEGORY_SLUGS.RESINS
+                                        );
+                                        const isPerUnit = !isBulkProduct || line.product.is_bundle || (!!line.product.weight_grams && line.product.weight_grams > 1 && !line.product.name.toLowerCase().includes('pack'));
 
-                                            <div className="flex items-center gap-2">
-                                                {/* Qty controls */}
-                                                <div className="flex items-center gap-1">
+                                        return (
+                                            <motion.div
+                                                key={line.product.id}
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: 20 }}
+                                                className={`rounded-xl p-2.5 transition-all ${isLightTheme ? 'bg-white border border-emerald-100 shadow-sm' : 'bg-zinc-800'}`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                    <div>
+                                                        <p className={`text-xs font-bold leading-tight transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                                            {line.product.name}
+                                                        </p>
+                                                        {isBulkProduct && !isPerUnit && (
+                                                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                                                {[1, 5, 10, 30, 50, 100].map(weight => (
+                                                                    <button
+                                                                        key={weight}
+                                                                        onClick={() => {
+                                                                            const val = Math.min(weight, line.product.stock_quantity);
+                                                                            setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: val } : l));
+                                                                        }}
+                                                                        className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border transition-all ${line.quantity === weight
+                                                                            ? (isLightTheme ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-green-500 border-green-400 text-black')
+                                                                            : (isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-400 hover:border-emerald-300' : 'bg-zinc-700/50 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500')
+                                                                            }`}
+                                                                    >
+                                                                        {weight}g
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <button
-                                                        onClick={() => updateQty(line.product.id, -1)}
-                                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
+                                                        onClick={() => removeLine(line.product.id)}
+                                                        className={`transition-colors shrink-0 mt-0.5 ${isLightTheme ? 'text-emerald-200 hover:text-red-500' : 'text-zinc-600 hover:text-red-400'}`}
                                                     >
-                                                        <Minus className="w-3 h-3" />
+                                                        <X className="w-3 h-3" />
                                                     </button>
-                                                    <div className="relative">
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    {/* Qty controls */}
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => updateQty(line.product.id, -1)}
+                                                            className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
+                                                        >
+                                                            <Minus className="w-3 h-3" />
+                                                        </button>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number"
+                                                                value={line.quantity}
+                                                                onChange={(e) => {
+                                                                    const val = parseFloat(e.target.value) || 0;
+                                                                    setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: Math.min(val, l.product.stock_quantity) } : l));
+                                                                }}
+                                                                className={`w-10 rounded-lg text-xs font-black text-center py-1 focus:outline-none transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isLightTheme
+                                                                    ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 focus:border-green-500'
+                                                                    : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'
+                                                                    }`}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => updateQty(line.product.id, 1)}
+                                                            disabled={line.quantity >= line.product.stock_quantity}
+                                                            className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 disabled:opacity-30' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300 disabled:opacity-40'}`}
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                        {!isPerUnit && <span className={`text-[10px] font-bold ml-1 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>g</span>}
+                                                    </div>
+
+                                                    {/* Price override */}
+                                                    <div className="flex-1 relative">
+                                                        <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>€</span>
                                                         <input
                                                             type="number"
-                                                            value={line.quantity}
-                                                            onChange={(e) => {
-                                                                const val = parseFloat(e.target.value) || 0;
-                                                                setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: Math.min(val, l.product.stock_quantity) } : l));
-                                                            }}
-                                                            className={`w-10 rounded-lg text-xs font-black text-center py-1 focus:outline-none transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isLightTheme
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={line.unitPrice}
+                                                            onChange={(e) => updatePrice(line.product.id, e.target.value)}
+                                                            className={`w-full rounded-lg pl-5 pr-2 py-1 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-green-500/20 ${isLightTheme
                                                                 ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 focus:border-green-500'
                                                                 : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'
                                                                 }`}
                                                         />
                                                     </div>
-                                                    <button
-                                                        onClick={() => updateQty(line.product.id, 1)}
-                                                        disabled={line.quantity >= line.product.stock_quantity}
-                                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 disabled:opacity-30' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300 disabled:opacity-40'}`}
-                                                    >
-                                                        <Plus className="w-3 h-3" />
-                                                    </button>
-                                                    <span className={`text-[10px] font-bold ml-1 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>g</span>
-                                                </div>
 
-                                                {/* Price override */}
-                                                <div className="flex-1 relative">
-                                                    <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>€</span>
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={line.unitPrice}
-                                                        onChange={(e) => updatePrice(line.product.id, e.target.value)}
-                                                        className={`w-full rounded-lg pl-5 pr-2 py-1 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-green-500/20 ${isLightTheme
-                                                            ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 focus:border-green-500'
-                                                            : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'
-                                                            }`}
-                                                    />
+                                                    <span className={`text-xs font-bold shrink-0 transition-colors ${isLightTheme ? 'text-green-600' : 'text-green-400'}`}>
+                                                        {(line.quantity * line.unitPrice).toFixed(2)} €
+                                                    </span>
                                                 </div>
-
-                                                <span className={`text-xs font-bold shrink-0 transition-colors ${isLightTheme ? 'text-green-600' : 'text-green-400'}`}>
-                                                    {(line.quantity * line.unitPrice).toFixed(2)} €
-                                                </span>
-                                            </div>
-                                        </motion.div>
-                                    ))
+                                            </motion.div>
+                                        );
+                                    })
                                 )}
                             </AnimatePresence>
                         </div>
