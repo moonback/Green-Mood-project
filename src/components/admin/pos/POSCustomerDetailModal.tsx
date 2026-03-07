@@ -40,41 +40,41 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
     ];
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`w-full max-w-4xl border rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-800'}`}
+                className={`w-full max-w-4xl border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-800'}`}
             >
                 {/* Header */}
-                <div className={`flex items-center justify-between p-6 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/50 border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
-                    <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-800 text-green-400'}`}>
-                            <User className="w-6 h-6" />
+                <div className={`flex items-center justify-between p-4 sm:p-6 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/50 border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-800 text-green-400'}`}>
+                            <User className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
                         <div>
-                            <h2 className={`text-xl font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{customer.full_name}</h2>
-                            <p className={`text-sm transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{customer.phone || 'Aucun numéro'}</p>
+                            <h2 className={`text-lg sm:text-xl font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{customer.full_name}</h2>
+                            <p className={`text-xs sm:text-sm transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{customer.phone || 'Aucun numéro'}</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
                         className={`p-2 rounded-full transition-colors ${isLightTheme ? 'hover:bg-emerald-50 text-emerald-400' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}
                     >
-                        <X className="w-6 h-6" />
+                        <X className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className={`flex border-b px-6 pt-2 gap-1 shrink-0 transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
+                <div className={`flex border-b px-4 sm:px-6 pt-2 gap-1 shrink-0 transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-3 text-[11px] font-black uppercase tracking-widest border-b-2 transition-all -mb-px ${activeTab === tab.id
-                                    ? (isLightTheme ? 'border-emerald-600 text-emerald-700' : 'border-green-500 text-white')
-                                    : (isLightTheme ? 'border-transparent text-emerald-400/50 hover:text-emerald-700' : 'border-transparent text-zinc-600 hover:text-zinc-300')
+                                ? (isLightTheme ? 'border-emerald-600 text-emerald-700' : 'border-green-500 text-white')
+                                : (isLightTheme ? 'border-transparent text-emerald-400/50 hover:text-emerald-700' : 'border-transparent text-zinc-600 hover:text-zinc-300')
                                 }`}
                         >
                             <tab.icon className="w-3.5 h-3.5" />
@@ -92,26 +92,26 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 10 }}
-                                className="p-6 space-y-6"
+                                className="p-4 sm:p-6 space-y-4 sm:space-y-6"
                             >
                                 {/* Stats */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-amber-500/10 border border-amber-500/20'}`}>
-                                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
-                                            <Star className="w-5 h-5" />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <div className={`border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+                                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
+                                            <Star className="w-4 h-4 sm:w-5 sm:h-5" />
                                         </div>
                                         <div>
-                                            <p className={`text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-700/60' : 'text-amber-500/70'}`}>Points Fidélité</p>
-                                            <p className={`text-2xl font-black ${isLightTheme ? 'text-emerald-950' : 'text-amber-500'}`}>{customer.loyalty_points}</p>
+                                            <p className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-700/60' : 'text-amber-500/70'}`}>Points Fidélité</p>
+                                            <p className={`text-xl sm:text-2xl font-black ${isLightTheme ? 'text-emerald-950' : 'text-amber-500'}`}>{customer.loyalty_points}</p>
                                         </div>
                                     </div>
-                                    <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-800/50 border border-zinc-700/50'}`}>
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-800 text-zinc-400'}`}>
-                                            <Calendar className="w-5 h-5" />
+                                    <div className={`border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-800/50 border border-zinc-700/50'}`}>
+                                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
                                         </div>
                                         <div>
-                                            <p className={`text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-500'}`}>Client depuis</p>
-                                            <p className={`text-lg font-bold ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                            <p className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-500'}`}>Client depuis</p>
+                                            <p className={`text-base sm:text-lg font-bold ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                                                 {new Date(customer.created_at).toLocaleDateString('fr-FR')}
                                             </p>
                                         </div>
@@ -119,7 +119,7 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                 </div>
 
                                 {/* Loyalty Card with QR */}
-                                <div className={`rounded-3xl p-6 transition-all ${isLightTheme ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-zinc-950/50 border border-zinc-800'}`}>
+                                <div className={`rounded-2xl sm:rounded-3xl p-3 sm:p-6 transition-all ${isLightTheme ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-zinc-950/50 border border-zinc-800'}`}>
                                     <LoyaltyCard
                                         userId={customer.id}
                                         fullName={customer.full_name || 'Client'}
@@ -135,11 +135,11 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                 initial={{ opacity: 0, x: 10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -10 }}
-                                className="p-6"
+                                className="p-4 sm:p-6"
                             >
                                 {/* Recent Orders */}
-                                <h3 className={`text-sm font-black uppercase tracking-wider mb-4 flex items-center gap-2 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
-                                    <Package className={`w-4 h-4 ${isLightTheme ? 'text-emerald-500' : 'text-green-400'}`} />
+                                <h3 className={`text-xs sm:text-sm font-black uppercase tracking-wider mb-4 flex items-center gap-2 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                    <Package className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLightTheme ? 'text-emerald-500' : 'text-green-400'}`} />
                                     Dernières Commandes
                                 </h3>
                                 {isLoadingOrders ? (
@@ -177,8 +177,8 @@ export default function POSCustomerDetailModal({ customer, onClose, isLightTheme
                                                                 {order.total.toFixed(2)} €
                                                             </p>
                                                             <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${order.status === 'delivered'
-                                                                    ? (isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400')
-                                                                    : (isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-700 text-zinc-400')
+                                                                ? (isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400')
+                                                                : (isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-700 text-zinc-400')
                                                                 }`}>
                                                                 {order.status}
                                                             </span>

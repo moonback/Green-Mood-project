@@ -402,9 +402,14 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                     <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
                         <ShoppingBag className="w-5 h-5 text-green-neon" />
                         Inventaire des Produits
-                        <span className="ml-2 px-2 py-0.5 bg-green-neon/10 text-green-neon border border-green-neon/20 rounded-full text-xs font-bold leading-none">
-                            {filteredProducts.length}
-                        </span>
+                        <div className="flex items-center gap-2 ml-2">
+                            <span className="px-2 py-0.5 bg-green-neon/10 text-green-neon border border-green-neon/20 rounded-full text-[12px] font-bold leading-none">
+                                {filteredProducts.length} PRODS
+                            </span>
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[12px] font-bold leading-none">
+                                {(filteredProducts.reduce((acc, p) => acc + (p.stock_quantity * (p.weight_grams || 1)), 0) / 1000).toFixed(2)} KG
+                            </span>
+                        </div>
                     </h2>
                     <p className="text-xs text-zinc-500 mt-1">Gérez votre catalogue et vos niveaux de stock.</p>
                 </div>

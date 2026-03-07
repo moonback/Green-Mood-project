@@ -247,23 +247,23 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
             <div className={`absolute inset-0 backdrop-blur-10 transition-colors ${isLightTheme ? 'bg-emerald-50/40' : 'bg-black/20'}`} />
 
             {/* Content Container */}
-            <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full relative z-10 p-8">
-                <div className="text-center mb-8">
+            <div className="flex flex-col gap-4 sm:gap-6 max-w-2xl mx-auto w-full relative z-10 p-4 sm:p-8">
+                <div className="text-center mb-4 sm:mb-8">
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className={`w-24 h-24 rounded-[2rem] border mx-auto flex items-center justify-center mb-6 shadow-2xl backdrop-blur-md transition-all ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-zinc-900/80 border-zinc-700/50'}`}
+                        className={`w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-[2rem] border mx-auto flex items-center justify-center mb-4 sm:mb-6 shadow-2xl backdrop-blur-md transition-all ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-zinc-900/80 border-zinc-700/50'}`}
                     >
-                        <User className="w-12 h-12 text-green-500" />
+                        <User className="w-8 h-8 sm:w-12 sm:h-12 text-green-500" />
                     </motion.div>
-                    <h2 className={`text-4xl font-black uppercase tracking-tight drop-shadow-lg transition-all ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Compte Client</h2>
-                    <p className={`font-medium mt-3 text-lg drop-shadow transition-all ${isLightTheme ? 'text-emerald-800/60' : 'text-zinc-400'}`}>Identifiez le client ou passez pour une vente rapide</p>
+                    <h2 className={`text-2xl sm:text-4xl font-black uppercase tracking-tight drop-shadow-lg transition-all ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Compte Client</h2>
+                    <p className={`font-medium mt-2 sm:mt-3 text-sm sm:text-lg drop-shadow transition-all ${isLightTheme ? 'text-emerald-800/60' : 'text-zinc-400'}`}>Identifiez le client ou passez outre</p>
                 </div>
 
                 <div className="  relative overflow-hidden">
                     <div className="space-y-6">
                         <div className="relative">
-                            <Search className={`absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 transition-all ${isLightTheme ? 'text-emerald-400' : 'text-white'}`} />
+                            <Search className={`absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 transition-all ${isLightTheme ? 'text-emerald-400' : 'text-white'}`} />
                             <input
                                 value={customerSearch}
                                 onChange={(e) => setCustomerSearch(e.target.value)}
@@ -272,8 +272,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                         performSearch(customerSearch, true);
                                     }
                                 }}
-                                placeholder="Nom, email ou téléphone…"
-                                className={`w-full border rounded-[2rem] pl-16 pr-20 py-5 text-xl font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
+                                placeholder="Nom ou téléphone…"
+                                className={`w-full border rounded-2xl sm:rounded-[2rem] pl-12 sm:pl-16 pr-16 sm:pr-20 py-4 sm:py-5 text-base sm:text-xl font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
                                     ? 'bg-white/90 border-emerald-100 text-emerald-950 placeholder-emerald-300'
                                     : 'bg-zinc-800/80 border-zinc-700 text-white placeholder-zinc-500'
                                     }`}
@@ -295,17 +295,17 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={() => onSelectCustomer(c)}
-                                        className={`flex items-center justify-between p-4 border rounded-[1.5rem] transition-all group text-left ${isLightTheme
+                                        className={`flex items-center justify-between p-3 sm:p-4 border rounded-xl sm:rounded-[1.5rem] transition-all group text-left ${isLightTheme
                                             ? 'bg-white/80 hover:bg-white border-emerald-100 hover:border-green-500/30'
                                             : 'bg-zinc-800/40 hover:bg-zinc-800 border-zinc-700/50 hover:border-green-500/30'
                                             }`}
                                     >
                                         <div>
-                                            <p className={`font-black text-lg group-hover:text-green-500 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{c.full_name}</p>
-                                            <p className={`text-sm ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{c.phone || 'Pas de numéro'}</p>
+                                            <p className={`font-black text-base sm:text-lg group-hover:text-green-500 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{c.full_name}</p>
+                                            <p className={`text-xs sm:text-sm ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{c.phone || 'Pas de numéro'}</p>
                                         </div>
-                                        <div className="text-right flex flex-col items-end">
-                                            <p className="text-amber-500 font-black flex items-center gap-1 bg-amber-500/10 px-3 py-1 rounded-full text-xs">
+                                        <div className="text-right flex flex-col items-end shrink-0">
+                                            <p className="text-amber-500 font-black flex items-center gap-1 bg-amber-500/10 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs">
                                                 ★ {c.loyalty_points} pts
                                             </p>
                                         </div>
