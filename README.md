@@ -50,6 +50,7 @@
 | **React Markdown** | Rendu Markdown dans le chat | ^10.1.0 |
 | **PapaParse** | Import CSV de produits | ^5.5.3 |
 | **Viva Wallet** | Passerelle de paiement | API REST |
+| **html5-qrcode** | Scanner QR code caméra temps réel | ^2.3.8 |
 | **pgvector** | Recherche sémantique vectorielle (PostgreSQL) | Extension |
 
 ---
@@ -63,7 +64,7 @@
 - **Panier persistant** — avec jauges de livraison gratuite, suggestions panier vide, codes promo
 - **Checkout complet** — Click & Collect ou livraison, intégration Viva Wallet
 - **Compte utilisateur** — profil, commandes, adresses, favoris
-- **Programme fidélité** — points gagnés/dépensés, historique des transactions
+- **Système de fidélité premium** — points gagnés/dépensés, carte de fidélité numérique avec QR code, tiers de fidélité (Bronze, Argent, Or, Platine), historique des transactions accessible via le menu utilisateur
 - **Programme parrainage** — codes uniques `GRN-XXXXXX`, bonus bienvenue, suivi
 - **Abonnements** — livraisons récurrentes (hebdo / bi-mensuel / mensuel)
 - **Avis produits** — notation 5 étoiles, commentaires, modération admin
@@ -80,7 +81,7 @@
 - **Gestion catégories** — CRUD, réorganisation, icônes
 - **Gestion commandes** — suivi statuts, mise à jour, détail
 - **Gestion stocks** — mouvements, alertes de réapprovisionnement
-- **POS (Point de Vente)** — caisse enregistreuse intégrée, scan code-barres, création client walk-in, rapports de clôture Z (avec réconciliation caisse)
+- **POS (Point de Vente)** — caisse enregistreuse intégrée, scan code-barres & QR (identification client via carte fidélité), création client walk-in, rapports de clôture Z (avec réconciliation caisse)
 - **Codes promo** — création, limites d'usage, expiration
 - **Bundles / Packs** — création de packs avec synchronisation automatique du stock
 - **Cross-selling** — recommandations manuelles + fallback automatique par catégorie
