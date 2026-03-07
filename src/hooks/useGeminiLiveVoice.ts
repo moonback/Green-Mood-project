@@ -151,6 +151,58 @@ export function useGeminiLiveVoice({
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<number | null>(null);
 
+  // ── Unified product lookup with 4 fallback levels ────────────────────────
+  // Level 1: exact name match
+  // Level 2: one name contains the other (substring)
+  // Level 3: ALL words of the query appear somewhere in the product name
+  // Level 4: Supabase ilike fallback (catches typos, accent differences, etc.)
+  // This runs in both add_to_cart and view_product so neither fails on first call.
+  const findProduct = useCallback(async (prodName: string): Promise<Product | undefined> => {
+    const q = prodName.toLowerCase().trim();
+    const allKnown = [...productsRef.current, ...searchResultsRef.current];
+
+    // L1 – exact
+    let found = allKnown.find(i => i.name.toLowerCase() === q);
+    if (found) return found;
+
+    // L2 – substring (either direction)
+    found = allKnown.find(i => i.name.toLowerCase().includes(q) || q.includes(i.name.toLowerCase()));
+    if (found) return found;
+
+    // L3 – ALL words present (min length 1 to catch short words like "OG", "CB")
+    const words = q.split(/\s+/).filter(w => w.length > 1);
+    if (words.length > 0) {
+      found = allKnown.find(i => words.every(w => i.name.toLowerCase().includes(w)));
+      if (found) return found;
+
+      // L3b – ANY word present (looser)
+      found = allKnown.find(i => words.some(w => i.name.toLowerCase().includes(w)));
+      if (found) return found;
+    }
+
+    // L4 – Supabase ilike (last resort, handles accent differences & typos)
+    try {
+      // Try exact name first, then a broader search
+      const { data } = await supabase
+        .from('products')
+        .select('*, category:categories(slug, name)')
+        .ilike('name', `%${prodName}%`)
+        .eq('is_active', true)
+        .limit(3);
+      if (data && data.length > 0) {
+        // Pick the closest match by name length proximity
+        const sorted = [...data].sort((a, b) =>
+          Math.abs(a.name.length - prodName.length) - Math.abs(b.name.length - prodName.length)
+        );
+        return sorted[0] as Product;
+      }
+    } catch (e) {
+      console.error('[Voice] Supabase product lookup failed:', e);
+    }
+
+    return undefined;
+  }, []);
+
   const canSendRealtimeInput = useCallback(() => {
     if (!sessionRef.current || !canStreamInputRef.current || isManualCloseRef.current) return false;
     const ws = (sessionRef.current as any)?._ws;
@@ -505,24 +557,7 @@ export function useGeminiLiveVoice({
                 const weightGrams = Number(args.weight_grams) || 0;
                 let qty = Number(args.quantity) || 0;
 
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
-
-                if (!p) {
-                  try {
-                    const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
-                    if (data) p = data as Product;
-                  } catch (e) {
-                    console.error('[Voice] Supabase fallback failed:', e);
-                  }
-                }
+                const p = await findProduct(prodName);
 
                 if (p) {
                   if (weightGrams > 0) {
@@ -553,19 +588,12 @@ export function useGeminiLiveVoice({
 
               if (c.name === 'view_product') {
                 const prodName = (args.product_name || '').trim();
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
+                const p = await findProduct(prodName);
                 if (p && onViewProductRef.current) {
                   onViewProductRef.current(p);
                   return { name: c.name, id: c.id, response: { result: `OK — Fiche de "${p.name}" affichée` } };
                 }
-                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
+                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue.` } };
               }
 
               if (c.name === 'navigate_to') {
