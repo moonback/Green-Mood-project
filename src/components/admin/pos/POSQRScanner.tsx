@@ -163,17 +163,17 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                 initial={{ opacity: 0, scale: 0.92, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.92, y: 20 }}
-                className={`w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border flex flex-col transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}
+                className={`w-full max-w-md rounded-3xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden border flex flex-col transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}
             >
                 {/* Header */}
-                <div className={`flex items-center justify-between px-6 py-5 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-800/50 border-zinc-800'}`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400'}`}>
-                            <QrCode className="w-5 h-5" />
+                <div className={`flex items-center justify-between px-4 sm:px-6 py-3 sm:py-5 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-800/50 border-zinc-800'}`}>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400'}`}>
+                            <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
                         <div>
-                            <p className={`font-black text-sm ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Scanner Carte Fidélité</p>
-                            <p className={`text-[10px] font-bold ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>
+                            <p className={`font-black text-xs sm:text-sm ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Scanner Carte Fidélité</p>
+                            <p className={`text-[8px] sm:text-[10px] font-bold ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>
                                 {mode === 'camera' ? 'Caméra active' : 'Saisie manuelle'}
                             </p>
                         </div>
@@ -210,7 +210,7 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                     </button>
                 </div>
 
-                <div className="p-6 space-y-5 flex-1 overflow-y-auto">
+                <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
                     <AnimatePresence mode="wait">
                         {/* SUCCESS state */}
                         {status === 'found' && foundCustomer && (
@@ -218,7 +218,7 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                                 key="found"
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className={`flex flex-col items-center gap-4 py-8 rounded-3xl ${isLightTheme ? 'bg-emerald-50' : 'bg-green-500/5'}`}
+                                className={`flex flex-col items-center gap-4 py-6 sm:py-8 rounded-2xl sm:rounded-3xl ${isLightTheme ? 'bg-emerald-50' : 'bg-green-500/5'}`}
                             >
                                 <div className="w-16 h-16 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center">
                                     <CheckCircle2 className="w-9 h-9 text-green-500" />
@@ -313,7 +313,7 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                         {/* MANUAL mode */}
                         {status !== 'found' && status !== 'error' && mode === 'manual' && (
                             <motion.div key="manual" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
-                                <div className={`flex flex-col items-center gap-3 py-6 rounded-3xl mb-2 ${isLightTheme ? 'bg-emerald-50 border border-emerald-100' : 'bg-zinc-800/50 border border-zinc-800'}`}>
+                                <div className={`flex flex-col items-center gap-2 sm:gap-3 py-4 sm:py-6 rounded-2xl sm:rounded-3xl mb-2 ${isLightTheme ? 'bg-emerald-50 border border-emerald-100' : 'bg-zinc-800/50 border border-zinc-800'}`}>
                                     <QrCode className={`w-10 h-10 ${isLightTheme ? 'text-emerald-300' : 'text-zinc-600'}`} />
                                     <p className={`text-xs font-bold text-center max-w-xs ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
                                         Branchez un lecteur de codes QR filaire — ou collez l'URL de la carte ci-dessous.
@@ -339,7 +339,7 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                                             }}
                                             onKeyDown={(e) => { if (e.key === 'Enter') handleManualSearch(); }}
                                             placeholder="greenmood://loyalty/…  ou coller ici"
-                                            className={`w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme
+                                            className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme
                                                 ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 placeholder-emerald-300 focus:border-green-500'
                                                 : 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-700 focus:border-green-500'
                                                 }`}
@@ -353,7 +353,7 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
                                 <button
                                     onClick={handleManualSearch}
                                     disabled={!manualInput.trim() || status === 'searching'}
-                                    className={`w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isLightTheme
+                                    className={`w-full py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isLightTheme
                                         ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-50 disabled:text-emerald-200'
                                         : 'bg-green-500 text-black hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-600'
                                         }`}

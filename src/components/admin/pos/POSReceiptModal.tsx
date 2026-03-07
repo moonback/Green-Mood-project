@@ -54,7 +54,7 @@ export default function POSReceiptModal({
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`border rounded-2xl p-6 w-full max-w-sm shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-700'}`}
+                className={`border rounded-2xl p-4 sm:p-6 w-full max-w-sm shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-700'}`}
             >
                 {/* Receipt printable zone */}
                 <div ref={printRef} className={`rounded-xl p-4 mb-4 font-mono text-xs leading-relaxed border transition-all ${isLightTheme ? 'bg-emerald-50/50 text-emerald-950 border-emerald-100' : 'bg-white text-black'}`}>
@@ -110,17 +110,17 @@ export default function POSReceiptModal({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                     <button
                         onClick={handlePrint}
-                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${isLightTheme ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20' : 'bg-green-500 hover:bg-green-600 text-black'}`}
+                        className={`flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all ${isLightTheme ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20' : 'bg-green-500 hover:bg-green-600 text-black'}`}
                     >
                         <Printer className="w-4 h-4" />
                         Imprimer
                     </button>
                     <button
                         onClick={onClose}
-                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-100' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
+                        className={`flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-100' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
                     >
                         <RotateCcw className="w-4 h-4" />
                         Fermer

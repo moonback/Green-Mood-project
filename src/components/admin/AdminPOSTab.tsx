@@ -1192,8 +1192,8 @@ function AdminPOSTab({
                         } ${isCartVisible ? 'flex' : 'hidden lg:flex'}`}>
                         <div className="lg:hidden p-4 border-b flex items-center justify-between">
                             <h3 className={`font-black text-sm uppercase tracking-widest ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Votre Panier</h3>
-                            <button onClick={() => setIsCartVisible(false)} className="p-2 rounded-full hover:bg-zinc-800">
-                                <X className="w-5 h-5 uppercase" />
+                            <button onClick={() => setIsCartVisible(false)} className={`p-2 rounded-full transition-colors ${isLightTheme ? 'hover:bg-emerald-50 text-emerald-400' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}>
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
                         {/* Customer Section */}
