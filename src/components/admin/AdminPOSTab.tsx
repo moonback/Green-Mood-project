@@ -38,6 +38,8 @@ import {
     Sun,
     Moon,
     Brain,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -125,6 +127,7 @@ function AdminPOSTab({
     const [selectedCustomerDefaultAddress, setSelectedCustomerDefaultAddress] = useState<Address | null>(null);
     const [selectedCustomerOrderCount, setSelectedCustomerOrderCount] = useState<number>(0);
     const [showAIPreferences, setShowAIPreferences] = useState(false);
+    const [showTodayTotal, setShowTodayTotal] = useState(false);
 
     // ── Create customer (POS) ──
     // States moved to POSCustomerSelection
@@ -836,15 +839,23 @@ function AdminPOSTab({
 
                 {/* Dashboard Stats */}
                 <div className="hidden md:flex items-center gap-4 lg:gap-12">
-                    <div className="flex items-center gap-4 group">
+                    <button
+                        onClick={() => setShowTodayTotal(!showTodayTotal)}
+                        className="flex items-center gap-4 group hover:opacity-80 transition-opacity"
+                    >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-50 text-emerald-600' : 'bg-zinc-800/50 text-zinc-500 group-hover:bg-green-500/10 group-hover:text-green-400'}`}>
-                            <Coins className="w-5 h-5" />
+                            {showTodayTotal ? <Coins className="w-5 h-5" /> : <Eye className="w-5 h-5 opacity-40" />}
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col text-left">
                             <span className={`text-[9px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-600'}`}>Ventes du jour</span>
-                            <span className={`text-xl font-black leading-none tracking-tight ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{todayTotal.toFixed(2)}<span className="text-xs ml-1 opacity-50">€</span></span>
+                            <div className="flex items-center gap-2">
+                                <span className={`text-xl font-black leading-none tracking-tight transition-all duration-300 ${!showTodayTotal ? 'blur-md select-none opacity-20' : ''} ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                    {todayTotal.toFixed(2)}<span className="text-xs ml-1 opacity-50">€</span>
+                                </span>
+                                {!showTodayTotal && <span className="text-[8px] font-black uppercase tracking-tighter text-zinc-500 animate-pulse">Cliquer pour voir</span>}
+                            </div>
                         </div>
-                    </div>
+                    </button>
 
                     <div className={`h-8 w-px ${isLightTheme ? 'bg-emerald-100' : 'bg-zinc-800'}`} />
 
@@ -1004,11 +1015,11 @@ function AdminPOSTab({
                         <button
                             onClick={onExit}
                             className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl transition-all group ${isLightTheme
-                                ? 'bg-emerald-50 text-emerald-400 hover:bg-red-50 hover:text-red-500 border border-emerald-100 hover:border-red-100'
-                                : 'bg-zinc-900 text-zinc-600 border border-zinc-800 hover:text-white hover:border-zinc-500 shadow-xl'}`}
+                                ? 'bg-red-50 text-red-400 hover:bg-red-500 hover:text-white border border-emerald-100 hover:border-red-100'
+                                : 'bg-red-900 text-red-600 border border-zinc-800 hover:text-white hover:border-zinc-500 shadow-xl'}`}
                             title="Fermer le point de vente"
                         >
-                            <LogOut className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
+                            <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:-translate-x-1 transition-transform" />
                         </button>
                     )}
                 </div>
