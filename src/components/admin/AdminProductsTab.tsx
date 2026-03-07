@@ -403,10 +403,10 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
                         <ShoppingBag className="w-5 h-5 text-green-neon" />
                         Inventaire des Produits
                         <div className="flex items-center gap-2 ml-2">
-                            <span className="px-2 py-0.5 bg-green-neon/10 text-green-neon border border-green-neon/20 rounded-full text-[10px] font-bold leading-none">
+                            <span className="px-2 py-0.5 bg-green-neon/10 text-green-neon border border-green-neon/20 rounded-full text-[12px] font-bold leading-none">
                                 {filteredProducts.length} PRODS
                             </span>
-                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[10px] font-bold leading-none">
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-[12px] font-bold leading-none">
                                 {(filteredProducts.reduce((acc, p) => acc + (p.stock_quantity * (p.weight_grams || 1)), 0) / 1000).toFixed(2)} KG
                             </span>
                         </div>
