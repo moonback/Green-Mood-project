@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { useBudTenderMemory, SavedPrefs } from '../hooks/useBudTenderMemory';
 import { BUDTENDER_DEFAULT_QUIZ, QuizStep, fetchBudTenderSettings } from '../lib/budtenderSettings';
 import SEO from '../components/SEO';
+import LoyaltyCard from '../components/LoyaltyCard';
 
 export default function Profile() {
     const { user, profile, setProfile } = useAuthStore();
@@ -463,6 +464,19 @@ export default function Profile() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Loyalty Card with QR */}
+                        {profile && user && (
+                            <div className="mt-8 flex flex-col items-center">
+                                <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.4em] mb-6">VOTRE CARTE FIDÉLITÉ</p>
+                                <LoyaltyCard
+                                    userId={user.id}
+                                    fullName={profile.full_name || 'Client'}
+                                    points={profile.loyalty_points}
+                                    referralCode={profile.referral_code}
+                                />
+                            </div>
+                        )}
                     </motion.div>
 
                     {/* Section 2: Préférences BudTender — Collapsible */}

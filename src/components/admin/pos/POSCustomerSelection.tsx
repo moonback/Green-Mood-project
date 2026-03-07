@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, UserPlus, User, ArrowRight, RotateCcw, CheckCircle2, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Search, UserPlus, User, ArrowRight, RotateCcw, CheckCircle2, X, QrCode } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../../lib/supabase';
 import { Profile } from '../../../lib/types';
+import POSQRScanner from './POSQRScanner';
 
 interface POSCustomerSelectionProps {
     onSelectCustomer: (customer: Profile) => void;
@@ -15,6 +16,7 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
     const [customerResults, setCustomerResults] = useState<Profile[]>([]);
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
     const [isListView, setIsListView] = useState(false);
+    const [showQRScanner, setShowQRScanner] = useState(false);
 
     // Create customer
     const [showCreateCustomer, setShowCreateCustomer] = useState(false);
@@ -271,14 +273,18 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                     }
                                 }}
                                 placeholder="Nom, email ou téléphone…"
-                                className={`w-full border rounded-[2rem] pl-16 pr-8 py-5 text-xl font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
+                                className={`w-full border rounded-[2rem] pl-16 pr-20 py-5 text-xl font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
                                     ? 'bg-white/90 border-emerald-100 text-emerald-950 placeholder-emerald-300'
                                     : 'bg-zinc-800/80 border-zinc-700 text-white placeholder-zinc-500'
                                     }`}
                             />
-                            {isSearchingCustomer && (
-                                <RotateCcw className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white animate-spin" />
-                            )}
+                            <button
+                                onClick={() => setShowQRScanner(true)}
+                                title="Scanner une carte fidélité QR"
+                                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isLightTheme ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 hover:text-white'}`}
+                            >
+                                <QrCode className="w-5 h-5" />
+                            </button>
                         </div>
 
                         {customerResults.length > 0 && (
@@ -396,6 +402,20 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                     </motion.div>
                 </div>
             )}
+
+            {/* QR Scanner Modal */}
+            <AnimatePresence>
+                {showQRScanner && (
+                    <POSQRScanner
+                        onCustomerFound={(customer) => {
+                            setShowQRScanner(false);
+                            onSelectCustomer(customer);
+                        }}
+                        onClose={() => setShowQRScanner(false)}
+                        isLightTheme={isLightTheme}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
