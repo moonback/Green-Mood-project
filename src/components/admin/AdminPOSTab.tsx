@@ -197,6 +197,7 @@ function AdminPOSTab({
         setPromoInput('');
         setPromoError('');
         setPosStep('client');
+        setIsCartVisible(false);
     };
 
     // ── Apply promo code ──
@@ -1827,7 +1828,12 @@ function AdminPOSTab({
                         storeName={storeName}
                         storeAddress={storeAddress}
                         storePhone={storePhone}
-                        onClose={() => setCompletedSale(null)}
+                        onClose={() => {
+                            setCompletedSale(null);
+                            setPosStep('client');
+                            setSelectedCustomer(null);
+                            setIsCartVisible(false);
+                        }}
                         isLightTheme={isLightTheme}
                     />
                 )
