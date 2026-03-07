@@ -835,7 +835,7 @@ function AdminPOSTab({
                 </div>
 
                 {/* Dashboard Stats */}
-                <div className="hidden lg:flex items-center gap-12">
+                <div className="hidden md:flex items-center gap-4 lg:gap-12">
                     <div className="flex items-center gap-4 group">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-50 text-emerald-600' : 'bg-zinc-800/50 text-zinc-500 group-hover:bg-green-500/10 group-hover:text-green-400'}`}>
                             <Coins className="w-5 h-5" />
@@ -864,16 +864,16 @@ function AdminPOSTab({
                             <motion.button
                                 whileHover={{ y: -2 }}
                                 onClick={() => setShowAIPreferences(true)}
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border transition-all shadow-sm ${isLightTheme
+                                className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl border transition-all shadow-sm ${isLightTheme
                                     ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-white hover:border-emerald-300'
                                     : 'bg-green-500/5 border-green-500/20 text-green-400 hover:bg-green-500/10 hover:border-green-500/40'}`}
                             >
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isLightTheme ? 'bg-emerald-600 text-white' : 'bg-green-500 text-black'}`}>
-                                    <Brain className="w-4 h-4" />
+                                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${isLightTheme ? 'bg-emerald-600 text-white' : 'bg-green-500 text-black'}`}>
+                                    <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </div>
                                 <div className="text-left">
-                                    <p className={`text-[8px] font-black uppercase tracking-widest leading-none mb-1 opacity-60`}>Client Profile</p>
-                                    <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Intelligence IA</p>
+                                    <p className={`text-[7px] sm:text-[8px] font-black uppercase tracking-widest leading-none mb-0.5 sm:mb-1 opacity-60`}>Client Profile</p>
+                                    <p className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Intelligence IA</p>
                                 </div>
                             </motion.button>
                         </>
@@ -882,6 +882,18 @@ function AdminPOSTab({
 
                 {/* Toolbar Actions */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
+                    {selectedCustomer && selectedCustomerAIPreferences && (
+                        <button
+                            onClick={() => setShowAIPreferences(true)}
+                            className={`md:hidden p-2 rounded-lg transition-all hover:scale-105 active:scale-95 ${isLightTheme
+                                ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
+                                : 'bg-green-500 text-black shadow-sm shadow-green-500/20'
+                                }`}
+                            title="Intelligence IA"
+                        >
+                            <Brain className="w-4 h-4" />
+                        </button>
+                    )}
                     <div className="flex items-center gap-1 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-zinc-800/10 backdrop-blur-sm border border-zinc-800/5 transition-all">
                         <button
                             onClick={() => setIsLightTheme(!isLightTheme)}
@@ -1219,13 +1231,24 @@ function AdminPOSTab({
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <p className={`font-bold text-xs transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{selectedCustomer.full_name}</p>
-                                                <button
-                                                    onClick={() => setShowCustomerDetail(true)}
-                                                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-100/50 hover:bg-emerald-100 text-emerald-600' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
-                                                    title="Détails client"
-                                                >
-                                                    <span className="text-[10px] font-bold">i</span>
-                                                </button>
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => setShowCustomerDetail(true)}
+                                                        className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
+                                                        title="Détails client"
+                                                    >
+                                                        <FileText className="w-3 h-3" />
+                                                    </button>
+                                                    {selectedCustomerAIPreferences && (
+                                                        <button
+                                                            onClick={() => setShowAIPreferences(true)}
+                                                            className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-green-500 text-black hover:bg-green-400'}`}
+                                                            title="Intelligence IA"
+                                                        >
+                                                            <Brain className="w-3 h-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <p className={`text-[10px] transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{selectedCustomer.phone || 'Pas de numéro'}</p>
