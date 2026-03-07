@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, PhoneOff, Volume2, X, Radio, Headphones } from 'lucide-react';
 import { Product } from '../lib/types';
@@ -26,87 +26,124 @@ interface Props {
 // ─── Status labels ───────────────────────────────────────────────────────────
 
 const STATUS: Record<VoiceState, string> = {
-    idle: 'Démarrage du chat vocal…',
-    connecting: 'Connexion en cours…',
-    listening: 'Je vous écoute…',
-    speaking: 'BudTender répond…',
-    error: 'Erreur de connexion',
+    idle: 'Démarrage…',
+    connecting: 'Connexion…',
+    listening: 'À votre écoute',
+    speaking: 'BudTender répond',
+    error: 'Erreur',
 };
 
-const STATUS_SUB: Record<VoiceState, string> = {
-    idle: 'Votre conseiller vocal IA est prêt',
-    connecting: 'Établissement de la connexion sécurisée',
-    listening: 'Parlez naturellement, je vous comprends',
-    speaking: 'Analyse et réponse en cours…',
-    error: 'Vérifiez votre connexion et réessayez',
+const STATUS_COLOR: Record<VoiceState, string> = {
+    idle: 'text-zinc-400',
+    connecting: 'text-zinc-400',
+    listening: 'text-green-400',
+    speaking: 'text-green-neon',
+    error: 'text-red-400',
 };
 
-// ─── Animated ring component ─────────────────────────────────────────────────
+// ─── Animated waveform bars ──────────────────────────────────────────────────
 
-function PulseRing({ delay = 0, scale = 1.5, color = 'green-neon' }: { delay?: number; scale?: number; color?: string }) {
-    return (
-        <motion.div
-            initial={{ scale: 1, opacity: 0.4 }}
-            animate={{ scale, opacity: 0 }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay }}
-            className={`absolute inset-0 rounded-full border border-${color}/30`}
-        />
-    );
-}
-
-// ─── Waveform bars (premium) ─────────────────────────────────────────────────
-
-function WaveformBars() {
+function WaveformBars({ active }: { active: boolean }) {
     const bars = [
-        { delay: 0, maxH: 20 },
-        { delay: 0.08, maxH: 32 },
-        { delay: 0.15, maxH: 40 },
-        { delay: 0.08, maxH: 32 },
-        { delay: 0, maxH: 20 },
+        { delay: 0, maxH: 16 },
+        { delay: 0.07, maxH: 24 },
+        { delay: 0.14, maxH: 32 },
+        { delay: 0.07, maxH: 24 },
+        { delay: 0, maxH: 16 },
     ];
 
+    if (!active) {
+        return (
+            <div className="flex items-center gap-[3px]">
+                {bars.map((_, i) => (
+                    <div key={i} className="w-[3px] h-[6px] bg-zinc-700 rounded-full" />
+                ))}
+            </div>
+        );
+    }
+
     return (
-        <div className="flex items-center gap-[5px]">
+        <div className="flex items-center gap-[3px]">
             {bars.map(({ delay, maxH }, i) => (
                 <motion.div
                     key={i}
                     className="w-[3px] bg-gradient-to-t from-green-neon/60 to-green-neon rounded-full"
-                    animate={{ height: ['6px', `${maxH}px`, '6px'] }}
-                    transition={{ duration: 0.7, repeat: Infinity, delay, ease: 'easeInOut' }}
+                    animate={{ height: ['4px', `${maxH}px`, '4px'] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay, ease: 'easeInOut' }}
                 />
             ))}
         </div>
     );
 }
 
-// ─── Orbiting dots ───────────────────────────────────────────────────────────
+// ─── Central mic orb ────────────────────────────────────────────────────────
 
-function OrbitingDots() {
+function MicOrb({ voiceState, isMuted }: { voiceState: VoiceState; isMuted: boolean }) {
+    const isActive = voiceState === 'listening' || voiceState === 'speaking';
+    const isListening = voiceState === 'listening';
+    const isSpeaking = voiceState === 'speaking';
+
     return (
-        <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-            className="absolute inset-[-8px]"
-        >
-            {[0, 120, 240].map((deg) => (
-                <div
-                    key={deg}
-                    className="absolute w-1.5 h-1.5 bg-green-neon rounded-full shadow-[0_0_8px_rgba(57,255,20,0.5)]"
-                    style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: `rotate(${deg}deg) translateY(-68px) translate(-50%, -50%)`,
-                    }}
-                />
-            ))}
-        </motion.div>
+        <div className="relative flex items-center justify-center w-16 h-16">
+            {/* Pulse rings when listening */}
+            {isListening && !isMuted && (
+                <>
+                    <motion.div
+                        className="absolute inset-0 rounded-full border border-green-neon/20"
+                        animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+                    />
+                    <motion.div
+                        className="absolute inset-0 rounded-full border border-green-neon/15"
+                        animate={{ scale: [1, 1.35], opacity: [0.3, 0] }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut', delay: 0.5 }}
+                    />
+                </>
+            )}
+
+            {/* Orb background */}
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-500 ${voiceState === 'error'
+                ? 'bg-red-500/10 border-2 border-red-500/30'
+                : isSpeaking
+                    ? 'bg-green-neon/15 border-2 border-green-neon/50 shadow-[0_0_24px_rgba(57,255,20,0.2)]'
+                    : isListening
+                        ? 'bg-green-neon/10 border-2 border-green-neon/30 shadow-[0_0_16px_rgba(57,255,20,0.12)]'
+                        : 'bg-zinc-800/80 border-2 border-zinc-700/50'
+                }`}>
+                <AnimatePresence mode="wait">
+                    {voiceState === 'connecting' && (
+                        <motion.div
+                            key="spinner"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="w-5 h-5 border-2 border-green-neon/30 border-t-green-neon rounded-full animate-spin"
+                        />
+                    )}
+                    {isSpeaking && (
+                        <motion.div key="vol" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                            <Volume2 className="w-6 h-6 text-green-neon" />
+                        </motion.div>
+                    )}
+                    {(isListening || voiceState === 'idle' || voiceState === 'error') && (
+                        <motion.div key="mic" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                            {isMuted
+                                ? <MicOff className={`w-6 h-6 ${voiceState === 'error' ? 'text-red-400' : 'text-orange-400'}`} />
+                                : <Mic className={`w-6 h-6 ${isActive ? 'text-green-neon' : voiceState === 'error' ? 'text-red-400' : 'text-zinc-400'}`} />
+                            }
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </div>
     );
 }
 
+// ─── Main component ──────────────────────────────────────────────────────────
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate, showUI = true, cartItems = [] }: Props) {
+export default function VoiceAdvisor({
+    products, pastProducts, savedPrefs, userName,
+    isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate,
+    showUI = true, cartItems = []
+}: Props) {
     const { settings } = useSettingsStore();
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
@@ -124,15 +161,22 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
             cartItems
         });
 
-    // Auto-start when opened
+    // Auto-start ONCE when the panel opens — never on subsequent voiceState changes.
+    // Without this guard, every time Gemini Live closes the WS cleanly (code 1000)
+    // voiceState resets to 'idle' and this effect would restart the session in a loop.
+    const hasAutoStartedRef = useRef(false);
     useEffect(() => {
-        if (isOpen && voiceState === 'idle' && isSupported) {
-            const timer = setTimeout(() => {
-                startSession();
-            }, 600); // Small delay for smooth transition
-            return () => clearTimeout(timer);
+        if (isOpen && isSupported) {
+            if (!hasAutoStartedRef.current) {
+                hasAutoStartedRef.current = true;
+                const timer = setTimeout(() => startSession(), 400);
+                return () => clearTimeout(timer);
+            }
+        } else {
+            // Panel closed: reset so next open auto-starts fresh
+            hasAutoStartedRef.current = false;
         }
-    }, [isOpen, voiceState, isSupported, startSession]);
+    }, [isOpen, isSupported, startSession]);
 
     const isActive = voiceState === 'listening' || voiceState === 'speaking';
 
@@ -152,251 +196,157 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
     return (
         <AnimatePresence>
             {isOpen && (
+                /* ── Floating panel anchored bottom-right, site stays accessible ── */
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="fixed inset-0 z-[99999] flex flex-col overflow-hidden"
+                    initial={{ opacity: 0, scale: 0.85, y: 24 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.85, y: 24 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    /* Position: above the widget button (bottom-6 + widget ~72px = ~84px) and to its left */
+                    className="fixed bottom-24 right-6 z-[99998] w-[320px] pointer-events-auto"
+                    style={{ originX: 1, originY: 1 }}
                 >
-                    {/* Layered background */}
-                    <div className="absolute inset-0 bg-zinc-950/[0.98]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(57,255,20,0.03)_0%,_transparent_70%)]" />
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-green-neon/[0.02] blur-[120px] rounded-full" />
+                    <div
+                        className="relative rounded-3xl overflow-hidden border border-zinc-800/80"
+                        style={{
+                            background: 'rgba(9,9,11,0.96)',
+                            backdropFilter: 'blur(32px)',
+                            boxShadow: isActive
+                                ? '0 8px 40px rgba(0,0,0,0.6), 0 0 30px rgba(57,255,20,0.06), inset 0 1px 0 rgba(255,255,255,0.04)'
+                                : '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
+                        }}
+                    >
+                        {/* Subtle green top-border glow when active */}
+                        {isActive && (
+                            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-green-neon/30 to-transparent" />
+                        )}
 
-                    {/* ── Header ── */}
-                    <div className="relative flex items-center justify-between px-5 py-4 border-b border-white/[0.04] shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
-                                <Headphones className="w-4 h-4 text-green-neon" />
+                        {/* ── Header ── */}
+                        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/[0.04]">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
+                                    <Headphones className="w-3.5 h-3.5 text-green-neon" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black text-white uppercase tracking-widest">
+                                            Conseiller Vocal
+                                        </span>
+                                        <motion.span
+                                            animate={isActive ? { opacity: [1, 0.4, 1] } : { opacity: 1 }}
+                                            transition={{ duration: 1.4, repeat: Infinity }}
+                                            className="inline-flex items-center gap-1 text-[9px] bg-green-neon/10 text-green-neon px-1.5 py-0.5 rounded-full border border-green-neon/20 font-bold"
+                                        >
+                                            <Radio className="w-2 h-2" />
+                                            LIVE
+                                        </motion.span>
+                                    </div>
+                                    <p className="text-[10px] text-zinc-600 font-medium mt-0.5">
+                                        Gemini Live · Audio natif
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-sm font-black text-white tracking-tight flex items-center gap-2">
-                                    CONSEILLER VOCAL
-                                    <motion.span
-                                        animate={isActive ? { opacity: [1, 0.5, 1] } : {}}
-                                        transition={{ duration: 1.5, repeat: Infinity }}
-                                        className="text-[9px] bg-green-neon/10 text-green-neon px-2.5 py-0.5 rounded-full border border-green-neon/20 font-bold tracking-wider inline-flex items-center gap-1"
-                                    >
-                                        <Radio className="w-2.5 h-2.5" />
-                                        LIVE
-                                    </motion.span>
-                                </h3>
-                                <p className="text-[10px] text-zinc-600 mt-0.5 font-medium">
-                                    Gemini Live · Audio natif temps réel
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
                             <button
                                 type="button"
                                 onClick={handleClose}
-                                className="p-2.5 text-zinc-500 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/5"
+                                className="p-2 text-zinc-600 hover:text-white hover:bg-white/5 rounded-xl transition-all"
                                 aria-label="Fermer le conseiller vocal"
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         </div>
-                    </div>
 
-                    {/* ── Main voice area ── */}
-                    <div className="relative flex-1 flex flex-col items-center justify-center gap-8 px-6 py-6">
+                        {/* ── Body ── */}
+                        <div className="px-4 py-4 flex items-center gap-4">
+                            {/* Orb */}
+                            <MicOrb voiceState={voiceState} isMuted={isMuted} />
 
-                        {/* Mic / state visualisation */}
-                        <div className="relative flex items-center justify-center w-40 h-40">
-
-                            {/* Orbiting dots when active */}
-                            <AnimatePresence>
-                                {isActive && (
-                                    <motion.div
-                                        key="orbit"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                    >
-                                        <OrbitingDots />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Pulsing rings when listening */}
-                            <AnimatePresence>
-                                {voiceState === 'listening' && (
-                                    <>
-                                        <PulseRing delay={0} scale={1.6} />
-                                        <PulseRing delay={0.5} scale={1.35} />
-                                        <PulseRing delay={1} scale={1.5} />
-                                    </>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Waveform when speaking */}
-                            <AnimatePresence>
-                                {voiceState === 'speaking' && (
-                                    <motion.div
-                                        key="wave"
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
-                                        className="absolute"
-                                    >
-                                        <WaveformBars />
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Outer glow ring */}
-                            <div className={`absolute inset-0 rounded-full transition-all duration-700 ${isActive
-                                ? 'shadow-[0_0_60px_rgba(57,255,20,0.08),_inset_0_0_30px_rgba(57,255,20,0.03)]'
-                                : ''
-                                }`} />
-
-                            {/* Central button */}
-                            <motion.button
-                                type="button"
-                                whileTap={{ scale: 0.92 }}
-                                whileHover={!isActive && voiceState !== 'connecting' ? { scale: 1.05 } : {}}
-                                onClick={isActive || voiceState === 'connecting' || !isSupported ? undefined : startSession}
-                                disabled={voiceState === 'connecting' || !isSupported}
-                                aria-label={isActive ? 'Session active' : 'Démarrer la session vocale'}
-                                className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500
-                                    ${voiceState === 'error'
-                                        ? 'bg-gradient-to-br from-red-500/10 to-red-900/10 border-2 border-red-500/30 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.1)]'
-                                        : isActive
-                                            ? 'bg-gradient-to-br from-green-neon/10 to-emerald-900/10 border-2 border-green-neon/40 text-green-neon shadow-[0_0_50px_rgba(57,255,20,0.12)]'
-                                            : voiceState === 'connecting'
-                                                ? 'bg-zinc-900/80 border-2 border-zinc-700/50 text-zinc-500 cursor-wait'
-                                                : 'bg-gradient-to-br from-zinc-800/80 to-zinc-900/80 border-2 border-zinc-700/50 text-zinc-400 hover:border-green-neon/30 hover:text-green-neon/80 cursor-pointer hover:shadow-[0_0_40px_rgba(57,255,20,0.08)]'
-                                    }`}
-                            >
-                                {/* Inner ring glow */}
-                                {isActive && (
-                                    <div className="absolute inset-[3px] rounded-full border border-green-neon/10" />
-                                )}
-
-                                <AnimatePresence mode="wait">
-                                    {voiceState === 'connecting' && (
-                                        <motion.div
-                                            key="spinner"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="w-8 h-8 border-2 border-green-neon/30 border-t-green-neon rounded-full animate-spin"
-                                        />
-                                    )}
-                                    {voiceState === 'speaking' && (
-                                        <motion.div key="vol" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            <Volume2 className="w-9 h-9" />
-                                        </motion.div>
-                                    )}
-                                    {(voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
-                                        <motion.div key="mic" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            {isMuted ? <MicOff className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.button>
-                        </div>
-
-                        {/* Status text */}
-                        <div className="text-center space-y-2">
-                            <motion.p
-                                key={voiceState}
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`text-base font-bold tracking-tight ${voiceState === 'error' ? 'text-red-400' : isActive ? 'text-white' : 'text-zinc-300'
-                                    }`}
-                            >
-                                {STATUS[voiceState]}
-                            </motion.p>
-                            <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed" aria-live="polite" aria-atomic="true">
-                                {error || compatibilityError || STATUS_SUB[voiceState]}
-                            </p>
-                        </div>
-
-                        {/* Active session controls */}
-                        <AnimatePresence>
-                            {isActive && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 12 }}
+                            {/* Status + waveform */}
+                            <div className="flex-1 min-w-0">
+                                <motion.p
+                                    key={voiceState}
+                                    initial={{ opacity: 0, y: 3 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 12 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="flex items-center gap-3"
+                                    className={`text-sm font-bold leading-tight ${STATUS_COLOR[voiceState]}`}
                                 >
+                                    {STATUS[voiceState]}
+                                </motion.p>
+                                <p className="text-[11px] text-zinc-600 mt-1 truncate leading-snug" aria-live="polite">
+                                    {compatibilityError || error || (
+                                        voiceState === 'speaking' ? 'Analyse et réponse en cours…' :
+                                            voiceState === 'listening' ? 'Parlez naturellement' :
+                                                voiceState === 'connecting' ? 'Établissement connexion sécurisée…' :
+                                                    voiceState === 'error' ? 'Appuyez sur Réessayer' :
+                                                        'Votre conseiller IA est prêt'
+                                    )}
+                                </p>
+                                <div className="mt-2.5">
+                                    <WaveformBars active={voiceState === 'speaking'} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Controls ── */}
+                        <div className="px-4 pb-4 flex items-center gap-2">
+                            {/* Unsupported browser */}
+                            {!isSupported && (
+                                <div className="flex-1 text-[10px] text-zinc-500 text-center py-2">
+                                    Navigateur non compatible · <button onClick={handleClose} className="underline text-zinc-400">Fermer</button>
+                                </div>
+                            )}
+
+                            {/* Error → retry */}
+                            {voiceState === 'error' && isSupported && (
+                                <button
+                                    type="button"
+                                    onClick={startSession}
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-neon to-emerald-400 text-black font-black text-xs uppercase tracking-wider hover:shadow-[0_0_20px_rgba(57,255,20,0.2)] active:scale-[0.98] transition-all"
+                                >
+                                    🔄 Réessayer
+                                </button>
+                            )}
+
+                            {/* Active controls: mute + hangup */}
+                            {(isActive || voiceState === 'connecting') && isSupported && (
+                                <>
                                     <button
                                         type="button"
                                         onClick={toggleMute}
-                                        className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-bold transition-all duration-300 ${isMuted
-                                            ? 'bg-orange-500/10 border border-orange-500/30 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.05)]'
+                                        disabled={voiceState === 'connecting'}
+                                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all disabled:opacity-40 ${isMuted
+                                            ? 'bg-orange-500/10 border border-orange-500/30 text-orange-400'
                                             : 'bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:border-white/10 hover:text-zinc-300'
                                             }`}
                                         aria-label={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
                                     >
                                         {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                                        {isMuted ? 'Micro coupé' : 'Couper le micro'}
+                                        {isMuted ? 'Activé' : 'Muet'}
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={handleHangup}
-                                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-bold bg-red-500/[0.06] border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-300"
+                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[11px] font-bold bg-red-500/[0.06] border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
                                         aria-label="Terminer la session vocale"
                                     >
                                         <PhoneOff className="w-3.5 h-3.5" />
                                         Raccrocher
                                     </button>
-                                </motion.div>
+                                </>
                             )}
-                        </AnimatePresence>
-                    </div>
 
-
-
-                    {/* ── Fallback when voice is unsupported ── */}
-                    {!isSupported && (
-                        <div className="relative px-5 pb-5 pt-2 shrink-0">
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="w-full py-4 rounded-2xl bg-zinc-800/80 border border-zinc-700 text-zinc-200 font-black text-sm uppercase tracking-wider hover:bg-zinc-700/80 transition-all duration-300"
-                            >
-                                💬 Continuer en chat texte
-                            </button>
-                            <p className="text-[10px] text-zinc-600 text-center mt-3 font-medium">
-                                Votre navigateur ne supporte pas toutes les APIs vocales nécessaires.
-                            </p>
-                        </div>
-                    )}
-
-                    {/* ── Start / retry button ── */}
-                    <AnimatePresence>
-                        {(voiceState === 'idle' || voiceState === 'error') && isSupported && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 10 }}
-                                className="relative px-5 pb-5 pt-2 shrink-0"
-                            >
+                            {/* Idle → start */}
+                            {voiceState === 'idle' && isSupported && (
                                 <button
                                     type="button"
                                     onClick={startSession}
-                                    className="group w-full py-4 rounded-2xl bg-gradient-to-r from-green-neon to-emerald-400 text-black font-black text-sm uppercase tracking-wider hover:shadow-[0_0_40px_rgba(57,255,20,0.25)] active:scale-[0.98] transition-all duration-300 relative overflow-hidden"
+                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-green-neon to-emerald-400 text-black font-black text-xs uppercase tracking-wider hover:shadow-[0_0_20px_rgba(57,255,20,0.2)] active:scale-[0.98] transition-all"
                                 >
-                                    {/* Shimmer effect */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-                                    <span className="relative">
-                                        {voiceState === 'error' ? '🔄 Réessayer la connexion' : '🎤 Démarrer la session vocale'}
-                                    </span>
+                                    🎤 Démarrer
                                 </button>
-                                <p className="text-[10px] text-zinc-600 text-center mt-3 font-medium flex items-center justify-center gap-2">
-                                    <span className="w-1 h-1 rounded-full bg-green-neon/40" />
-                                    Microphone requis · Connexion directe sécurisée
-                                    <span className="w-1 h-1 rounded-full bg-green-neon/40" />
-                                </p>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                            )}
+                        </div>
+                    </div>
                 </motion.div>
             )}
         </AnimatePresence>

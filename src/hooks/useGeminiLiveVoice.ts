@@ -9,8 +9,15 @@ import { getVoicePrompt } from '../lib/budtenderPrompts';
 const LIVE_MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const INPUT_SAMPLE_RATE = 16000;
 const OUTPUT_SAMPLE_RATE = 24000;
-const CONNECTION_TIMEOUT_MS = 10000;
+
+// ── Timeouts & retry policy ──────────────────────────────────────────────────
+const CONNECTION_TIMEOUT_MS = 18000;   // 18s — generous for slow mobile connections
 const AUDIO_SCHEDULE_AHEAD_SEC = 0.008;
+const MAX_AUTO_RETRIES = 2;           // Retry up to 2 times on non-intentional closes
+const RETRY_DELAY_MS = 2000;          // Wait 2s between retries
+
+// WebSocket close codes that are NOT worth retrying (user closed, server clean close, auth)
+const NON_RETRYABLE_CODES = new Set([1000, 1001, 4000, 4001, 4003, 4008]);
 
 export type VoiceState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error';
 
@@ -56,6 +63,38 @@ function toBase64(bytes: Uint8Array): string {
   let binary = '';
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
+}
+
+/**
+ * Maps browser MediaDevices/WebSocket errors to user-friendly French messages.
+ */
+function classifyError(err: unknown): string {
+  if (err instanceof Error) {
+    const name = err.name;
+    const msg = err.message.toLowerCase();
+    if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+      return 'Accès au microphone refusé. Veuillez l\'autoriser dans les paramètres du navigateur.';
+    }
+    if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+      return 'Aucun microphone détecté sur cet appareil.';
+    }
+    if (name === 'NotReadableError' || name === 'TrackStartError') {
+      return 'Microphone déjà utilisé par une autre application.';
+    }
+    if (name === 'OverconstrainedError') {
+      return 'Configuration audio non supportée par ce microphone.';
+    }
+    if (msg.includes('timeout') || msg.includes('délai')) {
+      return 'Délai de connexion dépassé. Vérifiez votre connexion internet.';
+    }
+    if (msg.includes('network') || msg.includes('réseau') || msg.includes('failed to fetch')) {
+      return 'Problème réseau. Vérifiez votre connexion internet.';
+    }
+    if (msg.includes('api key') || msg.includes('unauthorized') || msg.includes('403')) {
+      return 'Clé API invalide ou expirée.';
+    }
+  }
+  return 'Erreur de connexion. Appuyez sur "Réessayer".';
 }
 
 export function useGeminiLiveVoice({
@@ -109,6 +148,60 @@ export function useGeminiLiveVoice({
   const isManualCloseRef = useRef(false);
   const canStreamInputRef = useRef(false);
   const searchResultsRef = useRef<Product[]>([]);
+  const retryCountRef = useRef(0);
+  const retryTimerRef = useRef<number | null>(null);
+
+  // ── Unified product lookup with 4 fallback levels ────────────────────────
+  // Level 1: exact name match
+  // Level 2: one name contains the other (substring)
+  // Level 3: ALL words of the query appear somewhere in the product name
+  // Level 4: Supabase ilike fallback (catches typos, accent differences, etc.)
+  // This runs in both add_to_cart and view_product so neither fails on first call.
+  const findProduct = useCallback(async (prodName: string): Promise<Product | undefined> => {
+    const q = prodName.toLowerCase().trim();
+    const allKnown = [...productsRef.current, ...searchResultsRef.current];
+
+    // L1 – exact
+    let found = allKnown.find(i => i.name.toLowerCase() === q);
+    if (found) return found;
+
+    // L2 – substring (either direction)
+    found = allKnown.find(i => i.name.toLowerCase().includes(q) || q.includes(i.name.toLowerCase()));
+    if (found) return found;
+
+    // L3 – ALL words present (min length 1 to catch short words like "OG", "CB")
+    const words = q.split(/\s+/).filter(w => w.length > 1);
+    if (words.length > 0) {
+      found = allKnown.find(i => words.every(w => i.name.toLowerCase().includes(w)));
+      if (found) return found;
+
+      // L3b – ANY word present (looser)
+      found = allKnown.find(i => words.some(w => i.name.toLowerCase().includes(w)));
+      if (found) return found;
+    }
+
+    // L4 – Supabase ilike (last resort, handles accent differences & typos)
+    try {
+      // Try exact name first, then a broader search
+      const { data } = await supabase
+        .from('products')
+        .select('*, category:categories(slug, name)')
+        .ilike('name', `%${prodName}%`)
+        .eq('is_active', true)
+        .limit(3);
+      if (data && data.length > 0) {
+        // Pick the closest match by name length proximity
+        const sorted = [...data].sort((a, b) =>
+          Math.abs(a.name.length - prodName.length) - Math.abs(b.name.length - prodName.length)
+        );
+        return sorted[0] as Product;
+      }
+    } catch (e) {
+      console.error('[Voice] Supabase product lookup failed:', e);
+    }
+
+    return undefined;
+  }, []);
 
   const canSendRealtimeInput = useCallback(() => {
     if (!sessionRef.current || !canStreamInputRef.current || isManualCloseRef.current) return false;
@@ -137,7 +230,14 @@ export function useGeminiLiveVoice({
   const cleanup = useCallback(() => {
     isManualCloseRef.current = true;
     canStreamInputRef.current = false;
-    (sessionRef.current as any)?._ws?.close?.(); // Attempt direct WS close if accessible to speed up state change
+
+    // Cancel any pending retry
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+
+    (sessionRef.current as any)?._ws?.close?.();
     sessionRef.current?.close();
     sessionRef.current = null;
 
@@ -164,6 +264,7 @@ export function useGeminiLiveVoice({
   useEffect(() => cleanup, [cleanup]);
 
   const stopSession = useCallback(() => {
+    retryCountRef.current = 0;
     cleanup();
     setVoiceState('idle');
     setIsMuted(false);
@@ -171,7 +272,6 @@ export function useGeminiLiveVoice({
 
   const playPcmChunk = useCallback((base64: string) => {
     // Guard: discard any audio chunks that arrive after an interruption
-    // These are in-flight chunks sent before the server acknowledged the barge-in
     if (interruptedRef.current) return;
     if (!playbackCtxRef.current) return;
     const ctx = playbackCtxRef.current;
@@ -219,7 +319,7 @@ export function useGeminiLiveVoice({
           }
         });
       } catch (err: any) {
-        // Silently catch socket closed/closing errors during teardown to prevent console noise
+        // Silently catch socket closed/closing errors during teardown
         if (err?.message?.includes('CLOSED') || err?.message?.includes('CLOSING')) {
           return;
         }
@@ -234,12 +334,16 @@ export function useGeminiLiveVoice({
     silent.connect(ctx.destination);
   }, [canSendRealtimeInput]);
 
+  // Forward declaration so startSession can call itself for retry
+  const startSessionRef = useRef<(() => Promise<void>) | undefined>(undefined);
+
   const startSession = useCallback(async () => {
     if (startInFlightRef.current) return;
     cleanup();
     isManualCloseRef.current = false;
     const sid = sessionIdRef.current + 1;
     sessionIdRef.current = sid;
+
     if (compatibilityError) {
       setError(compatibilityError);
       setVoiceState('error');
@@ -248,7 +352,7 @@ export function useGeminiLiveVoice({
 
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      setError('Missing API Key.');
+      setError('Clé API Gemini manquante (VITE_GEMINI_API_KEY).');
       setVoiceState('error');
       return;
     }
@@ -257,17 +361,19 @@ export function useGeminiLiveVoice({
     setVoiceState('connecting');
     setError(null);
 
+    // ── Connection timeout ────────────────────────────────────────────────────
+    setupTimeoutRef.current = window.setTimeout(() => {
+      if (sessionIdRef.current === sid && startInFlightRef.current) {
+        console.warn('[Voice] Connection timeout after', CONNECTION_TIMEOUT_MS, 'ms');
+        setError('Délai de connexion dépassé. Vérifiez votre connexion internet.');
+        stopSession();
+      }
+    }, CONNECTION_TIMEOUT_MS);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const ai = new GoogleGenAI({ apiKey });
-
-      setupTimeoutRef.current = window.setTimeout(() => {
-        if (sessionIdRef.current === sid && startInFlightRef.current) {
-          setError('Délai de connexion dépassé.');
-          stopSession();
-        }
-      }, CONNECTION_TIMEOUT_MS);
 
       const session = await ai.live.connect({
         model: LIVE_MODEL,
@@ -339,7 +445,8 @@ export function useGeminiLiveVoice({
             if (sessionIdRef.current !== sid) return;
             if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
             canStreamInputRef.current = true;
-            console.info('Gemini Live: Setup Complete');
+            retryCountRef.current = 0; // Reset retry count on successful connection
+            console.info('[Voice] Gemini Live: Setup Complete');
             setVoiceState('listening');
             await startMicCapture(stream);
             startInFlightRef.current = false;
@@ -352,22 +459,61 @@ export function useGeminiLiveVoice({
           onerror: (e: ErrorEvent) => {
             if (sessionIdRef.current !== sid) return;
             canStreamInputRef.current = false;
-            console.error('Live Error:', e);
-            setError('Erreur de connexion Live.');
-            setVoiceState('error');
+            console.error('[Voice] Live Error:', e);
+            // onerror is always followed by onclose, so we let onclose handle retry logic
             startInFlightRef.current = false;
           },
           onclose: (e: CloseEvent) => {
             if (sessionIdRef.current !== sid || isManualCloseRef.current) return;
             canStreamInputRef.current = false;
-            console.log('Live Closed:', e.code, e.reason);
-            if (e.code !== 1000) {
-              setError(`Session interrompue (${e.code}).`);
-              setVoiceState('error');
-            } else {
-              stopSession();
-            }
             startInFlightRef.current = false;
+            console.log('[Voice] Live Closed:', e.code, e.reason);
+
+            // ── Clean close: normal end ──────────────────────────────────────
+            if (e.code === 1000) {
+              stopSession();
+              return;
+            }
+
+            // ── Abnormal close: decide whether to retry ──────────────────────
+            const canRetry = !NON_RETRYABLE_CODES.has(e.code) && retryCountRef.current < MAX_AUTO_RETRIES;
+
+            if (canRetry) {
+              retryCountRef.current += 1;
+              const attempt = retryCountRef.current;
+              const delay = RETRY_DELAY_MS * attempt; // Exponential-ish back-off
+              console.info(`[Voice] Auto-retry ${attempt}/${MAX_AUTO_RETRIES} in ${delay}ms (code ${e.code})`);
+              setError(`Reconnexion automatique (${attempt}/${MAX_AUTO_RETRIES})…`);
+              setVoiceState('connecting');
+
+              // Re-use the stream already acquired so we don't need to re-prompt for mic permission
+              retryTimerRef.current = window.setTimeout(() => {
+                if (isManualCloseRef.current) return;
+                // Partial cleanup: close session & audio but keep stream
+                (sessionRef.current as any)?._ws?.close?.();
+                sessionRef.current?.close();
+                sessionRef.current = null;
+                if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
+                stopAllPlayback();
+                if (processorRef.current) processorRef.current.port.onmessage = null;
+                processorRef.current?.disconnect();
+                processorRef.current = null;
+                captureCtxRef.current?.close().catch(() => { });
+                captureCtxRef.current = null;
+                playbackCtxRef.current?.close().catch(() => { });
+                playbackCtxRef.current = null;
+                scheduledUntilRef.current = 0;
+                interruptedRef.current = false;
+                // Don't reset sessionIdRef — we keep the same sid guard
+                startSessionRef.current?.();
+              }, delay);
+            } else {
+              // Max retries exceeded or non-retryable code
+              const reason = e.reason ? `(${e.reason})` : `(code ${e.code})`;
+              setError(`Session interrompue ${reason}. Appuyez sur "Réessayer".`);
+              setVoiceState('error');
+              cleanup();
+            }
           },
           onmessage: async (msg: LiveServerMessage) => {
             if (sessionIdRef.current !== sid) return;
@@ -379,6 +525,7 @@ export function useGeminiLiveVoice({
 
             if (msg.serverContent) {
               if (msg.serverContent.interrupted) {
+                // Server detected barge-in: immediately stop all scheduled audio
                 stopAllPlayback();
                 setupTurn();
                 return;
@@ -388,8 +535,7 @@ export function useGeminiLiveVoice({
                 return;
               }
 
-              // A new model turn with audio data means the server is speaking fresh content;
-              // clear the interrupted flag so these new chunks are allowed to play.
+              // A new model turn: clear the interrupted flag so fresh chunks can play
               if (msg.serverContent.modelTurn?.parts?.length) {
                 interruptedRef.current = false;
               }
@@ -411,32 +557,14 @@ export function useGeminiLiveVoice({
                 const weightGrams = Number(args.weight_grams) || 0;
                 let qty = Number(args.quantity) || 0;
 
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
-
-                if (!p) {
-                  try {
-                    const { data } = await supabase.from('products').select('*, category:categories(slug, name)').ilike('name', `%${prodName}%`).eq('is_active', true).limit(1).maybeSingle();
-                    if (data) p = data as Product;
-                  } catch (e) {
-                    console.error('[Voice] Supabase fallback failed:', e);
-                  }
-                }
+                const p = await findProduct(prodName);
 
                 if (p) {
-                  // Logic for weight vs quantity
                   if (weightGrams > 0) {
-                    const unitWeight = p.weight_grams || 1; // Fallback to 1g if not specified
+                    const unitWeight = p.weight_grams || 1;
                     qty = Math.max(1, Math.round(weightGrams / unitWeight));
                   } else if (qty <= 0) {
-                    qty = 1; // Default
+                    qty = 1;
                   }
 
                   if (onAddItemRef.current) {
@@ -460,19 +588,12 @@ export function useGeminiLiveVoice({
 
               if (c.name === 'view_product') {
                 const prodName = (args.product_name || '').trim();
-                const prodNameLower = prodName.toLowerCase();
-                const allKnown = [...productsRef.current, ...searchResultsRef.current];
-                let p = allKnown.find(i => i.name.toLowerCase() === prodNameLower)
-                  || allKnown.find(i => i.name.toLowerCase().includes(prodNameLower) || prodNameLower.includes(i.name.toLowerCase()));
-                if (!p) {
-                  const words = prodNameLower.split(/\s+/).filter(w => w.length > 2);
-                  p = allKnown.find(i => words.length > 0 && words.every(w => i.name.toLowerCase().includes(w)));
-                }
+                const p = await findProduct(prodName);
                 if (p && onViewProductRef.current) {
                   onViewProductRef.current(p);
                   return { name: c.name, id: c.id, response: { result: `OK — Fiche de "${p.name}" affichée` } };
                 }
-                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé.` } };
+                return { name: c.name, id: c.id, response: { error: `Produit "${prodName}" non trouvé dans le catalogue.` } };
               }
 
               if (c.name === 'navigate_to') {
@@ -524,13 +645,23 @@ export function useGeminiLiveVoice({
 
       sessionRef.current = session;
     } catch (err) {
-      console.error('Live session setup failed:', err);
       if (setupTimeoutRef.current) clearTimeout(setupTimeoutRef.current);
-      setError('Erreur media.');
-      setVoiceState('error');
       startInFlightRef.current = false;
+
+      // Don't show error if this session was superseded (e.g. rapid open/close)
+      if (sessionIdRef.current !== sid) return;
+
+      const userMessage = classifyError(err);
+      console.error('[Voice] Session setup failed:', err);
+      setError(userMessage);
+      setVoiceState('error');
     }
   }, [cleanup, buildSystemPrompt, compatibilityError, playPcmChunk, startMicCapture, stopAllPlayback, stopSession]);
+
+  // Keep startSession accessible inside the onclose retry callback via ref
+  useEffect(() => {
+    startSessionRef.current = startSession;
+  }, [startSession]);
 
   const toggleMute = useCallback(() => {
     isMutedRef.current = !isMutedRef.current;

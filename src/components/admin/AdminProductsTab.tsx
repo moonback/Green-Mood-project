@@ -161,6 +161,37 @@ export default function AdminProductsTab({ products, categories, onRefresh }: Ad
         setShowProductModal(false);
         onRefresh();
         setIsSaving(false);
+
+        // ── Auto-generate embedding after save (non-blocking) ──────────────────
+        // This ensures every product always has an up-to-date search vector
+        // without requiring a manual sync step.
+        if (savedId) {
+            const textToEmbed = [
+                payload.name,
+                payload.description ?? '',
+                payload.cbd_percentage ? `CBD ${payload.cbd_percentage}%` : '',
+                ...(Array.isArray(payload.attributes?.benefits) ? payload.attributes.benefits : []),
+            ].filter(Boolean).join(' ').trim();
+
+            if (textToEmbed) {
+                setVectorSyncProgress({ done: 0, total: 1 });
+                setIsSyncingVectors(true);
+                generateEmbedding(textToEmbed)
+                    .then((embedding) => {
+                        if (embedding.length > 0) {
+                            return supabase.from('products').update({ embedding }).eq('id', savedId!);
+                        }
+                    })
+                    .then(() => onRefresh())
+                    .catch((err) => {
+                        console.warn('[Auto-embed] Échec de la génération vectorielle (non bloquant):', err);
+                    })
+                    .finally(() => {
+                        setIsSyncingVectors(false);
+                        setVectorSyncProgress(null);
+                    });
+            }
+        }
     };
 
     const handleDeleteProduct = async (id: string) => {
