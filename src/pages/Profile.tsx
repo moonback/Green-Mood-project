@@ -463,6 +463,8 @@ export default function Profile() {
                                 </button>
                             </div>
                         </div>
+
+
                     </motion.div>
 
                     {/* Section 2: Préférences BudTender — Collapsible */}

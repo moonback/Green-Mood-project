@@ -14,12 +14,14 @@ import {
   ShieldCheck,
   Search,
   Sparkles,
+  QrCode,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import AgeGate from "./AgeGate";
 import CartSidebar from "./CartSidebar";
 import BudTender from "./BudTender";
+import LoyaltyCard from "./LoyaltyCard";
 import ToastContainer from "./Toast";
 import { useCartStore } from "../store/cartStore";
 import { useAuthStore } from "../store/authStore";
@@ -62,6 +64,7 @@ export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBannerVisible, setIsBannerVisible] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ products: Product[]; categories: Category[] }>({ products: [], categories: [] });
@@ -354,6 +357,16 @@ export default function Layout() {
                             <Clock className="h-4 w-4" />
                             Historique
                           </Link>
+                          <button
+                            onClick={() => {
+                              setIsLoyaltyModalOpen(true);
+                              setIsAccountMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-zinc-400 hover:bg-white/[0.04] hover:text-white rounded-xl transition-all"
+                          >
+                            <QrCode className="h-4 w-4 text-amber-400" />
+                            Ma Carte Fidélité
+                          </button>
                           {profile?.is_admin && (
                             <Link
                               to="/admin"
@@ -492,7 +505,7 @@ export default function Layout() {
                         <span className="text-lg font-serif font-black text-white">{profile?.full_name ?? "Client Mood"}</span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <Link
                         to="/compte"
                         onClick={() => setIsMenuOpen(false)}
@@ -501,6 +514,16 @@ export default function Layout() {
                         <User className="h-5 w-5 text-green-neon" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Profil</span>
                       </Link>
+                      <button
+                        onClick={() => {
+                          setIsLoyaltyModalOpen(true);
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex flex-col items-center justify-center gap-2 p-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl hover:bg-white/[0.08] transition-all"
+                      >
+                        <QrCode className="h-5 w-5 text-amber-400" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Carte</span>
+                      </button>
                       <button
                         onClick={() => { signOut(); setIsMenuOpen(false); }}
                         className="flex flex-col items-center justify-center gap-2 p-4 bg-red-400/5 border border-red-400/10 rounded-3xl hover:bg-red-400/10 transition-all group"
@@ -533,6 +556,45 @@ export default function Layout() {
           )}
         </AnimatePresence>
       </motion.header>
+
+      {/* Loyalty Card Modal */}
+      <AnimatePresence>
+        {isLoyaltyModalOpen && user && profile && (
+          <div className="fixed inset-0 z-[1001] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsLoyaltyModalOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md z-10"
+            >
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={() => setIsLoyaltyModalOpen(false)}
+                  className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.4em] mb-6">VOTRE CARTE FIDÉLITÉ</p>
+                <LoyaltyCard
+                  userId={user.id}
+                  fullName={profile.full_name || 'Client'}
+                  points={profile.loyalty_points}
+                  referralCode={profile.referral_code}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-grow">
