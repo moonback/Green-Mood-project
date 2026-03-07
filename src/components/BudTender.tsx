@@ -924,6 +924,7 @@ export default function BudTender() {
                 userName={memory.userName}
                 isOpen={isVoiceOpen}
                 cartItems={cartItems}
+                variant={isOpen ? 'full' : 'vignette'}
                 onClose={() => {
                     setIsVoiceOpen(false);
                     setIsShrink(false);

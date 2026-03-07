@@ -21,6 +21,7 @@ interface Props {
     onNavigate?: (path: string) => void;
     showUI?: boolean;
     cartItems?: any[];
+    variant?: 'full' | 'vignette';
 }
 
 // ─── Status labels ───────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ function OrbitingDots() {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate, showUI = true, cartItems = [] }: Props) {
+export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userName, isOpen, onClose, onHangup, onAddItem, onViewProduct, onNavigate, showUI = true, cartItems = [], variant = 'full' }: Props) {
     const { settings } = useSettingsStore();
 
     const { voiceState, error, isMuted, isSupported, compatibilityError, startSession, stopSession, toggleMute } =
@@ -153,25 +154,31 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
         <AnimatePresence>
             {isOpen && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="fixed inset-0 z-[99999] flex flex-col overflow-hidden"
+                    initial={{ opacity: 0, scale: variant === 'vignette' ? 0.9 : 1, y: variant === 'vignette' ? 20 : 0 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: variant === 'vignette' ? 0.9 : 1, y: variant === 'vignette' ? 20 : 0 }}
+                    transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                    className={variant === 'full'
+                        ? "fixed inset-0 z-[99999] flex flex-col overflow-hidden"
+                        : "fixed bottom-28 left-6 w-80 sm:w-96 z-[99999] flex flex-col overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-zinc-950/95 backdrop-blur-2xl px-1 pb-1 origin-bottom-left"}
                 >
                     {/* Layered background */}
-                    <div className="absolute inset-0 bg-zinc-950/[0.98]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(57,255,20,0.03)_0%,_transparent_70%)]" />
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-green-neon/[0.02] blur-[120px] rounded-full" />
+                    {variant === 'full' && (
+                        <>
+                            <div className="absolute inset-0 bg-zinc-950/[0.98]" />
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(57,255,20,0.03)_0%,_transparent_70%)]" />
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-green-neon/[0.02] blur-[120px] rounded-full" />
+                        </>
+                    )}
 
                     {/* ── Header ── */}
-                    <div className="relative flex items-center justify-between px-5 py-4 border-b border-white/[0.04] shrink-0">
+                    <div className={`relative flex items-center justify-between border-b border-white/[0.04] shrink-0 ${variant === 'full' ? 'px-5 py-4' : 'px-4 py-3'}`}>
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-xl bg-green-neon/10 border border-green-neon/20 flex items-center justify-center">
                                 <Headphones className="w-4 h-4 text-green-neon" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-black text-white tracking-tight flex items-center gap-2">
+                                <h3 className={variant === 'full' ? "text-sm font-black text-white tracking-tight flex items-center gap-2" : "text-[11px] font-black text-white tracking-tight flex items-center gap-2 uppercase"}>
                                     CONSEILLER VOCAL
                                     <motion.span
                                         animate={isActive ? { opacity: [1, 0.5, 1] } : {}}
@@ -182,9 +189,11 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                         LIVE
                                     </motion.span>
                                 </h3>
-                                <p className="text-[10px] text-zinc-600 mt-0.5 font-medium">
-                                    Gemini Live · Audio natif temps réel
-                                </p>
+                                {variant === 'full' && (
+                                    <p className="text-[10px] text-zinc-600 mt-0.5 font-medium">
+                                        Gemini Live · Audio natif temps réel
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -200,10 +209,10 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                     </div>
 
                     {/* ── Main voice area ── */}
-                    <div className="relative flex-1 flex flex-col items-center justify-center gap-8 px-6 py-6">
+                    <div className={`relative flex-1 flex flex-col items-center justify-center ${variant === 'full' ? 'gap-8 px-6 py-6' : 'gap-6 px-5 py-8'}`}>
 
                         {/* Mic / state visualisation */}
-                        <div className="relative flex items-center justify-center w-40 h-40">
+                        <div className={`relative flex items-center justify-center ${variant === 'full' ? 'w-40 h-40' : 'w-32 h-32'}`}>
 
                             {/* Orbiting dots when active */}
                             <AnimatePresence>
@@ -259,7 +268,8 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 onClick={isActive || voiceState === 'connecting' || !isSupported ? undefined : startSession}
                                 disabled={voiceState === 'connecting' || !isSupported}
                                 aria-label={isActive ? 'Session active' : 'Démarrer la session vocale'}
-                                className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-500
+                                className={`relative rounded-full flex items-center justify-center transition-all duration-500
+                                    ${variant === 'full' ? 'w-28 h-28' : 'w-24 h-24'}
                                     ${voiceState === 'error'
                                         ? 'bg-gradient-to-br from-red-500/10 to-red-900/10 border-2 border-red-500/30 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.1)]'
                                         : isActive
@@ -286,12 +296,12 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     )}
                                     {voiceState === 'speaking' && (
                                         <motion.div key="vol" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            <Volume2 className="w-9 h-9" />
+                                            <Volume2 className={variant === 'full' ? "w-9 h-9" : "w-8 h-8"} />
                                         </motion.div>
                                     )}
                                     {(voiceState === 'listening' || voiceState === 'idle' || voiceState === 'error') && (
                                         <motion.div key="mic" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                                            {isMuted ? <MicOff className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
+                                            {isMuted ? <MicOff className={variant === 'full' ? "w-9 h-9" : "w-8 h-8"} /> : <Mic className={variant === 'full' ? "w-9 h-9" : "w-8 h-8"} />}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -309,7 +319,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                             >
                                 {STATUS[voiceState]}
                             </motion.p>
-                            <p className="text-[11px] text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed" aria-live="polite" aria-atomic="true">
+                            <p className={`${variant === 'full' ? 'text-[11px]' : 'text-[10px]'} text-zinc-600 font-medium max-w-[260px] mx-auto leading-relaxed`} aria-live="polite" aria-atomic="true">
                                 {error || compatibilityError || STATUS_SUB[voiceState]}
                             </p>
                         </div>
@@ -322,29 +332,29 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 12 }}
                                     transition={{ duration: 0.3 }}
-                                    className="flex items-center gap-3"
+                                    className={`flex items-center ${variant === 'full' ? 'gap-3' : 'gap-2'}`}
                                 >
                                     <button
                                         type="button"
                                         onClick={toggleMute}
-                                        className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-bold transition-all duration-300 ${isMuted
+                                        className={`flex items-center gap-2.5 rounded-2xl text-xs font-bold transition-all duration-300 ${variant === 'full' ? 'px-5 py-3' : 'px-3 py-2.5'} ${isMuted
                                             ? 'bg-orange-500/10 border border-orange-500/30 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.05)]'
                                             : 'bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:border-white/10 hover:text-zinc-300'
                                             }`}
                                         aria-label={isMuted ? 'Réactiver le micro' : 'Couper le micro'}
                                     >
                                         {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                                        {isMuted ? 'Micro coupé' : 'Couper le micro'}
+                                        {variant === 'full' && (isMuted ? 'Micro coupé' : 'Couper le micro')}
                                     </button>
 
                                     <button
                                         type="button"
                                         onClick={handleHangup}
-                                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl text-xs font-bold bg-red-500/[0.06] border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-300"
+                                        className={`flex items-center gap-2.5 rounded-2xl text-xs font-bold bg-red-500/[0.06] border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all duration-300 ${variant === 'full' ? 'px-5 py-3' : 'px-4 py-2.5'}`}
                                         aria-label="Terminer la session vocale"
                                     >
                                         <PhoneOff className="w-3.5 h-3.5" />
-                                        Raccrocher
+                                        {variant === 'full' ? 'Raccrocher' : 'Fin'}
                                     </button>
                                 </motion.div>
                             )}
@@ -381,7 +391,7 @@ export default function VoiceAdvisor({ products, pastProducts, savedPrefs, userN
                                 <button
                                     type="button"
                                     onClick={startSession}
-                                    className="group w-full py-4 rounded-2xl bg-gradient-to-r from-green-neon to-emerald-400 text-black font-black text-sm uppercase tracking-wider hover:shadow-[0_0_40px_rgba(57,255,20,0.25)] active:scale-[0.98] transition-all duration-300 relative overflow-hidden"
+                                    className={`group w-full rounded-2xl bg-gradient-to-r from-green-neon to-emerald-400 text-black font-black uppercase tracking-wider hover:shadow-[0_0_40px_rgba(57,255,20,0.25)] active:scale-[0.98] transition-all duration-300 relative overflow-hidden ${variant === 'full' ? 'py-4 text-sm' : 'py-3.5 text-xs'}`}
                                 >
                                     {/* Shimmer effect */}
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
