@@ -35,6 +35,9 @@ import {
     Settings,
     Calculator,
     Tag,
+    Sun,
+    Moon,
+    Brain,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Product, Category, Profile } from '../../lib/types';
@@ -44,7 +47,9 @@ import POSCategoryGrid from './pos/POSCategoryGrid';
 import POSProductGrid from './pos/POSProductGrid';
 import POSCustomerSelection from './pos/POSCustomerSelection';
 import POSCustomerDetailModal from './pos/POSCustomerDetailModal';
+import POSAIPreferencesModal from './pos/POSAIPreferencesModal';
 import { CartLine, PaymentMethod, AppliedPromo, CompletedSale, DailyReport } from './pos/types';
+import { UserAIPreferences } from '../../lib/types';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -111,6 +116,13 @@ function AdminPOSTab({
     const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
     const [promoError, setPromoError] = useState('');
     const [isCheckingPromo, setIsCheckingPromo] = useState(false);
+
+    // ── Theme ──
+    const [isLightTheme, setIsLightTheme] = useState(false);
+
+    // ── AI Preferences ──
+    const [selectedCustomerAIPreferences, setSelectedCustomerAIPreferences] = useState<UserAIPreferences | null>(null);
+    const [showAIPreferences, setShowAIPreferences] = useState(false);
 
     // ── Create customer (POS) ──
     // States moved to POSCustomerSelection
@@ -381,6 +393,23 @@ function AdminPOSTab({
     });
 
     // ── Cart actions ──
+
+    // ── AI Preferences Fetch ──
+    useEffect(() => {
+        if (selectedCustomer) {
+            const fetchPrefs = async () => {
+                const { data } = await supabase
+                    .from('user_ai_preferences')
+                    .select('*')
+                    .eq('user_id', selectedCustomer.id)
+                    .maybeSingle();
+                setSelectedCustomerAIPreferences(data);
+            };
+            fetchPrefs();
+        } else {
+            setSelectedCustomerAIPreferences(null);
+        }
+    }, [selectedCustomer]);
 
     // ── Process sale ──
     const processSale = async () => {
@@ -756,30 +785,50 @@ function AdminPOSTab({
     };
 
     return (
-        <div className="h-full flex flex-col gap-4 overflow-hidden relative">
+        <div className={`h-full flex flex-col gap-4 overflow-hidden relative transition-colors duration-500 ${isLightTheme ? 'bg-emerald-50/50' : ''}`}>
             {/* ── TOP: Professional Header ── */}
-            <header className="relative z-50 flex items-center gap-6 px-6 py-4 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-3xl shrink-0 shadow-2xl">
+            <header className={`relative z-50 flex items-center gap-6 px-6 py-4 backdrop-blur-xl border rounded-3xl shrink-0 shadow-2xl transition-all ${isLightTheme
+                ? 'bg-white/90 border-emerald-100 shadow-emerald-200/50'
+                : 'bg-zinc-900/80 border-zinc-800 shadow-black/50'
+                }`}>
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-black shadow-[0_0_20px_rgba(57,255,20,0.3)]">
                         <ShoppingCart className="w-7 h-7" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-black text-white tracking-tight uppercase">Green Mood POS</h1>
-                        <p className="text-[10px] text-green-400 font-bold uppercase tracking-[0.2em]">Système de Vente Directe</p>
+                        <h1 className={`text-xl font-black tracking-tight uppercase ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Green Mood POS</h1>
+                        <p className="text-[10px] text-green-600 font-bold uppercase tracking-[0.2em]">Système de Vente Directe</p>
                     </div>
                 </div>
 
-                <div className="h-10 w-px bg-zinc-800 mx-2" />
+                <div className={`h-10 w-px mx-2 ${isLightTheme ? 'bg-emerald-100' : 'bg-zinc-800'}`} />
 
                 <div className="flex items-center gap-8">
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-0.5">Ventes du jour</span>
-                        <span className="text-2xl font-black text-white leading-none">{todayTotal.toFixed(2)} €</span>
+                        <span className={`text-[10px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Ventes du jour</span>
+                        <span className={`text-2xl font-black leading-none ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{todayTotal.toFixed(2)} €</span>
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-0.5">Session</span>
-                        <span className="text-2xl font-black text-white leading-none">{cart.length} <span className="text-xs text-zinc-600">art.</span></span>
+                        <span className={`text-[10px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Session</span>
+                        <span className={`text-2xl font-black leading-none ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{cart.length} <span className={isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}>art.</span></span>
                     </div>
+
+                    {selectedCustomer && selectedCustomerAIPreferences && (
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            onClick={() => setShowAIPreferences(true)}
+                            className={`flex flex-col items-center px-4 py-2 rounded-2xl border transition-all ${isLightTheme
+                                ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100'
+                                : 'bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20'}`}
+                        >
+                            <span className={`text-[8px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>AI Profile</span>
+                            <div className="flex items-center gap-1.5">
+                                <Brain className="w-4 h-4" />
+                                <span className={`text-xs font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Optimisé</span>
+                            </div>
+                        </motion.button>
+                    )}
                 </div>
 
                 <div className="flex-1" />
@@ -788,7 +837,9 @@ function AdminPOSTab({
                     {onExit && (
                         <button
                             onClick={onExit}
-                            className="flex items-center gap-2 px-5 py-3 bg-zinc-800 text-zinc-400 border border-zinc-700 hover:text-white hover:border-zinc-500 rounded-2xl font-bold text-sm transition-all group"
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all group border ${isLightTheme
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/50'
+                                : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white hover:border-zinc-500'}`}
                         >
                             <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                             Quitter
@@ -796,14 +847,28 @@ function AdminPOSTab({
                     )}
                     <button
                         onClick={toggleFullScreen}
-                        className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-2xl text-zinc-400 hover:text-white hover:border-zinc-500 transition-all group"
+                        className={`p-3 rounded-2xl transition-all group border ${isLightTheme
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-400 hover:text-emerald-600'
+                            : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'}`}
                         title="Plein écran"
                     >
                         <Maximize className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </button>
                     <button
+                        onClick={() => setIsLightTheme(!isLightTheme)}
+                        className={`p-3 border rounded-2xl transition-all group ${isLightTheme
+                            ? 'bg-amber-500 border-amber-400 text-white shadow-lg shadow-amber-200'
+                            : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'
+                            }`}
+                        title={isLightTheme ? "Thème Sombre" : "Thème Clair"}
+                    >
+                        {isLightTheme ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                    </button>
+                    <button
                         onClick={loadProducts}
-                        className="p-3 bg-zinc-800/50 border border-zinc-700 rounded-2xl text-zinc-400 hover:text-green-500 hover:border-green-500/50 transition-all group"
+                        className={`p-3 rounded-2xl transition-all group border ${isLightTheme
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-400 hover:text-green-600 hover:border-green-500'
+                            : 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:text-green-500 hover:border-green-500/50'}`}
                         title="Actualiser"
                     >
                         <RotateCcw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -812,9 +877,9 @@ function AdminPOSTab({
                     <div className="relative">
                         <button
                             onClick={() => setShowAdminMenu(!showAdminMenu)}
-                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all ${showAdminMenu
-                                ? 'bg-zinc-700 text-white'
-                                : 'bg-zinc-800/50 text-zinc-500 border border-zinc-700 hover:text-zinc-300'
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm transition-all border ${showAdminMenu
+                                ? (isLightTheme ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-white')
+                                : (isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-800/50 text-zinc-500 border-zinc-700 hover:text-zinc-300')
                                 }`}
                         >
                             <Settings className="w-4 h-4" />
@@ -828,7 +893,7 @@ function AdminPOSTab({
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute right-0 mt-3 w-56 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-[110]"
+                                    className={`absolute right-0 mt-3 w-56 border rounded-2xl shadow-2xl overflow-hidden z-[110] transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-800'}`}
                                 >
                                     <div className="p-2 space-y-1">
                                         <button
@@ -836,7 +901,7 @@ function AdminPOSTab({
                                                 setShowHistory(!showHistory);
                                                 setShowAdminMenu(false);
                                             }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
+                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isLightTheme ? 'text-emerald-900 hover:bg-emerald-50' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
                                         >
                                             <HistoryIcon className="w-4 h-4" />
                                             {showHistory ? 'Retour Catalogue' : 'Historique Ventes'}
@@ -846,12 +911,12 @@ function AdminPOSTab({
                                                 handleGenerateReport('view');
                                                 setShowAdminMenu(false);
                                             }}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all"
+                                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isLightTheme ? 'text-emerald-900 hover:bg-emerald-50' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
                                         >
                                             <FileText className="w-4 h-4" />
                                             Lecture X (Provisoire)
                                         </button>
-                                        <div className="h-px bg-zinc-800 my-1" />
+                                        <div className={`h-px my-1 transition-colors ${isLightTheme ? 'bg-emerald-100' : 'bg-zinc-800'}`} />
                                         <button
                                             onClick={() => {
                                                 handleGenerateReport('close');
@@ -872,24 +937,26 @@ function AdminPOSTab({
 
             {/* ── OVERLAY: Session Closed ── */}
             {isSessionClosed && !isUnlockedManually && !showHistory && (
-                <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xl rounded-[3rem] border border-zinc-800 shadow-2xl m-1">
+                <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center backdrop-blur-xl rounded-[3rem] border shadow-2xl m-1 transition-all ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-zinc-950/80 border-zinc-800'}`}>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="flex flex-col items-center text-center p-12 bg-zinc-900/50 border border-zinc-800 rounded-[3rem] shadow-2xl max-w-lg"
+                        className={`flex flex-col items-center text-center p-12 border rounded-[3rem] shadow-2xl max-w-lg transition-all ${isLightTheme ? 'bg-white border-emerald-100 shadow-emerald-200/50' : 'bg-zinc-900/50 border-zinc-800 shadow-black/50'}`}
                     >
-                        <div className="w-28 h-28 rounded-full bg-red-600/10 flex items-center justify-center mb-8 border border-red-600/20 shadow-[0_0_60px_rgba(220,38,38,0.15)]">
+                        <div className={`w-28 h-28 rounded-full flex items-center justify-center mb-8 border transition-all ${isLightTheme ? 'bg-red-50 border-red-100' : 'bg-red-600/10 border-red-600/20'}`}>
                             <Lock className="w-12 h-12 text-red-500 animate-pulse" />
                         </div>
-                        <h2 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase">Caisse Clôturée</h2>
-                        <p className="text-zinc-400 text-lg font-medium leading-[1.6] mb-10">
+                        <h2 className={`text-4xl font-black mb-4 tracking-tighter uppercase transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Caisse Clôturée</h2>
+                        <p className={`text-lg font-medium leading-[1.6] mb-10 transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-400'}`}>
                             La journée de vente est terminée. <br />
                             Le rapport Z a été validé et sécurisé.
                         </p>
                         <div className="flex flex-wrap justify-center gap-4">
                             <button
                                 onClick={() => setShowHistory(true)}
-                                className="flex items-center gap-2 px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-bold transition-all border border-zinc-700 hover:border-zinc-500"
+                                className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all border ${isLightTheme
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                                    : 'bg-zinc-800 text-white border-zinc-700 hover:bg-zinc-700 hover:border-zinc-500'}`}
                             >
                                 <HistoryIcon className="w-5 h-5" />
                                 Consulter l'Historique
@@ -900,7 +967,9 @@ function AdminPOSTab({
                                     setUnlockError(false);
                                     setShowUnlockModal(true);
                                 }}
-                                className="flex items-center gap-2 px-8 py-4 bg-red-600/10 text-red-500 rounded-2xl font-bold transition-all border border-red-500/20 hover:bg-red-600 hover:text-white"
+                                className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all border ${isLightTheme
+                                    ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-500 hover:text-white'
+                                    : 'bg-red-600/10 text-red-500 border-red-500/20 hover:bg-red-600 hover:text-white'}`}
                             >
                                 <Lock className="w-5 h-5" />
                                 Forcer Ouverture
@@ -915,14 +984,16 @@ function AdminPOSTab({
                             {onExit && (
                                 <button
                                     onClick={onExit}
-                                    className="flex items-center gap-2 px-8 py-4 bg-zinc-800 text-zinc-400 hover:text-white rounded-2xl font-bold transition-all border border-zinc-700 hover:border-zinc-500 w-full sm:w-auto justify-center"
+                                    className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all border w-full sm:w-auto justify-center ${isLightTheme
+                                        ? 'bg-emerald-50 text-emerald-400 border-emerald-100 hover:text-emerald-600'
+                                        : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white hover:border-zinc-500'}`}
                                 >
                                     <LogOut className="w-5 h-5" />
                                     Quitter la Caisse
                                 </button>
                             )}
                         </div>
-                        <p className="mt-12 text-zinc-600 text-[10px] font-black uppercase tracking-[0.3em]">
+                        <p className={`mt-12 text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
                             Prêt pour la réouverture demain matin
                         </p>
                     </motion.div>
@@ -934,17 +1005,20 @@ function AdminPOSTab({
                 {/* ── LEFT: Category Sidebar REMOVED (Now using central Category Grid) ── */}
 
                 {/* ── CENTER: Main Content ── */}
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-900/30 border border-zinc-800 rounded-[2.5rem] p-6">
+                <div className={`flex-1 flex flex-col min-w-0 overflow-hidden border rounded-[2.5rem] p-6 transition-all ${isLightTheme
+                    ? 'bg-white border-emerald-100 shadow-xl shadow-emerald-100/20'
+                    : 'bg-zinc-900/30 border-zinc-800'
+                    }`}>
                     {showHistory ? (
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-2xl font-black text-white uppercase tracking-tight">Historique</h3>
-                                    <p className="text-sm text-zinc-500 font-medium">Les 30 derniers jours d'activité boutique</p>
+                                    <h3 className={`text-2xl font-black uppercase tracking-tight transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Historique</h3>
+                                    <p className={`text-sm font-medium transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Les 30 derniers jours d'activité boutique</p>
                                 </div>
                                 <button
                                     onClick={() => setShowHistory(false)}
-                                    className="px-4 py-2 bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs font-bold transition-all"
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
                                 >
                                     Fermer
                                 </button>
@@ -969,31 +1043,33 @@ function AdminPOSTab({
                                         <button
                                             key={day.date}
                                             onClick={() => handleViewPastReport(day.date)}
-                                            className="bg-zinc-800/20 hover:bg-zinc-800/50 border border-zinc-800/50 hover:border-green-500/30 rounded-[2rem] p-6 flex items-center justify-between group transition-all"
+                                            className={`rounded-[2rem] p-6 flex items-center justify-between group transition-all border ${isLightTheme
+                                                ? 'bg-white border-emerald-100 hover:border-emerald-300 shadow-sm shadow-emerald-100/20'
+                                                : 'bg-zinc-800/20 hover:bg-zinc-800/50 border-zinc-800/50 hover:border-green-500/30'}`}
                                         >
                                             <div className="flex items-center gap-6">
-                                                <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col items-center justify-center shadow-inner">
-                                                    <Calendar className="w-4 h-4 text-zinc-600 mb-1" />
-                                                    <span className="text-xl font-black text-white leading-none">
+                                                <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center shadow-inner border transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
+                                                    <Calendar className={`w-4 h-4 mb-1 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                                    <span className={`text-xl font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                                                         {new Date(day.date).toLocaleDateString('fr-FR', { day: '2-digit' })}
                                                     </span>
                                                 </div>
                                                 <div className="text-left">
-                                                    <p className="text-lg font-black text-white group-hover:text-green-400 transition-colors">
+                                                    <p className={`text-lg font-black transition-colors ${isLightTheme ? 'text-emerald-900 group-hover:text-emerald-600' : 'text-white group-hover:text-green-400'}`}>
                                                         {new Date(day.date).toLocaleDateString('fr-FR', { weekday: 'long', month: 'long' })}
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <Package className="w-3 h-3 text-zinc-500" />
-                                                        <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">{day.count} ventes</p>
+                                                        <Package className={`w-3 h-3 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                                                        <p className={`text-xs font-bold uppercase tracking-wider transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>{day.count} ventes</p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-8">
                                                 <div className="text-right">
-                                                    <p className="text-2xl font-black text-green-400 leading-none">{day.total.toFixed(2)} €</p>
-                                                    <p className="text-[10px] text-zinc-600 uppercase font-black tracking-widest mt-1">Total Journalier</p>
+                                                    <p className={`text-2xl font-black leading-none transition-colors ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`}>{day.total.toFixed(2)} €</p>
+                                                    <p className={`text-[10px] uppercase font-black tracking-widest mt-1 transition-colors ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-600'}`}>Total Journalier</p>
                                                 </div>
-                                                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-green-500 group-hover:text-black transition-all">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white' : 'bg-zinc-800 text-zinc-400 group-hover:bg-green-500 group-hover:text-black'}`}>
                                                     <ChevronRight className="w-5 h-5" />
                                                 </div>
                                             </div>
@@ -1009,6 +1085,7 @@ function AdminPOSTab({
                                 setPosStep('category');
                             }}
                             onSkip={() => setPosStep('category')}
+                            isLightTheme={isLightTheme}
                         />
                     ) : posStep === 'category' ? (
                         <POSCategoryGrid
@@ -1018,6 +1095,7 @@ function AdminPOSTab({
                                 setPosStep('products');
                             }}
                             onBack={() => setPosStep('client')}
+                            isLightTheme={isLightTheme}
                         />
                     ) : (
                         <POSProductGrid
@@ -1037,21 +1115,28 @@ function AdminPOSTab({
                                     : selectedCategory === 'favorites' ? 'Favoris'
                                         : categories.find(c => c.id === selectedCategory)?.name || 'Produits'
                             }
+                            isLightTheme={isLightTheme}
                         />
                     )}
                 </div>
 
                 {/* ── RIGHT: Cart Panel ── */}
                 {!showHistory && (
-                    <div className="w-80 shrink-0 flex flex-col bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                    <div className={`w-80 shrink-0 flex flex-col border rounded-2xl overflow-hidden shadow-2xl transition-all ${isLightTheme
+                        ? 'bg-white border-emerald-100 shadow-emerald-100/30'
+                        : 'bg-zinc-900 border border-zinc-800 shadow-black/50'
+                        }`}>
                         {/* Customer Section */}
-                        <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-800/30">
+                        <div className={`px-3 py-3 border-b transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-100' : 'bg-zinc-800/30 border-zinc-800'}`}>
                             {!selectedCustomer ? (
                                 <div className="text-center py-2">
-                                    <p className="text-xs text-zinc-500 font-bold mb-2">Vente sans client</p>
+                                    <p className={`text-xs font-bold mb-2 ${isLightTheme ? 'text-emerald-700/60' : 'text-zinc-500'}`}>Vente sans client</p>
                                     <button
                                         onClick={() => setPosStep('client')}
-                                        className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg transition-colors font-bold flex items-center gap-1 mx-auto"
+                                        className={`text-[10px] px-3 py-1.5 rounded-lg transition-colors font-bold flex items-center gap-1 mx-auto ${isLightTheme
+                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
+                                            : 'bg-zinc-800 hover:bg-zinc-700 text-white'
+                                            }`}
                                     >
                                         <UserPlus className="w-3 h-3" />
                                         Identifier un client
@@ -1059,21 +1144,21 @@ function AdminPOSTab({
                                 </div>
                             ) : (
                                 <div>
-                                    <div className="flex items-center justify-between bg-zinc-800 border border-zinc-700 rounded-lg p-2.5">
+                                    <div className={`flex items-center justify-between rounded-lg p-2.5 transition-all ${isLightTheme ? 'bg-white border border-emerald-100 shadow-sm' : 'bg-zinc-800 border border-zinc-700'}`}>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-white text-xs">{selectedCustomer.full_name}</p>
+                                                <p className={`font-bold text-xs transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{selectedCustomer.full_name}</p>
                                                 <button
                                                     onClick={() => setShowCustomerDetail(true)}
-                                                    className="w-4 h-4 rounded-full bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-zinc-300 transition-colors"
+                                                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-100/50 hover:bg-emerald-100 text-emerald-600' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
                                                     title="Détails client"
                                                 >
                                                     <span className="text-[10px] font-bold">i</span>
                                                 </button>
                                             </div>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <p className="text-[10px] text-zinc-500">{selectedCustomer.phone || 'Pas de numéro'}</p>
-                                                <span className="text-yellow-500 font-bold text-[9px] bg-yellow-500/10 px-1.5 rounded">
+                                                <p className={`text-[10px] transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{selectedCustomer.phone || 'Pas de numéro'}</p>
+                                                <span className={`font-bold text-[9px] px-1.5 rounded transition-colors ${isLightTheme ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-500/10 text-yellow-500'}`}>
                                                     ★ {selectedCustomer.loyalty_points} pts
                                                 </span>
                                             </div>
@@ -1093,9 +1178,9 @@ function AdminPOSTab({
 
                                     {/* Loyalty points redemption UI */}
                                     {selectedCustomer.loyalty_points >= 100 && (
-                                        <div className="pt-2 border-t border-green-500/20">
+                                        <div className={`pt-2 border-t mt-2 transition-all ${isLightTheme ? 'border-emerald-100' : 'border-green-500/20'}`}>
                                             <label className="flex items-center justify-between cursor-pointer mb-2">
-                                                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider">Utiliser les points</span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isLightTheme ? 'text-emerald-900' : 'text-zinc-300'}`}>Utiliser les points</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={useLoyaltyPoints}
@@ -1122,17 +1207,17 @@ function AdminPOSTab({
                                                             step="100"
                                                             value={pointsToRedeem}
                                                             onChange={(e) => setPointsToRedeem(parseInt(e.target.value))}
-                                                            className="flex-1 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+                                                            className={`flex-1 h-1.5 rounded-lg appearance-none cursor-pointer accent-green-600 transition-all ${isLightTheme ? 'bg-emerald-100' : 'bg-zinc-700'}`}
                                                         />
-                                                        <span className="text-[10px] font-bold text-white w-12 text-right">
+                                                        <span className={`text-[10px] font-bold w-12 text-right transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                                                             {pointsToRedeem} pts
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between items-center text-[10px]">
-                                                        <span className="text-zinc-500">Valeur: {(pointsToRedeem / 100).toFixed(2)} €</span>
+                                                        <span className={`transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Valeur: {(pointsToRedeem / 100).toFixed(2)} €</span>
                                                         <button
                                                             onClick={() => setPointsToRedeem(Math.max(100, Math.min(selectedCustomer.loyalty_points, Math.floor((subtotal - discount) * 100))))}
-                                                            className="text-green-400 hover:underline"
+                                                            className="text-green-600 hover:text-green-700 hover:underline font-bold"
                                                         >
                                                             Max
                                                         </button>
@@ -1146,12 +1231,12 @@ function AdminPOSTab({
                         </div>
 
                         {/* Cart header */}
-                        <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                        <div className={`px-4 py-3 border-b flex items-center justify-between transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-transparent border-zinc-800'}`}>
                             <div className="flex items-center gap-2">
-                                <ShoppingCart className="w-4 h-4 text-green-400" />
-                                <span className="text-sm font-bold text-white">Vente en cours</span>
+                                <ShoppingCart className={`w-4 h-4 ${isLightTheme ? 'text-emerald-600' : 'text-green-400'}`} />
+                                <span className={`text-sm font-bold transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Vente en cours</span>
                                 {cart.length > 0 && (
-                                    <span className="text-[10px] bg-green-500 text-black font-bold rounded-full px-1.5 py-0.5">
+                                    <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 transition-colors ${isLightTheme ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-green-500 text-black'}`}>
                                         {cart.reduce((s, l) => s + l.quantity, 0)}
                                     </span>
                                 )}
@@ -1159,7 +1244,7 @@ function AdminPOSTab({
                             {cart.length > 0 && (
                                 <button
                                     onClick={clearCart}
-                                    className="text-zinc-600 hover:text-red-400 transition-colors"
+                                    className={`transition-colors ${isLightTheme ? 'text-emerald-200 hover:text-red-500' : 'text-zinc-600 hover:text-red-400'}`}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -1167,13 +1252,13 @@ function AdminPOSTab({
                         </div>
 
                         {/* Cart items */}
-                        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2">
+                        <div className={`flex-1 overflow-y-auto px-3 py-2 space-y-2 transition-all ${isLightTheme ? 'bg-emerald-50/20' : ''}`}>
                             <AnimatePresence>
                                 {cart.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-32 text-zinc-600">
+                                    <div className={`flex flex-col items-center justify-center h-32 transition-colors ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
                                         <ShoppingCart className="w-8 h-8 mb-2 opacity-30" />
                                         <p className="text-xs">Panier vide</p>
-                                        <p className="text-[10px] text-zinc-700 mt-1">Cliquez sur un produit pour ajouter</p>
+                                        <p className={`text-[10px] mt-1 ${isLightTheme ? 'text-emerald-100' : 'text-zinc-700'}`}>Cliquez sur un produit pour ajouter</p>
                                     </div>
                                 ) : (
                                     cart.map((line) => (
@@ -1182,11 +1267,11 @@ function AdminPOSTab({
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
-                                            className="bg-zinc-800 rounded-xl p-2.5"
+                                            className={`rounded-xl p-2.5 transition-all ${isLightTheme ? 'bg-white border border-emerald-100 shadow-sm' : 'bg-zinc-800'}`}
                                         >
                                             <div className="flex items-start justify-between gap-2 mb-2">
                                                 <div>
-                                                    <p className="text-xs font-bold text-white leading-tight">
+                                                    <p className={`text-xs font-bold leading-tight transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                                                         {line.product.name}
                                                     </p>
                                                     <div className="flex flex-wrap gap-1 mt-1.5">
@@ -1198,8 +1283,8 @@ function AdminPOSTab({
                                                                     setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: val } : l));
                                                                 }}
                                                                 className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border transition-all ${line.quantity === weight
-                                                                    ? 'bg-green-500 border-green-400 text-black'
-                                                                    : 'bg-zinc-700/50 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500'
+                                                                    ? (isLightTheme ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-green-500 border-green-400 text-black')
+                                                                    : (isLightTheme ? 'bg-emerald-50 border-emerald-100 text-emerald-400 hover:border-emerald-300' : 'bg-zinc-700/50 border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500')
                                                                     }`}
                                                             >
                                                                 {weight}g
@@ -1209,7 +1294,7 @@ function AdminPOSTab({
                                                 </div>
                                                 <button
                                                     onClick={() => removeLine(line.product.id)}
-                                                    className="text-zinc-600 hover:text-red-400 transition-colors shrink-0 mt-0.5"
+                                                    className={`transition-colors shrink-0 mt-0.5 ${isLightTheme ? 'text-emerald-200 hover:text-red-500' : 'text-zinc-600 hover:text-red-400'}`}
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -1220,9 +1305,9 @@ function AdminPOSTab({
                                                 <div className="flex items-center gap-1">
                                                     <button
                                                         onClick={() => updateQty(line.product.id, -1)}
-                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center transition-colors shadow-sm"
+                                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
                                                     >
-                                                        <Minus className="w-3 h-3 text-zinc-300" />
+                                                        <Minus className="w-3 h-3" />
                                                     </button>
                                                     <div className="relative">
                                                         <input
@@ -1232,33 +1317,39 @@ function AdminPOSTab({
                                                                 const val = parseFloat(e.target.value) || 0;
                                                                 setCart(prev => prev.map(l => l.product.id === line.product.id ? { ...l, quantity: Math.min(val, l.product.stock_quantity) } : l));
                                                             }}
-                                                            className="w-10 bg-zinc-700 border border-zinc-600 rounded-lg text-xs font-black text-white text-center py-1 focus:outline-none focus:border-green-500 shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            className={`w-10 rounded-lg text-xs font-black text-center py-1 focus:outline-none transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isLightTheme
+                                                                ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 focus:border-green-500'
+                                                                : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'
+                                                                }`}
                                                         />
                                                     </div>
                                                     <button
                                                         onClick={() => updateQty(line.product.id, 1)}
                                                         disabled={line.quantity >= line.product.stock_quantity}
-                                                        className="w-6 h-6 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 flex items-center justify-center transition-colors shadow-sm"
+                                                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all shadow-sm ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 disabled:opacity-30' : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300 disabled:opacity-40'}`}
                                                     >
-                                                        <Plus className="w-3 h-3 text-zinc-300" />
+                                                        <Plus className="w-3 h-3" />
                                                     </button>
-                                                    <span className="text-[10px] text-zinc-500 font-bold ml-1">g</span>
+                                                    <span className={`text-[10px] font-bold ml-1 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>g</span>
                                                 </div>
 
                                                 {/* Price override */}
                                                 <div className="flex-1 relative">
-                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                                                    <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-xs transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>€</span>
                                                     <input
                                                         type="number"
                                                         step="0.01"
                                                         min="0"
                                                         value={line.unitPrice}
                                                         onChange={(e) => updatePrice(line.product.id, e.target.value)}
-                                                        className="w-full bg-zinc-700 border border-zinc-600 rounded-lg pl-5 pr-2 py-1 text-xs text-white focus:outline-none focus:border-green-500 transition-colors"
+                                                        className={`w-full rounded-lg pl-5 pr-2 py-1 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-green-500/20 ${isLightTheme
+                                                            ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 focus:border-green-500'
+                                                            : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'
+                                                            }`}
                                                     />
                                                 </div>
 
-                                                <span className="text-xs font-bold text-green-400 shrink-0">
+                                                <span className={`text-xs font-bold shrink-0 transition-colors ${isLightTheme ? 'text-green-600' : 'text-green-400'}`}>
                                                     {(line.quantity * line.unitPrice).toFixed(2)} €
                                                 </span>
                                             </div>
@@ -1269,17 +1360,17 @@ function AdminPOSTab({
                         </div>
 
                         {/* Discount + Totals */}
-                        <div className="border-t border-zinc-800 px-3 py-3 space-y-2">
+                        <div className={`border-t px-3 py-3 space-y-2 transition-all ${isLightTheme ? 'bg-emerald-50/20 border-emerald-100' : 'border-zinc-800'}`}>
                             {/* Discount row */}
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setDiscountType((t) => (t === 'percent' ? 'fixed' : 'percent'))}
-                                    className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center hover:border-green-500 transition-colors"
+                                    className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-colors ${isLightTheme ? 'bg-white border-emerald-100 text-emerald-400 hover:border-green-500' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-green-500'}`}
                                 >
                                     {discountType === 'percent' ? (
-                                        <Percent className="w-3.5 h-3.5 text-zinc-400" />
+                                        <Percent className="w-3.5 h-3.5" />
                                     ) : (
-                                        <Hash className="w-3.5 h-3.5 text-zinc-400" />
+                                        <Hash className="w-3.5 h-3.5" />
                                     )}
                                 </button>
                                 <input
@@ -1289,7 +1380,9 @@ function AdminPOSTab({
                                     placeholder={discountType === 'percent' ? 'Remise en %' : 'Remise en €'}
                                     value={discountValue}
                                     onChange={(e) => setDiscountValue(e.target.value)}
-                                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors"
+                                    className={`flex-1 border rounded-lg px-3 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-green-500/20 ${isLightTheme
+                                        ? 'bg-white border-emerald-100 text-emerald-950 placeholder-emerald-200 focus:border-green-500'
+                                        : 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 focus:border-green-500'}`}
                                 />
                             </div>
 
@@ -1298,7 +1391,7 @@ function AdminPOSTab({
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5">
                                         <div className="relative flex-1">
-                                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500" />
+                                            <Tag className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 transition-colors ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`} />
                                             <input
                                                 value={promoInput}
                                                 onChange={(e) => {
@@ -1307,31 +1400,35 @@ function AdminPOSTab({
                                                 }}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
                                                 placeholder="Code promo…"
-                                                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg pl-7 pr-2 py-1.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-green-500 transition-colors uppercase"
+                                                className={`w-full border rounded-lg pl-7 pr-2 py-1.5 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-green-500/20 uppercase ${isLightTheme
+                                                    ? 'bg-white border-emerald-100 text-emerald-950 placeholder-emerald-200 focus:border-green-500'
+                                                    : 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 focus:border-green-500'}`}
                                             />
                                         </div>
                                         <button
                                             onClick={handleApplyPromo}
                                             disabled={!promoInput.trim() || isCheckingPromo}
-                                            className="px-2.5 py-1.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-colors shrink-0"
+                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${isLightTheme
+                                                ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 shadow-md shadow-emerald-200'
+                                                : 'bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 text-white'}`}
                                         >
                                             {isCheckingPromo ? '…' : 'OK'}
                                         </button>
                                     </div>
                                     {promoError && (
-                                        <p className="text-[10px] text-red-400 font-medium">{promoError}</p>
+                                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider pl-1">{promoError}</p>
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center justify-between bg-green-900/20 border border-green-500/30 rounded-lg px-2.5 py-1.5">
+                                <div className={`flex items-center justify-between border rounded-lg px-2.5 py-1.5 transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-500/30' : 'bg-green-900/20 border-green-500/30'}`}>
                                     <div className="flex items-center gap-1.5">
-                                        <Tag className="w-3 h-3 text-green-400 shrink-0" />
-                                        <span className="text-xs font-bold text-green-400">{appliedPromo.code}</span>
-                                        <span className="text-[10px] text-zinc-400">−{appliedPromo.discount_amount.toFixed(2)} €</span>
+                                        <Tag className={`w-3 h-3 shrink-0 ${isLightTheme ? 'text-emerald-700' : 'text-green-400'}`} />
+                                        <span className={`text-xs font-bold transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-green-400'}`}>{appliedPromo.code}</span>
+                                        <span className={`text-[10px] transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-400'}`}>−{appliedPromo.discount_amount.toFixed(2)} €</span>
                                     </div>
                                     <button
                                         onClick={() => { setAppliedPromo(null); setPromoInput(''); }}
-                                        className="text-zinc-500 hover:text-red-400 transition-colors"
+                                        className={`transition-colors ${isLightTheme ? 'text-emerald-200 hover:text-red-500' : 'text-zinc-500 hover:text-red-400'}`}
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -1339,38 +1436,38 @@ function AdminPOSTab({
                             )}
 
                             {/* Totals */}
-                            <div className="space-y-1 text-xs text-zinc-400">
+                            <div className={`space-y-1 text-xs transition-colors ${isLightTheme ? 'text-emerald-900/60' : 'text-zinc-400'}`}>
                                 <div className="flex justify-between">
                                     <span>Sous-total</span>
-                                    <span>{subtotal.toFixed(2)} €</span>
+                                    <span className={isLightTheme ? 'text-emerald-950 font-medium' : 'text-white'}>{subtotal.toFixed(2)} €</span>
                                 </div>
                                 {discount > 0 && (
-                                    <div className="flex justify-between text-orange-400">
+                                    <div className="flex justify-between text-orange-500 font-bold">
                                         <span>Remise ({discountType === 'percent' ? `${discountValue}%` : `${discountValue}€`})</span>
                                         <span>−{discount.toFixed(2)} €</span>
                                     </div>
                                 )}
                                 {promoDiscount > 0 && (
-                                    <div className="flex justify-between text-green-400">
+                                    <div className={`flex justify-between font-bold ${isLightTheme ? 'text-green-600' : 'text-green-400'}`}>
                                         <span>Promo ({appliedPromo?.code})</span>
                                         <span>−{promoDiscount.toFixed(2)} €</span>
                                     </div>
                                 )}
                                 {loyaltyDiscount > 0 && (
-                                    <div className="flex justify-between text-yellow-500 font-medium">
+                                    <div className={`flex justify-between font-bold ${isLightTheme ? 'text-amber-600' : 'text-yellow-500'}`}>
                                         <span>Points Fidélité ({pointsToRedeem} pts)</span>
                                         <span>−{loyaltyDiscount.toFixed(2)} €</span>
                                     </div>
                                 )}
                                 {selectedCustomer && cart.length > 0 && (
-                                    <div className="flex justify-between text-blue-400 italic font-medium">
+                                    <div className={`flex justify-between italic font-black text-[10px] uppercase tracking-wider ${isLightTheme ? 'text-emerald-400' : 'text-blue-400'}`}>
                                         <span>Points à gagner</span>
                                         <span>+{Math.floor(total)} pts</span>
                                     </div>
                                 )}
-                                <div className="flex justify-between text-base font-bold text-white pt-1 border-t border-zinc-700">
+                                <div className={`flex justify-between text-base font-black pt-1 border-t transition-all ${isLightTheme ? 'text-emerald-950 border-emerald-100' : 'text-white border-zinc-700'}`}>
                                     <span>TOTAL</span>
-                                    <span className="text-green-400">{total.toFixed(2)} €</span>
+                                    <span className={isLightTheme ? 'text-green-700' : 'text-green-400'}>{total.toFixed(2)} €</span>
                                 </div>
                             </div>
 
@@ -1378,9 +1475,12 @@ function AdminPOSTab({
                             <button
                                 onClick={() => setShowPaymentModal(true)}
                                 disabled={cart.length === 0}
-                                className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black font-bold py-3 rounded-xl transition-all text-sm"
+                                className={`w-full flex items-center justify-center gap-2 font-black py-4 rounded-xl transition-all text-sm uppercase tracking-widest ${isLightTheme
+                                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 disabled:bg-emerald-50 disabled:text-emerald-200 disabled:shadow-none'
+                                    : 'bg-green-500 hover:bg-green-400 text-black disabled:bg-zinc-700 disabled:text-zinc-500'
+                                    }`}
                             >
-                                <CreditCard className="w-4 h-4" />
+                                <CreditCard className="w-5 h-5" />
                                 Encaisser {cart.length > 0 ? `${total.toFixed(2)} €` : ''}
                             </button>
                         </div>
@@ -1396,22 +1496,22 @@ function AdminPOSTab({
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            className={`border rounded-2xl p-6 w-full max-w-md shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-700'}`}
                         >
                             <div className="flex items-center justify-between mb-5">
-                                <h2 className="text-lg font-bold text-white">Encaissement</h2>
+                                <h2 className={`text-lg font-bold transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Encaissement</h2>
                                 <button
                                     onClick={() => setShowPaymentModal(false)}
-                                    className="text-zinc-500 hover:text-white transition-colors"
+                                    className={`transition-colors ${isLightTheme ? 'text-emerald-300 hover:text-emerald-600' : 'text-zinc-500 hover:text-white'}`}
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
 
                             {/* Total to pay */}
-                            <div className="bg-zinc-800 rounded-2xl p-5 mb-5 text-center">
-                                <p className="text-xs text-zinc-500 uppercase tracking-widest mb-1">Montant à encaisser</p>
-                                <p className="text-4xl font-bold text-green-400">{total.toFixed(2)} €</p>
+                            <div className={`rounded-2xl p-5 mb-5 text-center transition-all ${isLightTheme ? 'bg-emerald-50 border border-emerald-100' : 'bg-zinc-800'}`}>
+                                <p className={`text-[10px] uppercase tracking-widest mb-1 font-black ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Montant à encaisser</p>
+                                <p className={`text-4xl font-black ${isLightTheme ? 'text-green-700' : 'text-green-400'}`}>{total.toFixed(2)} €</p>
                             </div>
 
                             {/* Payment method */}
@@ -1421,12 +1521,15 @@ function AdminPOSTab({
                                         key={pm.key}
                                         onClick={() => setPaymentMethod(pm.key)}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${paymentMethod === pm.key
-                                            ? pm.color
-                                            : 'border-zinc-700 bg-zinc-800 text-zinc-500 hover:border-zinc-600'
+                                            ? (isLightTheme && pm.key === 'card' ? 'bg-blue-600 border-blue-500 text-white'
+                                                : isLightTheme && pm.key === 'cash' ? 'bg-emerald-600 border-emerald-500 text-white'
+                                                    : isLightTheme && pm.key === 'mobile' ? 'bg-purple-600 border-purple-500 text-white'
+                                                        : pm.color)
+                                            : (isLightTheme ? 'border-emerald-100 bg-emerald-50 text-emerald-400 hover:border-emerald-300' : 'border-zinc-700 bg-zinc-800 text-zinc-500 hover:border-zinc-600')
                                             }`}
                                     >
                                         <pm.icon className="w-6 h-6" />
-                                        <span className="text-xs font-semibold">{pm.label}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{pm.label}</span>
                                     </button>
                                 ))}
                             </div>
@@ -1440,9 +1543,9 @@ function AdminPOSTab({
                                         exit={{ opacity: 0, height: 0 }}
                                         className="overflow-hidden mb-5"
                                     >
-                                        <div className="bg-zinc-800 rounded-xl p-4 space-y-3">
+                                        <div className={`rounded-xl p-4 space-y-3 transition-all ${isLightTheme ? 'bg-emerald-50' : 'bg-zinc-800'}`}>
                                             <div>
-                                                <label className="text-xs text-zinc-400 uppercase tracking-wider mb-1.5 block">
+                                                <label className={`text-[10px] uppercase font-black tracking-widest mb-1.5 block ${isLightTheme ? 'text-emerald-700/60' : 'text-zinc-400'}`}>
                                                     Montant reçu (€)
                                                 </label>
                                                 <input
@@ -1452,7 +1555,9 @@ function AdminPOSTab({
                                                     placeholder={`Min. ${total.toFixed(2)}`}
                                                     value={cashGiven}
                                                     onChange={(e) => setCashGiven(e.target.value)}
-                                                    className="w-full bg-zinc-700 border border-zinc-600 rounded-xl px-4 py-3 text-lg font-bold text-white focus:outline-none focus:border-green-500 transition-colors"
+                                                    className={`w-full rounded-xl px-4 py-3 text-xl font-black transition-all focus:outline-none ${isLightTheme
+                                                        ? 'bg-white border border-emerald-100 text-emerald-950 focus:border-green-500'
+                                                        : 'bg-zinc-700 border border-zinc-600 text-white focus:border-green-500'}`}
                                                 />
                                             </div>
 
@@ -1471,7 +1576,9 @@ function AdminPOSTab({
                                                         <button
                                                             key={v}
                                                             onClick={() => setCashGiven(v.toFixed(2))}
-                                                            className="flex-1 bg-zinc-700 hover:bg-zinc-600 rounded-lg py-2 text-xs font-bold text-zinc-300 transition-colors"
+                                                            className={`flex-1 rounded-lg py-2 text-[10px] font-black transition-all ${isLightTheme
+                                                                ? 'bg-white border border-emerald-100 text-emerald-600 hover:bg-emerald-50'
+                                                                : 'bg-zinc-700 hover:bg-zinc-600 text-zinc-300'}`}
                                                         >
                                                             {v.toFixed(0)} €
                                                         </button>
@@ -1479,9 +1586,9 @@ function AdminPOSTab({
                                             </div>
 
                                             {cashNum >= total && (
-                                                <div className="flex items-center justify-between bg-green-900/20 border border-green-800 rounded-xl px-4 py-3">
-                                                    <span className="text-sm text-green-400 font-medium">Monnaie à rendre</span>
-                                                    <span className="text-xl font-bold text-green-400">{change.toFixed(2)} €</span>
+                                                <div className={`flex items-center justify-between border rounded-xl px-4 py-3 transition-all ${isLightTheme ? 'bg-white border-green-500/20' : 'bg-green-900/20 border-green-800'}`}>
+                                                    <span className={`text-sm font-black uppercase tracking-tight ${isLightTheme ? 'text-green-700' : 'text-green-400'}`}>Monnaie à rendre</span>
+                                                    <span className={`text-xl font-black ${isLightTheme ? 'text-green-700' : 'text-green-400'}`}>{change.toFixed(2)} €</span>
                                                 </div>
                                             )}
 
@@ -1503,7 +1610,10 @@ function AdminPOSTab({
                                     isProcessing ||
                                     (paymentMethod === 'cash' && (cashNum < total || cashNum === 0))
                                 }
-                                className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black font-bold py-3.5 rounded-xl transition-all text-sm"
+                                className={`w-full flex items-center justify-center gap-2 font-black py-4 rounded-xl transition-all text-sm uppercase tracking-[0.2em] ${isLightTheme
+                                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 disabled:bg-emerald-50 disabled:text-emerald-200'
+                                    : 'bg-green-500 hover:bg-green-400 disabled:bg-zinc-700 disabled:text-zinc-500 text-black'
+                                    }`}
                             >
                                 {isProcessing ? (
                                     <>
@@ -1530,14 +1640,14 @@ function AdminPOSTab({
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl p-8 text-center"
+                            className={`rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl p-8 text-center border transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}
                         >
-                            <div className="w-20 h-20 rounded-full bg-red-600/10 flex items-center justify-center mx-auto mb-6 border border-red-600/20">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border transition-all ${isLightTheme ? 'bg-red-50 border-red-100' : 'bg-red-600/10 border-red-600/20'}`}>
                                 <Lock className="w-8 h-8 text-red-500" />
                             </div>
 
-                            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Accès Prioritaire</h2>
-                            <p className="text-zinc-500 text-sm mb-8">Entrez le code de déverrouillage pour réouvrir la session.</p>
+                            <h2 className={`text-2xl font-black mb-2 uppercase tracking-tight transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Accès Prioritaire</h2>
+                            <p className={`text-sm mb-8 transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Entrez le code de déverrouillage pour réouvrir la session.</p>
 
                             <div className="space-y-6">
                                 <div className="flex justify-center gap-3">
@@ -1548,7 +1658,7 @@ function AdminPOSTab({
                                                 ? 'border-red-500 bg-red-500/10 text-red-500'
                                                 : unlockPin.length > i
                                                     ? 'border-green-500 bg-green-500/10 text-green-400'
-                                                    : 'border-zinc-800 bg-zinc-950 text-zinc-700'
+                                                    : (isLightTheme ? 'border-emerald-100 bg-emerald-50 text-emerald-200' : 'border-zinc-800 bg-zinc-950 text-zinc-700')
                                                 }`}
                                         >
                                             {unlockPin.length > i ? '•' : ''}
@@ -1557,7 +1667,7 @@ function AdminPOSTab({
                                 </div>
 
                                 {unlockError && (
-                                    <p className="text-red-500 text-xs font-bold uppercase tracking-widest animate-bounce">Code incorrect</p>
+                                    <p className="text-red-500 text-xs font-black uppercase tracking-widest animate-bounce">Code incorrect</p>
                                 )}
 
                                 <div className="grid grid-cols-3 gap-3">
@@ -1580,10 +1690,10 @@ function AdminPOSTab({
                                                 }
                                             }}
                                             className={`h-14 rounded-xl font-black text-lg transition-all ${btn === 'OK'
-                                                ? 'bg-green-500 text-black hover:bg-green-400 col-span-1'
+                                                ? (isLightTheme ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-green-500 text-black hover:bg-green-400') + ' col-span-1 shadow-lg'
                                                 : btn === 'C'
-                                                    ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                                    : 'bg-zinc-950 text-white hover:bg-zinc-800 border border-zinc-900'
+                                                    ? (isLightTheme ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700')
+                                                    : (isLightTheme ? 'bg-emerald-50 text-emerald-950 hover:bg-emerald-100 border border-emerald-100' : 'bg-zinc-950 text-white hover:bg-zinc-800 border border-zinc-900')
                                                 }`}
                                         >
                                             {btn}
@@ -1593,7 +1703,7 @@ function AdminPOSTab({
 
                                 <button
                                     onClick={() => setShowUnlockModal(false)}
-                                    className="text-zinc-600 hover:text-white text-xs font-bold uppercase tracking-[0.2em] pt-4 transition-colors"
+                                    className={`text-xs font-black uppercase tracking-[0.2em] pt-4 transition-colors ${isLightTheme ? 'text-emerald-300 hover:text-emerald-600' : 'text-zinc-600 hover:text-white'}`}
                                 >
                                     Annuler
                                 </button>
@@ -1610,221 +1720,37 @@ function AdminPOSTab({
                     storeAddress={storeAddress}
                     storePhone={storePhone}
                     onClose={() => setCompletedSale(null)}
+                    isLightTheme={isLightTheme}
                 />
             )}
 
-            {/* ── Daily Report Modal ── */}
-            {showReportModal && reportData && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl"
-                    >
-                        <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-yellow-500">
-                                        {reportMode === 'view' ? <FileText className="w-6 h-6" /> : <FileCheck className="w-6 h-6 text-red-500" />}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-white">
-                                            {reportMode === 'view' ? 'Rapport de Lecture' : 'Clôture de Caisse'}
-                                        </h2>
-                                        <p className="text-xs text-zinc-500">Synthèse du {reportData.date.toLocaleDateString('fr-FR')}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setShowReportModal(false)}
-                                    className="p-2 hover:bg-zinc-800 rounded-full text-zinc-500 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    {(() => {
-                                        const panierMoyen = reportData.orderCount > 0 ? (reportData.totalSales / reportData.orderCount).toFixed(2) : '0.00';
-                                        const bestSeller = Object.entries(reportData.productBreakdown || {}).sort((a, b) => b[1].qty - a[1].qty)[0];
-
-                                        return (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="bg-green-500/10 rounded-2xl p-4 border border-green-500/20 col-span-2 sm:col-span-1">
-                                                    <p className="text-[10px] text-green-400 uppercase font-black tracking-widest mb-1">Caisses Totales</p>
-                                                    <p className="text-3xl font-black text-white leading-none">{reportData.totalSales.toFixed(2)} €</p>
-                                                </div>
-                                                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800 flex flex-col justify-center">
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Commandes</p>
-                                                    <p className="text-2xl font-black text-white leading-none">{reportData.orderCount}</p>
-                                                </div>
-                                                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800 flex flex-col justify-center">
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Panier Moyen</p>
-                                                    <p className="text-xl font-bold text-white leading-none">{panierMoyen} €</p>
-                                                </div>
-                                                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800 flex flex-col justify-center">
-                                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">Top Vente</p>
-                                                    <p className="text-sm font-bold text-white truncate" title={bestSeller ? bestSeller[0] : '-'}>
-                                                        {bestSeller ? bestSeller[0] : '-'}
-                                                    </p>
-                                                    {bestSeller && <p className="text-xs text-green-400 font-bold mt-0.5">{bestSeller[1].qty} vendus</p>}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-
-                                    <div className="bg-zinc-800/30 rounded-2xl border border-zinc-800 divide-y divide-zinc-800">
-                                        <div className="p-4 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <Banknote className="w-4 h-4 text-green-400" />
-                                                <span className="text-sm text-zinc-300">Espèces</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-white">{reportData.cashTotal.toFixed(2)} €</span>
-                                        </div>
-                                        <div className="p-4 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <CreditCard className="w-4 h-4 text-blue-400" />
-                                                <span className="text-sm text-zinc-300">Carte Bancaire</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-white">{reportData.cardTotal.toFixed(2)} €</span>
-                                        </div>
-                                        <div className="p-4 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <Smartphone className="w-4 h-4 text-purple-400" />
-                                                <span className="text-sm text-zinc-300">Mobile</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-white">{reportData.mobileTotal.toFixed(2)} €</span>
-                                        </div>
-                                    </div>
-
-                                </div>
-
-                                <div className="flex flex-col h-full space-y-4">
-                                    <div className="bg-zinc-800/50 rounded-2xl p-4 border border-zinc-800 flex justify-between items-center shrink-0">
-                                        <div>
-                                            <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Articles vendus</p>
-                                            <p className="text-lg font-bold text-white">{reportData.itemsSold} unités</p>
-                                        </div>
-                                        <Package className="w-8 h-8 text-zinc-700" />
-                                    </div>
-
-                                    {reportMode === 'close' && (
-                                        <div className="bg-zinc-800/50 rounded-2xl p-5 border-2 border-green-500/20 space-y-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
-                                                    <Calculator className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-white">Fond de caisse réel</h3>
-                                                    <p className="text-[10px] text-zinc-500 uppercase">Vérification des espèces</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] text-zinc-500 uppercase font-bold">Théorique (Système)</label>
-                                                    <div className="p-3 bg-zinc-900 rounded-xl border border-zinc-700 text-white font-black text-sm">
-                                                        {reportData.cashTotal.toFixed(2)} €
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[9px] text-green-400 uppercase font-bold">Réel (Compté)</label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            placeholder="0.00"
-                                                            value={cashCounted}
-                                                            onChange={(e) => setCashCounted(e.target.value)}
-                                                            className="w-full p-3 bg-zinc-950 rounded-xl border-2 border-green-500/30 focus:border-green-500 text-white font-black text-sm outline-none transition-all placeholder:text-zinc-800"
-                                                        />
-                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs">€</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {cashCounted && (
-                                                <div className={`p-3 rounded-xl flex justify-between items-center ${(parseFloat(cashCounted) - reportData.cashTotal) === 0
-                                                    ? 'bg-green-500/10 text-green-400'
-                                                    : 'bg-red-500/10 text-red-400'
-                                                    }`}>
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Écart de caisse :</span>
-                                                    <span className="text-sm font-black italic">
-                                                        {(parseFloat(cashCounted) - reportData.cashTotal).toFixed(2)} €
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Product Breakdown */}
-                                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[300px] max-h-[500px]">
-                                        <div className="bg-black/40 border border-zinc-800 rounded-2xl overflow-hidden">
-                                            <table className="w-full text-left text-xs">
-                                                <thead className="bg-zinc-800/50 text-zinc-500 uppercase font-black tracking-widest">
-                                                    <tr>
-                                                        <th className="px-4 py-2">Produit</th>
-                                                        <th className="px-4 py-2 text-center">Qté</th>
-                                                        <th className="px-4 py-2 text-right">Total</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
-                                                    {Object.entries(reportData.productBreakdown || {}).map(([name, stats]) => (
-                                                        <tr key={name}>
-                                                            <td className="px-4 py-2.5 font-medium">{name}</td>
-                                                            <td className="px-4 py-2.5 text-center font-bold text-white">{stats.qty}</td>
-                                                            <td className="px-4 py-2.5 text-right font-bold text-green-400">{stats.total.toFixed(2)} €</td>
-                                                        </tr>
-                                                    ))}
-                                                    {Object.keys(reportData.productBreakdown || {}).length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={3} className="px-4 py-6 text-center text-zinc-600 italic">Aucun article vendu</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 flex gap-3">
-                                <button
-                                    onClick={() => window.print()}
-                                    className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-2xl transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Printer className="w-5 h-5" />
-                                    Imprimer
-                                </button>
-                                {reportMode === 'view' ? (
-                                    <button
-                                        onClick={() => setShowReportModal(false)}
-                                        className="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-2xl transition-all"
-                                    >
-                                        OK
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={finalizeClose}
-                                        className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-900/20"
-                                    >
-                                        <Lock className="w-4 h-4" />
-                                        Confirmer la Clôture
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-
-            {/* Customer Detail Modal */}
             {showCustomerDetail && selectedCustomer && (
                 <POSCustomerDetailModal
                     customer={selectedCustomer}
                     onClose={() => setShowCustomerDetail(false)}
+                    isLightTheme={isLightTheme}
                 />
             )}
+
+            {showReportModal && reportData && (
+                <POSReportModal
+                    reportData={reportData}
+                    reportMode={reportMode}
+                    onClose={() => setShowReportModal(false)}
+                    onFinalizeClose={finalizeClose}
+                    isLightTheme={isLightTheme}
+                />
+            )}
+
+            {showAIPreferences && selectedCustomerAIPreferences && (
+                <POSAIPreferencesModal
+                    preferences={selectedCustomerAIPreferences}
+                    onClose={() => setShowAIPreferences(false)}
+                    isLightTheme={isLightTheme}
+                />
+            )}
+
+            {/* Modals are handled above via imported components */}
         </div>
     );
 };

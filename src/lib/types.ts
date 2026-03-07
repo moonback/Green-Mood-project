@@ -251,3 +251,19 @@ export interface CustomerAcquisitionPoint {
   date: string;
   new_customers: number;
 }
+
+// ─── AI Preferences Types ─────────────────────────────────────────────────────
+
+export interface UserAIPreferences {
+  id: string;
+  user_id: string;
+  goal: string | null;
+  experience_level: string | null;
+  preferred_format: string | null;
+  budget_range: string | null;
+  terpene_preferences: string[] | null;
+  updated_at: string | null;
+  age_range: string | null;
+  intensity_preference: string | null;
+  extra_prefs: Record<string, any> | null;
+}

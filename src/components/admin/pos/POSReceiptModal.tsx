@@ -9,6 +9,7 @@ interface POSReceiptModalProps {
     storeAddress: string;
     storePhone: string;
     onClose: () => void;
+    isLightTheme?: boolean;
 }
 
 export default function POSReceiptModal({
@@ -17,6 +18,7 @@ export default function POSReceiptModal({
     storeAddress,
     storePhone,
     onClose,
+    isLightTheme
 }: POSReceiptModalProps) {
     const printRef = useRef<HTMLDivElement>(null);
 
@@ -52,10 +54,10 @@ export default function POSReceiptModal({
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+                className={`border rounded-2xl p-6 w-full max-w-sm shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-700'}`}
             >
                 {/* Receipt printable zone */}
-                <div ref={printRef} className="bg-white text-black rounded-xl p-4 mb-4 font-mono text-xs leading-relaxed">
+                <div ref={printRef} className={`rounded-xl p-4 mb-4 font-mono text-xs leading-relaxed border transition-all ${isLightTheme ? 'bg-emerald-50/50 text-emerald-950 border-emerald-100' : 'bg-white text-black'}`}>
                     <div className="center bold text-sm">{storeName}</div>
                     <div className="center">{storeAddress}</div>
                     <div className="center">{storePhone}</div>
@@ -108,20 +110,20 @@ export default function POSReceiptModal({
                     )}
                 </div>
 
-                <div className="flex gap-3">
+                <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={handlePrint}
-                        className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-xl transition-all"
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${isLightTheme ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20' : 'bg-green-500 hover:bg-green-600 text-black'}`}
                     >
                         <Printer className="w-4 h-4" />
                         Imprimer
                     </button>
                     <button
                         onClick={onClose}
-                        className="flex-1 flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 rounded-xl transition-all"
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${isLightTheme ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-100' : 'bg-zinc-800 hover:bg-zinc-700 text-white'}`}
                     >
                         <RotateCcw className="w-4 h-4" />
-                        Nouvelle vente
+                        Fermer
                     </button>
                 </div>
             </motion.div>

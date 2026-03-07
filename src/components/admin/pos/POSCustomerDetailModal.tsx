@@ -7,9 +7,10 @@ import { Profile, Order } from '../../../lib/types';
 interface POSCustomerDetailModalProps {
     customer: Profile;
     onClose: () => void;
+    isLightTheme?: boolean;
 }
 
-export default function POSCustomerDetailModal({ customer, onClose }: POSCustomerDetailModalProps) {
+export default function POSCustomerDetailModal({ customer, onClose, isLightTheme }: POSCustomerDetailModalProps) {
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(true);
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -37,22 +38,22 @@ export default function POSCustomerDetailModal({ customer, onClose }: POSCustome
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
+                className={`w-full max-w-4xl border rounded-3xl shadow-2xl flex flex-col max-h-[90vh] transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border border-zinc-800'}`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-zinc-800 shrink-0">
+                <div className={`flex items-center justify-between p-6 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/50 border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}>
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-green-400">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-800 text-green-400'}`}>
                             <User className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white">{customer.full_name}</h2>
-                            <p className="text-sm text-zinc-500">{customer.phone || 'Aucun numéro'}</p>
+                            <h2 className={`text-xl font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{customer.full_name}</h2>
+                            <p className={`text-sm transition-colors ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{customer.phone || 'Aucun numéro'}</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-zinc-800 text-zinc-500 hover:text-white rounded-full transition-colors"
+                        className={`p-2 rounded-full transition-colors ${isLightTheme ? 'hover:bg-emerald-50 text-emerald-400' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -62,22 +63,22 @@ export default function POSCustomerDetailModal({ customer, onClose }: POSCustome
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-4">
+                        <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${isLightTheme ? 'bg-emerald-50 border-emerald-100 shadow-sm shadow-emerald-100/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
                             <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
                                 <Star className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-amber-500/70 uppercase tracking-wider">Points Fidélité</p>
-                                <p className="text-2xl font-black text-amber-500">{customer.loyalty_points}</p>
+                                <p className={`text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-700/60' : 'text-amber-500/70'}`}>Points Fidélité</p>
+                                <p className={`text-2xl font-black ${isLightTheme ? 'text-emerald-950' : 'text-amber-500'}`}>{customer.loyalty_points}</p>
                             </div>
                         </div>
-                        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-2xl p-4 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
+                        <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-800/50 border border-zinc-700/50'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-50 text-emerald-400' : 'bg-zinc-800 text-zinc-400'}`}>
                                 <Calendar className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Client depuis</p>
-                                <p className="text-lg font-bold text-white">
+                                <p className={`text-xs font-bold uppercase tracking-wider ${isLightTheme ? 'text-emerald-600/40' : 'text-zinc-500'}`}>Client depuis</p>
+                                <p className={`text-lg font-bold ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
                                     {new Date(customer.created_at).toLocaleDateString('fr-FR')}
                                 </p>
                             </div>
@@ -86,8 +87,8 @@ export default function POSCustomerDetailModal({ customer, onClose }: POSCustome
 
                     {/* Recent Orders */}
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <Package className="w-4 h-4 text-green-400" />
+                        <h3 className={`text-sm font-black uppercase tracking-wider mb-4 flex items-center gap-2 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                            <Package className={`w-4 h-4 ${isLightTheme ? 'text-emerald-500' : 'text-green-400'}`} />
                             Dernières Commandes
                         </h3>
                         {isLoadingOrders ? (

@@ -7,9 +7,10 @@ import { Profile } from '../../../lib/types';
 interface POSCustomerSelectionProps {
     onSelectCustomer: (customer: Profile) => void;
     onSkip: () => void;
+    isLightTheme?: boolean;
 }
 
-export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCustomerSelectionProps) {
+export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLightTheme }: POSCustomerSelectionProps) {
     const [customerSearch, setCustomerSearch] = useState('');
     const [customerResults, setCustomerResults] = useState<Profile[]>([]);
     const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
@@ -67,14 +68,14 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
     };
 
     return (
-        <div className="relative flex flex-col items-center justify-center h-full w-full rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl">
+        <div className={`relative flex flex-col items-center justify-center h-full w-full rounded-3xl overflow-hidden border shadow-2xl transition-all ${isLightTheme ? 'border-emerald-100' : 'border-zinc-800'}`}>
             {/* Background Image Layer */}
             <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: `url('/images/hero-bg-shop.png')` }}
             />
-            {/* Dark Overlay Layer */}
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-10" />
+            {/* Dark/Light Overlay Layer */}
+            <div className={`absolute inset-0 backdrop-blur-10 transition-colors ${isLightTheme ? 'bg-emerald-50/40' : 'bg-black/20'}`} />
 
             {/* Content Container */}
             <div className="flex flex-col gap-6 max-w-2xl mx-auto w-full relative z-10 p-8">
@@ -82,24 +83,27 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="w-24 h-24 rounded-[2rem] bg-zinc-900/80 border border-zinc-700/50 mx-auto flex items-center justify-center mb-6 shadow-2xl backdrop-blur-md"
+                        className={`w-24 h-24 rounded-[2rem] border mx-auto flex items-center justify-center mb-6 shadow-2xl backdrop-blur-md transition-all ${isLightTheme ? 'bg-white/80 border-emerald-100' : 'bg-zinc-900/80 border-zinc-700/50'}`}
                     >
-                        <User className="w-12 h-12 text-green-400" />
+                        <User className="w-12 h-12 text-green-500" />
                     </motion.div>
-                    <h2 className="text-4xl font-black text-white uppercase tracking-tight drop-shadow-lg">Compte Client</h2>
-                    <p className="text-zinc-400 font-medium mt-3 text-lg drop-shadow">Identifiez le client ou passez pour une vente rapide</p>
+                    <h2 className={`text-4xl font-black uppercase tracking-tight drop-shadow-lg transition-all ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Compte Client</h2>
+                    <p className={`font-medium mt-3 text-lg drop-shadow transition-all ${isLightTheme ? 'text-emerald-800/60' : 'text-zinc-400'}`}>Identifiez le client ou passez pour une vente rapide</p>
                 </div>
 
                 <div className="  relative overflow-hidden">
                     {!showCreateCustomer ? (
                         <div className="space-y-6">
                             <div className="relative">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white" />
+                                <Search className={`absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 transition-all ${isLightTheme ? 'text-emerald-400' : 'text-white'}`} />
                                 <input
                                     value={customerSearch}
                                     onChange={(e) => setCustomerSearch(e.target.value)}
-                                    placeholder="Rechercher par nom ou numéro..."
-                                    className="w-full bg-black/50 border border-zinc-800 rounded-[2rem] pl-16 pr-6 py-6 text-lg text-white placeholder-white focus:outline-none focus:border-green-500/50 focus:bg-black/60 transition-all shadow-inner"
+                                    placeholder="Nom, email ou téléphone…"
+                                    className={`w-full border rounded-[2rem] pl-16 pr-8 py-5 text-xl font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
+                                        ? 'bg-white/90 border-emerald-100 text-emerald-950 placeholder-emerald-300'
+                                        : 'bg-zinc-800/80 border-zinc-700 text-white placeholder-zinc-500'
+                                        }`}
                                 />
                                 {isSearchingCustomer && (
                                     <RotateCcw className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white animate-spin" />
@@ -114,11 +118,14 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => onSelectCustomer(c)}
-                                            className="flex items-center justify-between p-4 bg-zinc-800/40 hover:bg-zinc-800 border border-zinc-700/50 hover:border-green-500/30 rounded-[1.5rem] transition-all group text-left"
+                                            className={`flex items-center justify-between p-4 border rounded-[1.5rem] transition-all group text-left ${isLightTheme
+                                                ? 'bg-white/80 hover:bg-white border-emerald-100 hover:border-green-500/30'
+                                                : 'bg-zinc-800/40 hover:bg-zinc-800 border-zinc-700/50 hover:border-green-500/30'
+                                                }`}
                                         >
                                             <div>
-                                                <p className="font-black text-white text-lg group-hover:text-green-400 transition-colors">{c.full_name}</p>
-                                                <p className="text-zinc-500 text-sm">{c.phone || 'Pas de numéro'}</p>
+                                                <p className={`font-black text-lg group-hover:text-green-500 transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{c.full_name}</p>
+                                                <p className={`text-sm ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>{c.phone || 'Pas de numéro'}</p>
                                             </div>
                                             <div className="text-right flex flex-col items-end">
                                                 <p className="text-amber-500 font-black flex items-center gap-1 bg-amber-500/10 px-3 py-1 rounded-full text-xs">
@@ -131,8 +138,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                             )}
 
                             {customerSearch.trim().length >= 2 && !isSearchingCustomer && customerResults.length === 0 && (
-                                <div className="text-center py-8 bg-black/20 rounded-[1.5rem] border border-dashed border-zinc-800">
-                                    <p className="text-zinc-500 mb-4 font-bold">Aucun client trouvé</p>
+                                <div className={`text-center py-8 rounded-[1.5rem] border border-dashed transition-all ${isLightTheme ? 'bg-white/50 border-emerald-200' : 'bg-black/20 border-zinc-800'}`}>
+                                    <p className={`mb-4 font-bold ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Aucun client trouvé</p>
                                     <button
                                         onClick={() => {
                                             setShowCreateCustomer(true);
@@ -149,32 +156,38 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                     ) : (
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-black text-white flex items-center gap-2">
-                                    <UserPlus className="w-6 h-6 text-green-400" />
+                                <h3 className={`text-xl font-black flex items-center gap-2 ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                    <UserPlus className="w-6 h-6 text-green-500" />
                                     Nouveau Client
                                 </h3>
-                                <button onClick={() => setShowCreateCustomer(false)} className="p-2 hover:bg-zinc-800 rounded-full transition-colors text-zinc-500 hover:text-white">
+                                <button onClick={() => setShowCreateCustomer(false)} className={`p-2 rounded-full transition-colors ${isLightTheme ? 'hover:bg-emerald-50 text-emerald-400 hover:text-emerald-600' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}>
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Nom complet *</label>
+                                    <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Nom complet *</label>
                                     <input
                                         value={newCustomerName}
                                         onChange={(e) => setNewCustomerName(e.target.value)}
                                         placeholder="Ex: Jean Dupont"
-                                        className="w-full bg-black/40 border border-zinc-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-green-500/50 transition-all"
+                                        className={`w-full border rounded-2xl px-5 py-4 transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
+                                            ? 'bg-white border-emerald-100 text-emerald-950 placeholder-emerald-300'
+                                            : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-500'
+                                            }`}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Téléphone (Optionnel)</label>
+                                    <label className={`block text-xs font-bold uppercase tracking-widest mb-2 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>Téléphone (Optionnel)</label>
                                     <input
                                         value={newCustomerPhone}
                                         onChange={(e) => setNewCustomerPhone(e.target.value)}
                                         placeholder="Ex: 06 12 34 56 78"
-                                        className="w-full bg-black/40 border border-zinc-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-green-500/50 transition-all"
+                                        className={`w-full border rounded-2xl px-5 py-4 transition-all focus:outline-none focus:ring-4 focus:ring-green-500/20 ${isLightTheme
+                                            ? 'bg-white border-emerald-100 text-emerald-950 placeholder-emerald-300'
+                                            : 'bg-black/40 border-zinc-800 text-white placeholder-zinc-500'
+                                            }`}
                                     />
                                 </div>
                             </div>
@@ -194,7 +207,7 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                 <div className="text-center pt-4">
                     <button
                         onClick={onSkip}
-                        className="inline-flex items-center gap-2 text-zinc-500 hover:text-white font-black tracking-widest uppercase text-sm group transition-all"
+                        className={`inline-flex items-center gap-2 font-black tracking-widest uppercase text-sm group transition-all ${isLightTheme ? 'text-emerald-400/60 hover:text-emerald-900' : 'text-zinc-500 hover:text-white'}`}
                     >
                         Passer sans identifier de client
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
