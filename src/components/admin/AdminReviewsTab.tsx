@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, Trash2, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Trash2, CheckCircle, Clock, RefreshCw, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Review } from '../../lib/types';
 import StarRating from '../StarRating';
@@ -13,6 +13,7 @@ export default function AdminReviewsTab() {
   const [reviews, setReviews] = useState<ReviewWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'published'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadReviews();
@@ -42,19 +43,27 @@ export default function AdminReviewsTab() {
     setReviews((prev) => prev.filter((r) => r.id !== id));
   }
 
-  const filtered =
-    filter === 'all'
-      ? reviews
-      : filter === 'pending'
-        ? reviews.filter((r) => !r.is_published)
-        : reviews.filter((r) => r.is_published);
+  const filtered = reviews.filter((review) => {
+    const matchesFilter =
+      filter === 'all'
+        ? true
+        : filter === 'pending'
+          ? !review.is_published
+          : review.is_published;
+
+    const matchesSearch = !searchQuery ||
+      (review.profile?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (review.product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+    return matchesFilter && matchesSearch;
+  });
 
   const pendingCount = reviews.filter((r) => !r.is_published).length;
 
   return (
     <div className="space-y-4">
-      {/* Filters + stats */}
-      <div className="flex flex-wrap gap-2 items-center justify-between">
+      {/* Filters + Search */}
+      <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
         <div className="flex gap-2">
           {[
             { key: 'all', label: `Tous (${reviews.length})` },
@@ -73,13 +82,26 @@ export default function AdminReviewsTab() {
             </button>
           ))}
         </div>
-        <button
-          onClick={loadReviews}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Actualiser
-        </button>
+
+        <div className="flex items-center gap-3 flex-1 md:max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filtrer par client ou produit..."
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-green-neon/50 transition-all font-medium"
+            />
+          </div>
+          <button
+            onClick={loadReviews}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors flex-shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Actualiser</span>
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -91,34 +113,39 @@ export default function AdminReviewsTab() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">
           <CheckCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p>Aucun avis à afficher.</p>
+          <p>Aucun avis trouvé.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((review) => (
             <div
               key={review.id}
-              className={`bg-zinc-900 border rounded-xl p-4 ${review.is_published ? 'border-zinc-800' : 'border-yellow-900/50'
+              className={`bg-zinc-900 border rounded-2xl p-4 transition-all hover:border-zinc-700 ${review.is_published ? 'border-zinc-800' : 'border-yellow-900/50'
                 }`}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 <div className="flex-1 min-w-0">
                   {/* Header */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap mb-2">
                     <StarRating rating={review.rating} size="sm" />
-                    <span className="text-sm font-medium text-white">
-                      {review.profile?.full_name ?? 'Client'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400">
+                        {(review.profile?.full_name ?? 'C').charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-semibold text-white">
+                        {review.profile?.full_name ?? 'Client'}
+                      </span>
+                    </div>
                     <span className="text-zinc-600 text-xs">sur</span>
-                    <span className="text-xs text-zinc-400 truncate">
+                    <span className="text-xs text-zinc-400 truncate max-w-[150px]">
                       {review.product?.name ?? 'Produit inconnu'}
                     </span>
                     {review.is_verified && (
-                      <span className="text-xs text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full">
-                        Achat vérifié
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-green-400 bg-green-900/20 px-2 py-0.5 rounded-full">
+                        Vérifié
                       </span>
                     )}
-                    <span className={`ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${review.is_published
+                    <span className={`ml-auto flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${review.is_published
                       ? 'text-green-400 bg-green-900/20'
                       : 'text-yellow-400 bg-yellow-900/20'
                       }`}>
