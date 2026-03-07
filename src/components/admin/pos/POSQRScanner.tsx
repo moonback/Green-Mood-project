@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { QrCode, X, CheckCircle2, AlertTriangle, RotateCcw, Camera } from 'lucide-react';
+import { QrCode, X, CheckCircle2, AlertTriangle, RotateCcw, Camera, CameraOff, Keyboard } from 'lucide-react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { supabase } from '../../../lib/supabase';
 import { Profile } from '../../../lib/types';
 
@@ -11,33 +12,34 @@ interface POSQRScannerProps {
 }
 
 /**
- * Extracts the user ID from a loyalty QR code value.
- * Format: greenmood://loyalty/{userId}
+ * Extracts the user ID from a loyalty QR payload.
+ * Format: greenmood://loyalty/{uuid}
  */
-function parseQRCode(raw: string): string | null {
-    const match = raw.match(/greenmood:\/\/loyalty\/([a-f0-9-]{36})/i);
-    return match ? match[1] : null;
+function parseQRPayload(raw: string): string | null {
+    const urlMatch = raw.match(/greenmood:\/\/loyalty\/([a-f0-9-]{36})/i);
+    if (urlMatch) return urlMatch[1];
+    // Also accept bare UUID as fallback
+    const uuidMatch = raw.match(/^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i);
+    if (uuidMatch) return uuidMatch[1];
+    return null;
 }
 
+const SCANNER_ELEMENT_ID = 'pos-qr-reader';
+
 export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }: POSQRScannerProps) {
-    const [manualInput, setManualInput] = useState('');
-    const [status, setStatus] = useState<'idle' | 'searching' | 'found' | 'error'>('idle');
+    const [mode, setMode] = useState<'camera' | 'manual'>('camera');
+    const [status, setStatus] = useState<'idle' | 'scanning' | 'searching' | 'found' | 'error'>('idle');
     const [errorMsg, setErrorMsg] = useState('');
     const [foundCustomer, setFoundCustomer] = useState<Profile | null>(null);
+    const [manualInput, setManualInput] = useState('');
+    const [cameraError, setCameraError] = useState('');
+    const scannerRef = useRef<Html5Qrcode | null>(null);
+    const hasFoundRef = useRef(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-focus the input for barcode scanner
-    useEffect(() => {
-        inputRef.current?.focus();
-    }, []);
-
-    const searchByQR = async (raw: string) => {
-        const userId = parseQRCode(raw);
-        if (!userId) {
-            setStatus('error');
-            setErrorMsg('QR code invalide. Format non reconnu.');
-            return;
-        }
+    const lookupUser = async (userId: string) => {
+        if (hasFoundRef.current) return;
+        hasFoundRef.current = true;
         setStatus('searching');
         try {
             const { data, error } = await supabase
@@ -48,173 +50,320 @@ export default function POSQRScanner({ onCustomerFound, onClose, isLightTheme }:
             if (error || !data) throw new Error('Client introuvable');
             setFoundCustomer(data as Profile);
             setStatus('found');
+            // Stop the camera once found
+            stopCamera();
             setTimeout(() => {
                 onCustomerFound(data as Profile);
-            }, 1200);
-        } catch (err) {
+            }, 1400);
+        } catch {
+            hasFoundRef.current = false;
             setStatus('error');
             setErrorMsg('Client introuvable dans la base de données.');
         }
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setManualInput(val);
-        setStatus('idle');
-        setErrorMsg('');
-        // Auto-trigger when a full QR payload is pasted/scanned
-        if (val.startsWith('greenmood://loyalty/')) {
-            searchByQR(val);
+    const stopCamera = () => {
+        if (scannerRef.current) {
+            scannerRef.current.stop().catch(() => { }).finally(() => {
+                scannerRef.current?.clear();
+                scannerRef.current = null;
+            });
         }
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && manualInput.trim()) {
-            searchByQR(manualInput.trim());
+    const startCamera = async () => {
+        setCameraError('');
+        setStatus('scanning');
+        hasFoundRef.current = false;
+        try {
+            const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID, {
+                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                verbose: false,
+            });
+            scannerRef.current = scanner;
+
+            await scanner.start(
+                { facingMode: 'environment' },
+                {
+                    fps: 10,
+                    qrbox: { width: 240, height: 240 },
+                    aspectRatio: 1,
+                },
+                (decodedText) => {
+                    const userId = parseQRPayload(decodedText);
+                    if (userId && !hasFoundRef.current) {
+                        lookupUser(userId);
+                    }
+                },
+                () => { } // ignore ongoing failures
+            );
+        } catch (err: any) {
+            setCameraError(
+                err?.message?.includes('Permission')
+                    ? 'Accès caméra refusé. Autorisez l\'accès dans les paramètres du navigateur.'
+                    : 'Impossible d\'accéder à la caméra. Utilisez la saisie manuelle.'
+            );
+            setStatus('idle');
+            setMode('manual');
+        }
+    };
+
+    // Start camera on mount, stop on unmount
+    useEffect(() => {
+        if (mode === 'camera') {
+            startCamera();
+        }
+        return () => {
+            stopCamera();
+        };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Switch modes
+    const switchToCamera = () => {
+        setMode('camera');
+        setStatus('idle');
+        setErrorMsg('');
+        hasFoundRef.current = false;
+        // Small delay to let the DOM mount the element
+        setTimeout(() => startCamera(), 150);
+    };
+
+    const switchToManual = () => {
+        stopCamera();
+        setMode('manual');
+        setStatus('idle');
+        setErrorMsg('');
+        setTimeout(() => inputRef.current?.focus(), 100);
+    };
+
+    const handleManualSearch = async () => {
+        const userId = parseQRPayload(manualInput.trim());
+        if (!userId) {
+            setStatus('error');
+            setErrorMsg('Format invalide. Scannez le QR code ou collez l\'URL complète.');
+            return;
+        }
+        await lookupUser(userId);
+    };
+
+    const reset = () => {
+        hasFoundRef.current = false;
+        setStatus(mode === 'camera' ? 'scanning' : 'idle');
+        setErrorMsg('');
+        setFoundCustomer(null);
+        setManualInput('');
+        if (mode === 'camera') {
+            startCamera();
         }
     };
 
     return (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
             <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.92, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className={`w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}
+                exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                className={`w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border flex flex-col transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'}`}
             >
                 {/* Header */}
-                <div className={`flex items-center justify-between px-6 py-5 border-b transition-all ${isLightTheme ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-800/50 border-zinc-800'}`}>
+                <div className={`flex items-center justify-between px-6 py-5 border-b shrink-0 transition-all ${isLightTheme ? 'bg-emerald-50/70 border-emerald-100' : 'bg-zinc-800/50 border-zinc-800'}`}>
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-green-500/10 text-green-400'}`}>
                             <QrCode className="w-5 h-5" />
                         </div>
                         <div>
                             <p className={`font-black text-sm ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Scanner Carte Fidélité</p>
-                            <p className={`text-[10px] font-bold ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>QR Code ou saisie manuelle</p>
+                            <p className={`text-[10px] font-bold ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>
+                                {mode === 'camera' ? 'Caméra active' : 'Saisie manuelle'}
+                            </p>
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={() => { stopCamera(); onClose(); }}
                         className={`p-2 rounded-xl transition-all ${isLightTheme ? 'hover:bg-emerald-100 text-emerald-400' : 'hover:bg-zinc-800 text-zinc-500 hover:text-white'}`}
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6">
-                    {/* Visual scanner area */}
-                    <div className={`relative h-48 rounded-2xl flex items-center justify-center overflow-hidden transition-all ${isLightTheme ? 'bg-emerald-50 border border-emerald-100' : 'bg-zinc-950 border border-zinc-800'}`}>
-                        {/* Animated scanner frame */}
-                        {status === 'idle' && (
-                            <>
-                                <div className="absolute inset-4 border-2 rounded-2xl border-dashed opacity-30 border-green-500" />
-                                {/* Corner markers */}
-                                <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-green-500 rounded-tl-lg" />
-                                <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-green-500 rounded-tr-lg" />
-                                <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-green-500 rounded-bl-lg" />
-                                <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-green-500 rounded-br-lg" />
-                                {/* Scanning line */}
-                                <motion.div
-                                    className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-70"
-                                    animate={{ top: ['25%', '75%', '25%'] }}
-                                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                                />
-                                <div className="flex flex-col items-center gap-3 relative z-10">
-                                    <Camera className={`w-8 h-8 ${isLightTheme ? 'text-emerald-300' : 'text-zinc-700'}`} />
-                                    <p className={`text-xs font-bold ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`}>
-                                        Présentez la carte devant le lecteur
-                                    </p>
-                                </div>
-                            </>
-                        )}
+                {/* Mode toggle */}
+                <div className={`flex border-b shrink-0 transition-all ${isLightTheme ? 'border-emerald-100' : 'border-zinc-800'}`}>
+                    <button
+                        onClick={switchToCamera}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-[11px] font-black uppercase tracking-widest border-b-2 transition-all ${mode === 'camera'
+                            ? (isLightTheme ? 'border-emerald-600 text-emerald-700' : 'border-green-500 text-white')
+                            : (isLightTheme ? 'border-transparent text-emerald-300 hover:text-emerald-700' : 'border-transparent text-zinc-600 hover:text-zinc-300')
+                            }`}
+                    >
+                        <Camera className="w-3.5 h-3.5" />
+                        Caméra
+                    </button>
+                    <button
+                        onClick={switchToManual}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-[11px] font-black uppercase tracking-widest border-b-2 transition-all ${mode === 'manual'
+                            ? (isLightTheme ? 'border-emerald-600 text-emerald-700' : 'border-green-500 text-white')
+                            : (isLightTheme ? 'border-transparent text-emerald-300 hover:text-emerald-700' : 'border-transparent text-zinc-600 hover:text-zinc-300')
+                            }`}
+                    >
+                        <Keyboard className="w-3.5 h-3.5" />
+                        Manuel
+                    </button>
+                </div>
 
-                        {status === 'searching' && (
+                <div className="p-6 space-y-5 flex-1 overflow-y-auto">
+                    <AnimatePresence mode="wait">
+                        {/* SUCCESS state */}
+                        {status === 'found' && foundCustomer && (
                             <motion.div
+                                key="found"
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="flex flex-col items-center gap-3"
+                                className={`flex flex-col items-center gap-4 py-8 rounded-3xl ${isLightTheme ? 'bg-emerald-50' : 'bg-green-500/5'}`}
                             >
-                                <RotateCcw className="w-10 h-10 text-green-500 animate-spin" />
-                                <p className={`text-sm font-black ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Identification en cours…</p>
+                                <div className="w-16 h-16 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center">
+                                    <CheckCircle2 className="w-9 h-9 text-green-500" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-1">Client identifié</p>
+                                    <p className={`text-xl font-black ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>{foundCustomer.full_name}</p>
+                                    <p className="text-sm font-bold text-amber-500 mt-1">★ {foundCustomer.loyalty_points} points</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    {[1, 2, 3].map(i => (
+                                        <motion.div
+                                            key={i}
+                                            className="w-2 h-2 rounded-full bg-green-500"
+                                            animate={{ opacity: [0.3, 1, 0.3] }}
+                                            transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                                        />
+                                    ))}
+                                </div>
+                                <p className={`text-xs font-bold ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>Chargement en cours…</p>
                             </motion.div>
                         )}
 
-                        <AnimatePresence>
-                            {status === 'found' && foundCustomer && (
-                                <motion.div
-                                    initial={{ scale: 0.7, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="flex flex-col items-center gap-3 p-4"
+                        {/* ERROR state */}
+                        {status === 'error' && (
+                            <motion.div
+                                key="error"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className={`flex flex-col items-center gap-4 py-8 rounded-3xl ${isLightTheme ? 'bg-red-50' : 'bg-red-500/5'}`}
+                            >
+                                <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
+                                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                                </div>
+                                <p className={`text-sm font-bold text-center max-w-xs ${isLightTheme ? 'text-red-700' : 'text-red-400'}`}>{errorMsg}</p>
+                                <button
+                                    onClick={reset}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition-all ${isLightTheme ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'}`}
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                                        <CheckCircle2 className="w-7 h-7 text-green-500" />
-                                    </div>
-                                    <p className={`text-base font-black text-center ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
-                                        {foundCustomer.full_name}
-                                    </p>
-                                    <p className="text-xs font-bold text-amber-500">
-                                        ★ {foundCustomer.loyalty_points} points
-                                    </p>
-                                </motion.div>
-                            )}
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                    Réessayer
+                                </button>
+                            </motion.div>
+                        )}
 
-                            {status === 'error' && (
-                                <motion.div
-                                    initial={{ scale: 0.7, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="flex flex-col items-center gap-3 p-4"
+                        {/* CAMERA mode */}
+                        {status !== 'found' && status !== 'error' && mode === 'camera' && (
+                            <motion.div key="camera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                                {cameraError ? (
+                                    <div className={`flex flex-col items-center gap-3 py-8 rounded-3xl text-center ${isLightTheme ? 'bg-orange-50 border border-orange-100' : 'bg-zinc-800/50'}`}>
+                                        <CameraOff className={`w-10 h-10 ${isLightTheme ? 'text-orange-400' : 'text-zinc-600'}`} />
+                                        <p className={`text-sm font-bold max-w-xs ${isLightTheme ? 'text-orange-700' : 'text-zinc-400'}`}>{cameraError}</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Camera viewport */}
+                                        <div className="relative rounded-3xl overflow-hidden bg-black aspect-square">
+                                            {/* The html5-qrcode library renders into this div */}
+                                            <div id={SCANNER_ELEMENT_ID} className="w-full h-full" />
+
+                                            {/* Corner overlay markers */}
+                                            <div className="absolute inset-0 pointer-events-none">
+                                                <div className="absolute top-6 left-6 w-8 h-8 border-t-[3px] border-l-[3px] border-green-400 rounded-tl-xl" />
+                                                <div className="absolute top-6 right-6 w-8 h-8 border-t-[3px] border-r-[3px] border-green-400 rounded-tr-xl" />
+                                                <div className="absolute bottom-6 left-6 w-8 h-8 border-b-[3px] border-l-[3px] border-green-400 rounded-bl-xl" />
+                                                <div className="absolute bottom-6 right-6 w-8 h-8 border-b-[3px] border-r-[3px] border-green-400 rounded-br-xl" />
+                                                {/* Scanning beam */}
+                                                <motion.div
+                                                    className="absolute left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-green-400 to-transparent"
+                                                    animate={{ top: ['15%', '85%', '15%'] }}
+                                                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                                                />
+                                            </div>
+
+                                            {/* Searching overlay */}
+                                            {status === 'searching' && (
+                                                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-3">
+                                                    <RotateCcw className="w-10 h-10 text-green-400 animate-spin" />
+                                                    <p className="text-sm font-black text-white">Identification…</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <p className={`text-center text-xs font-bold ${isLightTheme ? 'text-emerald-500/60' : 'text-zinc-500'}`}>
+                                            Pointez la caméra vers le QR code de la carte fidélité
+                                        </p>
+                                    </>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {/* MANUAL mode */}
+                        {status !== 'found' && status !== 'error' && mode === 'manual' && (
+                            <motion.div key="manual" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
+                                <div className={`flex flex-col items-center gap-3 py-6 rounded-3xl mb-2 ${isLightTheme ? 'bg-emerald-50 border border-emerald-100' : 'bg-zinc-800/50 border border-zinc-800'}`}>
+                                    <QrCode className={`w-10 h-10 ${isLightTheme ? 'text-emerald-300' : 'text-zinc-600'}`} />
+                                    <p className={`text-xs font-bold text-center max-w-xs ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
+                                        Branchez un lecteur de codes QR filaire — ou collez l'URL de la carte ci-dessous.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className={`block text-[9px] font-black uppercase tracking-[0.25em] mb-2 ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>
+                                        Code QR / URL
+                                    </label>
+                                    <div className="relative">
+                                        <QrCode className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                        <input
+                                            ref={inputRef}
+                                            value={manualInput}
+                                            onChange={(e) => {
+                                                setManualInput(e.target.value);
+                                                // Auto-trigger if it looks like a full QR payload
+                                                if (e.target.value.startsWith('greenmood://loyalty/')) {
+                                                    const userId = parseQRPayload(e.target.value.trim());
+                                                    if (userId) lookupUser(userId);
+                                                }
+                                            }}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') handleManualSearch(); }}
+                                            placeholder="greenmood://loyalty/…  ou coller ici"
+                                            className={`w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme
+                                                ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 placeholder-emerald-300 focus:border-green-500'
+                                                : 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-700 focus:border-green-500'
+                                                }`}
+                                        />
+                                    </div>
+                                    <p className={`text-[9px] mt-1.5 ${isLightTheme ? 'text-emerald-400/50' : 'text-zinc-600'}`}>
+                                        Appuyez sur Entrée ou cliquez le bouton
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={handleManualSearch}
+                                    disabled={!manualInput.trim() || status === 'searching'}
+                                    className={`w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isLightTheme
+                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-50 disabled:text-emerald-200'
+                                        : 'bg-green-500 text-black hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-600'
+                                        }`}
                                 >
-                                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-                                        <AlertTriangle className="w-7 h-7 text-red-500" />
-                                    </div>
-                                    <p className="text-sm font-black text-red-400 text-center">{errorMsg}</p>
-                                    <button
-                                        onClick={() => { setStatus('idle'); setManualInput(''); setErrorMsg(''); }}
-                                        className="text-xs font-bold text-zinc-500 hover:text-white underline transition-colors"
-                                    >
-                                        Réessayer
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Manual / scanner input */}
-                    <div>
-                        <label className={`block text-[9px] font-black uppercase tracking-[0.25em] mb-2 ${isLightTheme ? 'text-emerald-600/50' : 'text-zinc-500'}`}>
-                            Scanner QR ou entrer l'ID manuellement
-                        </label>
-                        <div className="relative">
-                            <QrCode className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
-                            <input
-                                ref={inputRef}
-                                value={manualInput}
-                                onChange={handleInputChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Scannez ou collez le QR code…"
-                                className={`w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme
-                                    ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 placeholder-emerald-300 focus:border-green-500'
-                                    : 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-700 focus:border-green-500'
-                                    }`}
-                            />
-                        </div>
-                        <p className={`text-[9px] mt-2 ${isLightTheme ? 'text-emerald-400/50' : 'text-zinc-600'}`}>
-                            Branchez votre lecteur QR — il tapera le code automatiquement
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={() => { if (manualInput.trim()) searchByQR(manualInput.trim()); }}
-                        disabled={!manualInput.trim() || status === 'searching'}
-                        className={`w-full py-3.5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isLightTheme
-                            ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-50 disabled:text-emerald-200'
-                            : 'bg-green-500 text-black hover:bg-green-400 disabled:bg-zinc-800 disabled:text-zinc-600'
-                            }`}
-                    >
-                        <QrCode className="w-4 h-4" />
-                        Identifier le client
-                    </button>
+                                    {status === 'searching' ? <RotateCcw className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+                                    Identifier le client
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
         </div>
