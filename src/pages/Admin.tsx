@@ -209,66 +209,70 @@ export default function Admin() {
       <SEO title="Administration | Green Mood" description="Panel d'administration pour gérer la boutique Green Mood." />
 
       {/* Sidebar Desktop */}
-      <aside
-        className={`hidden md:flex flex-col bg-zinc-900 border-r border-zinc-800 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'
-          }`}
-      >
-        <div className="p-6 flex items-center justify-between">
-          {isSidebarOpen && (
-            <span className="text-xl font-serif font-bold text-green-neon">Admin</span>
-          )}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
-          >
-            <ChevronRight
-              className={`w-5 h-5 transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 custom-scrollbar">
-          {tabs.map((t) => (
+      {tab !== 'pos' && (
+        <aside
+          className={`hidden md:flex flex-col bg-zinc-900 border-r border-zinc-800 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-20'
+            }`}
+        >
+          <div className="p-6 flex items-center justify-between">
+            {isSidebarOpen && (
+              <span className="text-xl font-serif font-bold text-green-neon">Admin</span>
+            )}
             <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${tab === t.key
-                ? 'bg-green-neon text-white shadow-lg shadow-green-neon/20'
-                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                }`}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
             >
-              <t.icon className="w-5 h-5 shrink-0" />
-              {isSidebarOpen && <span className="text-sm font-medium">{t.label}</span>}
+              <ChevronRight
+                className={`w-5 h-5 transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`}
+              />
             </button>
-          ))}
-        </nav>
+          </div>
 
-        <div className="p-4 border-t border-zinc-800 space-y-2">
-          <a
-            href="/"
-            className="w-full flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
-          >
-            <Home className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="text-sm font-medium">Voir le site</span>}
-            {isSidebarOpen && <ExternalLink className="w-3 h-3 ml-auto opacity-50" />}
-          </a>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all">
-            <LogOut className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
-          </button>
-        </div>
-      </aside>
+          <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 custom-scrollbar">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${tab === t.key
+                  ? 'bg-green-neon text-white shadow-lg shadow-green-neon/20'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                  }`}
+              >
+                <t.icon className="w-5 h-5 shrink-0" />
+                {isSidebarOpen && <span className="text-sm font-medium">{t.label}</span>}
+              </button>
+            ))}
+          </nav>
+
+          <div className="p-4 border-t border-zinc-800 space-y-2">
+            <a
+              href="/"
+              className="w-full flex items-center gap-3 px-4 py-3 text-zinc-400 hover:text-green-neon hover:bg-green-neon/10 rounded-xl transition-all"
+            >
+              <Home className="w-5 h-5 shrink-0" />
+              {isSidebarOpen && <span className="text-sm font-medium">Voir le site</span>}
+              {isSidebarOpen && <ExternalLink className="w-3 h-3 ml-auto opacity-50" />}
+            </a>
+            <button className="w-full flex items-center gap-3 px-4 py-3 text-zinc-500 hover:text-red-400 hover:bg-red-900/10 rounded-xl transition-all">
+              <LogOut className="w-5 h-5 shrink-0" />
+              {isSidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Mobile Top Nav */}
-      <div className="md:hidden fixed top-0 inset-x-0 h-16 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between z-40">
-        <span className="text-lg font-serif font-bold text-green-neon">Green Mood Admin</span>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-zinc-400"
-        >
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
-      </div>
+      {tab !== 'pos' && (
+        <div className="md:hidden fixed top-0 inset-x-0 h-16 bg-zinc-900 border-b border-zinc-800 px-6 flex items-center justify-between z-40">
+          <span className="text-lg font-serif font-bold text-green-neon">Green Mood Admin</span>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-zinc-400"
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+      )}
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -322,24 +326,27 @@ export default function Admin() {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-zinc-950 pt-20 md:pt-0">
-        <div className="max-w-[1600px] mx-auto p-6 md:p-10">
-          <header className="mb-10">
-            <h1 className="text-3xl font-serif font-extrabold text-white tracking-tight">
-              {tabs.find((t) => t.key === tab)?.label}
-            </h1>
-            <p className="text-zinc-500 text-sm mt-1">
-              Gérez efficacement votre boutique Green Mood CBD.
-            </p>
-          </header>
+      <main className={`flex-1 bg-zinc-950 ${tab === 'pos' ? 'h-screen overflow-hidden' : 'overflow-y-auto pt-20 md:pt-0'}`}>
+        <div className={tab === 'pos' ? 'h-full p-2' : 'max-w-[1600px] mx-auto p-6 md:p-10'}>
+          {tab !== 'pos' && (
+            <header className="mb-10">
+              <h1 className="text-3xl font-serif font-extrabold text-white tracking-tight">
+                {tabs.find((t) => t.key === tab)?.label}
+              </h1>
+              <p className="text-zinc-500 text-sm mt-1">
+                Gérez efficacement votre boutique Green Mood CBD.
+              </p>
+            </header>
+          )}
 
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={tab === 'pos' ? undefined : { opacity: 0, y: 10 }}
+              animate={tab === 'pos' ? undefined : { opacity: 1, y: 0 }}
+              exit={tab === 'pos' ? undefined : { opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className={tab === 'pos' ? 'h-full' : ''}
             >
               {tab === 'dashboard' && stats && (
                 <AdminDashboardTab
@@ -379,7 +386,7 @@ export default function Admin() {
               {tab === 'promo_codes' && <AdminPromoCodesTab />}
               {tab === 'recommendations' && <AdminRecommendationsTab />}
               {tab === 'budtender' && <AdminBudTenderTab />}
-              {tab === 'pos' && <AdminPOSTab />}
+              {tab === 'pos' && <AdminPOSTab onExit={() => setTab('dashboard')} />}
               {tab === 'settings' && <AdminSettingsTab />}
             </motion.div>
           </AnimatePresence>
