@@ -718,7 +718,7 @@ export default function BudTender() {
                 )}
             </AnimatePresence>
 
-            {/* ── Chat panel ── */}
+            {/* ── Voice Advisor — floating panel, site stays accessible ── */}
             <VoiceAdvisor
                 products={products}
                 pastProducts={memory.pastProducts}
@@ -726,25 +726,21 @@ export default function BudTender() {
                 userName={memory.userName}
                 isOpen={isVoiceOpen}
                 cartItems={cartItems}
-                onClose={() => {
-                    setIsVoiceOpen(false);
-                    setIsShrink(false);
-                }}
-                onHangup={() => setIsShrink(true)}
+                onClose={() => setIsVoiceOpen(false)}
+                onHangup={() => setIsVoiceOpen(false)}
                 onAddItem={(product, quantity) => {
                     addItem(product, quantity);
                     openSidebar();
-                    setIsShrink(true);
+                    // Panel stays open so user can keep talking
                 }}
                 onViewProduct={(product) => {
                     navigate(`/catalogue/${product.slug}`);
-                    setIsShrink(true);
+                    // Panel stays open — user can navigate while voice session continues
                 }}
                 onNavigate={(path) => {
                     navigate(path);
-                    setIsShrink(false); // Reset shrink when changing page
                 }}
-                showUI={isOpen || isVoiceOpen}
+                showUI={true}
             />
 
             <AnimatePresence>
