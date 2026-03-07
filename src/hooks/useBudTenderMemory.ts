@@ -193,27 +193,42 @@ export function useBudTenderMemory() {
             // Supabase sync
             if (user) {
                 // Separate fixed DB columns from dynamic ones
-                const { goal, experience, format, budget, age, intensity, terpenes, ...extra } = prefs as any;
+                // We handle both local-only keys (intensity, terpenes) and mapped DB-column keys
+                const {
+                    goal,
+                    experience,
+                    format,
+                    budget,
+                    age,
+                    intensity,
+                    terpenes,
+                    experience_level,
+                    preferred_format,
+                    budget_range,
+                    age_range,
+                    intensity_preference,
+                    terpene_preferences,
+                    ...extra
+                } = prefs as any;
 
-                if (import.meta.env.DEV) {
-                    console.log('[BudTenderMemory] Supabase Upsert Payload:', {
-                        user_id: user.id,
-                        goal, experience, format, budget, age, intensity, terpenes, extra
-                    });
-                }
-
-                await supabase.from('user_ai_preferences').upsert({
+                const payload = {
                     user_id: user.id,
                     goal: goal,
-                    experience_level: experience,
-                    preferred_format: format,
-                    budget_range: budget,
-                    age_range: age,
-                    intensity_preference: intensity,
-                    terpene_preferences: terpenes ?? [],
+                    experience_level: experience || experience_level,
+                    preferred_format: format || preferred_format,
+                    budget_range: budget || budget_range,
+                    age_range: age || age_range,
+                    intensity_preference: intensity || intensity_preference,
+                    terpene_preferences: terpenes || terpene_preferences || [],
                     extra_prefs: extra, // This can store any dynamic questions added in Admin
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id' });
+                };
+
+                if (import.meta.env.DEV) {
+                    console.log('[BudTenderMemory] Supabase Upsert Payload:', payload);
+                }
+
+                await supabase.from('user_ai_preferences').upsert(payload, { onConflict: 'user_id' });
             }
         } catch (err) {
             if (import.meta.env.DEV) console.error('[BudTenderMemory] Error saving prefs:', err);

@@ -8,6 +8,56 @@ interface POSAIPreferencesModalProps {
     isLightTheme?: boolean;
 }
 
+const PREF_LABELS: Record<string, string> = {
+    // Goals
+    'sleep': 'Sommeil & Relaxation',
+    'stress': 'Stress & Anxiété',
+    'pain': 'Douleurs & Récupération',
+    'wellness': 'Bien-être général',
+    // Experience
+    'beginner': 'Débutant',
+    'intermediate': 'Intermédiaire',
+    'expert': 'Expert',
+    // Intensity
+    'low': 'Légère',
+    'mid': 'Modérée',
+    'high': 'Puissante',
+    // Budget
+    'budget_low': 'Moins de 20 €', // Support both prefixed and raw
+    'budget_mid': '20 € – 50 €',
+    'budget_high': 'Plus de 50 €',
+    // Format
+    'oil': 'Huile sublinguale',
+    'flower': 'Fleur ou résine',
+    'infusion': 'Infusion',
+    'bundle': 'Pack découverte',
+    // Age
+    'adult': '18 – 65 ans',
+    'senior': 'Plus de 65 ans',
+    // Terpenes
+    'limonene': 'Citronné (Limonène)',
+    'myrcene': 'Terreux (Myrcène)',
+    'linalool': 'Floral (Linalol)',
+    'pinene': 'Boisé/Pin (Pinène)',
+    'caryophyllene': 'Poivré (Caryophyllène)',
+};
+
+// Fallback for budget if simple key is used
+PREF_LABELS['low'] = 'Légère / Petit Budget'; // Ambiguous without context factor
+PREF_LABELS['mid'] = 'Modérée / Moyen Budget';
+PREF_LABELS['high'] = 'Puissante / Budget Premium';
+
+const t = (value: string | null | undefined, context?: string) => {
+    if (!value) return 'Non défini';
+
+    // Handle budget specifically if needed
+    if (context === 'budget' && PREF_LABELS[`budget_${value}`]) {
+        return PREF_LABELS[`budget_${value}`];
+    }
+
+    return PREF_LABELS[value] || value;
+};
+
 export default function POSAIPreferencesModal({
     preferences,
     onClose,
@@ -18,7 +68,7 @@ export default function POSAIPreferencesModal({
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className={`w-full max-w-lg border rounded-[2.5rem] overflow-hidden shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'
+                className={`w-full max-w-xl border rounded-[2.5rem] overflow-hidden shadow-2xl transition-all ${isLightTheme ? 'bg-white border-emerald-100' : 'bg-zinc-900 border-zinc-800'
                     }`}
             >
                 <div className="p-8">
@@ -51,42 +101,42 @@ export default function POSAIPreferencesModal({
                         <PreferenceCard
                             icon={Target}
                             label="Objectif"
-                            value={preferences.goal || 'Non défini'}
+                            value={t(preferences.goal)}
                             isLightTheme={isLightTheme}
                         />
                         {/* Experience */}
                         <PreferenceCard
                             icon={Zap}
                             label="Expérience"
-                            value={preferences.experience_level || 'Non défini'}
+                            value={t(preferences.experience_level)}
                             isLightTheme={isLightTheme}
                         />
                         {/* Intensity */}
                         <PreferenceCard
                             icon={Waves}
                             label="Intensité"
-                            value={preferences.intensity_preference || 'Non définie'}
+                            value={t(preferences.intensity_preference)}
                             isLightTheme={isLightTheme}
                         />
                         {/* Budget */}
                         <PreferenceCard
                             icon={Wallet}
                             label="Budget"
-                            value={preferences.budget_range || 'Non défini'}
+                            value={t(preferences.budget_range, 'budget')}
                             isLightTheme={isLightTheme}
                         />
                         {/* Format */}
                         <PreferenceCard
                             icon={Clock}
                             label="Format"
-                            value={preferences.preferred_format || 'Non défini'}
+                            value={t(preferences.preferred_format)}
                             isLightTheme={isLightTheme}
                         />
                         {/* Age range */}
                         <PreferenceCard
                             icon={UserIcon}
                             label="Tranche d'âge"
-                            value={preferences.age_range || 'Non définie'}
+                            value={t(preferences.age_range)}
                             isLightTheme={isLightTheme}
                         />
                     </div>
@@ -105,7 +155,7 @@ export default function POSAIPreferencesModal({
                                         className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${isLightTheme ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-800 text-green-400'
                                             }`}
                                     >
-                                        {terpene}
+                                        {t(terpene)}
                                     </span>
                                 ))}
                             </div>
