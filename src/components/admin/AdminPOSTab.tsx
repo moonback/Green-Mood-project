@@ -1835,7 +1835,7 @@ function AdminPOSTab({
                                                 setUnlockError(false);
                                                 if (btn === 'C') setUnlockPin('');
                                                 else if (btn === 'OK') {
-                                                    if (unlockPin === '0606') {
+                                                    if (unlockPin === '1234') {
                                                         setIsUnlockedManually(true);
                                                         setShowUnlockModal(false);
                                                     } else {
