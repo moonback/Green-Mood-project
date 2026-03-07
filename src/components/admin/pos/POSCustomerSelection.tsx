@@ -104,8 +104,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                 }}
                                 placeholder="Rechercher un client..."
                                 className={`w-full pl-11 pr-4 py-3 rounded-2xl text-sm font-bold transition-all focus:outline-none focus:ring-4 focus:ring-green-500/10 ${isLightTheme
-                                        ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 placeholder-emerald-300'
-                                        : 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600'
+                                    ? 'bg-emerald-50 border border-emerald-100 text-emerald-950 placeholder-emerald-300'
+                                    : 'bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600'
                                     }`}
                             />
                         </div>
@@ -113,8 +113,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                         <button
                             onClick={() => setShowCreateCustomer(true)}
                             className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${isLightTheme
-                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200'
-                                    : 'bg-green-500 text-black hover:bg-green-400 shadow-lg shadow-green-500/20'
+                                ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200'
+                                : 'bg-green-500 text-black hover:bg-green-400 shadow-lg shadow-green-500/20'
                                 }`}
                         >
                             <UserPlus className="w-4 h-4" />
@@ -143,8 +143,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                     transition={{ duration: 0.2 }}
                                     onClick={() => onSelectCustomer(c)}
                                     className={`p-6 rounded-[2rem] border text-left flex flex-col justify-between group transition-all h-[140px] ${isLightTheme
-                                            ? 'bg-white border-emerald-100 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-200/40'
-                                            : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
+                                        ? 'bg-white border-emerald-100 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-200/40'
+                                        : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -220,8 +220,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                                 onClick={handleCreateCustomer}
                                 disabled={!newCustomerName.trim() || isCreatingCustomer}
                                 className={`w-full py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 ${isLightTheme
-                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200'
-                                        : 'bg-green-500 text-black hover:bg-green-400 shadow-xl shadow-green-500/20'
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200'
+                                    : 'bg-green-500 text-black hover:bg-green-400 shadow-xl shadow-green-500/20'
                                     }`}
                             >
                                 {isCreatingCustomer ? <RotateCcw className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}
@@ -386,8 +386,8 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip, isLight
                             onClick={handleCreateCustomer}
                             disabled={!newCustomerName.trim() || isCreatingCustomer}
                             className={`w-full py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 ${isLightTheme
-                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200'
-                                    : 'bg-green-500 text-black hover:bg-green-400 shadow-xl shadow-green-500/20'
+                                ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl shadow-emerald-200'
+                                : 'bg-green-500 text-black hover:bg-green-400 shadow-xl shadow-green-500/20'
                                 }`}
                         >
                             {isCreatingCustomer ? <RotateCcw className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}
