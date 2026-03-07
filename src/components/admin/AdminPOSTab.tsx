@@ -49,7 +49,7 @@ import POSCustomerSelection from './pos/POSCustomerSelection';
 import POSCustomerDetailModal from './pos/POSCustomerDetailModal';
 import POSAIPreferencesModal from './pos/POSAIPreferencesModal';
 import { CartLine, PaymentMethod, AppliedPromo, CompletedSale, DailyReport } from './pos/types';
-import { UserAIPreferences } from '../../lib/types';
+import { UserAIPreferences, Address } from '../../lib/types';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -122,6 +122,8 @@ function AdminPOSTab({
 
     // ── AI Preferences ──
     const [selectedCustomerAIPreferences, setSelectedCustomerAIPreferences] = useState<UserAIPreferences | null>(null);
+    const [selectedCustomerDefaultAddress, setSelectedCustomerDefaultAddress] = useState<Address | null>(null);
+    const [selectedCustomerOrderCount, setSelectedCustomerOrderCount] = useState<number>(0);
     const [showAIPreferences, setShowAIPreferences] = useState(false);
 
     // ── Create customer (POS) ──
@@ -394,20 +396,38 @@ function AdminPOSTab({
 
     // ── Cart actions ──
 
-    // ── AI Preferences Fetch ──
     useEffect(() => {
         if (selectedCustomer) {
             const fetchPrefs = async () => {
-                const { data } = await supabase
+                // Fetch AI Preferences
+                const { data: aiData } = await supabase
                     .from('user_ai_preferences')
                     .select('*')
                     .eq('user_id', selectedCustomer.id)
                     .maybeSingle();
-                setSelectedCustomerAIPreferences(data);
+                setSelectedCustomerAIPreferences(aiData);
+
+                // Fetch Default Address
+                const { data: addrData } = await supabase
+                    .from('addresses')
+                    .select('*')
+                    .eq('user_id', selectedCustomer.id)
+                    .eq('is_default', true)
+                    .maybeSingle();
+                setSelectedCustomerDefaultAddress(addrData);
+
+                // Fetch Order Count
+                const { count } = await supabase
+                    .from('orders')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', selectedCustomer.id);
+                setSelectedCustomerOrderCount(count || 0);
             };
             fetchPrefs();
         } else {
             setSelectedCustomerAIPreferences(null);
+            setSelectedCustomerDefaultAddress(null);
+            setSelectedCustomerOrderCount(0);
         }
     }, [selectedCustomer]);
 
@@ -822,10 +842,10 @@ function AdminPOSTab({
                                 ? 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100'
                                 : 'bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20'}`}
                         >
-                            <span className={`text-[8px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>AI Profile</span>
+                            <span className={`text-[8px] uppercase font-black tracking-widest mb-0.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-500'}`}>Profile client</span>
                             <div className="flex items-center gap-1.5">
                                 <Brain className="w-4 h-4" />
-                                <span className={`text-xs font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Optimisé</span>
+                                <span className={`text-xs font-black transition-colors ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>Voir</span>
                             </div>
                         </motion.button>
                     )}
@@ -1742,9 +1762,16 @@ function AdminPOSTab({
                 />
             )}
 
-            {showAIPreferences && selectedCustomerAIPreferences && (
+            {showAIPreferences && selectedCustomerAIPreferences && selectedCustomer && (
                 <POSAIPreferencesModal
                     preferences={selectedCustomerAIPreferences}
+                    customer={selectedCustomer}
+                    defaultAddress={selectedCustomerDefaultAddress}
+                    orderCount={selectedCustomerOrderCount}
+                    onViewOrders={() => {
+                        setShowAIPreferences(false);
+                        setShowCustomerDetail(true);
+                    }}
                     onClose={() => setShowAIPreferences(false)}
                     isLightTheme={isLightTheme}
                 />
@@ -1753,6 +1780,6 @@ function AdminPOSTab({
             {/* Modals are handled above via imported components */}
         </div>
     );
-};
+}
 
 export default AdminPOSTab;

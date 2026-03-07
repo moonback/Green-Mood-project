@@ -1,9 +1,13 @@
 import { motion } from 'motion/react';
-import { X, Brain, Target, Zap, Waves, Wallet, Clock, User as UserIcon } from 'lucide-react';
-import { UserAIPreferences } from '../../../lib/types';
+import { X, Brain, Target, Zap, Waves, Wallet, Clock, User as UserIcon, Phone, MapPin, Package, ExternalLink } from 'lucide-react';
+import { UserAIPreferences, Profile, Address } from '../../../lib/types';
 
 interface POSAIPreferencesModalProps {
     preferences: UserAIPreferences;
+    customer: Profile;
+    defaultAddress?: Address | null;
+    orderCount?: number;
+    onViewOrders?: () => void;
     onClose: () => void;
     isLightTheme?: boolean;
 }
@@ -60,6 +64,10 @@ const t = (value: string | null | undefined, context?: string) => {
 
 export default function POSAIPreferencesModal({
     preferences,
+    customer,
+    defaultAddress,
+    orderCount = 0,
+    onViewOrders,
     onClose,
     isLightTheme,
 }: POSAIPreferencesModalProps) {
@@ -80,11 +88,30 @@ export default function POSAIPreferencesModal({
                             </div>
                             <div>
                                 <h2 className={`text-xl font-black uppercase tracking-tight ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
-                                    Profil AI Client
+                                    {customer.full_name || 'Client Anonyme'}
                                 </h2>
-                                <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
-                                    Préférences & Habitudes
-                                </p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <p className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
+                                        Profil AI & Habitudes
+                                    </p>
+                                    {customer.phone && (
+                                        <>
+                                            <span className={`text-[8px] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-700'}`}>•</span>
+                                            <div className="flex items-center gap-1 group">
+                                                <Phone className={`w-2.5 h-2.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                                <span className={`text-[10px] font-mono ${isLightTheme ? 'text-emerald-700/80' : 'text-zinc-400'}`}>{customer.phone}</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                {defaultAddress && (
+                                    <div className="flex items-center gap-1.5 mt-1.5 opacity-80 group">
+                                        <MapPin className={`w-2.5 h-2.5 ${isLightTheme ? 'text-emerald-400' : 'text-zinc-600'}`} />
+                                        <p className={`text-[10px] font-medium tracking-tight ${isLightTheme ? 'text-emerald-800' : 'text-zinc-400'}`}>
+                                            {defaultAddress.street}, {defaultAddress.postal_code} {defaultAddress.city}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <button
@@ -141,26 +168,58 @@ export default function POSAIPreferencesModal({
                         />
                     </div>
 
-                    {/* Terpenes */}
-                    {(preferences.terpene_preferences?.length || 0) > 0 && (
-                        <div className={`mt-6 p-5 rounded-3xl border ${isLightTheme ? 'bg-emerald-50/30 border-emerald-100' : 'bg-zinc-950 border-zinc-800'
-                            }`}>
-                            <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
-                                Terpènes Préférés
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {preferences.terpene_preferences?.map((terpene) => (
-                                    <span
-                                        key={terpene}
-                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${isLightTheme ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-800 text-green-400'
-                                            }`}
-                                    >
-                                        {t(terpene)}
-                                    </span>
-                                ))}
+                    {/* Terpenes & Order History */}
+                    <div className="mt-6 flex flex-col gap-4">
+                        {/* Terpenes */}
+                        {(preferences.terpene_preferences?.length || 0) > 0 && (
+                            <div className={`p-5 rounded-3xl border ${isLightTheme ? 'bg-emerald-50/30 border-emerald-100' : 'bg-zinc-950 border-zinc-800'
+                                }`}>
+                                <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
+                                    Terpènes Préférés
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {preferences.terpene_preferences?.map((terpene) => (
+                                        <span
+                                            key={terpene}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${isLightTheme ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-800 text-green-400'
+                                                }`}
+                                        >
+                                            {t(terpene)}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
+                        )}
+
+                        {/* Order History Summary */}
+                        <div className={`p-5 rounded-3xl border flex items-center justify-between transition-all ${isLightTheme ? 'bg-emerald-50/50 border-emerald-100' : 'bg-zinc-950 border-zinc-800'
+                            }`}>
+                            <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${isLightTheme ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-800 text-zinc-400'
+                                    }`}>
+                                    <Package className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-600/60' : 'text-zinc-500'}`}>
+                                        Commandes passées
+                                    </p>
+                                    <p className={`text-lg font-black ${isLightTheme ? 'text-emerald-950' : 'text-white'}`}>
+                                        {orderCount} {orderCount > 1 ? 'commandes' : 'commande'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onViewOrders}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm ${isLightTheme
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100'
+                                    : 'bg-green-500 text-black hover:bg-green-400 shadow-green-500/10'
+                                    }`}
+                            >
+                                Historique
+                                <ExternalLink className="w-3 h-3" />
+                            </button>
                         </div>
-                    )}
+                    </div>
 
                     {/* Updated At */}
                     <p className={`mt-8 text-center text-[9px] font-black uppercase tracking-[0.2em] ${isLightTheme ? 'text-emerald-200' : 'text-zinc-600'}`}>
