@@ -90,19 +90,19 @@ export default function POSCustomerSelection({ onSelectCustomer, onSkip }: POSCu
                     <p className="text-zinc-400 font-medium mt-3 text-lg drop-shadow">Identifiez le client ou passez pour une vente rapide</p>
                 </div>
 
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+                <div className="  relative overflow-hidden">
                     {!showCreateCustomer ? (
                         <div className="space-y-6">
                             <div className="relative">
-                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-zinc-500" />
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-white" />
                                 <input
                                     value={customerSearch}
                                     onChange={(e) => setCustomerSearch(e.target.value)}
                                     placeholder="Rechercher par nom ou numéro..."
-                                    className="w-full bg-black/40 border border-zinc-800 rounded-[2rem] pl-16 pr-6 py-6 text-lg text-white placeholder-zinc-600 focus:outline-none focus:border-green-500/50 focus:bg-black/60 transition-all shadow-inner"
+                                    className="w-full bg-black/50 border border-zinc-800 rounded-[2rem] pl-16 pr-6 py-6 text-lg text-white placeholder-white focus:outline-none focus:border-green-500/50 focus:bg-black/60 transition-all shadow-inner"
                                 />
                                 {isSearchingCustomer && (
-                                    <RotateCcw className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 animate-spin" />
+                                    <RotateCcw className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white animate-spin" />
                                 )}
                             </div>
 
