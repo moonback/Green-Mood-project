@@ -1,7 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+/**
+ * ProductDetail.tsx
+ *
+ * Product detail page. All data fetching and business logic is handled by
+ * useProductDetail. UI sub-sections are composed from focused components:
+ * - ProductImageGallery: main image + thumbnails + badges
+ * - ProductReviewSection: review list + form + eligibility CTA
+ *
+ * This component owns only UI state that is specific to the cart interaction
+ * (quantity, addedFeedback) and renders the product info, specs, cart, bundle,
+ * and subscription panels inline.
+ */
+
+import { useState, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { CATEGORY_SLUGS } from '../lib/constants';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -11,21 +24,16 @@ import {
   Star,
   RefreshCw,
   CheckCircle,
-  Send,
-  MessageSquare,
   Package,
-  Tag,
   Shield,
-  Zap,
   Sparkles,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
-import { Product, Review, SubscriptionFrequency, BundleItem } from '../lib/types';
+import { Product, SubscriptionFrequency } from '../lib/types';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useToastStore } from '../store/toastStore';
+import { useSettingsStore } from '../store/settingsStore';
 import StockBadge from '../components/StockBadge';
-import QuantitySelector from '../components/QuantitySelector';
 import StarRating from '../components/StarRating';
 import SEO from '../components/SEO';
 import { buildProductSEO } from '../lib/seo/metaBuilder';
@@ -33,7 +41,9 @@ import { breadcrumbSchema, productSchema } from '../lib/seo/schemaBuilder';
 import { buildInternalLinks } from '../lib/seo/internalLinks';
 import RelatedProducts from '../components/RelatedProducts';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
-import { useSettingsStore } from '../store/settingsStore';
+import ProductImageGallery from '../components/product/ProductImageGallery';
+import ProductReviewSection from '../components/product/ProductReviewSection';
+import { useProductDetail } from '../hooks/useProductDetail';
 
 const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
   weekly: 'Chaque semaine',
@@ -43,187 +53,42 @@ const FREQUENCY_LABELS: Record<SubscriptionFrequency, string> = {
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { user } = useAuthStore();
-
-  const [product, setProduct] = useState<Product | null>(null);
-  const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
-  const [productImages, setProductImages] = useState<string[]>([]);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
-  const [addedFeedback, setAddedFeedback] = useState(false);
-
-  // Subscription state
-  const [subFrequency, setSubFrequency] = useState<SubscriptionFrequency>('monthly');
-  const [subQty, setSubQty] = useState(1);
-  const [subSuccess, setSubSuccess] = useState(false);
-  const [subLoading, setSubLoading] = useState(false);
-
-  // Reviews state
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [avgRating, setAvgRating] = useState(0);
-  const [canReview, setCanReview] = useState(false);
-  const [reviewableOrderId, setReviewableOrderId] = useState<string | null>(null);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewError, setReviewError] = useState('');
-  const [reviewSuccess, setReviewSuccess] = useState(false);
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-
+  const settings = useSettingsStore((s) => s.settings);
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const openSidebar = useCartStore((s) => s.openSidebar);
-  const settings = useSettingsStore((s) => s.settings);
   const addToast = useToastStore((s) => s.addToast);
 
-  useEffect(() => {
-    if (!slug) return;
-    supabase
-      .from('products')
-      .select('*, category:categories(*)')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          navigate('/catalogue', { replace: true });
-          return;
-        }
-        const p = data as Product;
-        setProduct(p);
-        setIsLoading(false);
-        loadReviews(p.id);
-        if (user) checkCanReview(p.id, user.id);
+  const [quantity, setQuantity] = useState(1);
+  const [addedFeedback, setAddedFeedback] = useState(false);
 
-        // Build images array (main + extra from product_images table)
-        const mainImage = p.image_url ?? 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800';
-        supabase
-          .from('product_images')
-          .select('image_url, sort_order')
-          .eq('product_id', p.id)
-          .order('sort_order')
-          .then(({ data: extraImages, error: imgError }) => {
-            if (imgError || !extraImages) {
-              setProductImages([mainImage]);
-              return;
-            }
-            const urls = extraImages.map((img: { image_url: string }) => img.image_url);
-            setProductImages([mainImage, ...urls]);
-          });
-        // Load bundle items if applicable
-        if (p.is_bundle) {
-          supabase
-            .from('bundle_items')
-            .select('*, product:products(id, name, slug, price, image_url, cbd_percentage, weight_grams)')
-            .eq('bundle_id', p.id)
-            .then(({ data: items }) => {
-              if (items) setBundleItems(items as BundleItem[]);
-            });
-        }
-      });
-  }, [slug, navigate, user]);
+  const {
+    product,
+    bundleItems,
+    productImages,
+    isLoading,
+    reviews,
+    avgRating,
+    canReview,
+    reviewSuccess,
+    subFrequency,
+    setSubFrequency,
+    subSuccess,
+    subLoading,
+    handleSubscribe,
+    handleSubmitReview,
+  } = useProductDetail({ slug, userId: user?.id });
 
-  async function loadReviews(productId: string) {
-    const { data } = await supabase
-      .from('reviews')
-      .select('*, profile:profiles(full_name)')
-      .eq('product_id', productId)
-      .eq('is_published', true)
-      .order('created_at', { ascending: false });
-    const list = (data as Review[]) ?? [];
-    setReviews(list);
-    if (list.length > 0) {
-      setAvgRating(list.reduce((s, r) => s + r.rating, 0) / list.length);
-    }
-  }
-
-  async function checkCanReview(productId: string, userId: string) {
-    // Find delivered order items for this product by this user
-    const { data: items } = await supabase
-      .from('order_items')
-      .select('order_id')
-      .eq('product_id', productId);
-
-    if (!items || items.length === 0) return;
-    const orderIds = items.map((i: { order_id: string }) => i.order_id);
-
-    const { data: deliveredOrders } = await supabase
-      .from('orders')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('status', 'delivered')
-      .in('id', orderIds);
-
-    if (!deliveredOrders || deliveredOrders.length === 0) return;
-
-    // Check no existing review for this product
-    const { data: existing } = await supabase
-      .from('reviews')
-      .select('id')
-      .eq('product_id', productId)
-      .eq('user_id', userId)
-      .limit(1);
-
-    if (!existing || existing.length === 0) {
-      setCanReview(true);
-      setReviewableOrderId(deliveredOrders[0].id);
-    }
-  }
-
-  async function handleSubscribe() {
-    if (!user) {
-      navigate('/connexion');
-      return;
-    }
-    if (!product) return;
-    setSubLoading(true);
-
-    const next = new Date();
-    if (subFrequency === 'weekly') next.setDate(next.getDate() + 7);
-    else if (subFrequency === 'biweekly') next.setDate(next.getDate() + 14);
-    else next.setMonth(next.getMonth() + 1);
-
-    await supabase.from('subscriptions').insert({
-      user_id: user.id,
-      product_id: product.id,
-      quantity: subQty,
-      frequency: subFrequency,
-      next_delivery_date: next.toISOString().split('T')[0],
-      status: 'active',
-    });
-
-    setSubLoading(false);
-    setSubSuccess(true);
-  }
-
-  async function handleSubmitReview() {
-    if (!user || !product || !reviewableOrderId) return;
-    setIsSubmittingReview(true);
-    setReviewError('');
-
-    const { error } = await supabase.from('reviews').insert({
-      product_id: product.id,
-      user_id: user.id,
-      order_id: reviewableOrderId,
-      rating: reviewRating,
-      comment: reviewComment.trim() || null,
-      is_verified: true,
-      is_published: false,
-    });
-
-    if (error) {
-      setReviewError('Erreur lors de l\'envoi. Veuillez réessayer.');
-      setIsSubmittingReview(false);
-      return;
-    }
-
-    setReviewSuccess(true);
-    setShowReviewForm(false);
-    setCanReview(false);
-    setIsSubmittingReview(false);
-  }
+  const isBulkProduct = (
+    product?.category?.slug?.includes('fleurs') ||
+    product?.category?.slug?.includes('resines') ||
+    product?.category?.slug === 'nouveautes' ||
+    product?.category?.slug === CATEGORY_SLUGS.FLOWERS ||
+    product?.category?.slug === CATEGORY_SLUGS.RESINS
+  );
+  const isPerUnit = !isBulkProduct || product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1 && !product?.name.toLowerCase().includes('pack'));
+  const showWeightSelector = isBulkProduct && !isPerUnit;
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -239,17 +104,6 @@ export default function ProductDetail() {
     if (!product) return;
     setQuantity(Math.max(1, Math.min(parseFloat(e.target.value) || 1, product.stock_quantity)));
   }, [product?.stock_quantity]);
-
-  const isBulkProduct = (
-    product?.category?.slug?.includes('fleurs') ||
-    product?.category?.slug?.includes('resines') ||
-    product?.category?.slug === 'nouveautes' ||
-    product?.category?.slug === CATEGORY_SLUGS.FLOWERS ||
-    product?.category?.slug === CATEGORY_SLUGS.RESINS
-  );
-  const isPerUnit = !isBulkProduct || product?.is_bundle || (!!product?.weight_grams && product?.weight_grams > 1 && !product?.name.toLowerCase().includes('pack'));
-  const showWeightSelector = isBulkProduct && !isPerUnit;
-
 
   if (isLoading) {
     return (
@@ -300,66 +154,8 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 xl:gap-24 items-start">
-          {/* Image Section */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative group lg:sticky lg:top-28"
-          >
-            {/* Decorative Glow */}
-            <div className="absolute inset-0 bg-green-neon/5 blur-[120px] -z-10 group-hover:bg-green-neon/10 transition-all duration-1000" />
-
-            {/* Badges */}
-            <div className="absolute top-6 left-6 z-20 flex flex-col gap-2">
-              {product.is_bundle && (
-                <div className="flex items-center gap-2 bg-purple-600/90 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider text-white shadow-2xl">
-                  <Package className="w-3 h-3" />
-                  Écrin Prestige
-                </div>
-              )}
-              {product.is_featured && !product.is_bundle && (
-                <div className="flex items-center gap-2 bg-green-neon px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider text-black shadow-2xl">
-                  <Star className="w-3 h-3 fill-current" />
-                  Sélection Maître
-                </div>
-              )}
-            </div>
-
-            <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-white/[0.03] border border-white/[0.06] relative">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={activeImageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  src={productImages[activeImageIndex] || product.image_url || 'https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800'}
-                  alt={`${product.name} - Image ${activeImageIndex + 1}`}
-                  loading="eager" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out shadow-inner"
-                />
-              </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/20 to-transparent pointer-events-none" />
-            </div>
-
-            {/* Image Thumbnails */}
-            {productImages.length > 1 && (
-              <div className="flex gap-2 mt-4 justify-center">
-                {productImages.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImageIndex(idx)}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${idx === activeImageIndex
-                      ? 'border-green-neon shadow-[0_0_12px_rgba(57,255,20,0.3)]'
-                      : 'border-white/[0.08] opacity-60 hover:opacity-100'
-                      }`}
-                  >
-                    <img src={img} alt={`Vue ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-          </motion.div>
+          {/* Image Gallery */}
+          <ProductImageGallery product={product} images={productImages} />
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -424,7 +220,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Compact Specifications Bar - Above Price */}
+            {/* Compact Specifications Bar */}
             <div className="flex items-center flex-wrap gap-8 py-2 border-y border-white/[0.04]">
               {product.cbd_percentage != null && (
                 <div className="flex items-center gap-3">
@@ -461,6 +257,7 @@ export default function ProductDetail() {
               )}
             </div>
 
+            {/* Price & Cart Panel */}
             <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 md:p-8 space-y-10 relative overflow-hidden group/panel">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-neon/20 to-transparent" />
 
@@ -662,7 +459,6 @@ export default function ProductDetail() {
               Vente réservée aux personnes âgées de 18 ans et plus.
             </p>
 
-
             <section className="mt-16 rounded-2xl border border-zinc-800 p-6">
               <h2 className="text-xl font-semibold mb-4">Ressources & liens utiles</h2>
               <div className="flex flex-wrap gap-4">
@@ -673,7 +469,6 @@ export default function ProductDetail() {
                 ))}
               </div>
             </section>
-
           </motion.div>
         </div>
 
@@ -689,199 +484,15 @@ export default function ProductDetail() {
         )}
 
         {/* Reviews Section */}
-        <div className="mt-32 space-y-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/[0.06] pb-8">
-            <div className="space-y-4">
-              <h2 className="text-xs text-zinc-500 font-medium uppercase tracking-wider">EXPÉRIENCE & TÉMOIGNAGES</h2>
-              <p className="text-2xl md:text-3xl font-serif font-bold italic text-white uppercase tracking-tight">L'Expression de nos Membres.</p>
-            </div>
-            {reviews.length > 0 && (
-              <div className="flex items-center gap-6 bg-white/5 border border-white/[0.06] px-8 py-4 rounded-2xl backdrop-blur-xl">
-                <StarRating rating={avgRating} size="sm" />
-                <div className="w-px h-6 bg-white/10" />
-                <span className="text-sm font-bold text-white">{avgRating.toFixed(1)} <span className="text-xs text-zinc-500 ml-1">/ 5.0</span></span>
-              </div>
-            )}
-          </div>
+        <ProductReviewSection
+          reviews={reviews}
+          avgRating={avgRating}
+          canReview={canReview}
+          reviewSuccess={reviewSuccess}
+          onSubmitReview={handleSubmitReview}
+        />
 
-          {/* Can review CTA */}
-          {canReview && !reviewSuccess && !showReviewForm && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-green-neon/5 border border-dashed border-green-neon/20 rounded-2xl p-6 md:p-8 text-center space-y-6"
-            >
-              <MessageSquare className="w-12 h-12 mx-auto text-green-neon/40" />
-              <div className="space-y-2">
-                <p className="font-serif text-2xl font-bold text-white">Partagez votre voyage sensoriel.</p>
-                <p className="text-zinc-500 text-sm max-w-sm mx-auto italic">Votre expertise contribue à l'excellence de notre catalogue.</p>
-              </div>
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="bg-green-neon text-black font-semibold uppercase tracking-wider px-8 py-4 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all"
-              >
-                Rédiger mon Impression
-              </button>
-            </motion.div>
-          )}
-
-          {/* Review success message */}
-          {reviewSuccess && (
-            <div className="bg-green-neon/5 border border-green-neon/20 rounded-2xl p-6 md:p-8 flex items-center gap-6">
-              <div className="w-12 h-12 rounded-full bg-green-neon/20 flex items-center justify-center text-green-neon">
-                <CheckCircle className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-white font-semibold uppercase tracking-wider text-xs">Impression Transmise</p>
-                <p className="text-zinc-500 text-sm italic mt-1 font-serif">Votre témoignage est en cours de modération par notre comité d'excellence.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Review form */}
-          <AnimatePresence>
-            {showReviewForm && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 md:p-8 space-y-10"
-              >
-                <div className="space-y-2">
-                  <h3 className="font-serif text-2xl font-bold italic text-white leading-none">Votre Note.</h3>
-                  <StarRating
-                    rating={reviewRating}
-                    size="lg"
-                    interactive
-                    onRate={setReviewRating}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">VOTRE TÉMOIGNAGE</p>
-                  <textarea
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    rows={5}
-                    placeholder="Décrivez les nuances, l'arôme, et l'expérience vécue..."
-                    className="w-full bg-white/5 border border-white/[0.06] rounded-2xl px-5 py-4 text-lg font-serif italic text-white placeholder:text-zinc-800 focus:outline-none focus:border-green-neon transition-all resize-none"
-                  />
-                </div>
-
-                {reviewError && (
-                  <p className="text-xs font-semibold uppercase tracking-wider text-red-500">{reviewError}</p>
-                )}
-
-                <div className="flex flex-col md:flex-row gap-4">
-                  <button
-                    onClick={handleSubmitReview}
-                    disabled={isSubmittingReview}
-                    className="flex-1 bg-green-neon text-black font-semibold uppercase tracking-wider py-5 rounded-2xl hover:shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-2xl"
-                  >
-                    <Send className="w-4 h-4" />
-                    {isSubmittingReview ? 'TRANSMISSION...' : 'TRANSMETTRE'}
-                  </button>
-                  <button
-                    onClick={() => setShowReviewForm(false)}
-                    className="px-10 py-5 text-xs font-semibold uppercase tracking-wider text-zinc-600 hover:text-white transition-colors"
-                  >
-                    ANNULER
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Reviews list */}
-          {reviews.length === 0 ? (
-            <div className="py-24 text-center space-y-6 bg-white/[0.01] border border-dashed border-white/[0.06] rounded-2xl">
-              <MessageSquare className="w-16 h-16 mx-auto text-zinc-800" />
-              <div className="space-y-2">
-                <p className="font-serif text-2xl font-bold text-white italic">Silence Éloquent.</p>
-                <p className="text-zinc-600 text-sm max-w-xs mx-auto font-serif">Aucune impression n'a encore été consignée pour cette édition.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid gap-10">
-              {reviews.map((review, i) => {
-                const initials = (review.profile?.full_name ?? 'C L')
-                  .split(' ')
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join('')
-                  .toUpperCase();
-                return (
-                  <motion.div
-                    key={review.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.1, duration: 0.8, ease: "easeOut" }}
-                    className="relative group lg:pl-12"
-                  >
-                    {/* Artistic Line & Initials */}
-                    <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-green-neon/20 via-white/5 to-transparent" />
-
-                    <div className="bg-zinc-900/40 backdrop-blur-md border border-white/[0.06] rounded-[2.5rem] p-8 md:p-10 hover:border-green-neon/20 transition-all duration-700 relative overflow-hidden group-hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                      {/* Subtle Pattern Background */}
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-green-neon/[0.02] blur-[100px] pointer-events-none" />
-
-                      <div className="flex flex-col md:flex-row gap-8 relative z-10">
-                        <div className="flex flex-col items-center md:items-start gap-4 shrink-0">
-                          <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-green-neon font-serif text-2xl font-bold shadow-xl group-hover:scale-110 transition-transform duration-700">
-                            {initials}
-                          </div>
-                          {review.is_verified && (
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-neon/10 border border-green-neon/20 rounded-full">
-                              <CheckCircle className="w-3 h-3 text-green-neon" />
-                              <span className="text-[9px] font-black text-green-neon uppercase tracking-widest">Certifié</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 space-y-6 text-center md:text-left">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="space-y-1">
-                              <h4 className="text-xl font-serif font-bold text-white tracking-tight">
-                                {review.profile?.full_name ?? 'Membre Anonyme'}
-                              </h4>
-                              <div className="flex justify-center md:justify-start">
-                                <StarRating rating={review.rating} size="sm" />
-                              </div>
-                            </div>
-                            <div className="flex flex-col md:items-end gap-1">
-                              <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">
-                                Impression No. {review.id.slice(0, 4).toUpperCase()}
-                              </span>
-                              <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">
-                                {new Date(review.created_at).toLocaleDateString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric',
-                                }).toUpperCase()}
-                              </p>
-                            </div>
-                          </div>
-
-                          {review.comment && (
-                            <div className="relative pt-4">
-                              <span className="absolute -top-4 -left-4 text-6xl font-serif text-white/5 pointer-events-none group-hover:text-green-neon/5 transition-colors duration-700">“</span>
-                              <p className="text-zinc-400 font-serif italic text-xl md:text-2xl leading-relaxed max-w-3xl">
-                                {review.comment}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Related Products Section */}
+        {/* Related Products */}
         <div className="mt-20 pt-12 border-t border-white/[0.06]">
           <div className="mb-16 space-y-4">
             <h2 className="text-xs text-zinc-500 font-medium uppercase tracking-wider">VOUS POURRIEZ AUSSI APPRÉCIER</h2>
@@ -908,7 +519,6 @@ export default function ProductDetail() {
                 {(product.price * quantity).toFixed(2)}<span className="text-xs text-zinc-500 ml-1">€</span>
                 {!isPerUnit && <span className="text-[10px] text-zinc-600 ml-1 uppercase">/g</span>}
               </p>
-
               {product.stock_quantity <= 5 && (
                 <p className="text-[10px] text-orange-400 font-medium mt-0.5">Plus que {product.stock_quantity} en stock</p>
               )}
